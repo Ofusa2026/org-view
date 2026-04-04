@@ -55,6 +55,17 @@ tbody tr:hover td{background:#f8faff;}
 .empty{text-align:center;padding:60px;color:#94a3b8;font-size:13px;}
 .loading{text-align:center;padding:60px;color:#64748b;}
 .error-box{background:#fee2e2;color:#dc2626;border-radius:8px;padding:16px;margin:16px;font-size:13px;}
+/* パスワード認証 */
+.pass-screen{position:fixed;inset:0;background:#0f2040;display:flex;align-items:center;justify-content:center;z-index:9999;}
+.pass-box{background:white;border-radius:16px;padding:32px;width:100%;max-width:360px;margin:16px;text-align:center;}
+.pass-logo{font-size:11px;color:#94a3b8;margin-bottom:8px;}
+.pass-title{font-size:20px;font-weight:800;color:#0f2040;margin-bottom:4px;}
+.pass-org{font-size:13px;color:#64748b;margin-bottom:24px;}
+.pass-input{width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:16px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit;margin-bottom:12px;}
+.pass-input:focus{border-color:#6366f1;}
+.pass-btn{width:100%;padding:12px;background:#6366f1;color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;}
+.pass-btn:hover{background:#4f46e5;}
+.pass-err{color:#dc2626;font-size:12px;margin-top:8px;min-height:18px;}
 @media(max-width:440px){
   .layout{flex-direction:column;}
   .sidebar{width:100%;height:auto;position:static;display:flex;overflow-x:auto;padding:0;}
@@ -71,6 +82,17 @@ tbody tr:hover td{background:#f8faff;}
     <div class="header-title">📋 案件進捗確認</div>
   </div>
   <div class="header-org" id="headerOrg">読み込み中...</div>
+</div>
+<div id="passScreen" class="pass-screen" style="display:none;">
+  <div class="pass-box">
+    <div class="pass-logo">OFUSA 大房行政書士法人</div>
+    <div class="pass-title">🔒 パスワード認証</div>
+    <div class="pass-org" id="passOrgName">読み込み中...</div>
+    <input class="pass-input" type="password" id="passInput" placeholder="パスワードを入力"
+      onkeydown="if(event.key==='Enter')checkPass()">
+    <button class="pass-btn" onclick="checkPass()">ログイン</button>
+    <div class="pass-err" id="passErr"></div>
+  </div>
 </div>
 <div class="layout">
   <div class="sidebar" id="sidebar"></div>
@@ -240,6 +262,19 @@ async function saveComment(caseId){
   }catch(e){btn.textContent='保存';btn.disabled=false;alert('保存失敗: '+e.message);}
 }
 
+var _correctPass='';
+function checkPass(){
+  var input=document.getElementById('passInput').value.trim();
+  if(input===_correctPass){
+    document.getElementById('passScreen').style.display='none';
+    loadData();
+  }else{
+    document.getElementById('passErr').textContent='パスワードが正しくありません';
+    document.getElementById('passInput').value='';
+    document.getElementById('passInput').focus();
+  }
+}
+
 async function init(){
   var token=getParam('token');
   if(!token){document.getElementById('main').innerHTML='<div class="error-box">URLが正しくありません。</div>';return;}
@@ -252,9 +287,29 @@ async function init(){
     var r2=await sbFetch('support_orgs?id=eq.'+encodeURIComponent(orgId)+'&select=name');
     var od=await r2.json();
     orgName=(od&&od.length)?od[0].name:'';
+    // パスワードチェック
+    var rp=await sbFetch('settings?key=eq.'+encodeURIComponent('org_view_pass_'+token)+'&select=value');
+    var pd=await rp.json();
+    var pass=(pd&&pd.length)?pd[0].value:'';
+    if(pass){
+      _correctPass=pass;
+      document.getElementById('passOrgName').textContent=orgName+' 様';
+      document.getElementById('passScreen').style.display='flex';
+      setTimeout(function(){document.getElementById('passInput').focus();},100);
+      return;
+    }
+    // パスワードなしの場合はそのまま読込
     document.getElementById('headerOrg').textContent=orgName+' 様';
     document.title=orgName+' 様 | 案件進捗確認';
+    await loadData();
+  }catch(e){document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+e.message+'</div>';}
+}
+
+async function loadData(){
+  try{
     // 案件取得（受付番号・帰国予定も含む）
+    document.getElementById('headerOrg').textContent=orgName+' 様';
+    document.title=orgName+' 様 | 案件進捗確認';
     var r4=await sbFetch('cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,temp_return&order=expire.asc.nullslast');
     var cases=await r4.json();
     allCases=(cases||[]).map(function(c){return{id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',tempReturn:c.temp_return||''};});
