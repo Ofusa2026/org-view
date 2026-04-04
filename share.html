@@ -21,11 +21,22 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .sb-item.active .sb-badge{background:#6366f1;}
 .sb-divider{height:1px;background:rgba(255,255,255,.08);margin:6px 0;}
 .main{flex:1;padding:12px;overflow:auto;min-width:0;}
+/* 検索バー */
+.search-bar{display:flex;gap:8px;margin-bottom:10px;align-items:center;}
+.search-bar input{flex:1;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;font-family:inherit;}
+.search-bar input:focus{border-color:#6366f1;}
+.search-count{font-size:11px;color:#94a3b8;white-space:nowrap;}
+/* テーブル */
 .tbl-wrap{overflow-x:auto;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);background:white;}
-table{border-collapse:collapse;width:100%;min-width:600px;}
+table{border-collapse:collapse;width:100%;min-width:700px;}
 thead tr{background:#0f2040;color:white;position:sticky;top:0;z-index:10;}
-th{padding:8px 10px;font-size:10px;font-weight:700;letter-spacing:.3px;white-space:nowrap;text-align:left;}
-td{padding:7px 10px;font-size:11px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+th{padding:8px 10px;font-size:10px;font-weight:700;letter-spacing:.3px;white-space:nowrap;text-align:left;cursor:pointer;user-select:none;}
+th:hover{background:#1e3a5f;}
+th .sort-icon{margin-left:4px;opacity:.5;font-size:9px;}
+th.sort-asc .sort-icon::after{content:'▲';}
+th.sort-desc .sort-icon::after{content:'▼';}
+th:not(.sort-asc):not(.sort-desc) .sort-icon::after{content:'⇅';}
+td{padding:7px 10px;font-size:11px;border-bottom:1px solid #f1f5f9;vertical-align:top;}
 tr:last-child td{border-bottom:none;}
 tbody tr:hover td{background:#f8faff;}
 .st-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:12px;border:1px solid;display:inline-block;white-space:nowrap;}
@@ -34,7 +45,13 @@ tbody tr:hover td{background:#f8faff;}
 .type-koshin{background:#eff6ff;color:#2563eb;}
 .type-henkou{background:#fff7ed;color:#ea580c;}
 .type-other{background:#f1f5f9;color:#64748b;}
-.prog-memo{font-size:11px;color:#475569;background:#f8fafc;border-radius:6px;padding:6px 8px;border-left:3px solid #c7d2fe;line-height:1.5;white-space:pre-wrap;max-width:300px;}
+.prog-memo{font-size:11px;color:#475569;background:#f8fafc;border-radius:6px;padding:6px 8px;border-left:3px solid #c7d2fe;line-height:1.5;white-space:pre-wrap;}
+/* コメント欄 */
+.org-comment-area{width:100%;min-width:160px;max-width:220px;border:1.5px solid #e2e8f0;border-radius:6px;padding:5px 7px;font-size:11px;font-family:inherit;resize:vertical;min-height:52px;line-height:1.5;outline:none;color:#334155;}
+.org-comment-area:focus{border-color:#6366f1;}
+.save-btn{font-size:10px;padding:3px 10px;background:#6366f1;color:white;border:none;border-radius:5px;cursor:pointer;margin-top:4px;font-weight:700;}
+.save-btn:hover{background:#4f46e5;}
+.save-btn.saved{background:#16a34a;}
 .empty{text-align:center;padding:60px;color:#94a3b8;font-size:13px;}
 .loading{text-align:center;padding:60px;color:#64748b;}
 .error-box{background:#fee2e2;color:#dc2626;border-radius:8px;padding:16px;margin:16px;font-size:13px;}
@@ -62,7 +79,7 @@ tbody tr:hover td{background:#f8faff;}
 <script>
 var SUPABASE_URL='https://ehwlgbwpycglmopiqyty.supabase.co';
 var SUPABASE_KEY='sb_publishable_3ptyILIpGIcNA5sUBhFMbA_n0VxpY2u';
-function sb(p){return fetch(SUPABASE_URL+'/rest/v1/'+p,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});}
+function sbFetch(p,opts){return fetch(SUPABASE_URL+'/rest/v1/'+p,Object.assign({headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'}},opts||{}));}
 function getParam(k){return new URLSearchParams(location.search).get(k);}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
@@ -72,14 +89,33 @@ var ST_BOR={'未着手':'#e2e8f0','★ヒアリングフォーム送付':'#c4b5f
 
 var DONE_ST=['完了','審査完了'];
 var GROUPS=[{id:'active',label:'進行中'},{id:'done',label:'完了・許可済'},{id:'all',label:'すべて'}];
-var allCases=[]; var caseNotes={}; var currentGroup='active';
+var allCases=[],caseNotes={},orgComments={},currentGroup='active',searchQuery='',sortCol='expire',sortDir='asc',currentToken='',orgName='';
 
 function classify(c){return DONE_ST.indexOf(c.status)>=0?'done':'active';}
-function groupCases(gid){if(gid==='all')return allCases;return allCases.filter(function(c){return classify(c)===gid;});}
+function groupCases(gid){
+  var base=gid==='all'?allCases:allCases.filter(function(c){return classify(c)===gid;});
+  if(searchQuery){
+    var q=searchQuery.toLowerCase();
+    base=base.filter(function(c){
+      return (c.name||'').toLowerCase().includes(q)||(c.applicant||'').toLowerCase().includes(q)||
+             (c.company||'').toLowerCase().includes(q)||(c.status||'').toLowerCase().includes(q)||
+             (c.receiptNo||'').toLowerCase().includes(q)||(c.staff||'').toLowerCase().includes(q);
+    });
+  }
+  // ソート
+  base=base.slice().sort(function(a,b){
+    var av=a[sortCol]||'',bv=b[sortCol]||'';
+    if(!av&&!bv)return 0; if(!av)return 1; if(!bv)return -1;
+    var r=av<bv?-1:av>bv?1:0;
+    return sortDir==='asc'?r:-r;
+  });
+  return base;
+}
 
 function buildRow(c){
   var note=caseNotes[c.id]||{};
   var memo=note.progressMemo||'';
+  var comment=orgComments[c.id]||'';
   var today=new Date();today.setHours(0,0,0,0);
   var exp=new Date(c.expire);exp.setHours(0,0,0,0);
   var days=c.expire?Math.ceil((exp-today)/86400000):null;
@@ -105,24 +141,32 @@ function buildRow(c){
   var teamShort=(c.team||'').replace(/チーム$/,'').replace(/\s*チーム/,'');
   var staffShort=(c.staff||'').split(/[\s\u3000]/)[0];
   var displayName=c.name||c.applicant||'（未設定）';
+  // 帰国予定色
+  var retStyle='';
+  if(c.tempReturn){var rd=new Date(c.tempReturn);rd.setHours(0,0,0,0);var rdays=Math.ceil((rd-today)/86400000);if(rdays<=0)retStyle='color:#16a34a;font-weight:700;';else if(rdays<=10)retStyle='color:#ea580c;font-weight:700;';}
+
+  var cid=esc(c.id);
   var h='<tr>';
-  h+='<td style="min-width:160px;max-width:200px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px;" title="'+esc(displayName)+'">'+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px;">'+esc(c.applicant||'')+'</div></td>';
-  h+='<td style="min-width:100px;max-width:130px;"><div style="font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:125px;" title="'+esc(c.company)+'">'+esc(c.company||'—')+'</div></td>';
-  h+='<td style="width:50px;">'+typeHtml+'</td>';
-  h+='<td style="width:70px;">'+(teamShort?'<div style="font-size:10px;font-weight:600;">'+esc(teamShort)+'</div>':'')+(staffShort?'<div style="font-size:10px;color:#6b7280;">'+esc(staffShort)+'</div>':'')+'</td>';
+  h+='<td style="min-width:150px;max-width:190px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;" title="'+esc(displayName)+'">'+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div></td>';
+  h+='<td style="min-width:90px;max-width:120px;"><div style="font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:115px;">'+esc(c.company||'—')+'</div></td>';
+  h+='<td style="width:48px;">'+typeHtml+'</td>';
+  h+='<td style="width:65px;">'+(teamShort?'<div style="font-size:10px;font-weight:600;">'+esc(teamShort)+'</div>':'')+(staffShort?'<div style="font-size:10px;color:#6b7280;">'+esc(staffShort)+'</div>':'')+'</td>';
   h+='<td style="white-space:nowrap;">'+stHtml+'</td>';
-  h+='<td style="'+expStyle+'font-size:10px;white-space:nowrap;min-width:90px;">';
-  if(isShinsa){
-    h+='<div style="font-size:9px;color:#9ca3af;">'+(c.expire||'—')+'</div>';
-    h+='<div style="font-size:10px;font-weight:700;">特例 '+tokStr+'</div>';
-  }else{
-    h+='<div>'+(c.expire||'—')+'</div>';
-    h+='<div style="color:#9ca3af;font-size:9px;">特例 '+tokStr+'</div>';
-    if(days!==null&&days<=14&&days>0)h+='<div style="color:#ea580c;font-size:9px;">あと'+days+'日</div>';
-    else if(days!==null&&days<=0&&c.expire)h+='<div style="color:#dc2626;font-size:9px;">期限切れ</div>';
-  }
+  h+='<td style="'+expStyle+'font-size:10px;white-space:nowrap;min-width:88px;">';
+  if(isShinsa){h+='<div style="font-size:9px;color:#9ca3af;">'+(c.expire||'—')+'</div><div style="font-size:10px;font-weight:700;">特例 '+tokStr+'</div>';}
+  else{h+='<div>'+(c.expire||'—')+'</div><div style="color:#9ca3af;font-size:9px;">特例 '+tokStr+'</div>';if(days!==null&&days<=14&&days>0)h+='<div style="color:#ea580c;font-size:9px;">あと'+days+'日</div>';else if(days!==null&&days<=0&&c.expire)h+='<div style="color:#dc2626;font-size:9px;">期限切れ</div>';}
   h+='</td>';
-  h+='<td style="max-width:300px;">'+(memo?'<div class="prog-memo">'+esc(memo)+'</div>':'<span style="color:#d1d5db;">—</span>')+'</td>';
+  // 受付番号
+  h+='<td style="font-size:10px;white-space:nowrap;">'+(c.receiptNo?'<span style="color:#2563eb;font-weight:700;">'+esc(c.receiptNo)+'</span>':'<span style="color:#d1d5db;">—</span>')+'</td>';
+  // 帰国予定
+  h+='<td style="font-size:10px;white-space:nowrap;'+retStyle+'">'+(c.tempReturn||'<span style="color:#d1d5db;">—</span>')+'</td>';
+  // 進捗コメント
+  h+='<td style="max-width:240px;">'+(memo?'<div class="prog-memo">'+esc(memo)+'</div>':'<span style="color:#d1d5db;">—</span>')+'</td>';
+  // 登録支援機関コメント
+  h+='<td style="min-width:180px;">';
+  h+='<textarea class="org-comment-area" id="cmt_'+cid+'" placeholder="コメントを入力...">'+esc(comment)+'</textarea>';
+  h+='<div><button class="save-btn" id="savebtn_'+cid+'" onclick="saveComment(\''+cid+'\')">保存</button></div>';
+  h+='</td>';
   h+='</tr>';
   return h;
 }
@@ -138,12 +182,41 @@ function renderSidebar(){
   document.getElementById('sidebar').innerHTML=h;
 }
 
+var COLS=[
+  {key:'name',label:'案件名 / 申請者'},
+  {key:'company',label:'所属機関'},
+  {key:'appType',label:'種別'},
+  {key:'staff',label:'担当'},
+  {key:'status',label:'ステータス'},
+  {key:'expire',label:'在留期限 / 特例'},
+  {key:'receiptNo',label:'受付番号'},
+  {key:'tempReturn',label:'帰国予定'},
+  {key:'progressMemo',label:'進捗コメント'},
+  {key:'_comment',label:'支援機関コメント',noSort:true}
+];
+
+function thHtml(col){
+  if(col.noSort)return '<th>'+col.label+'</th>';
+  var cls=sortCol===col.key?(sortDir==='asc'?'sort-asc':'sort-desc'):'';
+  return '<th class="'+cls+'" onclick="toggleSort(\''+col.key+'\')">'+col.label+' <span class="sort-icon"></span></th>';
+}
+
+function toggleSort(key){
+  if(sortCol===key){sortDir=sortDir==='asc'?'desc':'asc';}else{sortCol=key;sortDir='asc';}
+  renderMain();
+}
+
 function renderMain(){
   var cases=groupCases(currentGroup);
-  var h='';
-  if(!cases.length){h='<div class="empty">該当する案件はありません</div>';}
+  var h='<div class="search-bar">';
+  h+='<input type="text" placeholder="🔍 案件名・申請者・会社・ステータスで検索..." value="'+esc(searchQuery)+'" oninput="searchQuery=this.value;renderSidebar();renderMain()" style="max-width:400px;">';
+  h+='<span class="search-count">'+cases.length+'件</span>';
+  h+='</div>';
+  if(!cases.length){h+='<div class="empty">該当する案件はありません</div>';}
   else{
-    h='<div class="tbl-wrap"><table><thead><tr><th>案件名 / 申請者</th><th>所属機関</th><th>種別</th><th>担当</th><th>ステータス</th><th>在留期限 / 特例</th><th>進捗コメント</th></tr></thead><tbody>';
+    h+='<div class="tbl-wrap"><table><thead><tr>';
+    COLS.forEach(function(c){h+=thHtml(c);});
+    h+='</tr></thead><tbody>';
     cases.forEach(function(c){h+=buildRow(c);});
     h+='</tbody></table></div>';
   }
@@ -152,27 +225,50 @@ function renderMain(){
 
 function switchGroup(gid){currentGroup=gid;renderSidebar();renderMain();}
 
+async function saveComment(caseId){
+  var ta=document.getElementById('cmt_'+caseId);
+  var btn=document.getElementById('savebtn_'+caseId);
+  if(!ta||!btn)return;
+  var val=ta.value.trim();
+  orgComments[caseId]=val;
+  var key='org_comment_'+currentToken+'_'+caseId;
+  btn.textContent='保存中...';btn.disabled=true;
+  try{
+    await sbFetch('settings',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:val})});
+    btn.textContent='✓保存済';btn.className='save-btn saved';
+    setTimeout(function(){btn.textContent='保存';btn.className='save-btn';btn.disabled=false;},2000);
+  }catch(e){btn.textContent='保存';btn.disabled=false;alert('保存失敗: '+e.message);}
+}
+
 async function init(){
   var token=getParam('token');
-  if(!token){document.getElementById('main').innerHTML='<div class="error-box">URLが正しくありません。担当者にお問い合わせください。</div>';return;}
+  if(!token){document.getElementById('main').innerHTML='<div class="error-box">URLが正しくありません。</div>';return;}
+  currentToken=token;
   try{
-    var r=await sb('settings?key=eq.'+encodeURIComponent('org_view_token_'+token)+'&select=value');
+    var r=await sbFetch('settings?key=eq.'+encodeURIComponent('org_view_token_'+token)+'&select=value');
     var sd=await r.json();
     if(!sd||!sd.length){document.getElementById('main').innerHTML='<div class="error-box">このURLは無効です。担当者にお問い合わせください。</div>';return;}
     var orgId=sd[0].value;
-    var r2=await sb('support_orgs?id=eq.'+encodeURIComponent(orgId)+'&select=name');
+    var r2=await sbFetch('support_orgs?id=eq.'+encodeURIComponent(orgId)+'&select=name');
     var od=await r2.json();
-    var orgName=(od&&od.length)?od[0].name:'';
-    document.getElementById('headerOrg').textContent=orgName;
-    document.title=orgName+' | 案件進捗確認';
-    var r4=await sb('cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type&order=expire.asc.nullslast');
+    orgName=(od&&od.length)?od[0].name:'';
+    document.getElementById('headerOrg').textContent=orgName+' 様';
+    document.title=orgName+' 様 | 案件進捗確認';
+    // 案件取得（受付番号・帰国予定も含む）
+    var r4=await sbFetch('cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,temp_return&order=expire.asc.nullslast');
     var cases=await r4.json();
-    allCases=(cases||[]).map(function(c){return{id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||''};});
+    allCases=(cases||[]).map(function(c){return{id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',tempReturn:c.temp_return||''};});
+    // 進捗コメント
     if(allCases.length){
       var ids=allCases.map(function(c){return c.id;});
-      var r5=await sb('case_notes?case_id=in.('+ids.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=case_id,note');
+      var r5=await sbFetch('case_notes?case_id=in.('+ids.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=case_id,note');
       var notes=await r5.json();
       (notes||[]).forEach(function(n){var note=n.note;if(typeof note==='string'){try{note=JSON.parse(note);}catch(e){note={progressMemo:note};}}caseNotes[n.case_id]=note||{};});
+      // 支援機関コメント取得
+      var cmtKeys=ids.map(function(id){return 'org_comment_'+token+'_'+id;});
+      var r6=await sbFetch('settings?key=in.('+cmtKeys.map(function(k){return '"'+k+'"';}).join(',')+')'+'&select=key,value');
+      var cmts=await r6.json();
+      (cmts||[]).forEach(function(row){var cid=row.key.replace('org_comment_'+token+'_','');orgComments[cid]=row.value||'';});
     }
     renderSidebar();renderMain();
   }catch(e){document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+e.message+'</div>';}
