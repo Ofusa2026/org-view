@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>案件進捗確認 | OFUSA</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;}
+  .header{background:#0f2040;color:white;padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;}
+  .header-logo{font-size:11px;opacity:.6;letter-spacing:.5px;}
+  .header-title{font-size:16px;font-weight:800;}
+  .header-org{font-size:12px;opacity:.7;margin-left:auto;}
+  .layout{display:flex;min-height:calc(100vh - 52px);}
+  /* サイドバー */
+  .sidebar{width:200px;background:#1e293b;flex-shrink:0;padding:12px 0;position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto;}
+  .sidebar-item{padding:10px 16px;cursor:pointer;font-size:12px;font-weight:600;color:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:space-between;gap:8px;transition:.15s;border-left:3px solid transparent;}
+  .sidebar-item:hover{background:rgba(255,255,255,.07);color:white;}
+  .sidebar-item.active{background:rgba(99,102,241,.2);color:#a5b4fc;border-left-color:#6366f1;}
+  .sidebar-badge{background:rgba(255,255,255,.15);color:white;font-size:10px;padding:1px 7px;border-radius:9999px;font-weight:700;min-width:20px;text-align:center;}
+  .sidebar-item.active .sidebar-badge{background:#6366f1;}
+  .sidebar-divider{height:1px;background:rgba(255,255,255,.08);margin:8px 0;}
+  /* メインエリア */
+  .main{flex:1;padding:16px;min-width:0;}
+  .section-title{font-size:14px;font-weight:800;color:#0f2040;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #e2e8f0;}
+  /* カード */
+  .case-card{background:white;border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);border-left:4px solid #e2e8f0;transition:.15s;}
+  .case-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.1);}
+  .case-name{font-size:15px;font-weight:800;color:#0f2040;margin-bottom:4px;}
+  .case-company{font-size:12px;color:#64748b;margin-bottom:8px;}
+  .case-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+  .badge{font-size:10px;padding:2px 8px;border-radius:9999px;font-weight:700;white-space:nowrap;}
+  .badge-status{background:#eff6ff;color:#2563eb;}
+  .badge-expire{background:#fef3c7;color:#92400e;}
+  .badge-tokurei{background:#fce7f3;color:#be185d;}
+  .badge-staff{background:#f0fdf4;color:#15803d;}
+  .progress-memo{font-size:12px;color:#475569;background:#f8fafc;border-radius:6px;padding:8px 10px;border-left:3px solid #c7d2fe;line-height:1.6;white-space:pre-wrap;}
+  .empty{text-align:center;padding:60px 20px;color:#94a3b8;font-size:14px;}
+  .loading{text-align:center;padding:60px;color:#64748b;font-size:14px;}
+  .error-box{background:#fee2e2;color:#dc2626;border-radius:8px;padding:16px;margin:20px;font-size:13px;}
+  /* スマホ */
+  @media(max-width:640px){
+    .sidebar{width:160px;}
+    .case-name{font-size:13px;}
+  }
+  @media(max-width:480px){
+    .layout{flex-direction:column;}
+    .sidebar{width:100%;height:auto;position:static;display:flex;overflow-x:auto;padding:0;}
+    .sidebar-item{flex-direction:column;gap:2px;padding:8px 12px;font-size:11px;border-left:none;border-bottom:3px solid transparent;white-space:nowrap;}
+    .sidebar-item.active{border-bottom-color:#6366f1;border-left:none;}
+    .sidebar-divider{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-logo">OFUSA 大房行政書士法人</div>
+    <div class="header-title">📋 案件進捗確認</div>
+  </div>
+  <div class="header-org" id="headerOrg">読み込み中...</div>
+</div>
+
+<div class="layout">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="main" id="main"><div class="loading">⏳ 読み込み中...</div></div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://ehwlgbwpycglmopiqyty.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_3ptyILIpGIcNA5sUBhFMbA_n0VxpY2u';
+
+function sb(path, opts) {
+  return fetch(SUPABASE_URL + '/rest/v1/' + path, Object.assign({
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json'
+    }
+  }, opts || {}));
+}
+
+function getParam(k) {
+  return new URLSearchParams(location.search).get(k);
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtDate(s) {
+  if (!s) return '';
+  var d = new Date(s);
+  if (isNaN(d)) return s;
+  return (d.getMonth()+1) + '/' + d.getDate();
+}
+
+function daysUntil(s) {
+  if (!s) return null;
+  var d = new Date(s);
+  if (isNaN(d)) return null;
+  return Math.ceil((d - Date.now()) / 86400000);
+}
+
+// ステータス分類
+var GROUPS = [
+  { id:'active',   label:'進行中',   color:'#6366f1', statuses: null, exclude: ['審査完了','★郵送交付','★窓口受取','窓口受取（本人）','許可済 受取方法調整中'] },
+  { id:'done',     label:'完了・許可済', color:'#16a34a', statuses: ['審査完了','★郵送交付','★窓口受取','窓口受取（本人）','許可済 受取方法調整中'] },
+  { id:'all',      label:'すべて',   color:'#64748b', statuses: null, exclude: null }
+];
+
+var allCases = [];
+var caseNotes = {};
+var currentGroup = 'active';
+
+function classify(c) {
+  var s = c.status || '';
+  var doneStatuses = GROUPS.find(function(g){return g.id==='done';}).statuses;
+  if (doneStatuses.indexOf(s) >= 0) return 'done';
+  return 'active';
+}
+
+function groupCases(groupId) {
+  if (groupId === 'all') return allCases;
+  return allCases.filter(function(c){ return classify(c) === groupId; });
+}
+
+function statusColor(s) {
+  if (!s) return '#e2e8f0';
+  if (/審査中|申請中/.test(s)) return '#bfdbfe';
+  if (/追完|不足/.test(s)) return '#fde68a';
+  if (/完了|許可|受取/.test(s)) return '#bbf7d0';
+  if (/準備/.test(s)) return '#e9d5ff';
+  return '#e2e8f0';
+}
+
+function renderSidebar() {
+  var h = '';
+  GROUPS.forEach(function(g) {
+    var count = groupCases(g.id).length;
+    h += '<div class="sidebar-item' + (currentGroup===g.id?' active':'') + '" onclick="switchGroup(\'' + g.id + '\')">';
+    h += '<span>' + g.label + '</span>';
+    h += '<span class="sidebar-badge">' + count + '</span>';
+    h += '</div>';
+    if (g.id === 'done') h += '<div class="sidebar-divider"></div>';
+  });
+  document.getElementById('sidebar').innerHTML = h;
+}
+
+function renderMain() {
+  var cases = groupCases(currentGroup);
+  var g = GROUPS.find(function(x){return x.id===currentGroup;});
+  var h = '<div class="section-title">' + g.label + '　<span style="font-size:12px;font-weight:400;color:#94a3b8;">' + cases.length + '件</span></div>';
+  if (!cases.length) {
+    h += '<div class="empty">該当する案件はありません</div>';
+  } else {
+    cases.forEach(function(c) {
+      var note = caseNotes[c.id] || {};
+      var memo = note.progressMemo || '';
+      var days = daysUntil(c.expire);
+      var expireStr = c.expire ? fmtDate(c.expire) + (days !== null ? '（' + (days >= 0 ? days + '日後' : Math.abs(days) + '日超過') + '）' : '') : '';
+      var tokureiStr = c.tokureiDate ? fmtDate(c.tokureiDate) : '';
+      var borderColor = statusColor(c.status);
+
+      h += '<div class="case-card" style="border-left-color:' + borderColor + ';">';
+      h += '<div class="case-name">' + esc(c.applicant || c.name || '（氏名未設定）') + '</div>';
+      if (c.company) h += '<div class="case-company">🏢 ' + esc(c.company) + '</div>';
+      h += '<div class="case-meta">';
+      if (c.status) h += '<span class="badge badge-status">' + esc(c.status) + '</span>';
+      if (expireStr) h += '<span class="badge badge-expire">📅 在留期限 ' + esc(expireStr) + '</span>';
+      if (tokureiStr) h += '<span class="badge badge-tokurei">⏰ 特例 ' + esc(tokureiStr) + '</span>';
+      if (c.staff) h += '<span class="badge badge-staff">👤 ' + esc(c.staff) + '</span>';
+      h += '</div>';
+      if (memo) h += '<div class="progress-memo">' + esc(memo) + '</div>';
+      h += '</div>';
+    });
+  }
+  document.getElementById('main').innerHTML = h;
+}
+
+function switchGroup(groupId) {
+  currentGroup = groupId;
+  renderSidebar();
+  renderMain();
+}
+
+async function init() {
+  var token = getParam('token');
+  if (!token) {
+    document.getElementById('main').innerHTML = '<div class="error-box">URLが正しくありません。担当者にお問い合わせください。</div>';
+    return;
+  }
+
+  try {
+    // トークンからorgIdを取得
+    var r = await sb('settings?key=eq.' + encodeURIComponent('org_view_token_' + token) + '&select=value');
+    var sd = await r.json();
+    if (!sd || !sd.length) {
+      document.getElementById('main').innerHTML = '<div class="error-box">このURLは無効です。担当者にお問い合わせください。</div>';
+      return;
+    }
+    var orgId = sd[0].value;
+
+    // 登録支援機関名を取得
+    var r2 = await sb('support_orgs?id=eq.' + encodeURIComponent(orgId) + '&select=name');
+    var od = await r2.json();
+    var orgName = (od && od.length) ? od[0].name : '';
+    document.getElementById('headerOrg').textContent = orgName;
+    document.title = orgName + ' | 案件進捗確認';
+
+    // casesテーブルのorgフィールドで直接照合
+    var r4 = await sb('cases?org=eq.' + encodeURIComponent(orgName) + '&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type&order=expire.asc.nullslast');
+    var cases = await r4.json();
+
+    allCases = (cases || []).map(function(c){
+      return {
+        id: c.id,
+        applicant: c.applicant || '',
+        name: c.name || '',
+        company: c.company || '',
+        status: c.status || '',
+        expire: c.expire || '',
+        tokureiDate: c.tokurei_date || '',
+        staff: c.staff || '',
+        team: c.team || '',
+        appType: c.app_type || ''
+      };
+    });
+
+    // 進捗コメント取得
+    if (allCases.length) {
+      var ids = allCases.map(function(c){return c.id;});
+      var r5 = await sb('case_notes?case_id=in.(' + ids.map(function(id){return '"'+id+'"';}).join(',') + ')&select=case_id,note');
+      var notes = await r5.json();
+      (notes || []).forEach(function(n){
+        var note = n.note;
+        if (typeof note === 'string') { try { note = JSON.parse(note); } catch(e) { note = {progressMemo: note}; } }
+        caseNotes[n.case_id] = note || {};
+      });
+    }
+
+    renderSidebar();
+    renderMain();
+
+  } catch(e) {
+    document.getElementById('main').innerHTML = '<div class="error-box">読み込みエラー: ' + e.message + '</div>';
+  }
+}
+
+init();
+</script>
+</body>
+</html>
