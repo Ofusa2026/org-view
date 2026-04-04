@@ -320,10 +320,10 @@ async function loadData(){
       var notes=await r5.json();
       (notes||[]).forEach(function(n){var note=n.note;if(typeof note==='string'){try{note=JSON.parse(note);}catch(e){note={progressMemo:note};}}caseNotes[n.case_id]=note||{};});
       // 支援機関コメント取得
-      var cmtKeys=ids.map(function(id){return 'org_comment_'+token+'_'+id;});
+      var cmtKeys=ids.map(function(id){return 'org_comment_'+currentToken+'_'+id;});
       var r6=await sbFetch('settings?key=in.('+cmtKeys.map(function(k){return '"'+k+'"';}).join(',')+')'+'&select=key,value');
       var cmts=await r6.json();
-      (cmts||[]).forEach(function(row){var cid=row.key.replace('org_comment_'+token+'_','');orgComments[cid]=row.value||'';});
+      (cmts||[]).forEach(function(row){var cid=row.key.replace('org_comment_'+currentToken+'_','');orgComments[cid]=row.value||'';});
     }
     renderSidebar();renderMain();
   }catch(e){document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+e.message+'</div>';}
