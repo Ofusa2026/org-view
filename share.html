@@ -73,6 +73,19 @@ tbody tr:hover td{background:#f8faff;}
   .sb-item.active{border-bottom-color:#6366f1;border-left:none;}
   .sb-divider{display:none;}
 }
+/* カンバン */
+.view-toggle{display:flex;gap:6px;margin-bottom:10px;}
+.view-btn{padding:5px 14px;font-size:11px;font-weight:700;border:1.5px solid #e2e8f0;border-radius:7px;cursor:pointer;background:white;color:#64748b;}
+.view-btn.active{background:#2563eb;color:white;border-color:#2563eb;}
+.kanban-wrap{display:flex;gap:12px;overflow-x:auto;align-items:flex-start;padding-bottom:12px;}
+.kanban-col{flex-shrink:0;width:220px;background:#f8fafc;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;}
+.kanban-col-head{padding:8px 12px;font-size:11px;font-weight:800;color:white;display:flex;align-items:center;justify-content:space-between;}
+.kanban-col-body{padding:8px;display:flex;flex-direction:column;gap:6px;min-height:60px;}
+.kanban-card{background:white;border-radius:8px;padding:10px 12px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.kanban-card-name{font-size:12px;font-weight:700;color:#0f2040;margin-bottom:3px;}
+.kanban-card-sub{font-size:10px;color:#64748b;margin-bottom:5px;}
+.kanban-card-meta{display:flex;flex-wrap:wrap;gap:4px;}
+.kanban-badge{font-size:9px;padding:1px 6px;border-radius:99px;font-weight:700;}
 </style>
 </head>
 <body>
@@ -263,6 +276,44 @@ function renderMain(){
     h+='</tbody></table></div>';
   }
   document.getElementById('main').innerHTML=h;
+}
+
+function renderKanban(cases){
+  var h='<div class="search-bar">';
+  h+='<input type="text" placeholder="🔍 検索..." value="'+esc(searchQuery)+'" oninput="searchQuery=this.value;renderSidebar();renderMain()" style="max-width:300px;">';
+  h+='<span class="search-count">'+cases.length+'件</span>';
+  h+='</div>';
+  h+='<div class="kanban-wrap">';
+  STATUS_COLS.forEach(function(col){
+    var colCases=cases.filter(function(c){return col.statuses.indexOf(c.status)>=0;});
+    h+='<div class="kanban-col">';
+    h+='<div class="kanban-col-head" style="background:'+col.color+';">';
+    h+=esc(col.label);
+    h+='<span style="background:rgba(255,255,255,.25);padding:1px 8px;border-radius:99px;font-size:10px;">'+colCases.length+'</span>';
+    h+='</div>';
+    h+='<div class="kanban-col-body">';
+    if(!colCases.length){h+='<div style="font-size:11px;color:#cbd5e1;text-align:center;padding:12px 0;">—</div>';}
+    colCases.forEach(function(c){
+      var note=caseNotes[c.id]||{};
+      var today=new Date();today.setHours(0,0,0,0);
+      var days=c.expire?Math.ceil((new Date(c.expire)-today)/86400000):null;
+      var expColor=days===null?'#94a3b8':days<=0?'#dc2626':days<=14?'#ea580c':days<=30?'#d97706':'#64748b';
+      var stBg=ST_BG[c.status]||'#f8fafc',stCol=ST_COL[c.status]||'#64748b';
+      h+='<div class="kanban-card" style="border-left:3px solid '+col.color+';">';
+      h+='<div class="kanban-card-name">'+esc(c.name||c.applicant||'（未設定）')+'</div>';
+      if(c.applicant&&c.name)h+='<div class="kanban-card-sub">'+esc(c.applicant)+'</div>';
+      h+='<div class="kanban-card-sub">'+esc(c.company||'')+'</div>';
+      h+='<div class="kanban-card-meta">';
+      if(c.status)h+='<span class="kanban-badge" style="background:'+stBg+';color:'+stCol+';">'+esc(c.status)+'</span>';
+      if(c.expire)h+='<span class="kanban-badge" style="background:#f8fafc;color:'+expColor+';">📅'+c.expire+(days!==null&&days<=30?' (あと'+days+'日)':'')+'</span>';
+      if(c.staff)h+='<span class="kanban-badge" style="background:#f0fdf4;color:#16a34a;">'+esc((c.staff||'').split(/[\s　]/)[0])+'</span>';
+      if(note.progressMemo)h+='<div style="font-size:10px;color:#64748b;margin-top:4px;padding-top:4px;border-top:1px solid #f1f5f9;line-height:1.4;white-space:pre-wrap;max-height:60px;overflow:hidden;">'+esc(note.progressMemo)+'</div>';
+      h+='</div></div>';
+    });
+    h+='</div></div>';
+  });
+  h+='</div>';
+  return h;
 }
 
 function switchGroup(gid){currentGroup=gid;renderSidebar();renderMain();}
