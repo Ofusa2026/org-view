@@ -39,7 +39,7 @@ th:not(.sort-asc):not(.sort-desc) .sort-icon::after{content:'⇅';}
 td{padding:7px 10px;font-size:11px;border-bottom:1px solid #f1f5f9;vertical-align:top;}
 tr:last-child td{border-bottom:none;}
 tbody tr:hover td{background:#f8faff;}
-.st-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:12px;border:1px solid;display:inline-block;white-space:nowrap;}
+.st-badge{font-size:9px;font-weight:600;padding:1px 5px;border-radius:10px;border:1px solid;display:inline-block;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;}
 .type-badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;display:inline-block;}
 .type-nintei{background:#ede9fe;color:#7c3aed;}
 .type-koshin{background:#eff6ff;color:#2563eb;}
@@ -111,7 +111,7 @@ var ST_BOR={'未着手':'#e2e8f0','★ヒアリングフォーム送付':'#c4b5f
 
 var DONE_ST=['完了','審査完了'];
 var GROUPS=[{id:'active',label:'進行中'},{id:'done',label:'完了・許可済'},{id:'all',label:'すべて'}];
-var allCases=[],caseNotes={},orgComments={},currentGroup='active',searchQuery='',sortCol='expire',sortDir='asc',currentToken='',orgName='';
+var allCases=[],caseNotes={},orgComments={},currentGroup='active',searchQuery='',filterStatus='',filterCompany='',sortCol='expire',sortDir='asc',currentToken='',orgName='';
 
 function classify(c){return DONE_ST.indexOf(c.status)>=0?'done':'active';}
 function groupCases(gid){
@@ -124,6 +124,8 @@ function groupCases(gid){
              (c.receiptNo||'').toLowerCase().includes(q)||(c.staff||'').toLowerCase().includes(q);
     });
   }
+  if(filterStatus) base=base.filter(function(c){return c.status===filterStatus;});
+  if(filterCompany) base=base.filter(function(c){return c.company===filterCompany;});
   // ソート
   base=base.slice().sort(function(a,b){
     var av=a[sortCol]||'',bv=b[sortCol]||'';
@@ -230,9 +232,27 @@ function toggleSort(key){
 
 function renderMain(){
   var cases=groupCases(currentGroup);
-  var h='<div class="search-bar">';
-  h+='<input type="text" placeholder="🔍 案件名・申請者・会社・ステータスで検索..." value="'+esc(searchQuery)+'" oninput="searchQuery=this.value;renderSidebar();renderMain()" style="max-width:400px;">';
-  h+='<span class="search-count">'+cases.length+'件</span>';
+  // フィルター用ユニーク値
+  var baseAll=currentGroup==='all'?allCases:allCases.filter(function(c){return classify(c)===currentGroup;});
+  var statuses=[...new Set(baseAll.map(function(c){return c.status||'';}).filter(Boolean))].sort();
+  var companies=[...new Set(baseAll.map(function(c){return c.company||'';}).filter(Boolean))].sort();
+
+  var h='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center;">';
+  // テキスト検索
+  h+='<input type="text" placeholder="🔍 フリーワード検索..." value="'+esc(searchQuery)+'" oninput="searchQuery=this.value;renderSidebar();renderMain()" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;font-family:inherit;min-width:200px;flex:1;">';
+  // ステータスフィルター
+  h+='<select onchange="filterStatus=this.value;renderSidebar();renderMain()" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;background:white;cursor:pointer;">';
+  h+='<option value="">ステータス（全て）</option>';
+  statuses.forEach(function(s){h+='<option value="'+esc(s)+'"'+(filterStatus===s?' selected':'')+'>'+esc(s)+'</option>';});
+  h+='</select>';
+  // 企業フィルター
+  h+='<select onchange="filterCompany=this.value;renderSidebar();renderMain()" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;background:white;cursor:pointer;">';
+  h+='<option value="">所属機関（全て）</option>';
+  companies.forEach(function(c){h+='<option value="'+esc(c)+'"'+(filterCompany===c?' selected':'')+'>'+esc(c)+'</option>';});
+  h+='</select>';
+  // クリアボタン
+  if(searchQuery||filterStatus||filterCompany) h+='<button onclick="searchQuery=\'\';filterStatus=\'\';filterCompany=\'\';renderSidebar();renderMain()" style="padding:7px 12px;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap;">✕ クリア</button>';
+  h+='<span style="font-size:11px;color:#94a3b8;white-space:nowrap;">'+cases.length+'件</span>';
   h+='</div>';
   if(!cases.length){h+='<div class="empty">該当する案件はありません</div>';}
   else{
