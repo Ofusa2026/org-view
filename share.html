@@ -330,8 +330,7 @@ function renderKanban(cases){
     if(!colCases.length) return;
     h+=buildKanbanCol(col.label,col.color,colCases);
   });
-  var otherCases=cases.filter(function(c){return allColStatuses.indexOf(c.status)<0;});
-  if(otherCases.length) h+=buildKanbanCol('その他','#94a3b8',otherCases);
+
   h+='</div>';
   return h;
 }
