@@ -20,6 +20,9 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .sb-badge{background:rgba(255,255,255,.15);color:white;font-size:10px;padding:1px 6px;border-radius:99px;font-weight:700;}
 .sb-item.active .sb-badge{background:#6366f1;}
 .sb-divider{height:1px;background:rgba(255,255,255,.08);margin:6px 0;}
+.main-wrap{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
+.filter-bar{background:white;border-bottom:1px solid #e2e8f0;padding:10px 12px;flex-shrink:0;position:sticky;top:0;z-index:50;}
+.filter-bar-inner{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
 .main{flex:1;padding:12px;overflow:auto;min-width:0;}
 /* 検索バー */
 .search-bar{display:flex;gap:8px;margin-bottom:10px;align-items:center;}
@@ -109,7 +112,10 @@ tbody tr:hover td{background:#f8faff;}
 </div>
 <div class="layout">
   <div class="sidebar" id="sidebar"></div>
-  <div class="main" id="main"><div class="loading">⏳ 読み込み中...</div></div>
+  <div class="main-wrap">
+    <div class="filter-bar" id="filter-bar"></div>
+    <div class="main" id="main"><div class="loading">⏳ 読み込み中...</div></div>
+  </div>
 </div>
 <script>
 var SUPABASE_URL='https://ehwlgbwpycglmopiqyty.supabase.co';
@@ -253,14 +259,12 @@ function toggleSort(key){
 
 function setView(v){currentView=v;renderMain();}
 
-function renderMain(){
-  var cases=groupCases(currentGroup);
-  // フィルター用ユニーク値
+function renderFilterBar(){
   var baseAll=currentGroup==='all'?allCases:allCases.filter(function(c){return classify(c)===currentGroup;});
   var statuses=[...new Set(baseAll.map(function(c){return c.status||'';}).filter(Boolean))].sort();
   var companies=[...new Set(baseAll.map(function(c){return c.company||'';}).filter(Boolean))].sort();
-
-  var h='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center;">';
+  var cases=groupCases(currentGroup);
+  var h='<div class="filter-bar-inner">';
   // テキスト検索
   h+='<input type="text" placeholder="🔍 フリーワード検索..." value="'+esc(searchQuery)+'" id="ms-search-input" autocomplete="off" autocorrect="off" autocapitalize="off" oninput="if(!_imeOn){searchQuery=this.value;renderSidebar();renderMain();}" oncompositionstart="_imeOn=true" oncompositionend="_imeOn=false;searchQuery=this.value;renderSidebar();renderMain();" onchange="searchQuery=this.value;renderSidebar();renderMain();" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;font-family:inherit;min-width:200px;flex:1;">';
   // ステータスフィルター
@@ -276,6 +280,18 @@ function renderMain(){
   // クリアボタン
   if(searchQuery||filterStatus||filterCompany) h+='<button onclick="searchQuery=\'\';filterStatus=\'\';filterCompany=\'\';renderSidebar();renderMain()" style="padding:7px 12px;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap;">✕ クリア</button>';
   h+='<span style="font-size:11px;color:#94a3b8;white-space:nowrap;">'+cases.length+'件</span>';
+  // ビュー切り替えボタン
+  h+='<div style="display:flex;gap:3px;background:#f1f5f9;border-radius:8px;padding:3px;margin-left:auto;">';
+  h+='<button onclick="setView(\'list\')" style="padding:4px 10px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;'+(currentView==='list'?'background:white;color:#0f2040;box-shadow:0 1px 3px rgba(0,0,0,.1);':'background:none;color:#94a3b8;')+'">☰ リスト</button>';
+  h+='<button onclick="setView(\'kanban\')" style="padding:4px 10px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;'+(currentView==='kanban'?'background:white;color:#0f2040;box-shadow:0 1px 3px rgba(0,0,0,.1);':'background:none;color:#94a3b8;')+'">▦ カンバン</button>';
+  h+='</div>';
+  h+='</div>';
+  document.getElementById('filter-bar').innerHTML=h;
+}
+
+function renderMain(){
+  var cases=groupCases(currentGroup);
+  renderFilterBar();
   // ビュー切り替えボタン
   h+='<div style="display:flex;gap:3px;background:#f1f5f9;border-radius:8px;padding:3px;margin-left:auto;">';
   h+='<button onclick="setView(\'list\')" style="padding:4px 10px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;'+(currentView==='list'?'background:white;color:#0f2040;box-shadow:0 1px 3px rgba(0,0,0,.1);':'background:none;color:#94a3b8;')+'"">☰ リスト</button>';
