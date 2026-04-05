@@ -405,14 +405,22 @@ async function loadData(){
     // 進捗コメント
     if(allCases.length){
       var ids=allCases.map(function(c){return c.id;});
-      var r5=await sbFetch('case_notes?case_id=in.('+ids.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=case_id,note');
-      var notes=await r5.json();
-      (notes||[]).forEach(function(n){var note=n.note;if(typeof note==='string'){try{note=JSON.parse(note);}catch(e){note={progressMemo:note};}}caseNotes[n.case_id]=note||{};});
-      // 支援機関コメント取得
+      // 分割取得（URLが長くなりすぎないよう50件ずつ）
+      var CHUNK=50;
+      for(var ci=0;ci<ids.length;ci+=CHUNK){
+        var chunk=ids.slice(ci,ci+CHUNK);
+        var r5=await sbFetch('case_notes?case_id=in.('+chunk.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=case_id,note');
+        var notes=await r5.json();
+        (notes||[]).forEach(function(n){var note=n.note;if(typeof note==='string'){try{note=JSON.parse(note);}catch(e){note={progressMemo:note};}}caseNotes[n.case_id]=note||{};});
+      }
+      // 支援機関コメント取得（分割）
       var cmtKeys=ids.map(function(id){return 'org_comment_'+currentToken+'_'+id;});
-      var r6=await sbFetch('settings?key=in.('+cmtKeys.map(function(k){return '"'+k+'"';}).join(',')+')'+'&select=key,value');
-      var cmts=await r6.json();
-      (cmts||[]).forEach(function(row){var cid=row.key.replace('org_comment_'+currentToken+'_','');orgComments[cid]=row.value||'';});
+      for(var ci2=0;ci2<cmtKeys.length;ci2+=CHUNK){
+        var cmtChunk=cmtKeys.slice(ci2,ci2+CHUNK);
+        var r6=await sbFetch('settings?key=in.('+cmtChunk.map(function(k){return '"'+k+'"';}).join(',')+')'+'&select=key,value');
+        var cmts=await r6.json();
+        if(Array.isArray(cmts)) (cmts||[]).forEach(function(row){var cid=row.key.replace('org_comment_'+currentToken+'_','');orgComments[cid]=row.value||'';});
+      }
     }
     renderSidebar();renderMain();
   }catch(e){document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+e.message+'</div>';}
