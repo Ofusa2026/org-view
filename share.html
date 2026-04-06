@@ -236,12 +236,13 @@ function buildRow(c){
   h+='<td style="font-size:10px;white-space:nowrap;">'+(c.receiptNo?'<span style="color:#2563eb;font-weight:700;">'+esc(c.receiptNo)+'</span>':'<span style="color:#d1d5db;">—</span>')+'</td>';
   // 帰国予定
   h+='<td style="font-size:10px;white-space:nowrap;'+retStyle+'">'+(c.tempReturn||'<span style="color:#d1d5db;">—</span>')+'</td>';
-  // 進捗コメント
-  h+='<td style="max-width:240px;">'+(memo?'<div class="prog-memo">'+esc(memo)+'</div>':'<span style="color:#d1d5db;">—</span>')+'</td>';
-  // 登録支援機関コメント
+  // コメント（登録支援機関向け・index.htmlから入力）
   h+='<td style="min-width:180px;">';
-  h+='<textarea class="org-comment-area" id="cmt_'+cid+'" placeholder="コメントを入力...">'+esc(comment)+'</textarea>';
-  h+='<div><button class="save-btn" id="savebtn_'+cid+'" onclick="saveComment(\''+cid+'\')">保存</button></div>';
+  if(comment){
+    h+='<div style="font-size:11px;color:#374151;white-space:pre-wrap;line-height:1.5;">'+esc(comment)+'</div>';
+  } else {
+    h+='<span style="color:#d1d5db;">—</span>';
+  }
   h+='</td>';
   h+='</tr>';
   return h;
@@ -267,8 +268,7 @@ var COLS=[
   {key:'expire',label:'在留期限 / 特例'},
   {key:'receiptNo',label:'受付番号'},
   {key:'tempReturn',label:'帰国予定'},
-  {key:'progressMemo',label:'コメント'},
-  {key:'_comment',label:'支援機関コメント',noSort:true}
+  {key:'_comment',label:'コメント',noSort:true}
 ];
 
 function thHtml(col){
@@ -351,7 +351,7 @@ function buildKanbanCol(label,color,colCases){
     if(c.status)h+='<span class="kanban-badge" style="background:'+stBg+';color:'+stCol+';">'+esc(c.status)+'</span>';
     if(c.expire)h+='<span class="kanban-badge" style="background:#f8fafc;color:'+expColor+';">📅'+c.expire+(days!==null&&days<=30?' (あと'+days+'日)':'')+'</span>';
     if(c.staff)h+='<span class="kanban-badge" style="background:#f0fdf4;color:#16a34a;">'+esc((c.staff||'').split(/[\s\u3000]/)[0])+'</span>';
-    if(note.progressMemo)h+='<div style="font-size:10px;color:#64748b;margin-top:4px;padding-top:4px;border-top:1px solid #f1f5f9;line-height:1.4;white-space:pre-wrap;max-height:60px;overflow:hidden;">'+esc(note.progressMemo)+'</div>';
+    var orgCmt=orgComments[c.id]||''; if(orgCmt)h+='<div style="font-size:10px;color:#374151;margin-top:3px;padding-top:3px;border-top:1px solid #f1f5f9;line-height:1.4;white-space:pre-wrap;max-height:40px;overflow:hidden;">'+esc(orgCmt)+'</div>';
     h+='</div></div>';
   });
   h+='</div></div>';
