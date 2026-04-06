@@ -293,12 +293,7 @@ function renderFilterBar(){
 function renderMain(){
   var cases=groupCases(currentGroup);
   renderFilterBar();
-  // ビュー切り替えボタン
-  h+='<div style="display:flex;gap:3px;background:#f1f5f9;border-radius:8px;padding:3px;margin-left:auto;">';
-  h+='<button onclick="setView(\'list\')" style="padding:4px 10px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;'+(currentView==='list'?'background:white;color:#0f2040;box-shadow:0 1px 3px rgba(0,0,0,.1);':'background:none;color:#94a3b8;')+'"">☰ リスト</button>';
-  h+='<button onclick="setView(\'kanban\')" style="padding:4px 10px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;'+(currentView==='kanban'?'background:white;color:#0f2040;box-shadow:0 1px 3px rgba(0,0,0,.1);':'background:none;color:#94a3b8;')+'"">▦ カンバン</button>';
-  h+='</div>';
-  h+='</div>';
+  var h='';
   if(!cases.length){h+='<div class="empty">該当する案件はありません</div>';}
   else if(currentView==='kanban'){h+=renderKanban(cases);}
   else{
