@@ -101,7 +101,7 @@ tbody tr:hover td{background:#f8faff;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260413.05</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260413.07</div>
   </div>
   <div class="header-org" id="headerOrg">読み込み中...</div>
   <button id="notifyBadgeBtn" onclick="showNotifyModal()" style="display:none;position:relative;background:#ef4444;color:white;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
@@ -543,12 +543,12 @@ var _notifyData = []; // 未確認通知リスト
 var _notifyRealtimeWs = null;
 
 var _STATUS_LABELS = {
-  '申請済(番号待)': {label:'申請済み（受付番号待ち）', color:'#059669', bg:'#f0fdf4'},
-  '審査中':         {label:'審査中', color:'#d97706', bg:'#fef3c7'},
-  '審査完了':       {label:'審査完了 ✅', color:'#16a34a', bg:'#f0fdf4'},
-  '★要追完':       {label:'追完依頼 ⚠️', color:'#ea580c', bg:'#fff7ed'},
-  '要追完 企業不足書類待ち': {label:'追完依頼（企業書類）⚠️', color:'#ea580c', bg:'#fff7ed'},
-  '要追完 人材不足書類待ち': {label:'追完依頼（人材書類）⚠️', color:'#ea580c', bg:'#fff7ed'},
+  '審査中':                     {label:'✅ 申請済み・受付番号紐付', color:'#059669', bg:'#f0fdf4'},
+  '許可済 受取方法調整中':       {label:'🎉 許可済 受取方法調整中', color:'#0369a1', bg:'#f0f9ff'},
+  '入管受取ステータス変更中':    {label:'🏛 入管受取ステータス変更中', color:'#0369a1', bg:'#f0f9ff'},
+  '郵送交付':                   {label:'📮 郵送交付', color:'#0369a1', bg:'#f0f9ff'},
+  '★窓口受取':                 {label:'🏢 窓口受取', color:'#0369a1', bg:'#f0f9ff'},
+  '窓口受取（本人）':           {label:'🏢 窓口受取（本人）', color:'#0369a1', bg:'#f0f9ff'},
 };
 
 async function loadNotifications(orgName) {
