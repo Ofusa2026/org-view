@@ -97,7 +97,7 @@ tbody tr:hover td{background:#f8faff;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260406.01</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260413.02</div>
   </div>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
@@ -235,6 +235,23 @@ function buildRow(c){
   h+='</td>';
   // 受付番号
   h+='<td style="font-size:10px;white-space:nowrap;">'+(c.receiptNo?'<span style="color:#2563eb;font-weight:700;">'+esc(c.receiptNo)+'</span>':'<span style="color:#d1d5db;">—</span>')+'</td>';
+  // 他機関申請
+  var _agKeys=['kokkoSho','jaim','kyogikai','suisensho'];
+  var _agLabels={kokkoSho:'国交省',jaim:'JAIM',kyogikai:'協議会',suisensho:'推薦票'};
+  var _agColors={kokkoSho:'#0369a1',jaim:'#7c3aed',kyogikai:'#d97706',suisensho:'#16a34a'};
+  var _ags=(c.otherAgencies&&typeof c.otherAgencies==='object')?_agKeys.filter(function(k){return c.otherAgencies[k]&&!c.otherAgencies[k+'_fuyo'];}):[];
+  h+='<td style="min-width:80px;">';
+  if(_ags.length){
+    _ags.forEach(function(k){
+      var st=c.otherAgencies[k+'_status']||'';
+      var stColor=st==='完了'?'#16a34a':st==='申請中'?'#2563eb':st.indexOf('補正')>=0?'#ef4444':'#64748b';
+      h+='<div style="font-size:9px;display:inline-flex;align-items:center;gap:2px;margin:1px 1px 1px 0;background:'+_agColors[k]+'15;border:1px solid '+_agColors[k]+'40;border-radius:4px;padding:1px 5px;">';
+      h+='<span style="color:'+_agColors[k]+';font-weight:700;">'+_agLabels[k]+'</span>';
+      if(st)h+='<span style="color:'+stColor+';font-size:8px;">'+esc(st)+'</span>';
+      h+='</div>';
+    });
+  }else{h+='<span style="color:#d1d5db;">—</span>';}
+  h+='</td>';
   // 帰国予定
   h+='<td style="font-size:10px;white-space:nowrap;'+retStyle+'">'+(c.tempReturn||'<span style="color:#d1d5db;">—</span>')+'</td>';
   // コメント（登録支援機関向け・index.htmlから入力）
@@ -268,6 +285,7 @@ var COLS=[
   {key:'status',label:'ステータス'},
   {key:'expire',label:'在留期限 / 特例'},
   {key:'receiptNo',label:'受付番号'},
+  {key:'_agencies',label:'他機関',noSort:true},
   {key:'tempReturn',label:'帰国予定'},
   {key:'_comment',label:'コメント',noSort:true}
 ];
@@ -436,9 +454,9 @@ async function loadData(){
     // 案件取得（受付番号・帰国予定も含む）
     document.getElementById('headerOrg').textContent=orgName+' 様';
     document.title=orgName+' 様 | 案件進捗確認';
-    var r4=await sbFetch('cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,temp_return&order=expire.asc.nullslast');
+    var r4=await sbFetch('cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,temp_return,other_agencies&order=expire.asc.nullslast');
     var cases=await r4.json();
-    allCases=(cases||[]).map(function(c){return{id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',tempReturn:c.temp_return||''};});
+    allCases=(cases||[]).map(function(c){return{id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',tempReturn:c.temp_return||'',otherAgencies:c.other_agencies||{}};});
     // personsテーブルからtempReturn(一時帰国予定日)を取得して補完
     if(allCases.length){
       var pids=allCases.map(function(c){return c.id;});
