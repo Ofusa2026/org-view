@@ -101,7 +101,7 @@ tbody tr:hover td{background:#f8faff;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260413.03</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260413.04</div>
   </div>
   <div class="header-org" id="headerOrg">読み込み中...</div>
   <button id="notifyBadgeBtn" onclick="showNotifyModal()" style="display:none;position:relative;background:#ef4444;color:white;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
@@ -272,13 +272,19 @@ function buildRow(c){
   h+='</td>';
   // 帰国予定
   h+='<td style="font-size:10px;white-space:nowrap;'+retStyle+'">'+(c.tempReturn||'<span style="color:#d1d5db;">—</span>')+'</td>';
-  // コメント（登録支援機関向け・index.htmlから入力）
-  h+='<td style="min-width:180px;">';
+  // 大房コメント（index.htmlから入力）
+  h+='<td style="min-width:160px;">';
   if(comment){
     h+='<div style="font-size:11px;color:#374151;white-space:pre-wrap;line-height:1.5;">'+esc(comment)+'</div>';
   } else {
     h+='<span style="color:#d1d5db;">—</span>';
   }
+  h+='</td>';
+  // 支援機関コメント（share.htmlから入力）
+  var orgCmt = orgSideComments[c.id] || '';
+  h+='<td style="min-width:160px;">';
+  h+='<textarea id="cmt_'+c.id+'" class="org-comment-area" placeholder="コメントを入力..." rows="2">'+esc(orgCmt)+'</textarea>';
+  h+='<button id="savebtn_'+c.id+'" onclick="saveComment(\'' + c.id + '\')" class="save-btn" style="margin-top:3px;width:100%;padding:3px 0;border:1px solid #e2e8f0;border-radius:5px;font-size:10px;cursor:pointer;background:white;">保存</button>';
   h+='</td>';
   h+='</tr>';
   return h;
@@ -305,7 +311,8 @@ var COLS=[
   {key:'receiptNo',label:'受付番号'},
   {key:'_agencies',label:'他機関',noSort:true},
   {key:'tempReturn',label:'帰国予定'},
-  {key:'_comment',label:'コメント',noSort:true}
+  {key:'_ofusa_comment',label:'大房コメント',noSort:true},
+  {key:'_org_comment',label:'支援機関コメント',noSort:true}
 ];
 
 function thHtml(col){
@@ -414,8 +421,9 @@ async function saveComment(caseId){
   var btn=document.getElementById('savebtn_'+caseId);
   if(!ta||!btn)return;
   var val=ta.value.trim();
-  orgComments[caseId]=val;
-  var key='org_comment_'+currentToken+'_'+caseId;
+  orgSideComments[caseId]=val;
+  // 支援機関→大房のコメントはorg_side_comment_{token}_{caseId}で保存
+  var key='org_side_comment_'+currentToken+'_'+caseId;
   btn.textContent='保存中...';btn.disabled=true;
   try{
     await sbFetch('settings',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:val})});
@@ -424,6 +432,7 @@ async function saveComment(caseId){
   }catch(e){btn.textContent='保存';btn.disabled=false;alert('保存失敗: '+e.message);}
 }
 
+var orgSideComments = {}; // 支援機関→大房コメント
 var _correctPass='';
 function checkPass(){
   var input=document.getElementById('passInput').value.trim();
@@ -511,6 +520,14 @@ async function loadData(){
         var r6=await sbFetch('settings?key=in.('+cmtChunk.map(function(k){return '"'+k+'"';}).join(',')+')'+'&select=key,value');
         var cmts=await r6.json();
         if(Array.isArray(cmts)) (cmts||[]).forEach(function(row){var cid=row.key.replace('org_comment_'+currentToken+'_','');orgComments[cid]=row.value||'';});
+      }
+      // 支援機関側コメント読み込み（org_side_comment_{token}_{caseId}）
+      var sideCmtKeys=ids.map(function(id){return 'org_side_comment_'+currentToken+'_'+id;});
+      for(var ci3=0;ci3<sideCmtKeys.length;ci3+=CHUNK){
+        var sideCmtChunk=sideCmtKeys.slice(ci3,ci3+CHUNK);
+        var r7=await sbFetch('settings?key=in.('+sideCmtChunk.map(function(k){return '"'+k+'"';}).join(',')+')'+'&select=key,value');
+        var sideCmts=await r7.json();
+        if(Array.isArray(sideCmts)) sideCmts.forEach(function(row){var cid=row.key.replace('org_side_comment_'+currentToken+'_','');orgSideComments[cid]=row.value||'';});
       }
     }
     renderSidebar();renderMain();
