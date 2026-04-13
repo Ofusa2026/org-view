@@ -42,7 +42,7 @@ th:not(.sort-asc):not(.sort-desc) .sort-icon::after{content:'⇅';}
 td{padding:7px 10px;font-size:11px;border-bottom:1px solid #f1f5f9;vertical-align:top;}
 tr:last-child td{border-bottom:none;}
 tbody tr:hover td{background:#f8faff;}
-.st-badge{font-size:9px;font-weight:600;padding:1px 5px;border-radius:10px;border:1px solid;display:inline-block;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;}
+.st-badge{font-size:9px;font-weight:600;padding:1px 5px;border-radius:10px;border:1px solid;display:inline-block;white-space:nowrap;max-width:64px;overflow:hidden;text-overflow:ellipsis;}
 .type-badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;display:inline-block;}
 .type-nintei{background:#ede9fe;color:#7c3aed;}
 .type-koshin{background:#eff6ff;color:#2563eb;}
@@ -101,7 +101,7 @@ tbody tr:hover td{background:#f8faff;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260413.04</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260413.05</div>
   </div>
   <div class="header-org" id="headerOrg">読み込み中...</div>
   <button id="notifyBadgeBtn" onclick="showNotifyModal()" style="display:none;position:relative;background:#ef4444;color:white;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
@@ -246,7 +246,7 @@ function buildRow(c){
   h+='<td style="min-width:90px;max-width:120px;"><div style="font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:115px;">'+esc(c.company||'—')+'</div></td>';
   h+='<td style="width:48px;">'+typeHtml+'</td>';
   h+='<td style="width:65px;">'+(teamShort?'<div style="font-size:10px;font-weight:600;">'+esc(teamShort)+'</div>':'')+(staffShort?'<div style="font-size:10px;color:#6b7280;">'+esc(staffShort)+'</div>':'')+'</td>';
-  h+='<td style="white-space:nowrap;">'+stHtml+'</td>';
+  h+='<td style="width:66px;max-width:66px;">'+stHtml+'</td>';
   h+='<td style="'+expStyle+'font-size:10px;white-space:nowrap;min-width:88px;">';
   if(isShinsa){h+='<div style="font-size:9px;color:#9ca3af;">'+(c.expire||'—')+'</div><div style="font-size:10px;font-weight:700;">特例 '+tokStr+'</div>';}
   else{h+='<div>'+(c.expire||'—')+'</div><div style="color:#9ca3af;font-size:9px;">特例 '+tokStr+'</div>';if(days!==null&&days<=14&&days>0)h+='<div style="color:#ea580c;font-size:9px;">あと'+days+'日</div>';else if(days!==null&&days<=0&&c.expire)h+='<div style="color:#dc2626;font-size:9px;">期限切れ</div>';}
@@ -283,8 +283,10 @@ function buildRow(c){
   // 支援機関コメント（share.htmlから入力）
   var orgCmt = orgSideComments[c.id] || '';
   h+='<td style="min-width:160px;">';
-  h+='<textarea id="cmt_'+c.id+'" class="org-comment-area" placeholder="コメントを入力..." rows="2">'+esc(orgCmt)+'</textarea>';
-  h+='<button id="savebtn_'+c.id+'" onclick="saveComment(\'' + c.id + '\')" class="save-btn" style="margin-top:3px;width:100%;padding:3px 0;border:1px solid #e2e8f0;border-radius:5px;font-size:10px;cursor:pointer;background:white;">保存</button>';
+  h+='<div style="display:flex;gap:4px;align-items:flex-start;">';
+  h+='<textarea id="cmt_'+c.id+'" class="org-comment-area" placeholder="コメントを入力..." rows="2" style="flex:1;min-width:0;">'+esc(orgCmt)+'</textarea>';
+  h+='<button id="savebtn_'+c.id+'" onclick="saveComment(\'' + c.id + '\')" class="save-btn" style="flex-shrink:0;padding:4px 7px;font-size:10px;margin-top:0;">保存</button>';
+  h+='</div>';
   h+='</td>';
   h+='</tr>';
   return h;
