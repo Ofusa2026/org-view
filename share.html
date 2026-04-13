@@ -90,6 +90,10 @@ tbody tr:hover td{background:#f8faff;}
 .kanban-card-sub{font-size:10px;color:#64748b;margin-bottom:5px;}
 .kanban-card-meta{display:flex;flex-wrap:wrap;gap:4px;}
 .kanban-badge{font-size:9px;padding:1px 6px;border-radius:99px;font-weight:700;}
+
+@keyframes pulse {
+  0%,100%{opacity:1;} 50%{opacity:.6;}
+}
 </style>
 </head>
 <body>
@@ -97,9 +101,12 @@ tbody tr:hover td{background:#f8faff;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260413.02</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260413.03</div>
   </div>
   <div class="header-org" id="headerOrg">読み込み中...</div>
+  <button id="notifyBadgeBtn" onclick="showNotifyModal()" style="display:none;position:relative;background:#ef4444;color:white;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
+    🔔 新着 <span id="notifyCount">0</span>件
+  </button>
 </div>
 <div id="passScreen" class="pass-screen" style="display:none;">
   <div class="pass-box">
@@ -110,6 +117,17 @@ tbody tr:hover td{background:#f8faff;}
       onkeydown="if(event.key==='Enter')checkPass()">
     <button class="pass-btn" onclick="checkPass()">ログイン</button>
     <div class="pass-err" id="passErr"></div>
+  </div>
+</div>
+
+<!-- 通知モーダル -->
+<div id="notifyModal" onclick="if(event.target===this)this.style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:white;border-radius:14px;width:100%;max-width:520px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+    <div style="padding:14px 16px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:14px;font-weight:800;color:#0f2040;">🔔 新着通知</div>
+      <button onclick="document.getElementById('notifyModal').style.display='none'" style="padding:4px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;cursor:pointer;background:white;">閉じる</button>
+    </div>
+    <div id="notifyList" style="flex:1;overflow-y:auto;padding:12px;"></div>
   </div>
 </div>
 <div class="layout">
@@ -496,8 +514,107 @@ async function loadData(){
       }
     }
     renderSidebar();renderMain();
+    // 通知ロード
+    if(typeof loadNotifications === 'function') loadNotifications(orgName);
   }catch(e){document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+e.message+'</div>';}
 }
+
+// ===== 通知機能 =====
+var _notifyData = []; // 未確認通知リスト
+var _notifyRealtimeWs = null;
+
+var _STATUS_LABELS = {
+  '申請済(番号待)': {label:'申請済み（受付番号待ち）', color:'#059669', bg:'#f0fdf4'},
+  '審査中':         {label:'審査中', color:'#d97706', bg:'#fef3c7'},
+  '審査完了':       {label:'審査完了 ✅', color:'#16a34a', bg:'#f0fdf4'},
+  '★要追完':       {label:'追完依頼 ⚠️', color:'#ea580c', bg:'#fff7ed'},
+  '要追完 企業不足書類待ち': {label:'追完依頼（企業書類）⚠️', color:'#ea580c', bg:'#fff7ed'},
+  '要追完 人材不足書類待ち': {label:'追完依頼（人材書類）⚠️', color:'#ea580c', bg:'#fff7ed'},
+};
+
+async function loadNotifications(orgName) {
+  try {
+    var r = await sbFetch('share_notifications?org=eq.'+encodeURIComponent(orgName)+'&confirmed_at=is.null&order=notified_at.desc&limit=50');
+    var data = await r.json();
+    if (!Array.isArray(data)) return;
+    _notifyData = data;
+    updateNotifyBadge();
+    // Realtime購読開始
+    startNotifyRealtime(orgName);
+  } catch(e) { console.error('loadNotifications error:', e); }
+}
+
+function updateNotifyBadge() {
+  var btn = document.getElementById('notifyBadgeBtn');
+  var cnt = document.getElementById('notifyCount');
+  if (!btn || !cnt) return;
+  if (_notifyData.length > 0) {
+    cnt.textContent = _notifyData.length;
+    btn.style.display = 'inline-flex';
+    btn.style.animation = 'pulse 1.5s infinite';
+  } else {
+    btn.style.display = 'none';
+    btn.style.animation = '';
+  }
+}
+
+function showNotifyModal() {
+  var modal = document.getElementById('notifyModal');
+  var listEl = document.getElementById('notifyList');
+  if (!modal || !listEl) return;
+  if (_notifyData.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:24px;font-size:13px;">新着通知はありません</div>';
+  } else {
+    var h = '';
+    _notifyData.forEach(function(n) {
+      var st = _STATUS_LABELS[n.status] || {label: n.status, color:'#374151', bg:'#f8fafc'};
+      var dt = n.notified_at ? new Date(n.notified_at) : null;
+      var dtStr = dt ? (dt.getMonth()+1)+'/'+dt.getDate()+' '+dt.getHours()+':'+('0'+dt.getMinutes()).slice(-2) : '';
+      // 案件名を取得
+      var caseObj = allCases ? allCases.find(function(c){return c.id===n.case_id;}) : null;
+      var caseName = caseObj ? (caseObj.name || caseObj.applicant || n.case_id) : n.case_id;
+      h += '<div style="background:'+st.bg+';border:1.5px solid '+st.color+'40;border-radius:10px;padding:12px 14px;margin-bottom:8px;">';
+      h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">';
+      h += '<div>';
+      h += '<div style="font-size:13px;font-weight:800;color:#0f2040;">'+esc(caseName)+'</div>';
+      if (n.receipt_no) h += '<div style="font-size:11px;color:#6b7280;margin-top:1px;">受付番号: '+esc(n.receipt_no)+'</div>';
+      h += '</div>';
+      h += '<div style="text-align:right;">';
+      h += '<div style="font-size:12px;font-weight:800;color:'+st.color+';">'+st.label+'</div>';
+      h += '<div style="font-size:10px;color:#9ca3af;">'+dtStr+'</div>';
+      h += '</div>';
+      h += '</div>';
+      h += '<button onclick="confirmNotification('+n.id+')" style="width:100%;padding:8px;background:white;border:1.5px solid #e2e8f0;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;color:#374151;">✅ 確認済みにする</button>';
+      h += '</div>';
+    });
+    listEl.innerHTML = h;
+  }
+  modal.style.display = 'flex';
+}
+
+async function confirmNotification(notifId) {
+  try {
+    await sbFetch('share_notifications?id=eq.'+encodeURIComponent(notifId), {
+      method: 'PATCH',
+      body: JSON.stringify({ confirmed_at: new Date().toISOString(), confirmed_by: orgName || '' })
+    });
+    // ローカルからも削除
+    _notifyData = _notifyData.filter(function(n){ return n.id !== notifId; });
+    updateNotifyBadge();
+    showNotifyModal(); // モーダル再描画
+  } catch(e) { console.error('confirmNotification error:', e); }
+}
+
+function startNotifyRealtime(orgName) {
+  // Supabase RealtimeはWebSocket経由
+  // share.htmlはsupbase-js未使用なのでpolling方式で代替（30秒ごと）
+  if (window._notifyPollTimer) clearInterval(window._notifyPollTimer);
+  window._notifyPollTimer = setInterval(function() {
+    loadNotifications(orgName);
+  }, 30000); // 30秒ごとに更新
+}
+// ===== /通知機能 =====
+
 init();
 </script>
 </body>
