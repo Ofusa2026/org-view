@@ -101,7 +101,7 @@ tbody tr:hover td{background:#f8faff;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260413.07</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260413.08</div>
   </div>
   <div class="header-org" id="headerOrg">読み込み中...</div>
   <button id="notifyBadgeBtn" onclick="showNotifyModal()" style="display:none;position:relative;background:#ef4444;color:white;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
@@ -603,7 +603,7 @@ function showNotifyModal() {
       h += '<div style="font-size:10px;color:#9ca3af;">'+dtStr+'</div>';
       h += '</div>';
       h += '</div>';
-      h += '<button onclick="confirmNotification('+n.id+')" style="width:100%;padding:8px;background:white;border:1.5px solid #e2e8f0;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;color:#374151;">✅ 確認済みにする</button>';
+      h += '<button onclick="confirmNotification(\'' + n.id + '\')" style="width:100%;padding:8px;background:white;border:1.5px solid #e2e8f0;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;color:#374151;">✅ 確認済みにする</button>';
       h += '</div>';
     });
     listEl.innerHTML = h;
