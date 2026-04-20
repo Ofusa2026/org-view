@@ -100,7 +100,7 @@ tbody tr:hover td{background:#f8faff;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260411.02</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260420.01</div>
   </div>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
@@ -135,7 +135,7 @@ var ST_BOR={'未着手':'#e2e8f0','★ヒアリングフォーム送付':'#c4b5f
 
 var DONE_ST=['完了','審査完了','★郵送交付','★窓口受取','窓口受取（本人）','許可済 受取方法調整中'];
 var GROUPS=[{id:'active',label:'進行中'},{id:'done',label:'完了・許可済'},{id:'all',label:'すべて'}];
-var allCases=[],allReceipts=[],caseNotes={},orgComments={},currentGroup='active',currentView='list',searchQuery='',filterStatus='',filterCompany='',sortCol='expire',sortDir='asc',currentToken='',orgName='',_imeOn=false;
+var allCases=[],allReceipts=[],caseNotes={},orgComments={},orgOwnComments={},currentGroup='active',currentView='list',searchQuery='',filterStatus='',filterCompany='',sortCol='expire',sortDir='asc',currentToken='',orgName='',_imeOn=false;
 var STATUS_COLS=[
   {label:'未着手',color:'#64748b',statuses:['未着手']},
   {label:'★ヒアリング送付',color:'#7c3aed',statuses:['★ヒアリングフォーム送付']},
