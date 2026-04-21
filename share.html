@@ -12,6 +12,26 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .header-logo{font-size:10px;opacity:.5;letter-spacing:.5px;}
 .header-title{font-size:15px;font-weight:800;}
 .header-org{font-size:11px;opacity:.7;margin-left:auto;max-width:200px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.notif-btn{position:relative;background:rgba(255,255,255,.12);border:none;color:white;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;gap:6px;}
+.notif-btn:hover{background:rgba(255,255,255,.22);}
+.notif-badge{position:absolute;top:-4px;right:-4px;background:#dc2626;color:white;min-width:16px;height:16px;border-radius:99px;font-size:9px;font-weight:800;padding:0 4px;display:flex;align-items:center;justify-content:center;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.15);}}
+.notif-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:none;align-items:flex-start;justify-content:center;padding:56px 12px 12px;overflow-y:auto;}
+.notif-modal-bg.open{display:flex;}
+.notif-modal{background:white;border-radius:14px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden;}
+.notif-modal-head{padding:14px 18px;background:#0f2040;color:white;display:flex;align-items:center;justify-content:space-between;}
+.notif-modal-title{font-size:14px;font-weight:800;}
+.notif-close{background:none;border:none;color:white;font-size:18px;cursor:pointer;opacity:.7;}
+.notif-close:hover{opacity:1;}
+.notif-body{max-height:60vh;overflow-y:auto;padding:10px;}
+.notif-item{background:#fffbeb;border:1px solid #fcd34d;border-left:3px solid #f59e0b;border-radius:8px;padding:10px 12px;margin-bottom:8px;}
+.notif-item.confirmed{background:#f8fafc;border-color:#e2e8f0;border-left-color:#94a3b8;opacity:.7;}
+.notif-case-name{font-size:13px;font-weight:800;color:#0f2040;margin-bottom:3px;}
+.notif-meta{font-size:10px;color:#64748b;margin-bottom:6px;}
+.notif-status{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#fef3c7;color:#b45309;margin-bottom:8px;}
+.notif-confirm-btn{width:100%;padding:7px;background:white;border:1.5px solid #e2e8f0;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;color:#374151;font-family:inherit;}
+.notif-confirm-btn:hover{background:#f1f5f9;border-color:#cbd5e1;}
+.notif-empty{text-align:center;padding:40px 20px;color:#94a3b8;font-size:12px;}
 .layout{display:flex;min-height:calc(100vh - 48px);}
 .sidebar{width:160px;background:#1e293b;flex-shrink:0;padding:10px 0;position:sticky;top:48px;height:calc(100vh - 48px);overflow-y:auto;}
 .sb-item{padding:10px 14px;cursor:pointer;font-size:11px;font-weight:600;color:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:space-between;gap:6px;border-left:3px solid transparent;transition:.1s;}
@@ -42,6 +62,9 @@ th:not(.sort-asc):not(.sort-desc) .sort-icon::after{content:'⇅';}
 td{padding:7px 10px;font-size:11px;border-bottom:1px solid #f1f5f9;vertical-align:top;}
 tr:last-child td{border-bottom:none;}
 tbody tr:hover td{background:#f8faff;}
+tr.row-notif td{background:#fffbeb !important;}
+tr.row-notif:hover td{background:#fef3c7 !important;}
+.row-notif-dot{display:inline-block;width:6px;height:6px;background:#dc2626;border-radius:99px;margin-right:5px;animation:pulse 1.5s infinite;vertical-align:middle;}
 .st-badge{font-size:9px;font-weight:600;padding:1px 5px;border-radius:10px;border:1px solid;display:inline-block;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;}
 .type-badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;display:inline-block;}
 .type-nintei{background:#ede9fe;color:#7c3aed;}
@@ -100,9 +123,22 @@ tbody tr:hover td{background:#f8faff;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260420.01</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260421.02</div>
   </div>
+  <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
+    <span>🔔</span>
+    <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
+  </button>
   <div class="header-org" id="headerOrg">読み込み中...</div>
+</div>
+<div id="notifModalBg" class="notif-modal-bg" onclick="if(event.target===this)closeNotifModal()">
+  <div class="notif-modal">
+    <div class="notif-modal-head">
+      <div class="notif-modal-title">🔔 OFUSAからのお知らせ</div>
+      <button class="notif-close" onclick="closeNotifModal()">✕</button>
+    </div>
+    <div id="notifBody" class="notif-body"><div class="notif-empty">読み込み中...</div></div>
+  </div>
 </div>
 <div id="passScreen" class="pass-screen" style="display:none;">
   <div class="pass-box">
@@ -133,9 +169,16 @@ var ST_BG={'未着手':'#f8fafc','★ヒアリングフォーム送付':'#ede9fe
 var ST_COL={'未着手':'#64748b','★ヒアリングフォーム送付':'#7c3aed','ヒアリングフォーム回答待ち(送付済)':'#94a3b8','1-6作成':'#2563eb','★1-6企業送付':'#7c3aed','1-6企業確認待ち(送付済)':'#94a3b8','1-6修正':'#ea580c','★1-6修正送付':'#7c3aed','サイン書類作成':'#2563eb','★サイン書類送付':'#7c3aed','サイン書類返送待ち(送付済)':'#94a3b8','★企業押印送付':'#7c3aed','企業押印返送待ち(送付済)':'#94a3b8','スキャン書類作成':'#2563eb','★申請':'#16a34a','申請済(番号待)':'#059669','審査中':'#d97706','特活審査中':'#d97706','許可済 受取方法調整中':'#0369a1','★要追完':'#ea580c','要追完 企業不足書類待ち':'#ea580c','要追完 人材不足書類待ち':'#ea580c','郵送交付':'#0369a1','★郵送交付':'#0369a1','窓口受取':'#0369a1','★窓口受取':'#0369a1','入管受取ステータス変更中':'#0284c7'};
 var ST_BOR={'未着手':'#e2e8f0','★ヒアリングフォーム送付':'#c4b5fd','ヒアリングフォーム回答待ち(送付済)':'#e2e8f0','1-6作成':'#93c5fd','★1-6企業送付':'#c4b5fd','1-6企業確認待ち(送付済)':'#e2e8f0','1-6修正':'#fdba74','★1-6修正送付':'#c4b5fd','サイン書類作成':'#93c5fd','★サイン書類送付':'#c4b5fd','サイン書類返送待ち(送付済)':'#e2e8f0','★企業押印送付':'#c4b5fd','企業押印返送待ち(送付済)':'#e2e8f0','スキャン書類作成':'#93c5fd','★申請':'#86efac','申請済(番号待)':'#6ee7b7','審査中':'#fcd34d','特活審査中':'#fcd34d','許可済 受取方法調整中':'#7dd3fc','★要追完':'#fdba74','要追完 企業不足書類待ち':'#fdba74','要追完 人材不足書類待ち':'#fdba74','郵送交付':'#7dd3fc','★郵送交付':'#7dd3fc','窓口受取':'#7dd3fc','★窓口受取':'#7dd3fc','入管受取ステータス変更中':'#38bdf8'};
 
+// お知らせモーダル内のステータス表示ラベル
+var NOTIF_LABELS={'審査中':'✅ 申請済み・受付番号紐付','許可済 受取方法調整中':'🎉 許可済 受取方法調整中','入管受取ステータス変更中':'🏛 入管受取ステータス変更中','郵送交付':'📮 郵送交付','★郵送交付':'📮 郵送交付','★窓口受取':'🏢 窓口受取','窓口受取（本人）':'🏢 窓口受取（本人）'};
+
 var DONE_ST=['完了','審査完了','★郵送交付','★窓口受取','窓口受取（本人）','許可済 受取方法調整中'];
 var GROUPS=[{id:'active',label:'進行中'},{id:'done',label:'完了・許可済'},{id:'all',label:'すべて'}];
 var allCases=[],allReceipts=[],caseNotes={},orgComments={},orgOwnComments={},currentGroup='active',currentView='list',searchQuery='',filterStatus='',filterCompany='',sortCol='expire',sortDir='asc',currentToken='',orgName='',_imeOn=false;
+var notifications=[]; // 未確認・確認済両方を保持
+var NOTIF_POLL_MS=30000;
+var _notifTimer=null;
+
 var STATUS_COLS=[
   {label:'未着手',color:'#64748b',statuses:['未着手']},
   {label:'★ヒアリング送付',color:'#7c3aed',statuses:['★ヒアリングフォーム送付']},
@@ -192,6 +235,13 @@ function groupCases(gid){
   return base;
 }
 
+// 未確認通知のある案件のcase_idセット
+function getUnconfirmedCaseIds(){
+  var s={};
+  notifications.forEach(function(n){ if(!n.confirmed_at) s[n.case_id]=true; });
+  return s;
+}
+
 function buildRow(c){
   var note=caseNotes[c.id]||{};
   var memo=note.progressMemo||'';
@@ -226,8 +276,12 @@ function buildRow(c){
   if(c.tempReturn){var rd=new Date(c.tempReturn);rd.setHours(0,0,0,0);var rdays=Math.ceil((rd-today)/86400000);if(rdays<=0)retStyle='color:#16a34a;font-weight:700;';else if(rdays<=10)retStyle='color:#ea580c;font-weight:700;';}
 
   var cid=esc(c.id);
-  var h='<tr>';
-  h+='<td style="min-width:150px;max-width:190px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;" title="'+esc(displayName)+'">'+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div></td>';
+  // 未確認通知があれば行を強調
+  var unconfirmed=getUnconfirmedCaseIds();
+  var rowCls=unconfirmed[c.id]?' class="row-notif"':'';
+  var notifDot=unconfirmed[c.id]?'<span class="row-notif-dot" title="未確認のお知らせあり"></span>':'';
+  var h='<tr'+rowCls+'>';
+  h+='<td style="min-width:150px;max-width:190px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div></td>';
   h+='<td style="min-width:90px;max-width:120px;"><div style="font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:115px;">'+esc(c.company||'—')+'</div></td>';
   h+='<td style="width:48px;">'+typeHtml+'</td>';
   h+='<td style="width:65px;">'+(teamShort?'<div style="font-size:10px;font-weight:600;">'+esc(teamShort)+'</div>':'')+(staffShort?'<div style="font-size:10px;color:#6b7280;">'+esc(staffShort)+'</div>':'')+'</td>';
@@ -386,14 +440,16 @@ function buildKanbanCol(label,color,colCases){
   h+='<span style="background:rgba(255,255,255,.25);padding:1px 8px;border-radius:99px;font-size:10px;">'+colCases.length+'</span>';
   h+='</div>';
   h+='<div class="kanban-col-body">';
+  var unconfirmed=getUnconfirmedCaseIds();
   colCases.forEach(function(c){
     var note=caseNotes[c.id]||{};
     var today=new Date();today.setHours(0,0,0,0);
     var days=c.expire?Math.ceil((new Date(c.expire)-today)/86400000):null;
     var expColor=days===null?'#94a3b8':days<=0?'#dc2626':days<=14?'#ea580c':days<=30?'#d97706':'#64748b';
     var stBg=ST_BG[c.status]||'#f8fafc',stCol=ST_COL[c.status]||'#64748b';
-    h+='<div class="kanban-card" style="border-left:3px solid '+color+';">';
-    h+='<div class="kanban-card-name">'+esc(c.name||c.applicant||'（未設定）')+'</div>';
+    var cardBg=unconfirmed[c.id]?'background:#fffbeb;':'';
+    h+='<div class="kanban-card" style="'+cardBg+'border-left:3px solid '+color+';">';
+    h+='<div class="kanban-card-name">'+(unconfirmed[c.id]?'<span class="row-notif-dot"></span>':'')+esc(c.name||c.applicant||'（未設定）')+'</div>';
     if(c.applicant&&c.name)h+='<div class="kanban-card-sub">'+esc(c.applicant)+'</div>';
     h+='<div class="kanban-card-sub">'+esc(c.company||'')+'</div>';
     h+='<div class="kanban-card-meta">';
@@ -450,6 +506,134 @@ async function saveOwnComment(caseId){
     setTimeout(function(){btn.textContent='保存';btn.className='own-save-btn';btn.disabled=false;},2000);
   }catch(e){btn.textContent='保存';btn.disabled=false;alert('保存失敗: '+e.message);}
 }
+
+// ========== 通知（お知らせ）機能 ==========
+async function loadNotifications(){
+  if(!orgName) return;
+  try{
+    // 最近60日以内の通知を取得
+    var cutoff=new Date(); cutoff.setDate(cutoff.getDate()-60);
+    var cutoffStr=cutoff.toISOString();
+    var r=await sbFetch('share_notifications?org=eq.'+encodeURIComponent(orgName)+'&notified_at=gte.'+encodeURIComponent(cutoffStr)+'&select=id,case_id,status,receipt_no,notified_at,confirmed_at,confirmed_by&order=notified_at.desc&limit=200');
+    if(!r.ok) return;
+    var data=await r.json();
+    if(!Array.isArray(data)) return;
+    var prevUnconfirmed=notifications.filter(function(n){return !n.confirmed_at;}).length;
+    notifications=data;
+    updateNotifBadge();
+    // 件数が変わったらリストも再描画（行ハイライト更新のため）
+    var newUnconfirmed=notifications.filter(function(n){return !n.confirmed_at;}).length;
+    if(newUnconfirmed!==prevUnconfirmed){
+      if(currentGroup!=='receipts') renderMain();
+    }
+  }catch(e){ console.warn('loadNotifications error',e); }
+}
+
+function updateNotifBadge(){
+  var btn=document.getElementById('notifBtn');
+  var badge=document.getElementById('notifBadge');
+  if(!btn||!badge) return;
+  var unconfirmed=notifications.filter(function(n){return !n.confirmed_at;});
+  btn.style.display='flex';
+  if(unconfirmed.length>0){
+    badge.style.display='flex';
+    badge.textContent=unconfirmed.length>99?'99+':unconfirmed.length;
+  } else {
+    badge.style.display='none';
+  }
+}
+
+function fmtTime(iso){
+  if(!iso) return '';
+  try{
+    var d=new Date(iso); if(isNaN(d.getTime())) return '';
+    var now=new Date(); var diff=now-d;
+    if(diff<60000) return 'たった今';
+    if(diff<3600000) return Math.floor(diff/60000)+'分前';
+    if(diff<86400000) return Math.floor(diff/3600000)+'時間前';
+    var m=d.getMonth()+1, day=d.getDate();
+    var hh=String(d.getHours()).padStart(2,'0'), mm=String(d.getMinutes()).padStart(2,'0');
+    return m+'/'+day+' '+hh+':'+mm;
+  }catch(e){ return ''; }
+}
+
+function renderNotifModal(){
+  var body=document.getElementById('notifBody');
+  if(!body) return;
+  if(!notifications.length){
+    body.innerHTML='<div class="notif-empty">お知らせはありません</div>';
+    return;
+  }
+  // 未確認を上、確認済みを下（最近10件）
+  var unconf=notifications.filter(function(n){return !n.confirmed_at;});
+  var conf=notifications.filter(function(n){return n.confirmed_at;}).slice(0,10);
+  var h='';
+  if(unconf.length){
+    h+='<div style="font-size:11px;font-weight:700;color:#b45309;margin:4px 6px 6px;">🔔 未確認（'+unconf.length+'）</div>';
+    unconf.forEach(function(n){ h+=buildNotifItem(n,false); });
+  } else {
+    h+='<div style="padding:16px;text-align:center;color:#16a34a;font-size:12px;font-weight:700;">✅ 未確認のお知らせはありません</div>';
+  }
+  if(conf.length){
+    h+='<div style="font-size:11px;font-weight:700;color:#94a3b8;margin:14px 6px 6px;">確認済み（最近 '+conf.length+'件）</div>';
+    conf.forEach(function(n){ h+=buildNotifItem(n,true); });
+  }
+  body.innerHTML=h;
+}
+
+function buildNotifItem(n,isConfirmed){
+  var c=allCases.find(function(x){return x.id===n.case_id;});
+  var title=c?(c.name||c.applicant||'（案件）'):'（案件データなし）';
+  var sub=c?[c.applicant,c.company].filter(Boolean).join(' / '):esc(n.case_id);
+  var lbl=NOTIF_LABELS[n.status]||n.status;
+  var cls=isConfirmed?'notif-item confirmed':'notif-item';
+  var h='<div class="'+cls+'">';
+  h+='<div class="notif-case-name">'+esc(title)+'</div>';
+  h+='<div class="notif-meta">'+esc(sub)+(n.receipt_no?' ・ '+esc(n.receipt_no):'')+'</div>';
+  h+='<div class="notif-status">'+esc(lbl)+'</div>';
+  h+='<div class="notif-meta" style="margin-bottom:'+(isConfirmed?'0':'8px')+';">🕒 '+esc(fmtTime(n.notified_at));
+  if(isConfirmed) h+=' / ✓ 確認済 '+esc(fmtTime(n.confirmed_at));
+  h+='</div>';
+  if(!isConfirmed){
+    h+='<button class="notif-confirm-btn" onclick="confirmNotification(\''+esc(n.id)+'\')">✅ 確認済みにする</button>';
+  }
+  h+='</div>';
+  return h;
+}
+
+function openNotifModal(){
+  document.getElementById('notifModalBg').classList.add('open');
+  renderNotifModal();
+}
+function closeNotifModal(){
+  document.getElementById('notifModalBg').classList.remove('open');
+}
+
+async function confirmNotification(id){
+  var n=notifications.find(function(x){return x.id===id;});
+  if(!n||n.confirmed_at) return;
+  try{
+    var r=await sbFetch('share_notifications?id=eq.'+encodeURIComponent(id),{
+      method:'PATCH',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+      body:JSON.stringify({confirmed_at:new Date().toISOString(),confirmed_by:orgName||''})
+    });
+    if(!r.ok){ alert('確認済みへの更新に失敗しました'); return; }
+    var updated=await r.json();
+    if(Array.isArray(updated)&&updated.length){ Object.assign(n,updated[0]); }
+    else { n.confirmed_at=new Date().toISOString(); }
+    updateNotifBadge();
+    renderNotifModal();
+    if(currentGroup!=='receipts') renderMain();
+  }catch(e){ alert('エラー: '+e.message); }
+}
+
+function startNotifPolling(){
+  if(_notifTimer) clearInterval(_notifTimer);
+  loadNotifications();
+  _notifTimer=setInterval(loadNotifications, NOTIF_POLL_MS);
+}
+// ========== /通知機能 ==========
 
 var _correctPass='';
 function checkPass(){
@@ -567,6 +751,8 @@ async function loadData(){
       });
     }
     renderSidebar();renderMain();
+    // お知らせポーリング開始
+    startNotifPolling();
   }catch(e){document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+e.message+'</div>';}
 }
 init();
