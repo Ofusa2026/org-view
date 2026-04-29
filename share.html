@@ -123,7 +123,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260421.02</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260429.01</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -175,6 +175,11 @@ var NOTIF_LABELS={'審査中':'✅ 申請済み・受付番号紐付','許可済
 var DONE_ST=['完了','審査完了','★郵送交付','★窓口受取','窓口受取（本人）','許可済 受取方法調整中'];
 var GROUPS=[{id:'active',label:'進行中'},{id:'done',label:'完了・許可済'},{id:'all',label:'すべて'}];
 var allCases=[],allReceipts=[],caseNotes={},orgComments={},orgOwnComments={},currentGroup='active',currentView='list',searchQuery='',filterStatus='',filterCompany='',sortCol='expire',sortDir='asc',currentToken='',orgName='',_imeOn=false;
+// コメント入力中フラグ（再描画スキップ用）。値は編集中のtextareaのid（例:'owncmt_xxx'）
+var _editingCommentId=null;
+var _editingImeOn=false;
+// renderMain()を遅延させたいときの待ちフラグ
+var _renderMainPending=false;
 var notifications=[]; // 未確認・確認済両方を保持
 var NOTIF_POLL_MS=30000;
 var _notifTimer=null;
@@ -306,7 +311,7 @@ function buildRow(c){
   var ownComment=orgOwnComments[c.id]||'';
   h+='<td style="min-width:200px;">';
   h+='<div style="display:flex;flex-direction:column;gap:3px;">';
-  h+='<textarea id="owncmt_'+cid+'" class="org-comment-area" rows="2" placeholder="コメントを入力...">'+esc(ownComment)+'</textarea>';
+  h+='<textarea id="owncmt_'+cid+'" class="org-comment-area" rows="2" placeholder="コメントを入力..." data-cid="'+cid+'" autocomplete="off" autocorrect="off" autocapitalize="off" oninput="orgOwnComments[this.dataset.cid]=this.value;" onfocus="_editingCommentId=this.id;" onblur="if(_editingCommentId===this.id)_editingCommentId=null;safeRenderMainIfPending();" oncompositionstart="_editingImeOn=true;" oncompositionend="_editingImeOn=false;orgOwnComments[this.dataset.cid]=this.value;">'+esc(ownComment)+'</textarea>';
   h+='<button id="ownsavebtn_'+cid+'" class="own-save-btn" data-cid="'+cid+'" onclick="saveOwnComment(this.dataset.cid)">保存</button>';
   h+='</div>';
   h+='</td>';
@@ -418,6 +423,12 @@ function renderReceipts(){
 }
 
 function renderMain(){
+  // コメント入力中・IME変換中は再描画をスキップ（入力中の文字消失・フォーカス外れを防ぐ）
+  if(_editingCommentId||_editingImeOn){
+    _renderMainPending=true;
+    return;
+  }
+  _renderMainPending=false;
   var cases=groupCases(currentGroup);
   renderFilterBar();
   var h='';
@@ -431,6 +442,17 @@ function renderMain(){
     h+='</tbody></table></div>';
   }
   document.getElementById('main').innerHTML=h;
+}
+
+// blur後に保留中のrenderMainを実行する
+function safeRenderMainIfPending(){
+  if(_renderMainPending&&!_editingCommentId&&!_editingImeOn){
+    setTimeout(function(){
+      if(!_editingCommentId&&!_editingImeOn&&_renderMainPending){
+        renderMain();
+      }
+    },100);
+  }
 }
 
 function buildKanbanCol(label,color,colCases){
