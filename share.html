@@ -123,7 +123,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260429.01</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260504.01</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -174,7 +174,7 @@ var NOTIF_LABELS={'審査中':'✅ 申請済み・受付番号紐付','許可済
 
 var DONE_ST=['完了','審査完了','★郵送交付','★窓口受取','窓口受取（本人）','許可済 受取方法調整中'];
 var GROUPS=[{id:'active',label:'進行中'},{id:'done',label:'完了・許可済'},{id:'all',label:'すべて'}];
-var allCases=[],allReceipts=[],caseNotes={},orgComments={},orgOwnComments={},currentGroup='active',currentView='list',searchQuery='',filterStatus='',filterCompany='',sortCol='expire',sortDir='asc',currentToken='',orgName='',_imeOn=false;
+var allCases=[],allReceipts=[],allShinsa=[],caseNotes={},orgComments={},orgOwnComments={},currentGroup='active',currentView='list',searchQuery='',filterStatus='',filterCompany='',sortCol='expire',sortDir='asc',currentToken='',orgName='',_imeOn=false;
 // コメント入力中フラグ（再描画スキップ用）。値は編集中のtextareaのid（例:'owncmt_xxx'）
 var _editingCommentId=null;
 var _editingImeOn=false;
@@ -329,6 +329,7 @@ function renderSidebar(){
   });
   h+='<div class="sb-divider"></div>';
   h+='<div class="sb-item'+(currentGroup==='receipts'?' active':'')+'" onclick="switchGroup(\'receipts\')">申請記録 <span class="sb-badge">'+allReceipts.length+'</span></div>';
+  h+='<div class="sb-item'+(currentGroup==='shinsa'?' active':'')+'" onclick="switchGroup(\'shinsa\')">審査完了 <span class="sb-badge">'+allShinsa.length+'</span></div>';
   document.getElementById('sidebar').innerHTML=h;
 }
 
@@ -404,7 +405,7 @@ function renderReceipts(){
   h+='<span style="font-size:11px;color:#6b7280;">'+sorted.length+'件</span>';
   h+='</div>';
   h+='<div class="tbl-wrap"><table><thead><tr>';
-  h+='<th>受付日</th><th>申請日</th><th>申請者</th><th>受付番号</th><th>案件</th><th>ステータス</th>';
+  h+='<th>受付日</th><th>申請日</th><th>申請者</th><th>受付番号</th><th>案件</th><th>ステータス</th><th style="text-align:center;">PDF</th>';
   h+='</tr></thead><tbody>';
   sorted.forEach(function(r){
     var stBg=ST_BG[r.status]||'#f8fafc';
@@ -416,6 +417,37 @@ function renderReceipts(){
     h+='<td style="font-size:11px;color:#2563eb;font-weight:700;white-space:nowrap;">'+(r.caseNo||'&mdash;')+'</td>';
     h+='<td style="font-size:11px;color:#374151;">'+esc(r.sub||'')+'</td>';
     h+='<td>'+(r.status?'<span style="font-size:10px;padding:2px 8px;border-radius:4px;background:'+stBg+';color:'+stCol+';border:1px solid '+stCol+'33;">'+esc(r.status)+'</span>':'&mdash;')+'</td>';
+    h+='<td style="text-align:center;white-space:nowrap;">'+(r.driveUrl?'<a href="'+esc(r.driveUrl)+'" target="_blank" rel="noopener" style="display:inline-block;padding:2px 10px;background:#dc2626;color:white;border-radius:4px;font-size:10px;font-weight:700;text-decoration:none;">PDF</a>':'<span style="color:#cbd5e1;font-size:10px;">&mdash;</span>')+'</td>';
+    h+='</tr>';
+  });
+  h+='</tbody></table></div>';
+  el.innerHTML=h;
+}
+
+function renderShinsa(){
+  var el=document.getElementById('main');
+  if(!el)return;
+  if(!allShinsa.length){
+    el.innerHTML='<div class="empty">審査完了の記録はありません</div>';
+    return;
+  }
+  var sorted=allShinsa.slice().sort(function(a,b){
+    return (b.date||'').localeCompare(a.date||'');
+  });
+  var h='<div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;">';
+  h+='<span style="font-size:13px;font-weight:700;color:#0f2040;">審査完了</span>';
+  h+='<span style="font-size:11px;color:#6b7280;">'+sorted.length+'件</span>';
+  h+='</div>';
+  h+='<div class="tbl-wrap"><table><thead><tr>';
+  h+='<th>完了日</th><th>申請者</th><th>受付番号</th><th>案件</th><th style="text-align:center;">PDF</th>';
+  h+='</tr></thead><tbody>';
+  sorted.forEach(function(r){
+    h+='<tr>';
+    h+='<td style="white-space:nowrap;font-size:11px;color:#6b7280;">'+(r.date?r.date.slice(0,10):'&mdash;')+'</td>';
+    h+='<td style="font-size:12px;font-weight:700;">'+esc(r.name||'')+'</td>';
+    h+='<td style="font-size:11px;color:#2563eb;font-weight:700;white-space:nowrap;">'+(r.caseNo||'&mdash;')+'</td>';
+    h+='<td style="font-size:11px;color:#374151;">'+esc(r.sub||'')+'</td>';
+    h+='<td style="text-align:center;white-space:nowrap;">'+(r.driveUrl?'<a href="'+esc(r.driveUrl)+'" target="_blank" rel="noopener" style="display:inline-block;padding:2px 10px;background:#16a34a;color:white;border-radius:4px;font-size:10px;font-weight:700;text-decoration:none;">PDF</a>':'<span style="color:#cbd5e1;font-size:10px;">&mdash;</span>')+'</td>';
     h+='</tr>';
   });
   h+='</tbody></table></div>';
@@ -497,7 +529,7 @@ function renderKanban(cases){
   h+='</div>';
   return h;
 }
-function switchGroup(gid){currentGroup=gid;renderSidebar();if(gid==='receipts'){renderReceipts();}else{renderMain();}}
+function switchGroup(gid){currentGroup=gid;renderSidebar();if(gid==='receipts'){renderReceipts();}else if(gid==='shinsa'){renderShinsa();}else{renderMain();}}
 
 async function saveComment(caseId){
   var ta=document.getElementById('cmt_'+caseId);
@@ -761,7 +793,7 @@ async function loadData(){
       var _recTmp=[];
       for(var ri=0;ri<caseIds.length;ri+=RCHUNK){
         var rchunk=caseIds.slice(ri,ri+RCHUNK);
-        var rr=await sbFetch('receipt_archive?case_id=in.('+rchunk.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=id,name,date,case_no,sub,case_id,application_date,reported&order=date.desc.nullslast');
+        var rr=await sbFetch('receipt_archive?case_id=in.('+rchunk.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=id,name,date,case_no,sub,case_id,application_date,reported,drive_url&order=date.desc.nullslast');
         var recs=await rr.json();
         if(Array.isArray(recs)) _recTmp=_recTmp.concat(recs);
       }
@@ -769,7 +801,20 @@ async function loadData(){
         var lc=allCases.find(function(c){return c.id===r.case_id;})||null;
         return {id:r.id,name:r.name||'',date:r.date||'',caseNo:r.case_no||'',sub:r.sub||'',
           applicationDate:r.application_date||'',reported:r.reported||false,
+          driveUrl:r.drive_url||'',
           status:lc?(lc.status||''):''};
+      });
+      // 審査完了取得（同様にcase_idで絞り込み）
+      var _shTmp=[];
+      for(var si=0;si<caseIds.length;si+=RCHUNK){
+        var schunk=caseIds.slice(si,si+RCHUNK);
+        var sr=await sbFetch('shinsa_archive?case_id=in.('+schunk.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=id,name,date,case_no,sub,case_id,drive_url&order=date.desc.nullslast');
+        var shs=await sr.json();
+        if(Array.isArray(shs)) _shTmp=_shTmp.concat(shs);
+      }
+      allShinsa=_shTmp.map(function(r){
+        return {id:r.id,name:r.name||'',date:r.date||'',caseNo:r.case_no||'',sub:r.sub||'',
+          driveUrl:r.drive_url||''};
       });
     }
     renderSidebar();renderMain();
