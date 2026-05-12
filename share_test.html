@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="mobile-web-app-capable" content="yes">
+<title>案件進捗確認 | OFUSA</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
+.header{background:#0f2040;color:white;padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:200;}
+.header-logo{font-size:10px;opacity:.5;letter-spacing:.5px;}
+.header-title{font-size:15px;font-weight:800;}
+.header-org{font-size:11px;opacity:.7;margin-left:auto;max-width:200px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.notif-btn{position:relative;background:rgba(255,255,255,.12);border:none;color:white;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;gap:6px;}
+.notif-btn:hover{background:rgba(255,255,255,.22);}
+.notif-badge{position:absolute;top:-4px;right:-4px;background:#dc2626;color:white;min-width:16px;height:16px;border-radius:99px;font-size:9px;font-weight:800;padding:0 4px;display:flex;align-items:center;justify-content:center;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.15);}}
+.notif-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:none;align-items:flex-start;justify-content:center;padding:56px 12px 12px;overflow-y:auto;}
+.notif-modal-bg.open{display:flex;}
+.notif-modal{background:white;border-radius:14px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden;}
+.notif-modal-head{padding:14px 18px;background:#0f2040;color:white;display:flex;align-items:center;justify-content:space-between;}
+.notif-modal-title{font-size:14px;font-weight:800;}
+.notif-close{background:none;border:none;color:white;font-size:18px;cursor:pointer;opacity:.7;}
+.notif-close:hover{opacity:1;}
+.notif-body{max-height:60vh;overflow-y:auto;padding:10px;}
+.notif-item{background:#fffbeb;border:1px solid #fcd34d;border-left:3px solid #f59e0b;border-radius:8px;padding:10px 12px;margin-bottom:8px;}
+.notif-item.confirmed{background:#f8fafc;border-color:#e2e8f0;border-left-color:#94a3b8;opacity:.7;}
+.notif-case-name{font-size:13px;font-weight:800;color:#0f2040;margin-bottom:3px;}
+.notif-meta{font-size:10px;color:#64748b;margin-bottom:6px;}
+.notif-status{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#fef3c7;color:#b45309;margin-bottom:8px;}
+.notif-confirm-btn{width:100%;padding:7px;background:white;border:1.5px solid #e2e8f0;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;color:#374151;font-family:inherit;}
+.notif-confirm-btn:hover{background:#f1f5f9;border-color:#cbd5e1;}
+.notif-empty{text-align:center;padding:40px 20px;color:#94a3b8;font-size:12px;}
+.layout{display:flex;min-height:calc(100vh - 48px);}
+.sidebar{width:160px;background:#1e293b;flex-shrink:0;padding:10px 0;position:sticky;top:48px;height:calc(100vh - 48px);overflow-y:auto;}
+.sb-item{padding:10px 14px;cursor:pointer;font-size:11px;font-weight:600;color:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:space-between;gap:6px;border-left:3px solid transparent;transition:.1s;}
+.sb-item:hover{background:rgba(255,255,255,.07);color:white;}
+.sb-item.active{background:rgba(99,102,241,.2);color:#a5b4fc;border-left-color:#6366f1;}
+.sb-badge{background:rgba(255,255,255,.15);color:white;font-size:10px;padding:1px 6px;border-radius:99px;font-weight:700;}
+.sb-item.active .sb-badge{background:#6366f1;}
+.sb-divider{height:1px;background:rgba(255,255,255,.08);margin:6px 0;}
+.main-wrap{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
+.filter-bar{background:white;border-bottom:1px solid #e2e8f0;padding:10px 12px;flex-shrink:0;position:sticky;top:0;z-index:50;}
+.filter-bar-inner{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.main{flex:1;padding:12px;overflow:auto;min-width:0;}
+/* 検索バー */
+.search-bar{display:flex;gap:8px;margin-bottom:10px;align-items:center;}
+.search-bar input{flex:1;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;font-family:inherit;}
+.search-bar input:focus{border-color:#6366f1;}
+.search-count{font-size:11px;color:#94a3b8;white-space:nowrap;}
+/* テーブル */
+.tbl-wrap{overflow-x:auto;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);background:white;}
+table{border-collapse:collapse;width:100%;min-width:700px;}
+thead tr{background:#0f2040;color:white;position:sticky;top:0;z-index:10;}
+th{padding:8px 10px;font-size:10px;font-weight:700;letter-spacing:.3px;white-space:nowrap;text-align:left;cursor:pointer;user-select:none;}
+th:hover{background:#1e3a5f;}
+th .sort-icon{margin-left:4px;opacity:.5;font-size:9px;}
+th.sort-asc .sort-icon::after{content:'▲';}
+th.sort-desc .sort-icon::after{content:'▼';}
+th:not(.sort-asc):not(.sort-desc) .sort-icon::after{content:'⇅';}
+td{padding:7px 10px;font-size:11px;border-bottom:1px solid #f1f5f9;vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:#f8faff;}
+tr.row-notif td{background:#fffbeb !important;}
+tr.row-notif:hover td{background:#fef3c7 !important;}
+.row-notif-dot{display:inline-block;width:6px;height:6px;background:#dc2626;border-radius:99px;margin-right:5px;animation:pulse 1.5s infinite;vertical-align:middle;}
+.st-badge{font-size:9px;font-weight:600;padding:1px 5px;border-radius:10px;border:1px solid;display:inline-block;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;}
+.type-badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;display:inline-block;}
+.type-nintei{background:#ede9fe;color:#7c3aed;}
+.type-koshin{background:#eff6ff;color:#2563eb;}
+.type-henkou{background:#fff7ed;color:#ea580c;}
+.type-other{background:#f1f5f9;color:#64748b;}
+.prog-memo{font-size:11px;color:#475569;background:#f8fafc;border-radius:6px;padding:6px 8px;border-left:3px solid #c7d2fe;line-height:1.5;white-space:pre-wrap;}
+/* コメント欄 */
+/* 支援機関コメント保存ボタン */
+.own-save-btn{background:#0f2040;color:white;border:none;border-radius:5px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;transition:.15s;align-self:flex-start;}
+.own-save-btn:hover{background:#1e3a5f;}
+.own-save-btn.saved{background:#16a34a;}
+.own-save-btn:disabled{opacity:.6;cursor:not-allowed;}
+.org-comment-area{width:100%;min-width:160px;max-width:220px;border:1.5px solid #e2e8f0;border-radius:6px;padding:5px 7px;font-size:11px;font-family:inherit;resize:vertical;min-height:52px;line-height:1.5;outline:none;color:#334155;}
+.org-comment-area:focus{border-color:#6366f1;}
+
+.empty{text-align:center;padding:60px;color:#94a3b8;font-size:13px;}
+.loading{text-align:center;padding:60px;color:#64748b;}
+.error-box{background:#fee2e2;color:#dc2626;border-radius:8px;padding:16px;margin:16px;font-size:13px;}
+/* パスワード認証 */
+.pass-screen{position:fixed;inset:0;background:#0f2040;display:flex;align-items:center;justify-content:center;z-index:9999;}
+.pass-box{background:white;border-radius:16px;padding:32px;width:100%;max-width:360px;margin:16px;text-align:center;}
+.pass-logo{font-size:11px;color:#94a3b8;margin-bottom:8px;}
+.pass-title{font-size:20px;font-weight:800;color:#0f2040;margin-bottom:4px;}
+.pass-org{font-size:13px;color:#64748b;margin-bottom:24px;}
+.pass-input{width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:16px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit;margin-bottom:12px;}
+.pass-input:focus{border-color:#6366f1;}
+.pass-btn{width:100%;padding:12px;background:#6366f1;color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;}
+.pass-btn:hover{background:#4f46e5;}
+.pass-err{color:#dc2626;font-size:12px;margin-top:8px;min-height:18px;}
+@media(max-width:440px){
+  .layout{flex-direction:column;}
+  .sidebar{width:100%;height:auto;position:static;display:flex;overflow-x:auto;padding:0;}
+  .sb-item{flex-direction:column;gap:2px;padding:8px 10px;font-size:10px;border-left:none;border-bottom:3px solid transparent;white-space:nowrap;flex-shrink:0;}
+  .sb-item.active{border-bottom-color:#6366f1;border-left:none;}
+  .sb-divider{display:none;}
+}
+/* カンバン */
+.view-toggle{display:flex;gap:6px;margin-bottom:10px;}
+.view-btn{padding:5px 14px;font-size:11px;font-weight:700;border:1.5px solid #e2e8f0;border-radius:7px;cursor:pointer;background:white;color:#64748b;}
+.view-btn.active{background:#2563eb;color:white;border-color:#2563eb;}
+.kanban-wrap{display:flex;gap:12px;overflow-x:auto;align-items:flex-start;padding-bottom:12px;}
+.kanban-col{flex-shrink:0;width:220px;background:#f8fafc;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;display:flex;flex-direction:column;max-height:calc(100vh - 160px);}
+.kanban-col-head{padding:8px 12px;font-size:11px;font-weight:800;color:white;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;flex-shrink:0;}
+.kanban-col-body{overflow-y:auto;flex:1;padding:8px;display:flex;flex-direction:column;gap:6px;}
+.kanban-col-body{padding:8px;display:flex;flex-direction:column;gap:6px;min-height:60px;}
+.kanban-card{background:white;border-radius:8px;padding:10px 12px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.kanban-card-name{font-size:12px;font-weight:700;color:#0f2040;margin-bottom:3px;}
+.kanban-card-sub{font-size:10px;color:#64748b;margin-bottom:5px;}
+.kanban-card-meta{display:flex;flex-wrap:wrap;gap:4px;}
+.kanban-badge{font-size:9px;padding:1px 6px;border-radius:99px;font-weight:700;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <div class="header-logo">OFUSA 大房行政書士法人</div>
+    <div class="header-title">📋 案件進捗確認</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260504.01</div>
+  </div>
+  <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
+    <span>🔔</span>
+    <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
+  </button>
+  <div class="header-org" id="headerOrg">読み込み中...</div>
+</div>
+<div id="notifModalBg" class="notif-modal-bg" onclick="if(event.target===this)closeNotifModal()">
+  <div class="notif-modal">
+    <div class="notif-modal-head">
+      <div class="notif-modal-title">🔔 OFUSAからのお知らせ</div>
+      <button class="notif-close" onclick="closeNotifModal()">✕</button>
+    </div>
+    <div id="notifBody" class="notif-body"><div class="notif-empty">読み込み中...</div></div>
+  </div>
+</div>
+<div id="passScreen" class="pass-screen" style="display:none;">
+  <div class="pass-box">
+    <div class="pass-logo">OFUSA 大房行政書士法人</div>
+    <div class="pass-title">🔒 パスワード認証</div>
+    <div class="pass-org" id="passOrgName">読み込み中...</div>
+    <input class="pass-input" type="password" id="passInput" placeholder="パスワードを入力"
+      onkeydown="if(event.key==='Enter')checkPass()">
+    <button class="pass-btn" onclick="checkPass()">ログイン</button>
+    <div class="pass-err" id="passErr"></div>
+  </div>
+</div>
+<div class="layout">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="main-wrap">
+    <div class="filter-bar" id="filter-bar"></div>
+    <div class="main" id="main"><div class="loading">⏳ 読み込み中...</div></div>
+  </div>
+</div>
+<script>
+var SUPABASE_URL='https://ehwlgbwpycglmopiqyty.supabase.co';
+var SUPABASE_KEY='sb_publishable_3ptyILIpGIcNA5sUBhFMbA_n0VxpY2u';
+function sbFetch(p,opts){return fetch(SUPABASE_URL+'/rest/v1/'+p,Object.assign({headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'}},opts||{}));}
+function getParam(k){return new URLSearchParams(location.search).get(k);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+var ST_BG={'未着手':'#f8fafc','★ヒアリングフォーム送付':'#ede9fe','ヒアリングフォーム回答待ち(送付済)':'#f8fafc','1-6作成':'#eff6ff','★1-6企業送付':'#ede9fe','1-6企業確認待ち(送付済)':'#f8fafc','1-6修正':'#fff7ed','★1-6修正送付':'#ede9fe','サイン書類作成':'#eff6ff','★サイン書類送付':'#ede9fe','サイン書類返送待ち(送付済)':'#f8fafc','★企業押印送付':'#ede9fe','企業押印返送待ち(送付済)':'#f8fafc','スキャン書類作成':'#eff6ff','★申請':'#f0fdf4','申請済(番号待)':'#f0fdf4','審査中':'#fef3c7','特活審査中':'#fef3c7','許可済 受取方法調整中':'#f0f9ff','★要追完':'#fff7ed','要追完 企業不足書類待ち':'#fff7ed','要追完 人材不足書類待ち':'#fff7ed','郵送交付':'#f0f9ff','★郵送交付':'#f0f9ff','窓口受取':'#f0f9ff','★窓口受取':'#f0f9ff','入管受取ステータス変更中':'#e0f2fe'};
+var ST_COL={'未着手':'#64748b','★ヒアリングフォーム送付':'#7c3aed','ヒアリングフォーム回答待ち(送付済)':'#94a3b8','1-6作成':'#2563eb','★1-6企業送付':'#7c3aed','1-6企業確認待ち(送付済)':'#94a3b8','1-6修正':'#ea580c','★1-6修正送付':'#7c3aed','サイン書類作成':'#2563eb','★サイン書類送付':'#7c3aed','サイン書類返送待ち(送付済)':'#94a3b8','★企業押印送付':'#7c3aed','企業押印返送待ち(送付済)':'#94a3b8','スキャン書類作成':'#2563eb','★申請':'#16a34a','申請済(番号待)':'#059669','審査中':'#d97706','特活審査中':'#d97706','許可済 受取方法調整中':'#0369a1','★要追完':'#ea580c','要追完 企業不足書類待ち':'#ea580c','要追完 人材不足書類待ち':'#ea580c','郵送交付':'#0369a1','★郵送交付':'#0369a1','窓口受取':'#0369a1','★窓口受取':'#0369a1','入管受取ステータス変更中':'#0284c7'};
+var ST_BOR={'未着手':'#e2e8f0','★ヒアリングフォーム送付':'#c4b5fd','ヒアリングフォーム回答待ち(送付済)':'#e2e8f0','1-6作成':'#93c5fd','★1-6企業送付':'#c4b5fd','1-6企業確認待ち(送付済)':'#e2e8f0','1-6修正':'#fdba74','★1-6修正送付':'#c4b5fd','サイン書類作成':'#93c5fd','★サイン書類送付':'#c4b5fd','サイン書類返送待ち(送付済)':'#e2e8f0','★企業押印送付':'#c4b5fd','企業押印返送待ち(送付済)':'#e2e8f0','スキャン書類作成':'#93c5fd','★申請':'#86efac','申請済(番号待)':'#6ee7b7','審査中':'#fcd34d','特活審査中':'#fcd34d','許可済 受取方法調整中':'#7dd3fc','★要追完':'#fdba74','要追完 企業不足書類待ち':'#fdba74','要追完 人材不足書類待ち':'#fdba74','郵送交付':'#7dd3fc','★郵送交付':'#7dd3fc','窓口受取':'#7dd3fc','★窓口受取':'#7dd3fc','入管受取ステータス変更中':'#38bdf8'};
+
+// ===== ver.20260512: 登録支援機関側に見せる外部ステータス変換マップ =====
+// 内部の細かいステータスを、登録支援機関にわかりやすい大きなフェーズ名に変換
+var ST_EXTERNAL={
+  '未着手':'雇用条件作成・企業確認',
+  '★ヒアリングフォーム送付':'雇用条件作成・企業確認',
+  'ヒアリングフォーム回答待ち(送付済)':'雇用条件作成・企業確認',
+  'ヒアリングフォーム回答待ち (送付済)':'雇用条件作成・企業確認',
+  '雇用条件待ち':'雇用条件作成・企業確認',
+  '1-6作成':'雇用条件作成・企業確認',
+  '★1-6企業送付':'雇用条件作成・企業確認',
+  '1-6企業確認待ち(送付済)':'雇用条件作成・企業確認',
+  '1-6企業確認待ち (送付済)':'雇用条件作成・企業確認',
+  '1-6修正':'雇用条件作成・企業確認',
+  '★1-6修正送付':'雇用条件作成・企業確認',
+  'サイン書類作成':'特定技能生サインご対応',
+  '★サイン書類送付':'特定技能生サインご対応',
+  'サイン書類返送待ち(送付済)':'特定技能生サインご対応',
+  'サイン書類返送待ち (送付済)':'特定技能生サインご対応',
+  '企業書類作成':'企業押印ご対応・書類収集・申請準備',
+  '★企業押印送付':'企業押印ご対応・書類収集・申請準備',
+  '企業押印返送待ち(送付済)':'企業押印ご対応・書類収集・申請準備',
+  '企業押印返送待ち (送付済)':'企業押印ご対応・書類収集・申請準備',
+  '人材書類待ち':'企業押印ご対応・書類収集・申請準備',
+  '企業書類待ち':'企業押印ご対応・書類収集・申請準備',
+  'スキャン書類作成':'企業押印ご対応・書類収集・申請準備',
+  '★申請':'企業押印ご対応・書類収集・申請準備',
+  '申請済(番号待)':'出入国在留管理局審査中',
+  '申請済 (番号待)':'出入国在留管理局審査中',
+  '審査中':'出入国在留管理局審査中',
+  '特活審査中':'出入国在留管理局審査中',
+  '★要追完':'出入国在留管理局審査中',
+  '要追完 企業不足書類待ち':'出入国在留管理局審査中',
+  '要追完 人材不足書類待ち':'出入国在留管理局審査中',
+  '許可済 受取方法調整中':'審査完了・新在留カード交付',
+  '入管受取ステータス変更中':'審査完了・新在留カード交付',
+  '郵送交付':'審査完了・新在留カード交付',
+  '★郵送交付':'審査完了・新在留カード交付',
+  '郵送交付中':'審査完了・新在留カード交付',
+  '窓口受取':'審査完了・新在留カード交付',
+  '★窓口受取':'審査完了・新在留カード交付',
+  '窓口受取（本人）':'審査完了・新在留カード交付',
+  '窓口受取 (本人)':'審査完了・新在留カード交付',
+  '完了':'新在留カード発行済み',
+  '審査完了':'新在留カード発行済み'
+};
+// 外部ステータスごとの色（バッジ用）
+var ST_EXT_COL={
+  '雇用条件作成・企業確認':{bg:'#eff6ff',col:'#2563eb',bor:'#93c5fd'},
+  '特定技能生サインご対応':{bg:'#fdf4ff',col:'#a21caf',bor:'#e9d5ff'},
+  '企業押印ご対応・書類収集・申請準備':{bg:'#fff7ed',col:'#ea580c',bor:'#fed7aa'},
+  '出入国在留管理局審査中':{bg:'#fef3c7',col:'#b45309',bor:'#fcd34d'},
+  '審査完了・新在留カード交付':{bg:'#dbeafe',col:'#1d4ed8',bor:'#93c5fd'},
+  '新在留カード発行済み':{bg:'#dcfce7',col:'#15803d',bor:'#86efac'}
+};
+function getExternalStatus(s){return ST_EXTERNAL[s]||s||'未着手';}
+
+// ===== ver.20260512: 他機関申請（国交省）ステータスマッピング =====
+// 建設分野の案件にのみ表示。大房側のステータスから自動推定する。
+// 「他機関側の進捗」を別途管理する場合はここに保存先を追加する余地あり。
+var MLIT_BY_STATUS={
+  '未着手':'国土交通省整備局申請準備',
+  '★ヒアリングフォーム送付':'国土交通省整備局申請準備',
+  'ヒアリングフォーム回答待ち(送付済)':'国土交通省整備局申請準備',
+  'ヒアリングフォーム回答待ち (送付済)':'国土交通省整備局申請準備',
+  '雇用条件待ち':'国土交通省整備局申請準備',
+  '1-6作成':'国土交通省整備局申請準備',
+  '★1-6企業送付':'国土交通省整備局申請準備',
+  '1-6企業確認待ち(送付済)':'国土交通省整備局申請準備',
+  '1-6企業確認待ち (送付済)':'国土交通省整備局申請準備',
+  '1-6修正':'国土交通省整備局申請準備',
+  '★1-6修正送付':'国土交通省整備局申請準備',
+  'サイン書類作成':'国土交通省整備局申請準備',
+  '★サイン書類送付':'国土交通省整備局申請準備',
+  'サイン書類返送待ち(送付済)':'国土交通省整備局申請準備',
+  '企業書類作成':'国土交通省整備局申請準備',
+  '★企業押印送付':'国土交通省整備局申請準備',
+  '企業押印返送待ち(送付済)':'国土交通省整備局申請準備',
+  '人材書類待ち':'国土交通省整備局申請準備',
+  '企業書類待ち':'国土交通省整備局申請準備',
+  'スキャン書類作成':'国土交通省整備局申請準備',
+  '★申請':'国土交通省整備局審査中',
+  '申請済(番号待)':'国土交通省整備局審査中',
+  '審査中':'国土交通省整備局審査中',
+  '特活審査中':'国土交通省整備局審査中',
+  '★要追完':'国土交通省補正通知・対応',
+  '要追完 企業不足書類待ち':'国土交通省補正通知・対応',
+  '要追完 人材不足書類待ち':'国土交通省補正通知・対応',
+  '許可済 受取方法調整中':'国土交通省整備局認定済み',
+  '入管受取ステータス変更中':'国土交通省整備局認定済み',
+  '郵送交付':'国土交通省整備局認定済み',
+  '★郵送交付':'国土交通省整備局認定済み',
+  '窓口受取':'国土交通省整備局認定済み',
+  '★窓口受取':'国土交通省整備局認定済み',
+  '完了':'国土交通省整備局認定済み',
+  '審査完了':'国土交通省整備局認定済み'
+};
+function isKensetsuField(field){return field&&String(field).indexOf('建設')>=0;}
+function getMlitStatus(c){
+  if(!isKensetsuField(c.applicantField))return '';
+  return MLIT_BY_STATUS[c.status]||'';
+}
+
+// お知らせモーダル内のステータス表示ラベル
+var NOTIF_LABELS={'審査中':'✅ 申請済み・受付番号紐付','許可済 受取方法調整中':'🎉 許可済 受取方法調整中','入管受取ステータス変更中':'🏛 入管受取ステータス変更中','郵送交付':'📮 郵送交付','★郵送交付':'📮 郵送交付','★窓口受取':'🏢 窓口受取','窓口受取（本人）':'🏢 窓口受取（本人）'};
+
+var DONE_ST=['完了','審査完了','★郵送交付','★窓口受取','窓口受取（本人）','許可済 受取方法調整中'];
+var GROUPS=[{id:'active',label:'進行中'},{id:'done',label:'完了・許可済'},{id:'all',label:'すべて'}];
+var allCases=[],allReceipts=[],allShinsa=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},currentGroup='active',currentView='list',searchQuery='',filterStatus='',filterCompany='',sortCol='expire',sortDir='asc',currentToken='',orgName='',_imeOn=false;
+// コメント入力中フラグ（再描画スキップ用）。値は編集中のtextareaのid（例:'owncmt_xxx'）
+var _editingCommentId=null;
+var _editingImeOn=false;
+// renderMain()を遅延させたいときの待ちフラグ
+var _renderMainPending=false;
+var notifications=[]; // 未確認・確認済両方を保持
+var NOTIF_POLL_MS=30000;
+var _notifTimer=null;
+
+var STATUS_COLS=[
+  {label:'未着手',color:'#64748b',statuses:['未着手']},
+  {label:'★ヒアリング送付',color:'#7c3aed',statuses:['★ヒアリングフォーム送付']},
+  {label:'ヒアリング回答待ち',color:'#94a3b8',statuses:['ヒアリングフォーム回答待ち(送付済)','ヒアリングフォーム回答待ち (送付済)']},
+  {label:'雇用条件待ち',color:'#7c3aed',statuses:['雇用条件待ち']},
+  {label:'1-6作成',color:'#2563eb',statuses:['1-6作成']},
+  {label:'★1-6企業送付',color:'#7c3aed',statuses:['★1-6企業送付']},
+  {label:'1-6企業確認待ち',color:'#94a3b8',statuses:['1-6企業確認待ち(送付済)','1-6企業確認待ち (送付済)']},
+  {label:'1-6修正',color:'#ea580c',statuses:['1-6修正']},
+  {label:'★1-6修正送付',color:'#7c3aed',statuses:['★1-6修正送付']},
+  {label:'サイン書類作成',color:'#2563eb',statuses:['サイン書類作成']},
+  {label:'★サイン書類送付',color:'#7c3aed',statuses:['★サイン書類送付']},
+  {label:'サイン書類返送待ち',color:'#94a3b8',statuses:['サイン書類返送待ち(送付済)','サイン書類返送待ち (送付済)']},
+  {label:'企業書類作成',color:'#2563eb',statuses:['企業書類作成']},
+  {label:'★企業押印送付',color:'#7c3aed',statuses:['★企業押印送付']},
+  {label:'企業押印返送待ち',color:'#94a3b8',statuses:['企業押印返送待ち(送付済)','企業押印返送待ち (送付済)']},
+  {label:'人材書類待ち',color:'#7c3aed',statuses:['人材書類待ち']},
+  {label:'企業書類待ち',color:'#7c3aed',statuses:['企業書類待ち']},
+  {label:'スキャン書類作成',color:'#2563eb',statuses:['スキャン書類作成']},
+  {label:'★申請',color:'#16a34a',statuses:['★申請']},
+  {label:'申請済(番号待)',color:'#059669',statuses:['申請済(番号待)','申請済 (番号待)']},
+  {label:'審査中',color:'#d97706',statuses:['審査中']},
+  {label:'特活審査中',color:'#d97706',statuses:['特活審査中']},
+  {label:'★要追完',color:'#ea580c',statuses:['★要追完']},
+  {label:'要追完(企業)',color:'#ea580c',statuses:['要追完 企業不足書類待ち']},
+  {label:'要追完(人材)',color:'#ea580c',statuses:['要追完 人材不足書類待ち']},
+  {label:'許可済 受取調整中',color:'#0369a1',statuses:['許可済 受取方法調整中']},
+  {label:'入管受取変更中',color:'#0284c7',statuses:['入管受取ステータス変更中']},
+  {label:'★郵送交付',color:'#0369a1',statuses:['★郵送交付','郵送交付中','郵送交付']},
+  {label:'★窓口受取',color:'#0369a1',statuses:['★窓口受取','窓口受取','窓口受取（本人）','窓口受取 (本人)']},
+  {label:'完了',color:'#16a34a',statuses:['完了','審査完了']}
+];
+
+function classify(c){return DONE_ST.indexOf(c.status)>=0?'done':'active';}
+function groupCases(gid){
+  var base=gid==='all'?allCases:allCases.filter(function(c){return classify(c)===gid;});
+  if(searchQuery){
+    var q=searchQuery.toLowerCase();
+    base=base.filter(function(c){
+      return (c.name||'').toLowerCase().includes(q)||(c.applicant||'').toLowerCase().includes(q)||
+             (c.company||'').toLowerCase().includes(q)||(c.status||'').toLowerCase().includes(q)||
+             (c.receiptNo||'').toLowerCase().includes(q)||(c.staff||'').toLowerCase().includes(q);
+    });
+  }
+  if(filterStatus) base=base.filter(function(c){return c.status===filterStatus;});
+  if(filterCompany) base=base.filter(function(c){return c.company===filterCompany;});
+  // ソート
+  base=base.slice().sort(function(a,b){
+    var av=a[sortCol]||'',bv=b[sortCol]||'';
+    if(!av&&!bv)return 0; if(!av)return 1; if(!bv)return -1;
+    var r=av<bv?-1:av>bv?1:0;
+    return sortDir==='asc'?r:-r;
+  });
+  return base;
+}
+
+// 未確認通知のある案件のcase_idセット
+function getUnconfirmedCaseIds(){
+  var s={};
+  notifications.forEach(function(n){ if(!n.confirmed_at) s[n.case_id]=true; });
+  return s;
+}
+
+// ver.20260512: 資料DLセル構築
+// - 申請受付番号の通知書（receipt_archive.drive_url）
+// - 審査完了通知（shinsa_archive.drive_url）
+// - 事前ガイダンス書類（1-5, 1-6, 1-17）の固定リンク
+// - 1-6修正依頼フォーム（受領方法）
+var GUIDANCE_LINKS={
+  '1-5': 'https://ofusa2026.github.io/docs/1-5/1_5.html',
+  '1-6': 'https://ofusa2026.github.io/docs/1-6/1_6.html',
+  '1-17': 'https://ofusa2026.github.io/docs/1-17/1_17.html'
+};
+var REQUEST_16_FIX_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfPlaceholder/viewform'; // ※実フォームURLに差し替えてください
+function buildDownloadCell(c){
+  var receipts=allReceipts.filter(function(r){return r.case_id===c.id&&r.driveUrl;});
+  var shinsa=allShinsa.filter(function(r){return r.case_id===c.id&&r.driveUrl;});
+  var html='<div style="display:flex;flex-direction:column;gap:3px;">';
+  // 申請受付番号DL
+  if(receipts.length){
+    receipts.forEach(function(r){
+      html+='<a href="'+esc(r.driveUrl)+'" target="_blank" rel="noopener" style="font-size:10px;color:#2563eb;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;max-width:130px;" title="申請受付番号通知DL">📄 受付番号DL</a>';
+    });
+  }
+  // 審査完了DL
+  if(shinsa.length){
+    shinsa.forEach(function(s){
+      html+='<a href="'+esc(s.driveUrl)+'" target="_blank" rel="noopener" style="font-size:10px;color:#16a34a;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;max-width:130px;" title="審査完了通知DL">✅ 審査完了DL</a>';
+    });
+  }
+  // 事前ガイダンス（常時表示）
+  html+='<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:2px;">';
+  html+='<a href="'+esc(GUIDANCE_LINKS['1-5'])+'" target="_blank" rel="noopener" style="font-size:9px;color:#7c3aed;text-decoration:none;border:1px solid #c4b5fd;padding:1px 5px;border-radius:4px;" title="参考様式1-5 事前ガイダンス確認書">1-5</a>';
+  html+='<a href="'+esc(GUIDANCE_LINKS['1-6'])+'" target="_blank" rel="noopener" style="font-size:9px;color:#7c3aed;text-decoration:none;border:1px solid #c4b5fd;padding:1px 5px;border-radius:4px;" title="参考様式1-6 雇用条件書">1-6</a>';
+  html+='<a href="'+esc(GUIDANCE_LINKS['1-17'])+'" target="_blank" rel="noopener" style="font-size:9px;color:#7c3aed;text-decoration:none;border:1px solid #c4b5fd;padding:1px 5px;border-radius:4px;" title="参考様式1-17 受入れに係る重要事項説明書">1-17</a>';
+  html+='</div>';
+  // 1-6修正依頼フォーム（特定の状態の場合に表示）
+  var needFix=(c.status==='1-6修正'||c.status==='★1-6修正送付');
+  if(needFix){
+    html+='<a href="'+esc(REQUEST_16_FIX_URL)+'" target="_blank" rel="noopener" style="font-size:10px;color:#ea580c;text-decoration:none;white-space:nowrap;background:#fff7ed;border:1px solid #fdba74;border-radius:4px;padding:2px 6px;display:inline-block;margin-top:2px;" title="1-6修正依頼フォーム">📝 1-6修正依頼</a>';
+  }
+  if(!receipts.length&&!shinsa.length&&!needFix){
+    // 既にガイダンスDLは出ているのでOK
+  }
+  html+='</div>';
+  return html;
+}
+
+function buildRow(c){
+  var note=caseNotes[c.id]||{};
+  var memo=note.progressMemo||'';
+  var comment=orgComments[c.id]||'';
+  var today=new Date();today.setHours(0,0,0,0);
+  var exp=new Date(c.expire);exp.setHours(0,0,0,0);
+  var days=c.expire?Math.ceil((exp-today)/86400000):null;
+  var isShinsa=(c.status==='審査中'||c.status==='特活審査中');
+  var tokStr='—';
+  if(c.tokureiDate){tokStr=c.tokureiDate;}
+  else if(c.expire&&!isNaN(exp.getTime())){var t2=new Date(exp);t2.setMonth(t2.getMonth()+2);tokStr=t2.toISOString().split('T')[0];}
+  var expStyle='';
+  if(c.expire&&!isShinsa){
+    if(days<=0)expStyle='background:#fee2e2;color:#dc2626;font-weight:800;';
+    else if(days<=14)expStyle='background:#fff7ed;color:#ea580c;font-weight:700;';
+    else if(days<=30)expStyle='color:#d97706;font-weight:700;';
+  }
+  var stHtml;
+  // ver.20260512: 外部用ステータスに変換して表示
+  if(c.status==='審査完了'||c.status==='完了'){
+    stHtml='<span class="st-badge" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">✓ 新在留カード発行済み</span>';
+  }else{
+    var extLabel=getExternalStatus(c.status);
+    var extCol=ST_EXT_COL[extLabel]||{bg:'#f8fafc',col:'#64748b',bor:'#e2e8f0'};
+    stHtml='<span class="st-badge" style="background:'+extCol.bg+';color:'+extCol.col+';border-color:'+extCol.bor+';" title="内部ステータス: '+esc(c.status||'')+'">'+esc(extLabel)+'</span>';
+  }
+  // 他機関申請（建設分野のみ表示）
+  var mlitLabel=getMlitStatus(c);
+  var mlitHtml=mlitLabel?'<span class="st-badge" style="background:#fef3c7;color:#92400e;border-color:#fcd34d;">🏛 '+esc(mlitLabel)+'</span>':'<span style="color:#d1d5db;font-size:10px;">—</span>';
+  var tCls=c.appType==='認定'?'type-nintei':c.appType==='更新'?'type-koshin':c.appType==='変更'?'type-henkou':'type-other';
+  var typeHtml=c.appType?'<span class="type-badge '+tCls+'">'+esc(c.appType)+'</span>':'—';
+  var teamShort=(c.team||'').replace(/チーム$/,'').replace(/\s*チーム/,'');
+  var staffShort=(c.staff||'').split(/[\s\u3000]/)[0];
+  var displayName=c.name||c.applicant||'（未設定）';
+  // 帰国予定色
+  var retStyle='';
+  if(c.tempReturn){var rd=new Date(c.tempReturn);rd.setHours(0,0,0,0);var rdays=Math.ceil((rd-today)/86400000);if(rdays<=0)retStyle='color:#16a34a;font-weight:700;';else if(rdays<=10)retStyle='color:#ea580c;font-weight:700;';}
+
+  var cid=esc(c.id);
+  // 未確認通知があれば行を強調
+  var unconfirmed=getUnconfirmedCaseIds();
+  var rowCls=unconfirmed[c.id]?' class="row-notif"':'';
+  var notifDot=unconfirmed[c.id]?'<span class="row-notif-dot" title="未確認のお知らせあり"></span>':'';
+  var h='<tr'+rowCls+'>';
+  h+='<td style="min-width:150px;max-width:190px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div></td>';
+  h+='<td style="min-width:90px;max-width:120px;"><div style="font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:115px;">'+esc(c.company||'—')+'</div></td>';
+  h+='<td style="width:48px;">'+typeHtml+'</td>';
+  h+='<td style="width:65px;">'+(teamShort?'<div style="font-size:10px;font-weight:600;">'+esc(teamShort)+'</div>':'')+(staffShort?'<div style="font-size:10px;color:#6b7280;">'+esc(staffShort)+'</div>':'')+'</td>';
+  h+='<td style="white-space:nowrap;">'+stHtml+'</td>';
+  // 他機関申請（国交省）列
+  h+='<td style="white-space:nowrap;min-width:140px;">'+mlitHtml+'</td>';
+  h+='<td style="'+expStyle+'font-size:10px;white-space:nowrap;min-width:88px;">';
+  if(isShinsa){h+='<div style="font-size:9px;color:#9ca3af;">'+(c.expire||'—')+'</div><div style="font-size:10px;font-weight:700;">特例 '+tokStr+'</div>';}
+  else{h+='<div>'+(c.expire||'—')+'</div><div style="color:#9ca3af;font-size:9px;">特例 '+tokStr+'</div>';if(days!==null&&days<=14&&days>0)h+='<div style="color:#ea580c;font-size:9px;">あと'+days+'日</div>';else if(days!==null&&days<=0&&c.expire)h+='<div style="color:#dc2626;font-size:9px;">期限切れ</div>';}
+  h+='</td>';
+  // 受付番号
+  h+='<td style="font-size:10px;white-space:nowrap;">'+(c.receiptNo?'<span style="color:#2563eb;font-weight:700;">'+esc(c.receiptNo)+'</span>':'<span style="color:#d1d5db;">—</span>')+'</td>';
+  // 帰国予定
+  h+='<td style="font-size:10px;white-space:nowrap;'+retStyle+'">'+(c.tempReturn||'<span style="color:#d1d5db;">—</span>')+'</td>';
+  // ver.20260512: 資料DLカラム
+  h+='<td style="font-size:10px;min-width:130px;">'+buildDownloadCell(c)+'</td>';
+  // 大房コメント（index.htmlから入力・表示のみ）
+  h+='<td style="min-width:180px;max-width:220px;">';
+  if(comment){
+    h+='<div style="font-size:11px;color:#374151;white-space:pre-wrap;line-height:1.5;">'+esc(comment)+'</div>';
+  } else {
+    h+='<span style="color:#d1d5db;">—</span>';
+  }
+  h+='</td>';
+  // 登録支援機関様コメント（入力・保存可能）+ 辞退・振替申請
+  var ownComment=orgOwnComments[c.id]||'';
+  var withdrawData=orgWithdraws[c.id]||{};
+  var withdrawType=withdrawData.type||'';
+  h+='<td style="min-width:220px;">';
+  h+='<div style="display:flex;flex-direction:column;gap:4px;">';
+  // 辞退・振替セレクト
+  h+='<select id="withdraw_'+cid+'" data-cid="'+cid+'" onchange="changeWithdraw(this.dataset.cid,this.value)" style="font-size:10px;padding:3px 5px;border:1.5px solid '+(withdrawType?'#dc2626':'#e2e8f0')+';border-radius:5px;background:'+(withdrawType?'#fef2f2':'white')+';color:'+(withdrawType?'#dc2626':'#374151')+';font-weight:'+(withdrawType?'700':'400')+';">';
+  h+='<option value="">通常進行</option>';
+  h+='<option value="辞退"'+(withdrawType==='辞退'?' selected':'')+'>🚫 辞退</option>';
+  h+='<option value="振替"'+(withdrawType==='振替'?' selected':'')+'>🔄 振替</option>';
+  h+='<option value="保留"'+(withdrawType==='保留'?' selected':'')+'>⏸ 保留</option>';
+  h+='</select>';
+  h+='<textarea id="owncmt_'+cid+'" class="org-comment-area" rows="2" placeholder="コメントを入力..." data-cid="'+cid+'" autocomplete="off" autocorrect="off" autocapitalize="off" oninput="orgOwnComments[this.dataset.cid]=this.value;" onfocus="_editingCommentId=this.id;" onblur="if(_editingCommentId===this.id)_editingCommentId=null;safeRenderMainIfPending();" oncompositionstart="_editingImeOn=true;" oncompositionend="_editingImeOn=false;orgOwnComments[this.dataset.cid]=this.value;">'+esc(ownComment)+'</textarea>';
+  h+='<button id="ownsavebtn_'+cid+'" class="own-save-btn" data-cid="'+cid+'" onclick="saveOwnComment(this.dataset.cid)">保存</button>';
+  h+='</div>';
+  h+='</td>';
+  h+='</tr>';
+  return h;
+}
+
+function renderSidebar(){
+  var h='';
+  GROUPS.forEach(function(g,i){
+    var count=groupCases(g.id).length;
+    h+='<div class="sb-item'+(currentGroup===g.id?' active':'')+'" onclick="switchGroup(\''+g.id+'\')">';
+    h+='<span>'+g.label+'</span><span class="sb-badge">'+count+'</span></div>';
+    if(i===0)h+='<div class="sb-divider"></div>';
+  });
+  h+='<div class="sb-divider"></div>';
+  h+='<div class="sb-item'+(currentGroup==='receipts'?' active':'')+'" onclick="switchGroup(\'receipts\')">申請記録 <span class="sb-badge">'+allReceipts.length+'</span></div>';
+  h+='<div class="sb-item'+(currentGroup==='shinsa'?' active':'')+'" onclick="switchGroup(\'shinsa\')">審査完了 <span class="sb-badge">'+allShinsa.length+'</span></div>';
+  document.getElementById('sidebar').innerHTML=h;
+}
+
+var COLS=[
+  {key:'name',label:'案件名 / 申請者'},
+  {key:'company',label:'所属機関'},
+  {key:'appType',label:'種別'},
+  {key:'staff',label:'担当'},
+  {key:'status',label:'ステータス'},
+  {key:'_mlit',label:'他機関申請',noSort:true},
+  {key:'expire',label:'在留期限 / 特例'},
+  {key:'receiptNo',label:'受付番号'},
+  {key:'tempReturn',label:'帰国予定'},
+  {key:'_downloads',label:'資料DL',noSort:true},
+  {key:'_comment',label:'大房コメント',noSort:true},
+  {key:'_own_comment',label:'登録支援機関様コメント',noSort:true}
+];
+
+function thHtml(col){
+  if(col.noSort)return '<th>'+col.label+'</th>';
+  var cls=sortCol===col.key?(sortDir==='asc'?'sort-asc':'sort-desc'):'';
+  return '<th class="'+cls+'" onclick="toggleSort(\''+col.key+'\')">'+col.label+' <span class="sort-icon"></span></th>';
+}
+
+function toggleSort(key){
+  if(sortCol===key){sortDir=sortDir==='asc'?'desc':'asc';}else{sortCol=key;sortDir='asc';}
+  renderMain();
+}
+
+function setView(v){currentView=v;renderMain();}
+
+function renderFilterBar(){
+  var baseAll=currentGroup==='all'?allCases:allCases.filter(function(c){return classify(c)===currentGroup;});
+  var statuses=[...new Set(baseAll.map(function(c){return c.status||'';}).filter(Boolean))].sort();
+  var companies=[...new Set(baseAll.map(function(c){return c.company||'';}).filter(Boolean))].sort();
+  var cases=groupCases(currentGroup);
+  var h='<div class="filter-bar-inner">';
+  // テキスト検索
+  h+='<input type="text" placeholder="🔍 フリーワード検索..." value="'+esc(searchQuery)+'" id="ms-search-input" autocomplete="off" autocorrect="off" autocapitalize="off" oninput="if(!_imeOn){searchQuery=this.value;renderSidebar();renderMain();}" oncompositionstart="_imeOn=true" oncompositionend="_imeOn=false;searchQuery=this.value;renderSidebar();renderMain();" onchange="searchQuery=this.value;renderSidebar();renderMain();" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;font-family:inherit;min-width:200px;flex:1;">';
+  // ステータスフィルター
+  h+='<select onchange="filterStatus=this.value;renderSidebar();renderMain()" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;background:white;cursor:pointer;">';
+  h+='<option value="">ステータス（全て）</option>';
+  statuses.forEach(function(s){h+='<option value="'+esc(s)+'"'+(filterStatus===s?' selected':'')+'>'+esc(s)+'</option>';});
+  h+='</select>';
+  // 企業フィルター
+  h+='<select onchange="filterCompany=this.value;renderSidebar();renderMain()" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;background:white;cursor:pointer;">';
+  h+='<option value="">所属機関（全て）</option>';
+  companies.forEach(function(c){h+='<option value="'+esc(c)+'"'+(filterCompany===c?' selected':'')+'>'+esc(c)+'</option>';});
+  h+='</select>';
+  // クリアボタン
+  if(searchQuery||filterStatus||filterCompany) h+='<button onclick="searchQuery=\'\';filterStatus=\'\';filterCompany=\'\';renderSidebar();renderMain()" style="padding:7px 12px;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap;">✕ クリア</button>';
+  h+='<span style="font-size:11px;color:#94a3b8;white-space:nowrap;">'+cases.length+'件</span>';
+  // ビュー切り替えボタン
+  h+='<div style="display:flex;gap:3px;background:#f1f5f9;border-radius:8px;padding:3px;margin-left:auto;">';
+  h+='<button onclick="setView(\'list\')" style="padding:4px 10px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;'+(currentView==='list'?'background:white;color:#0f2040;box-shadow:0 1px 3px rgba(0,0,0,.1);':'background:none;color:#94a3b8;')+'">☰ リスト</button>';
+  h+='<button onclick="setView(\'kanban\')" style="padding:4px 10px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;'+(currentView==='kanban'?'background:white;color:#0f2040;box-shadow:0 1px 3px rgba(0,0,0,.1);':'background:none;color:#94a3b8;')+'">▦ カンバン</button>';
+  h+='</div>';
+  h+='</div>';
+  document.getElementById('filter-bar').innerHTML=h;
+}
+
+
+function renderReceipts(){
+  var el=document.getElementById('main');
+  if(!el)return;
+  if(!allReceipts.length){
+    el.innerHTML='<div class="empty">申請記録はありません</div>';
+    return;
+  }
+  var sorted=allReceipts.slice().sort(function(a,b){
+    return (b.date||'').localeCompare(a.date||'');
+  });
+  var h='<div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;">';
+  h+='<span style="font-size:13px;font-weight:700;color:#0f2040;">申請記録</span>';
+  h+='<span style="font-size:11px;color:#6b7280;">'+sorted.length+'件</span>';
+  h+='</div>';
+  h+='<div class="tbl-wrap"><table><thead><tr>';
+  h+='<th>受付日</th><th>申請日</th><th>申請者</th><th>受付番号</th><th>案件</th><th>ステータス</th><th style="text-align:center;">PDF</th>';
+  h+='</tr></thead><tbody>';
+  sorted.forEach(function(r){
+    var stBg=ST_BG[r.status]||'#f8fafc';
+    var stCol=ST_COL[r.status]||'#64748b';
+    h+='<tr>';
+    h+='<td style="white-space:nowrap;font-size:11px;color:#6b7280;">'+(r.date?r.date.slice(0,10):'&mdash;')+'</td>';
+    h+='<td style="white-space:nowrap;font-size:11px;color:#0369a1;font-weight:700;">'+(r.applicationDate?r.applicationDate.slice(0,10):'&mdash;')+'</td>';
+    h+='<td style="font-size:12px;font-weight:700;">'+esc(r.name||'')+'</td>';
+    h+='<td style="font-size:11px;color:#2563eb;font-weight:700;white-space:nowrap;">'+(r.caseNo||'&mdash;')+'</td>';
+    h+='<td style="font-size:11px;color:#374151;">'+esc(r.sub||'')+'</td>';
+    h+='<td>'+(r.status?'<span style="font-size:10px;padding:2px 8px;border-radius:4px;background:'+stBg+';color:'+stCol+';border:1px solid '+stCol+'33;">'+esc(r.status)+'</span>':'&mdash;')+'</td>';
+    h+='<td style="text-align:center;white-space:nowrap;">'+(r.driveUrl?'<a href="'+esc(r.driveUrl)+'" target="_blank" rel="noopener" style="display:inline-block;padding:2px 10px;background:#dc2626;color:white;border-radius:4px;font-size:10px;font-weight:700;text-decoration:none;">PDF</a>':'<span style="color:#cbd5e1;font-size:10px;">&mdash;</span>')+'</td>';
+    h+='</tr>';
+  });
+  h+='</tbody></table></div>';
+  el.innerHTML=h;
+}
+
+function renderShinsa(){
+  var el=document.getElementById('main');
+  if(!el)return;
+  if(!allShinsa.length){
+    el.innerHTML='<div class="empty">審査完了の記録はありません</div>';
+    return;
+  }
+  var sorted=allShinsa.slice().sort(function(a,b){
+    return (b.date||'').localeCompare(a.date||'');
+  });
+  var h='<div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;">';
+  h+='<span style="font-size:13px;font-weight:700;color:#0f2040;">審査完了</span>';
+  h+='<span style="font-size:11px;color:#6b7280;">'+sorted.length+'件</span>';
+  h+='</div>';
+  h+='<div class="tbl-wrap"><table><thead><tr>';
+  h+='<th>完了日</th><th>申請者</th><th>受付番号</th><th>案件</th><th style="text-align:center;">PDF</th>';
+  h+='</tr></thead><tbody>';
+  sorted.forEach(function(r){
+    h+='<tr>';
+    h+='<td style="white-space:nowrap;font-size:11px;color:#6b7280;">'+(r.date?r.date.slice(0,10):'&mdash;')+'</td>';
+    h+='<td style="font-size:12px;font-weight:700;">'+esc(r.name||'')+'</td>';
+    h+='<td style="font-size:11px;color:#2563eb;font-weight:700;white-space:nowrap;">'+(r.caseNo||'&mdash;')+'</td>';
+    h+='<td style="font-size:11px;color:#374151;">'+esc(r.sub||'')+'</td>';
+    h+='<td style="text-align:center;white-space:nowrap;">'+(r.driveUrl?'<a href="'+esc(r.driveUrl)+'" target="_blank" rel="noopener" style="display:inline-block;padding:2px 10px;background:#16a34a;color:white;border-radius:4px;font-size:10px;font-weight:700;text-decoration:none;">PDF</a>':'<span style="color:#cbd5e1;font-size:10px;">&mdash;</span>')+'</td>';
+    h+='</tr>';
+  });
+  h+='</tbody></table></div>';
+  el.innerHTML=h;
+}
+
+function renderMain(){
+  // コメント入力中・IME変換中は再描画をスキップ（入力中の文字消失・フォーカス外れを防ぐ）
+  if(_editingCommentId||_editingImeOn){
+    _renderMainPending=true;
+    return;
+  }
+  _renderMainPending=false;
+  var cases=groupCases(currentGroup);
+  renderFilterBar();
+  var h='';
+  // ver.20260512: 期限切迫案件サマリー (10日以内・特例期限含む)
+  h+=buildUrgentSummary();
+  if(!cases.length){h+='<div class="empty">該当する案件はありません</div>';}
+  else if(currentView==='kanban'){h+=renderKanban(cases);}
+  else{
+    h+='<div class="tbl-wrap"><table><thead><tr>';
+    COLS.forEach(function(c){h+=thHtml(c);});
+    h+='</tr></thead><tbody>';
+    cases.forEach(function(c){h+=buildRow(c);});
+    h+='</tbody></table></div>';
+  }
+  document.getElementById('main').innerHTML=h;
+}
+
+// ver.20260512: 在留期限・特例期限が10日以内の案件をサマリ表示
+function buildUrgentSummary(){
+  var today=new Date();today.setHours(0,0,0,0);
+  var urgent=[];
+  // 完了済以外を対象
+  allCases.filter(function(c){return classify(c)==='active';}).forEach(function(c){
+    var isShinsa=(c.status==='審査中'||c.status==='特活審査中');
+    var checkDate=null;
+    var label='';
+    if(isShinsa){
+      // 審査中は特例期限を見る
+      if(c.tokureiDate){
+        checkDate=new Date(c.tokureiDate);
+        label='特例期限';
+      } else if(c.expire){
+        // 自動算出（在留期限+2ヶ月）
+        var t=new Date(c.expire);t.setMonth(t.getMonth()+2);
+        checkDate=t;
+        label='特例期限(推定)';
+      }
+    } else {
+      // 通常は在留期限
+      if(c.expire){
+        checkDate=new Date(c.expire);
+        label='在留期限';
+      }
+    }
+    if(!checkDate||isNaN(checkDate.getTime())) return;
+    checkDate.setHours(0,0,0,0);
+    var days=Math.ceil((checkDate-today)/86400000);
+    if(days<=10){
+      urgent.push({c:c,days:days,label:label,date:checkDate.toISOString().split('T')[0]});
+    }
+  });
+  if(!urgent.length) return '';
+  urgent.sort(function(a,b){return a.days-b.days;});
+  var h='<div style="background:linear-gradient(135deg,#fef2f2 0%,#fffbeb 100%);border:2px solid #fca5a5;border-radius:12px;padding:14px 16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(220,38,38,.1);">';
+  h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">';
+  h+='<span style="font-size:20px;">🚨</span>';
+  h+='<div style="font-size:14px;font-weight:800;color:#dc2626;">期限が10日以内に迫っている案件 ('+urgent.length+'件)</div>';
+  h+='</div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;">';
+  urgent.forEach(function(u){
+    var c=u.c;
+    var bgCol=u.days<=0?'#fee2e2':u.days<=3?'#fff7ed':'#fefce8';
+    var borCol=u.days<=0?'#fca5a5':u.days<=3?'#fdba74':'#fde68a';
+    var dayCol=u.days<=0?'#dc2626':u.days<=3?'#ea580c':'#d97706';
+    var daysText=u.days<=0?'⚠️ 期限切れ '+Math.abs(u.days)+'日経過':u.days===0?'⚠️ 本日':u.days+'日後';
+    h+='<div style="background:'+bgCol+';border:1.5px solid '+borCol+';border-radius:8px;padding:8px 10px;">';
+    h+='<div style="font-size:11px;font-weight:700;color:#0f2040;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(c.name||c.applicant||'(未設定)')+'</div>';
+    h+='<div style="font-size:10px;color:#64748b;margin-top:2px;">'+esc(c.company||'')+(c.appType?' / '+esc(c.appType):'')+'</div>';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;gap:6px;">';
+    h+='<span style="font-size:10px;color:#64748b;">'+u.label+': '+u.date+'</span>';
+    h+='<span style="font-size:11px;font-weight:800;color:'+dayCol+';white-space:nowrap;">'+daysText+'</span>';
+    h+='</div></div>';
+  });
+  h+='</div></div>';
+  return h;
+}
+
+// blur後に保留中のrenderMainを実行する
+function safeRenderMainIfPending(){
+  if(_renderMainPending&&!_editingCommentId&&!_editingImeOn){
+    setTimeout(function(){
+      if(!_editingCommentId&&!_editingImeOn&&_renderMainPending){
+        renderMain();
+      }
+    },100);
+  }
+}
+
+function buildKanbanCol(label,color,colCases){
+  var h='<div class="kanban-col">';
+  h+='<div class="kanban-col-head" style="background:'+color+';">';
+  h+=esc(label);
+  h+='<span style="background:rgba(255,255,255,.25);padding:1px 8px;border-radius:99px;font-size:10px;">'+colCases.length+'</span>';
+  h+='</div>';
+  h+='<div class="kanban-col-body">';
+  var unconfirmed=getUnconfirmedCaseIds();
+  colCases.forEach(function(c){
+    var note=caseNotes[c.id]||{};
+    var today=new Date();today.setHours(0,0,0,0);
+    var days=c.expire?Math.ceil((new Date(c.expire)-today)/86400000):null;
+    var expColor=days===null?'#94a3b8':days<=0?'#dc2626':days<=14?'#ea580c':days<=30?'#d97706':'#64748b';
+    var stBg=ST_BG[c.status]||'#f8fafc',stCol=ST_COL[c.status]||'#64748b';
+    var cardBg=unconfirmed[c.id]?'background:#fffbeb;':'';
+    h+='<div class="kanban-card" style="'+cardBg+'border-left:3px solid '+color+';">';
+    h+='<div class="kanban-card-name">'+(unconfirmed[c.id]?'<span class="row-notif-dot"></span>':'')+esc(c.name||c.applicant||'（未設定）')+'</div>';
+    if(c.applicant&&c.name)h+='<div class="kanban-card-sub">'+esc(c.applicant)+'</div>';
+    h+='<div class="kanban-card-sub">'+esc(c.company||'')+'</div>';
+    h+='<div class="kanban-card-meta">';
+    if(c.status)h+='<span class="kanban-badge" style="background:'+stBg+';color:'+stCol+';">'+esc(c.status)+'</span>';
+    if(c.expire)h+='<span class="kanban-badge" style="background:#f8fafc;color:'+expColor+';">📅'+c.expire+(days!==null&&days<=30?' (あと'+days+'日)':'')+'</span>';
+    if(c.staff)h+='<span class="kanban-badge" style="background:#f0fdf4;color:#16a34a;">'+esc((c.staff||'').split(/[\s\u3000]/)[0])+'</span>';
+    var orgCmt=orgComments[c.id]||''; if(orgCmt)h+='<div style="font-size:10px;color:#374151;margin-top:3px;padding-top:3px;border-top:1px solid #f1f5f9;line-height:1.4;white-space:pre-wrap;max-height:40px;overflow:hidden;">'+esc(orgCmt)+'</div>';
+    h+='</div></div>';
+  });
+  h+='</div></div>';
+  return h;
+}
+
+function renderKanban(cases){
+  var allColStatuses=STATUS_COLS.reduce(function(a,col){return a.concat(col.statuses);},[]);
+  var h='<div class="kanban-wrap">';
+  STATUS_COLS.forEach(function(col){
+    var colCases=cases.filter(function(c){return col.statuses.indexOf(c.status)>=0;});
+    if(!colCases.length) return;
+    h+=buildKanbanCol(col.label,col.color,colCases);
+  });
+
+  h+='</div>';
+  return h;
+}
+function switchGroup(gid){currentGroup=gid;renderSidebar();if(gid==='receipts'){renderReceipts();}else if(gid==='shinsa'){renderShinsa();}else{renderMain();}}
+
+async function saveComment(caseId){
+  var ta=document.getElementById('cmt_'+caseId);
+  var btn=document.getElementById('savebtn_'+caseId);
+  if(!ta||!btn)return;
+  var val=ta.value.trim();
+  orgComments[caseId]=val;
+  var key='org_comment_'+currentToken+'_'+caseId;
+  btn.textContent='保存中...';btn.disabled=true;
+  try{
+    await sbFetch('settings',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:val})});
+    btn.textContent='✓保存済';btn.className='save-btn saved';
+    setTimeout(function(){btn.textContent='保存';btn.className='save-btn';btn.disabled=false;},2000);
+  }catch(e){btn.textContent='保存';btn.disabled=false;alert('保存失敗: '+e.message);}
+}
+
+async function saveOwnComment(caseId){
+  var ta=document.getElementById('owncmt_'+caseId);
+  var btn=document.getElementById('ownsavebtn_'+caseId);
+  if(!ta||!btn)return;
+  var val=ta.value.trim();
+  orgOwnComments[caseId]=val;
+  var key='org_own_comment_'+currentToken+'_'+caseId;
+  btn.textContent='保存中...';btn.disabled=true;
+  try{
+    await sbFetch('settings',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:val})});
+    btn.textContent='✓保存済';btn.className='own-save-btn saved';
+    setTimeout(function(){btn.textContent='保存';btn.className='own-save-btn';btn.disabled=false;},2000);
+  }catch(e){btn.textContent='保存';btn.disabled=false;alert('保存失敗: '+e.message);}
+}
+
+// ver.20260512: 辞退・振替申請を保存
+async function changeWithdraw(caseId, withdrawType){
+  var sel=document.getElementById('withdraw_'+caseId);
+  if(!sel) return;
+  // 視覚フィードバック
+  if(withdrawType){
+    sel.style.borderColor='#dc2626';
+    sel.style.background='#fef2f2';
+    sel.style.color='#dc2626';
+    sel.style.fontWeight='700';
+  } else {
+    sel.style.borderColor='#e2e8f0';
+    sel.style.background='white';
+    sel.style.color='#374151';
+    sel.style.fontWeight='400';
+  }
+  var data={type:withdrawType||'',requested_at:new Date().toISOString(),requested_by:orgName};
+  orgWithdraws[caseId]=data;
+  var key='org_withdraw_'+currentToken+'_'+caseId;
+  try{
+    await sbFetch('settings',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:JSON.stringify(data)})});
+    // 確認モーダル表示
+    if(withdrawType){
+      alert('「' + withdrawType + '」として登録しました。\n大房側で確認の上、対応いたします。');
+    }
+  }catch(e){
+    alert('保存失敗: '+e.message);
+  }
+}
+
+// ========== 通知（お知らせ）機能 ==========
+async function loadNotifications(){
+  if(!orgName) return;
+  try{
+    // 最近60日以内の通知を取得
+    var cutoff=new Date(); cutoff.setDate(cutoff.getDate()-60);
+    var cutoffStr=cutoff.toISOString();
+    var r=await sbFetch('share_notifications?org=eq.'+encodeURIComponent(orgName)+'&notified_at=gte.'+encodeURIComponent(cutoffStr)+'&select=id,case_id,status,receipt_no,notified_at,confirmed_at,confirmed_by&order=notified_at.desc&limit=200');
+    if(!r.ok) return;
+    var data=await r.json();
+    if(!Array.isArray(data)) return;
+    var prevUnconfirmed=notifications.filter(function(n){return !n.confirmed_at;}).length;
+    notifications=data;
+    updateNotifBadge();
+    // 件数が変わったらリストも再描画（行ハイライト更新のため）
+    var newUnconfirmed=notifications.filter(function(n){return !n.confirmed_at;}).length;
+    if(newUnconfirmed!==prevUnconfirmed){
+      if(currentGroup!=='receipts') renderMain();
+    }
+  }catch(e){ console.warn('loadNotifications error',e); }
+}
+
+function updateNotifBadge(){
+  var btn=document.getElementById('notifBtn');
+  var badge=document.getElementById('notifBadge');
+  if(!btn||!badge) return;
+  var unconfirmed=notifications.filter(function(n){return !n.confirmed_at;});
+  btn.style.display='flex';
+  if(unconfirmed.length>0){
+    badge.style.display='flex';
+    badge.textContent=unconfirmed.length>99?'99+':unconfirmed.length;
+  } else {
+    badge.style.display='none';
+  }
+}
+
+function fmtTime(iso){
+  if(!iso) return '';
+  try{
+    var d=new Date(iso); if(isNaN(d.getTime())) return '';
+    var now=new Date(); var diff=now-d;
+    if(diff<60000) return 'たった今';
+    if(diff<3600000) return Math.floor(diff/60000)+'分前';
+    if(diff<86400000) return Math.floor(diff/3600000)+'時間前';
+    var m=d.getMonth()+1, day=d.getDate();
+    var hh=String(d.getHours()).padStart(2,'0'), mm=String(d.getMinutes()).padStart(2,'0');
+    return m+'/'+day+' '+hh+':'+mm;
+  }catch(e){ return ''; }
+}
+
+function renderNotifModal(){
+  var body=document.getElementById('notifBody');
+  if(!body) return;
+  if(!notifications.length){
+    body.innerHTML='<div class="notif-empty">お知らせはありません</div>';
+    return;
+  }
+  // 未確認を上、確認済みを下（最近10件）
+  var unconf=notifications.filter(function(n){return !n.confirmed_at;});
+  var conf=notifications.filter(function(n){return n.confirmed_at;}).slice(0,10);
+  var h='';
+  if(unconf.length){
+    h+='<div style="font-size:11px;font-weight:700;color:#b45309;margin:4px 6px 6px;">🔔 未確認（'+unconf.length+'）</div>';
+    unconf.forEach(function(n){ h+=buildNotifItem(n,false); });
+  } else {
+    h+='<div style="padding:16px;text-align:center;color:#16a34a;font-size:12px;font-weight:700;">✅ 未確認のお知らせはありません</div>';
+  }
+  if(conf.length){
+    h+='<div style="font-size:11px;font-weight:700;color:#94a3b8;margin:14px 6px 6px;">確認済み（最近 '+conf.length+'件）</div>';
+    conf.forEach(function(n){ h+=buildNotifItem(n,true); });
+  }
+  body.innerHTML=h;
+}
+
+function buildNotifItem(n,isConfirmed){
+  var c=allCases.find(function(x){return x.id===n.case_id;});
+  var title=c?(c.name||c.applicant||'（案件）'):'（案件データなし）';
+  var sub=c?[c.applicant,c.company].filter(Boolean).join(' / '):esc(n.case_id);
+  var lbl=NOTIF_LABELS[n.status]||n.status;
+  var cls=isConfirmed?'notif-item confirmed':'notif-item';
+  var h='<div class="'+cls+'">';
+  h+='<div class="notif-case-name">'+esc(title)+'</div>';
+  h+='<div class="notif-meta">'+esc(sub)+(n.receipt_no?' ・ '+esc(n.receipt_no):'')+'</div>';
+  h+='<div class="notif-status">'+esc(lbl)+'</div>';
+  h+='<div class="notif-meta" style="margin-bottom:'+(isConfirmed?'0':'8px')+';">🕒 '+esc(fmtTime(n.notified_at));
+  if(isConfirmed) h+=' / ✓ 確認済 '+esc(fmtTime(n.confirmed_at));
+  h+='</div>';
+  if(!isConfirmed){
+    h+='<button class="notif-confirm-btn" onclick="confirmNotification(\''+esc(n.id)+'\')">✅ 確認済みにする</button>';
+  }
+  h+='</div>';
+  return h;
+}
+
+function openNotifModal(){
+  document.getElementById('notifModalBg').classList.add('open');
+  renderNotifModal();
+}
+function closeNotifModal(){
+  document.getElementById('notifModalBg').classList.remove('open');
+}
+
+async function confirmNotification(id){
+  var n=notifications.find(function(x){return x.id===id;});
+  if(!n||n.confirmed_at) return;
+  try{
+    var r=await sbFetch('share_notifications?id=eq.'+encodeURIComponent(id),{
+      method:'PATCH',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+      body:JSON.stringify({confirmed_at:new Date().toISOString(),confirmed_by:orgName||''})
+    });
+    if(!r.ok){ alert('確認済みへの更新に失敗しました'); return; }
+    var updated=await r.json();
+    if(Array.isArray(updated)&&updated.length){ Object.assign(n,updated[0]); }
+    else { n.confirmed_at=new Date().toISOString(); }
+    updateNotifBadge();
+    renderNotifModal();
+    if(currentGroup!=='receipts') renderMain();
+  }catch(e){ alert('エラー: '+e.message); }
+}
+
+function startNotifPolling(){
+  if(_notifTimer) clearInterval(_notifTimer);
+  loadNotifications();
+  _notifTimer=setInterval(loadNotifications, NOTIF_POLL_MS);
+}
+// ========== /通知機能 ==========
+
+var _correctPass='';
+function checkPass(){
+  var input=document.getElementById('passInput').value.trim();
+  if(input===_correctPass){
+    document.getElementById('passScreen').style.display='none';
+    loadData();
+  }else{
+    document.getElementById('passErr').textContent='パスワードが正しくありません';
+    document.getElementById('passInput').value='';
+    document.getElementById('passInput').focus();
+  }
+}
+
+async function init(){
+  var token=getParam('token');
+  if(!token){document.getElementById('main').innerHTML='<div class="error-box">URLが正しくありません。</div>';return;}
+  currentToken=token;
+  try{
+    var r=await sbFetch('settings?key=eq.'+encodeURIComponent('org_view_token_'+token)+'&select=value');
+    var sd=await r.json();
+    if(!sd||!sd.length){document.getElementById('main').innerHTML='<div class="error-box">このURLは無効です。担当者にお問い合わせください。</div>';return;}
+    var orgId=sd[0].value;
+    var r2=await sbFetch('support_orgs?id=eq.'+encodeURIComponent(orgId)+'&select=name');
+    var od=await r2.json();
+    orgName=(od&&od.length)?od[0].name:'';
+    // パスワードチェック
+    var rp=await sbFetch('settings?key=eq.'+encodeURIComponent('org_view_pass_'+token)+'&select=value');
+    var pd=await rp.json();
+    var pass=(pd&&pd.length)?pd[0].value:'';
+    if(pass){
+      _correctPass=pass;
+      document.getElementById('passOrgName').textContent=orgName+' 様';
+      document.getElementById('passScreen').style.display='flex';
+      setTimeout(function(){document.getElementById('passInput').focus();},100);
+      return;
+    }
+    // パスワードなしの場合はそのまま読込
+    document.getElementById('headerOrg').textContent=orgName+' 様';
+    document.title=orgName+' 様 | 案件進捗確認';
+    await loadData();
+  }catch(e){document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+e.message+'</div>';}
+}
+
+async function loadData(){
+  try{
+    // 案件取得（受付番号・帰国予定も含む）
+    document.getElementById('headerOrg').textContent=orgName+' 様';
+    document.title=orgName+' 様 | 案件進捗確認';
+    var r4=await sbFetch('cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,temp_return,applicant_field&order=expire.asc.nullslast');
+    var cases=await r4.json();
+    allCases=(cases||[]).map(function(c){return{id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||''};});
+    // personsテーブルからtempReturn(一時帰国予定日)を取得して補完
+    if(allCases.length){
+      var pids=allCases.map(function(c){return c.id;});
+      var PCHUNK=50;
+      for(var pi=0;pi<pids.length;pi+=PCHUNK){
+        var pchunk=pids.slice(pi,pi+PCHUNK);
+        var rp=await sbFetch('persons?case_id=in.('+pchunk.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=case_id,temp_return');
+        var persons=await rp.json();
+        if(Array.isArray(persons)){
+          persons.forEach(function(p){
+            if(p.temp_return){
+              var c=allCases.find(function(x){return x.id===p.case_id;});
+              if(c&&!c.tempReturn) c.tempReturn=p.temp_return;
+            }
+          });
+        }
+      }
+    }
+    // 進捗コメント
+    if(allCases.length){
+      var ids=allCases.map(function(c){return c.id;});
+      // 分割取得（URLが長くなりすぎないよう50件ずつ）
+      var CHUNK=50;
+      for(var ci=0;ci<ids.length;ci+=CHUNK){
+        var chunk=ids.slice(ci,ci+CHUNK);
+        var r5=await sbFetch('case_notes?case_id=in.('+chunk.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=case_id,note');
+        var notes=await r5.json();
+        (notes||[]).forEach(function(n){var note=n.note;if(typeof note==='string'){try{note=JSON.parse(note);}catch(e){note={progressMemo:note};}}caseNotes[n.case_id]=note||{};});
+      }
+      // 大房コメント取得（分割）
+      var cmtKeys=ids.map(function(id){return 'org_comment_'+currentToken+'_'+id;});
+      for(var ci2=0;ci2<cmtKeys.length;ci2+=CHUNK){
+        var cmtChunk=cmtKeys.slice(ci2,ci2+CHUNK);
+        var r6=await sbFetch('settings?key=in.('+cmtChunk.map(function(k){return '"'+k+'"';}).join(',')+')'+'&select=key,value');
+        var cmts=await r6.json();
+        if(Array.isArray(cmts)) (cmts||[]).forEach(function(row){var cid=row.key.replace('org_comment_'+currentToken+'_','');orgComments[cid]=row.value||'';});
+      }
+      // 登録支援機関様コメント取得（分割）
+      var ownCmtKeys=ids.map(function(id){return 'org_own_comment_'+currentToken+'_'+id;});
+      for(var ci3=0;ci3<ownCmtKeys.length;ci3+=CHUNK){
+        var ownChunk=ownCmtKeys.slice(ci3,ci3+CHUNK);
+        var r7=await sbFetch('settings?key=in.('+ownChunk.map(function(k){return '"'+k+'"';}).join(',')+')'+'&select=key,value');
+        var ownCmts=await r7.json();
+        if(Array.isArray(ownCmts)) (ownCmts||[]).forEach(function(row){var cid=row.key.replace('org_own_comment_'+currentToken+'_','');orgOwnComments[cid]=row.value||'';});
+      }
+      // ver.20260512: 辞退・振替申請取得（分割）
+      var wdKeys=ids.map(function(id){return 'org_withdraw_'+currentToken+'_'+id;});
+      for(var ci4=0;ci4<wdKeys.length;ci4+=CHUNK){
+        var wdChunk=wdKeys.slice(ci4,ci4+CHUNK);
+        var r8=await sbFetch('settings?key=in.('+wdChunk.map(function(k){return '"'+k+'"';}).join(',')+')'+'&select=key,value');
+        var wds=await r8.json();
+        if(Array.isArray(wds)) (wds||[]).forEach(function(row){
+          var cid=row.key.replace('org_withdraw_'+currentToken+'_','');
+          var val=row.value;
+          if(typeof val==='string'){try{val=JSON.parse(val);}catch(e){val={type:val};}}
+          orgWithdraws[cid]=val||{};
+        });
+      }
+    }
+    // 申請記録取得（このorgに紐づく案件のcase_idで絞り込み）
+    if(allCases.length){
+      var caseIds=allCases.map(function(c){return c.id;});
+      var RCHUNK=50;
+      var _recTmp=[];
+      for(var ri=0;ri<caseIds.length;ri+=RCHUNK){
+        var rchunk=caseIds.slice(ri,ri+RCHUNK);
+        var rr=await sbFetch('receipt_archive?case_id=in.('+rchunk.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=id,name,date,case_no,sub,case_id,application_date,reported,drive_url&order=date.desc.nullslast');
+        var recs=await rr.json();
+        if(Array.isArray(recs)) _recTmp=_recTmp.concat(recs);
+      }
+      allReceipts=_recTmp.map(function(r){
+        var lc=allCases.find(function(c){return c.id===r.case_id;})||null;
+        return {id:r.id,case_id:r.case_id||'',name:r.name||'',date:r.date||'',caseNo:r.case_no||'',sub:r.sub||'',
+          applicationDate:r.application_date||'',reported:r.reported||false,
+          driveUrl:r.drive_url||'',
+          status:lc?(lc.status||''):''};
+      });
+      // 審査完了取得（同様にcase_idで絞り込み）
+      var _shTmp=[];
+      for(var si=0;si<caseIds.length;si+=RCHUNK){
+        var schunk=caseIds.slice(si,si+RCHUNK);
+        var sr=await sbFetch('shinsa_archive?case_id=in.('+schunk.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=id,name,date,case_no,sub,case_id,drive_url&order=date.desc.nullslast');
+        var shs=await sr.json();
+        if(Array.isArray(shs)) _shTmp=_shTmp.concat(shs);
+      }
+      allShinsa=_shTmp.map(function(r){
+        return {id:r.id,case_id:r.case_id||'',name:r.name||'',date:r.date||'',caseNo:r.case_no||'',sub:r.sub||'',
+          driveUrl:r.drive_url||''};
+      });
+    }
+    renderSidebar();renderMain();
+    // お知らせポーリング開始
+    startNotifPolling();
+  }catch(e){document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+e.message+'</div>';}
+}
+init();
+</script>
+</body>
+</html>
