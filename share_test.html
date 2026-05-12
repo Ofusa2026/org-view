@@ -645,12 +645,28 @@ function renderMain(){
   document.getElementById('main').innerHTML=h;
 }
 
-// ver.20260512: 在留期限・特例期限が10日以内の案件をサマリ表示
+// ver.20260512: 在留期限・特例期限が10日以内かつ「申請未完了」の案件をサマリ表示
+// 申請済の案件は、申請受理されたら入管側の判断を待つだけなので、登録支援機関に
+// プレッシャーをかけるのではなく、申請前の案件だけ目立たせる
 function buildUrgentSummary(){
+  // 申請済とみなすステータス（=サマリから除外）
+  var APPLIED_STATUSES={
+    '★申請':1,'申請済(番号待)':1,'申請済 (番号待)':1,'審査中':1,'特活審査中':1,
+    '★要追完':1,'要追完 企業不足書類待ち':1,'要追完 人材不足書類待ち':1,
+    '許可済 受取方法調整中':1,'入管受取ステータス変更中':1,
+    '郵送交付':1,'★郵送交付':1,'郵送交付中':1,
+    '窓口受取':1,'★窓口受取':1,'窓口受取（本人）':1,'窓口受取 (本人)':1,
+    '完了':1,'審査完了':1
+  };
   var today=new Date();today.setHours(0,0,0,0);
   var urgent=[];
-  // 完了済以外を対象
-  allCases.filter(function(c){return classify(c)==='active';}).forEach(function(c){
+  // 完了済以外を対象 + 申請未完了のみ
+  allCases.filter(function(c){
+    if(classify(c)!=='active') return false;
+    // 申請済はスキップ（=登録支援機関の対応待ちではない）
+    if(APPLIED_STATUSES[c.status]) return false;
+    return true;
+  }).forEach(function(c){
     var isShinsa=(c.status==='審査中'||c.status==='特活審査中');
     var checkDate=null;
     var label='';
@@ -660,7 +676,6 @@ function buildUrgentSummary(){
         checkDate=new Date(c.tokureiDate);
         label='特例期限';
       } else if(c.expire){
-        // 自動算出（在留期限+2ヶ月）
         var t=new Date(c.expire);t.setMonth(t.getMonth()+2);
         checkDate=t;
         label='特例期限(推定)';
@@ -684,7 +699,7 @@ function buildUrgentSummary(){
   var h='<div style="background:linear-gradient(135deg,#fef2f2 0%,#fffbeb 100%);border:2px solid #fca5a5;border-radius:12px;padding:14px 16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(220,38,38,.1);">';
   h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">';
   h+='<span style="font-size:20px;">🚨</span>';
-  h+='<div style="font-size:14px;font-weight:800;color:#dc2626;">期限が10日以内に迫っている案件 ('+urgent.length+'件)</div>';
+  h+='<div style="font-size:14px;font-weight:800;color:#dc2626;">期限が10日以内に迫っている案件 ('+urgent.length+'件) <span style="font-size:11px;font-weight:400;color:#92400e;">※申請未完了のみ</span></div>';
   h+='</div>';
   h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;">';
   urgent.forEach(function(u){
