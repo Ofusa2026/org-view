@@ -124,7 +124,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260518.18</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260518.19</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -802,30 +802,40 @@ function buildTodayHighlights(scope){
   receipts.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
   shinsas.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
 
-  // ver.20260518.18: トンマナをリスト風に統一（縦1列、強調しすぎない）
-  // 控えめな背景・薄い枠で、申請記録テーブルと視線の流れを揃える
+  // ver.20260518.19: 下のテーブル（申請記録・審査完了）と列幅・列構成を完全に揃える
+  // <table>形式に変えて、tdのmin-width/max-widthを下のテーブルと完全一致させる
   var h='<div style="background:#fafbfc;border:1px solid #e2e8f0;border-left:4px solid #2563eb;border-radius:6px;padding:10px 14px;margin-bottom:14px;">';
   h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">';
   h+='<span style="font-size:14px;">📋</span>';
   h+='<div style="font-size:12px;font-weight:700;color:#1e293b;">未確認の案件 <span style="font-size:10px;font-weight:400;color:#94a3b8;margin-left:4px;">※直近7日以内</span></div>';
   h+='</div>';
 
-  // ① 申請分
+  // ① 申請分（caseベース：日付なし、ステータスなし、PDFなし）
   if(showApplied){
   h+=_buildTodaySection('🟢 未確認の申請分', applied.length, '#16a34a', function(){
-    if(!applied.length) return '<div style="font-size:11px;color:#94a3b8;padding:6px 8px;">未確認の申請はありません</div>';
-    var rh='<div style="display:flex;flex-direction:column;gap:0;background:white;border-radius:6px;overflow:hidden;border:1px solid #e2e8f0;">'; // ver.20260518.18: 縦1列リスト
+    if(!applied.length) return '<div style="font-size:11px;color:#94a3b8;padding:6px 8px;background:white;border:1px solid #e2e8f0;border-radius:6px;">未確認の申請はありません</div>';
+    var rh='<div class="tbl-wrap" style="background:white;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;"><table>';
+    rh+='<tbody>';
     applied.forEach(function(c,idx){
       var aid='case_'+c.id;
-      var border=idx===0?'':'border-top:1px solid #f1f5f9;';
-      rh+='<div style="'+border+'padding:6px 10px;display:flex;align-items:center;gap:10px;font-size:11px;">';
-      rh+='<input type="checkbox" data-aid="'+esc(aid)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:#16a34a;flex-shrink:0;">';
-      rh+='<span style="font-weight:700;color:#0f2040;min-width:140px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(c.name||c.applicant||'')+'</span>';
-      rh+='<span style="color:#64748b;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(c.company||'')+'</span>';
-      if(c.receiptNo)rh+='<span style="color:#2563eb;font-weight:700;white-space:nowrap;">'+esc(c.receiptNo)+'</span>';
-      rh+='</div>';
+      rh+='<tr'+(idx>0?' style="border-top:1px solid #f1f5f9;"':'')+'>';
+      // 日付（受付日と同じ位置・スタイル）— 申請分は日付なしなので空
+      rh+='<td style="white-space:nowrap;font-size:11px;color:#6b7280;">&mdash;</td>';
+      // 申請者（min-width:140px, bold）
+      rh+='<td style="font-size:12px;font-weight:700;min-width:140px;">'+esc(c.name||c.applicant||'')+'</td>';
+      // 所属機関（min-width:120px, max-width:200px, 折返し可）
+      rh+='<td style="font-size:11px;color:#374151;min-width:120px;max-width:200px;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(c.company||'')+'</td>';
+      // 受付番号（青bold, nowrap）
+      rh+='<td style="font-size:11px;color:#2563eb;font-weight:700;white-space:nowrap;">'+(c.receiptNo?esc(c.receiptNo):'&mdash;')+'</td>';
+      // 案件（min-width:220px, max-width:360px, 折返し可）
+      rh+='<td style="font-size:11px;color:#374151;min-width:220px;max-width:360px;white-space:normal;word-break:break-word;line-height:1.4;">&mdash;</td>';
+      // PDF（中央寄せ）
+      rh+='<td style="text-align:center;white-space:nowrap;"><span style="color:#cbd5e1;font-size:10px;">&mdash;</span></td>';
+      // 確認チェック（中央寄せ）
+      rh+='<td style="text-align:center;white-space:nowrap;"><input type="checkbox" data-aid="'+esc(aid)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)" style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;"></td>';
+      rh+='</tr>';
     });
-    rh+='</div>';
+    rh+='</tbody></table></div>';
     return rh;
   });
   }
@@ -833,20 +843,21 @@ function buildTodayHighlights(scope){
   // ② 申請受付番号
   if(showReceipts){
   h+=_buildTodaySection('📮 未確認の申請受付番号', receipts.length, '#2563eb', function(){
-    if(!receipts.length) return '<div style="font-size:11px;color:#94a3b8;padding:6px 8px;">未確認の受付番号はありません</div>';
-    var rh='<div style="display:flex;flex-direction:column;gap:0;background:white;border-radius:6px;overflow:hidden;border:1px solid #e2e8f0;">'; // ver.20260518.18: 縦1列リスト
+    if(!receipts.length) return '<div style="font-size:11px;color:#94a3b8;padding:6px 8px;background:white;border:1px solid #e2e8f0;border-radius:6px;">未確認の受付番号はありません</div>';
+    var rh='<div class="tbl-wrap" style="background:white;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;"><table>';
+    rh+='<tbody>';
     receipts.forEach(function(r,idx){
-      var border=idx===0?'':'border-top:1px solid #f1f5f9;';
-      rh+='<div style="'+border+'padding:6px 10px;display:flex;align-items:center;gap:10px;font-size:11px;">';
-      rh+='<input type="checkbox" data-aid="'+esc(r.id)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:#2563eb;flex-shrink:0;">';
-      rh+='<span style="color:#94a3b8;white-space:nowrap;font-size:10px;">'+(r.date?r.date.slice(0,10):'')+'</span>';
-      rh+='<span style="font-weight:700;color:#0f2040;min-width:140px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(r.name||'')+'</span>';
-      rh+='<span style="color:#64748b;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(r.company||'')+'</span>';
-      if(r.caseNo)rh+='<span style="color:#2563eb;font-weight:700;white-space:nowrap;">'+esc(r.caseNo)+'</span>';
-      if(r.driveUrl||r.pdfDone)rh+=_buildPdfButton(r, '#dc2626');
-      rh+='</div>';
+      rh+='<tr'+(idx>0?' style="border-top:1px solid #f1f5f9;"':'')+'>';
+      rh+='<td style="white-space:nowrap;font-size:11px;color:#6b7280;">'+(r.date?r.date.slice(0,10):'&mdash;')+'</td>';
+      rh+='<td style="font-size:12px;font-weight:700;min-width:140px;">'+esc(r.name||'')+'</td>';
+      rh+='<td style="font-size:11px;color:#374151;min-width:120px;max-width:200px;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(r.company||'')+'</td>';
+      rh+='<td style="font-size:11px;color:#2563eb;font-weight:700;white-space:nowrap;">'+(r.caseNo||'&mdash;')+'</td>';
+      rh+='<td style="font-size:11px;color:#374151;min-width:220px;max-width:360px;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(r.sub||'')+'</td>';
+      rh+='<td style="text-align:center;white-space:nowrap;">'+_buildPdfCell(r, '#dc2626')+'</td>';
+      rh+='<td style="text-align:center;white-space:nowrap;"><input type="checkbox" data-aid="'+esc(r.id)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)" style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;"></td>';
+      rh+='</tr>';
     });
-    rh+='</div>';
+    rh+='</tbody></table></div>';
     return rh;
   });
   }
@@ -854,20 +865,21 @@ function buildTodayHighlights(scope){
   // ③ 審査完了
   if(showShinsas){
   h+=_buildTodaySection('✅ 未確認の審査完了', shinsas.length, '#0369a1', function(){
-    if(!shinsas.length) return '<div style="font-size:11px;color:#94a3b8;padding:6px 8px;">未確認の審査完了はありません</div>';
-    var rh='<div style="display:flex;flex-direction:column;gap:0;background:white;border-radius:6px;overflow:hidden;border:1px solid #e2e8f0;">'; // ver.20260518.18: 縦1列リスト
+    if(!shinsas.length) return '<div style="font-size:11px;color:#94a3b8;padding:6px 8px;background:white;border:1px solid #e2e8f0;border-radius:6px;">未確認の審査完了はありません</div>';
+    var rh='<div class="tbl-wrap" style="background:white;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;"><table>';
+    rh+='<tbody>';
     shinsas.forEach(function(s,idx){
-      var border=idx===0?'':'border-top:1px solid #f1f5f9;';
-      rh+='<div style="'+border+'padding:6px 10px;display:flex;align-items:center;gap:10px;font-size:11px;">';
-      rh+='<input type="checkbox" data-aid="'+esc(s.id)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:#0369a1;flex-shrink:0;">';
-      rh+='<span style="color:#94a3b8;white-space:nowrap;font-size:10px;">'+(s.date?s.date.slice(0,10):'')+'</span>';
-      rh+='<span style="font-weight:700;color:#0f2040;min-width:140px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(s.name||'')+'</span>';
-      rh+='<span style="color:#64748b;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(s.company||'')+'</span>';
-      if(s.caseNo)rh+='<span style="color:#2563eb;font-weight:700;white-space:nowrap;">'+esc(s.caseNo)+'</span>';
-      if(s.driveUrl||s.pdfDone)rh+=_buildPdfButton(s, '#16a34a');
-      rh+='</div>';
+      rh+='<tr'+(idx>0?' style="border-top:1px solid #f1f5f9;"':'')+'>';
+      rh+='<td style="white-space:nowrap;font-size:11px;color:#6b7280;">'+(s.date?s.date.slice(0,10):'&mdash;')+'</td>';
+      rh+='<td style="font-size:12px;font-weight:700;min-width:140px;">'+esc(s.name||'')+'</td>';
+      rh+='<td style="font-size:11px;color:#374151;min-width:120px;max-width:200px;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(s.company||'')+'</td>';
+      rh+='<td style="font-size:11px;color:#2563eb;font-weight:700;white-space:nowrap;">'+(s.caseNo||'&mdash;')+'</td>';
+      rh+='<td style="font-size:11px;color:#374151;min-width:220px;max-width:360px;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(s.sub||'')+'</td>';
+      rh+='<td style="text-align:center;white-space:nowrap;">'+_buildPdfCell(s, '#16a34a')+'</td>';
+      rh+='<td style="text-align:center;white-space:nowrap;"><input type="checkbox" data-aid="'+esc(s.id)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)" style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;"></td>';
+      rh+='</tr>';
     });
-    rh+='</div>';
+    rh+='</tbody></table></div>';
     return rh;
   });
   }
