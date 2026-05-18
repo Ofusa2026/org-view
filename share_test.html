@@ -123,7 +123,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260518.09</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260518.10</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -665,6 +665,8 @@ function renderMain(){
 // ③本日の審査完了（shinsa_archiveで未確認）
 // チェックすると一覧側のorgChecksと連動して消える
 function buildTodayHighlights(){
+  // ver.20260518.10: 「本日」=今日の日付のみ（過去含めない）
+  var todayStr=new Date().toISOString().slice(0,10); // YYYY-MM-DD
   // ① 申請分（status=申請済(番号待)で、orgChecksに未登録の案件）
   // ※ 「申請済」のid管理: case.id を使う（receipt_archive.id とは別軸）
   var applied=allCases.filter(function(c){
@@ -672,16 +674,20 @@ function buildTodayHighlights(){
     if(orgChecks['case_'+c.id]) return false; // 確認済はスキップ
     return true;
   });
-  // ② 申請受付番号（receipt_archiveで未確認）
+  // ② 申請受付番号（receipt_archiveで、受付日=今日、かつ未確認）
   var receipts=allReceipts.filter(function(r){
     if(!r.id) return false;
     if(orgChecks[r.id]) return false;
+    var rDate=(r.date||'').slice(0,10);
+    if(rDate!==todayStr) return false; // ver.20260518.10: 今日の日付のみ
     return true;
   });
-  // ③ 審査完了（shinsa_archiveで未確認）
+  // ③ 審査完了（shinsa_archiveで、完了日=今日、かつ未確認）
   var shinsas=allShinsa.filter(function(s){
     if(!s.id) return false;
     if(orgChecks[s.id]) return false;
+    var sDate=(s.date||'').slice(0,10);
+    if(sDate!==todayStr) return false; // ver.20260518.10: 今日の日付のみ
     return true;
   });
   if(!applied.length && !receipts.length && !shinsas.length) return '';
@@ -1118,6 +1124,48 @@ function startNotifPolling(){
 }
 // ========== /通知機能 ==========
 
+// ver.20260518.10: リアルタイム更新（A+B）
+// A: 5分ごとにバックグラウンドでデータ再取得
+// B: タブが非表示→表示になったとき即時更新
+var _dataReloadTimer=null;
+var DATA_RELOAD_MS=5*60*1000; // 5分
+var _isReloading=false;
+var _lastReloadAt=0;
+var MIN_RELOAD_INTERVAL_MS=10*1000; // 連打防止: 10秒以内は再リロードしない
+
+async function reloadDataSilent(){
+  // データ取得中・コメント編集中・IME変換中はスキップ
+  if(_isReloading) return;
+  if(_editingCommentId||_editingImeOn) return;
+  var now=Date.now();
+  if(now-_lastReloadAt < MIN_RELOAD_INTERVAL_MS) return;
+  _isReloading=true;
+  _lastReloadAt=now;
+  try{
+    // データを再取得（loadDataを呼ぶ）
+    await loadData();
+    // 通知も合わせて取得
+    if(typeof loadNotifications==='function') loadNotifications();
+  }catch(e){
+    // サイレント失敗（エラー表示しない・コンソールのみ）
+    console.warn('[reloadDataSilent] failed:', e&&e.message);
+  }finally{
+    _isReloading=false;
+  }
+}
+
+function startDataReloadTimer(){
+  // A: 5分ごとに自動更新
+  if(_dataReloadTimer) clearInterval(_dataReloadTimer);
+  _dataReloadTimer=setInterval(reloadDataSilent, DATA_RELOAD_MS);
+  // B: タブがアクティブになった時に更新
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState==='visible'){
+      reloadDataSilent();
+    }
+  });
+}
+
 var _correctPass='';
 function checkPass(){
   var input=document.getElementById('passInput').value.trim();
@@ -1276,9 +1324,19 @@ async function loadData(){
       });
     }
     renderSidebar();renderMain();
-    // お知らせポーリング開始
-    startNotifPolling();
-  }catch(e){document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+e.message+'</div>';}
+    // ver.20260518.10: 初回のみポーリング＆リロードタイマー開始（多重起動防止）
+    if(!_dataReloadTimer){
+      startNotifPolling();
+      startDataReloadTimer();
+    }
+  }catch(e){
+    // ver.20260518.10: バックグラウンドリロード中は画面を上書きしない
+    if(!_isReloading){
+      document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+e.message+'</div>';
+    }else{
+      console.warn('[loadData reload] failed:', e&&e.message);
+    }
+  }
 }
 init();
 </script>
