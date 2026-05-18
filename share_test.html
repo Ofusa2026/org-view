@@ -107,8 +107,9 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
 .view-btn{padding:5px 14px;font-size:11px;font-weight:700;border:1.5px solid #e2e8f0;border-radius:7px;cursor:pointer;background:white;color:#64748b;}
 .view-btn.active{background:#2563eb;color:white;border-color:#2563eb;}
 .kanban-wrap{display:flex;gap:12px;overflow-x:auto;align-items:flex-start;padding-bottom:12px;}
-.kanban-col{flex-shrink:0;width:220px;background:#f8fafc;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;display:flex;flex-direction:column;max-height:calc(100vh - 160px);}
-.kanban-col-head{padding:8px 12px;font-size:11px;font-weight:800;color:white;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;flex-shrink:0;}
+.kanban-col{flex-shrink:0;width:240px;background:#f8fafc;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;display:flex;flex-direction:column;max-height:calc(100vh - 160px);}
+.kanban-col-head{padding:8px 12px;font-size:11px;font-weight:800;color:white;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;flex-shrink:0;gap:6px;line-height:1.3;}
+.kanban-col-head .kanban-col-label{flex:1;min-width:0;word-break:break-word;white-space:normal;}
 .kanban-col-body{overflow-y:auto;flex:1;padding:8px;display:flex;flex-direction:column;gap:6px;}
 .kanban-col-body{padding:8px;display:flex;flex-direction:column;gap:6px;min-height:60px;}
 .kanban-card{background:white;border-radius:8px;padding:10px 12px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,.05);}
@@ -123,7 +124,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260518.14</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260518.15</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -289,37 +290,31 @@ var notifications=[]; // 未確認・確認済両方を保持
 var NOTIF_POLL_MS=30000;
 var _notifTimer=null;
 
+// ver.20260518.15: カンバンを6段階の集約ステータスに統一（リスト表示と連動）
+// ST_EXTERNALで分類される6つの集約ラベル単位でカラムを作る
 var STATUS_COLS=[
-  {label:'未着手',color:'#64748b',statuses:['未着手']},
-  {label:'★ヒアリング送付',color:'#7c3aed',statuses:['★ヒアリングフォーム送付']},
-  {label:'ヒアリング回答待ち',color:'#94a3b8',statuses:['ヒアリングフォーム回答待ち(送付済)','ヒアリングフォーム回答待ち (送付済)']},
-  {label:'雇用条件待ち',color:'#7c3aed',statuses:['雇用条件待ち']},
-  {label:'1-6作成',color:'#2563eb',statuses:['1-6作成']},
-  {label:'★1-6企業送付',color:'#7c3aed',statuses:['★1-6企業送付']},
-  {label:'1-6企業確認待ち',color:'#94a3b8',statuses:['1-6企業確認待ち(送付済)','1-6企業確認待ち (送付済)']},
-  {label:'1-6修正',color:'#ea580c',statuses:['1-6修正']},
-  {label:'★1-6修正送付',color:'#7c3aed',statuses:['★1-6修正送付']},
-  {label:'サイン書類作成',color:'#2563eb',statuses:['サイン書類作成']},
-  {label:'★サイン書類送付',color:'#7c3aed',statuses:['★サイン書類送付']},
-  {label:'サイン書類返送待ち',color:'#94a3b8',statuses:['サイン書類返送待ち(送付済)','サイン書類返送待ち (送付済)']},
-  {label:'企業書類作成',color:'#2563eb',statuses:['企業書類作成']},
-  {label:'★企業押印送付',color:'#7c3aed',statuses:['★企業押印送付']},
-  {label:'企業押印返送待ち',color:'#94a3b8',statuses:['企業押印返送待ち(送付済)','企業押印返送待ち (送付済)']},
-  {label:'人材書類待ち',color:'#7c3aed',statuses:['人材書類待ち']},
-  {label:'企業書類待ち',color:'#7c3aed',statuses:['企業書類待ち']},
-  {label:'スキャン書類作成',color:'#2563eb',statuses:['スキャン書類作成']},
-  {label:'★申請',color:'#16a34a',statuses:['★申請']},
-  {label:'申請済(番号待)',color:'#059669',statuses:['申請済(番号待)','申請済 (番号待)']},
-  {label:'審査中',color:'#d97706',statuses:['審査中']},
-  {label:'特活審査中',color:'#d97706',statuses:['特活審査中']},
-  {label:'★要追完',color:'#ea580c',statuses:['★要追完']},
-  {label:'要追完(企業)',color:'#ea580c',statuses:['要追完 企業不足書類待ち']},
-  {label:'要追完(人材)',color:'#ea580c',statuses:['要追完 人材不足書類待ち']},
-  {label:'許可済 受取調整中',color:'#0369a1',statuses:['許可済 受取方法調整中']},
-  {label:'入管受取変更中',color:'#0284c7',statuses:['入管受取ステータス変更中']},
-  {label:'★郵送交付',color:'#0369a1',statuses:['★郵送交付','郵送交付中','郵送交付']},
-  {label:'★窓口受取',color:'#0369a1',statuses:['★窓口受取','窓口受取','窓口受取（本人）','窓口受取 (本人)']},
-  {label:'完了',color:'#16a34a',statuses:['完了','審査完了']}
+  {label:'雇用条件作成・企業確認',color:'#2563eb',statuses:[
+    '未着手','★ヒアリングフォーム送付','ヒアリングフォーム回答待ち(送付済)','ヒアリングフォーム回答待ち (送付済)',
+    '雇用条件待ち','1-6作成','★1-6企業送付','1-6企業確認待ち(送付済)','1-6企業確認待ち (送付済)',
+    '1-6修正','★1-6修正送付'
+  ]},
+  {label:'特定技能生サインご対応',color:'#a21caf',statuses:[
+    'サイン書類作成','★サイン書類送付','サイン書類返送待ち(送付済)','サイン書類返送待ち (送付済)'
+  ]},
+  {label:'企業押印ご対応・書類収集・申請準備',color:'#ea580c',statuses:[
+    '企業書類作成','★企業押印送付','企業押印返送待ち(送付済)','企業押印返送待ち (送付済)',
+    '人材書類待ち','企業書類待ち','スキャン書類作成','★申請'
+  ]},
+  {label:'出入国在留管理局審査中',color:'#b45309',statuses:[
+    '申請済(番号待)','申請済 (番号待)','審査中','特活審査中',
+    '★要追完','要追完 企業不足書類待ち','要追完 人材不足書類待ち'
+  ]},
+  {label:'審査完了・新在留カード交付',color:'#1d4ed8',statuses:[
+    '許可済 受取方法調整中','入管受取ステータス変更中',
+    '郵送交付','★郵送交付','郵送交付中',
+    '窓口受取','★窓口受取','窓口受取（本人）','窓口受取 (本人)'
+  ]},
+  {label:'新在留カード発行済み',color:'#15803d',statuses:['完了','審査完了']}
 ];
 
 function classify(c){return DONE_ST.indexOf(c.status)>=0?'done':'active';}
@@ -969,8 +964,8 @@ function safeRenderMainIfPending(){
 function buildKanbanCol(label,color,colCases){
   var h='<div class="kanban-col">';
   h+='<div class="kanban-col-head" style="background:'+color+';">';
-  h+=esc(label);
-  h+='<span style="background:rgba(255,255,255,.25);padding:1px 8px;border-radius:99px;font-size:10px;">'+colCases.length+'</span>';
+  h+='<span class="kanban-col-label">'+esc(label)+'</span>'; // ver.20260518.15: 折り返し対応
+  h+='<span style="background:rgba(255,255,255,.25);padding:1px 8px;border-radius:99px;font-size:10px;flex-shrink:0;">'+colCases.length+'</span>';
   h+='</div>';
   h+='<div class="kanban-col-body">';
   var unconfirmed=getUnconfirmedCaseIds();
@@ -986,7 +981,12 @@ function buildKanbanCol(label,color,colCases){
     if(c.applicant&&c.name)h+='<div class="kanban-card-sub">'+esc(c.applicant)+'</div>';
     h+='<div class="kanban-card-sub">'+esc(c.company||'')+'</div>';
     h+='<div class="kanban-card-meta">';
-    if(c.status)h+='<span class="kanban-badge" style="background:'+stBg+';color:'+stCol+';">'+esc(c.status)+'</span>';
+    // ver.20260518.15: ステータスバッジも集約ラベルで表示（リストと連動）
+    if(c.status){
+      var kExtLabel=getExternalStatus(c.status);
+      var kExtCol=ST_EXT_COL[kExtLabel]||{bg:stBg,col:stCol};
+      h+='<span class="kanban-badge" style="background:'+kExtCol.bg+';color:'+kExtCol.col+';">'+esc(kExtLabel)+'</span>';
+    }
     if(c.expire)h+='<span class="kanban-badge" style="background:#f8fafc;color:'+expColor+';">📅'+c.expire+(days!==null&&days<=30?' (あと'+days+'日)':'')+'</span>';
     if(c.staff)h+='<span class="kanban-badge" style="background:#f0fdf4;color:#16a34a;">'+esc((c.staff||'').split(/[\s\u3000]/)[0])+'</span>';
     var orgCmt=orgComments[c.id]||''; if(orgCmt)h+='<div style="font-size:10px;color:#374151;margin-top:3px;padding-top:3px;border-top:1px solid #f1f5f9;line-height:1.4;white-space:pre-wrap;max-height:40px;overflow:hidden;">'+esc(orgCmt)+'</div>';
