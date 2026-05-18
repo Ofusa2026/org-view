@@ -123,7 +123,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260504.01</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260518.08</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -276,7 +276,7 @@ var NOTIF_LABELS={'審査中':'✅ 申請済み・受付番号紐付','許可済
 
 var DONE_ST=['完了','審査完了','★郵送交付','★窓口受取','窓口受取（本人）','許可済 受取方法調整中'];
 var GROUPS=[{id:'active',label:'進行中'},{id:'done',label:'完了・許可済'},{id:'all',label:'すべて'}];
-var allCases=[],allReceipts=[],allShinsa=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},currentGroup='active',currentView='list',searchQuery='',filterStatus='',filterCompany='',sortCol='expire',sortDir='asc',currentToken='',orgName='',_imeOn=false;
+var allCases=[],allReceipts=[],allShinsa=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='active',currentView='list',searchQuery='',filterStatus='',filterCompany='',sortCol='expire',sortDir='asc',currentToken='',orgName='',_imeOn=false; // ver.20260518.08: orgChecks追加
 // コメント入力中フラグ（再描画スキップ用）。値は編集中のtextareaのid（例:'owncmt_xxx'）
 var _editingCommentId=null;
 var _editingImeOn=false;
@@ -438,7 +438,7 @@ function buildRow(c){
   var rowCls=unconfirmed[c.id]?' class="row-notif"':'';
   var notifDot=unconfirmed[c.id]?'<span class="row-notif-dot" title="未確認のお知らせあり"></span>':'';
   var h='<tr'+rowCls+'>';
-  h+='<td style="min-width:150px;max-width:190px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div></td>';
+  h+='<td style="min-width:200px;max-width:320px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div></td>'; // ver.20260518.06: 案件名を全文表示（折り返し）
   h+='<td style="min-width:90px;max-width:120px;"><div style="font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:115px;">'+esc(c.company||'—')+'</div></td>';
   h+='<td style="width:48px;">'+typeHtml+'</td>';
   h+='<td style="width:65px;">'+(teamShort?'<div style="font-size:10px;font-weight:600;">'+esc(teamShort)+'</div>':'')+(staffShort?'<div style="font-size:10px;color:#6b7280;">'+esc(staffShort)+'</div>':'')+'</td>';
@@ -572,18 +572,26 @@ function renderReceipts(){
   h+='<span style="font-size:11px;color:#6b7280;">'+sorted.length+'件</span>';
   h+='</div>';
   h+='<div class="tbl-wrap"><table><thead><tr>';
-  h+='<th>受付日</th><th>申請日</th><th>申請者</th><th>受付番号</th><th>案件</th><th>ステータス</th><th style="text-align:center;">PDF</th>';
+  h+='<th>受付日</th><th>申請日</th><th>申請者</th><th>所属機関</th><th>受付番号</th><th>案件</th><th>ステータス</th><th style="text-align:center;">PDF</th><th style="text-align:center;" title="確認したらチェック">確認</th>'; // ver.20260518.08: 確認チェックボックス追加
   h+='</tr></thead><tbody>';
   sorted.forEach(function(r){
-    var stBg=ST_BG[r.status]||'#f8fafc';
-    var stCol=ST_COL[r.status]||'#64748b';
-    h+='<tr>';
+    // ver.20260518.08: 集約ラベルで表示
+    var extLabel=getExternalStatus(r.status);
+    var extCol=ST_EXT_COL[extLabel]||{bg:ST_BG[r.status]||'#f8fafc',col:ST_COL[r.status]||'#64748b',bor:'#e2e8f0'};
+    var stBg=extCol.bg;
+    var stCol=extCol.col;
+    var isChecked=!!orgChecks[r.id]; // ver.20260518.08: チェック状態
+    h+='<tr'+(isChecked?' style="background:#f0fdf4;"':'')+'>';
     h+='<td style="white-space:nowrap;font-size:11px;color:#6b7280;">'+(r.date?r.date.slice(0,10):'&mdash;')+'</td>';
     h+='<td style="white-space:nowrap;font-size:11px;color:#0369a1;font-weight:700;">'+(r.applicationDate?r.applicationDate.slice(0,10):'&mdash;')+'</td>';
-    h+='<td style="font-size:12px;font-weight:700;">'+esc(r.name||'')+'</td>';
+    h+='<td style="font-size:12px;font-weight:700;min-width:140px;">'+esc(r.name||'')+'</td>';
+    h+='<td style="font-size:11px;color:#374151;min-width:120px;max-width:200px;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(r.company||'')+'</td>'; // ver.20260518.07: 所属機関名
     h+='<td style="font-size:11px;color:#2563eb;font-weight:700;white-space:nowrap;">'+(r.caseNo||'&mdash;')+'</td>';
-    h+='<td style="font-size:11px;color:#374151;">'+esc(r.sub||'')+'</td>';
-    h+='<td>'+(r.status?'<span style="font-size:10px;padding:2px 8px;border-radius:4px;background:'+stBg+';color:'+stCol+';border:1px solid '+stCol+'33;">'+esc(r.status)+'</span>':'&mdash;')+'</td>';
+    h+='<td style="font-size:11px;color:#374151;min-width:220px;max-width:360px;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(r.sub||'')+'</td>'; // ver.20260518.06: 案件名を全文表示
+    h+='<td>'+(r.status?'<span style="font-size:10px;padding:2px 8px;border-radius:4px;background:'+stBg+';color:'+stCol+';border:1px solid '+stCol+'33;">'+esc(extLabel)+'</span>':'&mdash;')+'</td>'; // ver.20260518.08: 集約ラベル
+    h+='<td style="text-align:center;white-space:nowrap;">'+(r.driveUrl?'<a href="'+esc(r.driveUrl)+'" target="_blank" rel="noopener" style="display:inline-block;padding:2px 10px;background:#dc2626;color:white;border-radius:4px;font-size:10px;font-weight:700;text-decoration:none;">PDF</a>':'<span style="color:#cbd5e1;font-size:10px;">&mdash;</span>')+'</td>';
+    // ver.20260518.08: 確認チェックボックス
+    h+='<td style="text-align:center;white-space:nowrap;"><input type="checkbox" data-aid="'+esc(r.id)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)"'+(isChecked?' checked':'')+' style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;">'+(isChecked&&orgChecks[r.id]?'<div style="font-size:9px;color:#16a34a;margin-top:2px;white-space:nowrap;">'+esc((orgChecks[r.id]||'').slice(0,10))+'</div>':'')+'</td>';
     h+='<td style="text-align:center;white-space:nowrap;">'+(r.driveUrl?'<a href="'+esc(r.driveUrl)+'" target="_blank" rel="noopener" style="display:inline-block;padding:2px 10px;background:#dc2626;color:white;border-radius:4px;font-size:10px;font-weight:700;text-decoration:none;">PDF</a>':'<span style="color:#cbd5e1;font-size:10px;">&mdash;</span>')+'</td>';
     h+='</tr>';
   });
@@ -606,15 +614,19 @@ function renderShinsa(){
   h+='<span style="font-size:11px;color:#6b7280;">'+sorted.length+'件</span>';
   h+='</div>';
   h+='<div class="tbl-wrap"><table><thead><tr>';
-  h+='<th>完了日</th><th>申請者</th><th>受付番号</th><th>案件</th><th style="text-align:center;">PDF</th>';
+  h+='<th>完了日</th><th>申請者</th><th>所属機関</th><th>受付番号</th><th>案件</th><th style="text-align:center;">PDF</th><th style="text-align:center;" title="確認したらチェック">確認</th>'; // ver.20260518.08: 確認チェックボックス追加
   h+='</tr></thead><tbody>';
   sorted.forEach(function(r){
-    h+='<tr>';
+    var isChecked=!!orgChecks[r.id]; // ver.20260518.08: チェック状態
+    h+='<tr'+(isChecked?' style="background:#f0fdf4;"':'')+'>';
     h+='<td style="white-space:nowrap;font-size:11px;color:#6b7280;">'+(r.date?r.date.slice(0,10):'&mdash;')+'</td>';
-    h+='<td style="font-size:12px;font-weight:700;">'+esc(r.name||'')+'</td>';
+    h+='<td style="font-size:12px;font-weight:700;min-width:140px;">'+esc(r.name||'')+'</td>';
+    h+='<td style="font-size:11px;color:#374151;min-width:120px;max-width:200px;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(r.company||'')+'</td>'; // ver.20260518.07: 所属機関名
     h+='<td style="font-size:11px;color:#2563eb;font-weight:700;white-space:nowrap;">'+(r.caseNo||'&mdash;')+'</td>';
-    h+='<td style="font-size:11px;color:#374151;">'+esc(r.sub||'')+'</td>';
+    h+='<td style="font-size:11px;color:#374151;min-width:220px;max-width:360px;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(r.sub||'')+'</td>'; // ver.20260518.06: 案件名を全文表示
     h+='<td style="text-align:center;white-space:nowrap;">'+(r.driveUrl?'<a href="'+esc(r.driveUrl)+'" target="_blank" rel="noopener" style="display:inline-block;padding:2px 10px;background:#16a34a;color:white;border-radius:4px;font-size:10px;font-weight:700;text-decoration:none;">PDF</a>':'<span style="color:#cbd5e1;font-size:10px;">&mdash;</span>')+'</td>';
+    // ver.20260518.08: 確認チェックボックス
+    h+='<td style="text-align:center;white-space:nowrap;"><input type="checkbox" data-aid="'+esc(r.id)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)"'+(isChecked?' checked':'')+' style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;">'+(isChecked&&orgChecks[r.id]?'<div style="font-size:9px;color:#16a34a;margin-top:2px;white-space:nowrap;">'+esc((orgChecks[r.id]||'').slice(0,10))+'</div>':'')+'</td>';
     h+='</tr>';
   });
   h+='</tbody></table></div>';
@@ -788,6 +800,36 @@ async function saveComment(caseId){
     btn.textContent='✓保存済';btn.className='save-btn saved';
     setTimeout(function(){btn.textContent='保存';btn.className='save-btn';btn.disabled=false;},2000);
   }catch(e){btn.textContent='保存';btn.disabled=false;alert('保存失敗: '+e.message);}
+}
+
+// ver.20260518.08: 申請記録・審査完了の「確認」チェックボックスをトグル＆DB保存
+async function toggleOrgCheck(archiveId, checked){
+  if(!archiveId)return;
+  if(checked){
+    orgChecks[archiveId]=new Date().toISOString();
+  }else{
+    delete orgChecks[archiveId];
+  }
+  // 行の背景色を即時更新
+  var cb=document.querySelector('input[type="checkbox"][data-aid="'+archiveId+'"]');
+  if(cb){
+    var tr=cb.closest('tr');
+    if(tr){
+      tr.style.background=checked?'#f0fdf4':'';
+    }
+  }
+  // DB保存（org_checks_<token> に JSON 丸ごと保存）
+  var key='org_checks_'+currentToken;
+  try{
+    await sbFetch('settings',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:JSON.stringify(orgChecks)})});
+    // 確認日表示を更新するためテーブル全体を再描画
+    if(currentGroup==='receipts'){renderReceipts();}else if(currentGroup==='shinsa'){renderShinsa();}
+  }catch(e){
+    alert('保存失敗: '+e.message);
+    // 失敗時はロールバック
+    if(checked){delete orgChecks[archiveId];}else{orgChecks[archiveId]=new Date().toISOString();}
+    if(cb)cb.checked=!checked;
+  }
 }
 
 async function saveOwnComment(caseId){
@@ -1072,6 +1114,19 @@ async function loadData(){
           orgWithdraws[cid]=val||{};
         });
       }
+      // ver.20260518.08: 登録支援機関側の「確認」チェック状態をsettings から JSON で取得
+      try{
+        var rChk=await sbFetch('settings?key=eq.'+encodeURIComponent('org_checks_'+currentToken)+'&select=value');
+        var chkRows=await rChk.json();
+        if(Array.isArray(chkRows)&&chkRows.length){
+          var chkVal=chkRows[0].value;
+          if(typeof chkVal==='string'){
+            try{orgChecks=JSON.parse(chkVal)||{};}catch(e){orgChecks={};}
+          }else if(chkVal&&typeof chkVal==='object'){
+            orgChecks=chkVal;
+          }
+        }
+      }catch(e){orgChecks={};}
     }
     // 申請記録取得（このorgに紐づく案件のcase_idで絞り込み）
     if(allCases.length){
@@ -1089,6 +1144,7 @@ async function loadData(){
         return {id:r.id,case_id:r.case_id||'',name:r.name||'',date:r.date||'',caseNo:r.case_no||'',sub:r.sub||'',
           applicationDate:r.application_date||'',reported:r.reported||false,
           driveUrl:r.drive_url||'',
+          company:lc?(lc.company||''):'', // ver.20260518.07: 所属機関名を追加
           status:lc?(lc.status||''):''};
       });
       // 審査完了取得（同様にcase_idで絞り込み）
@@ -1100,8 +1156,10 @@ async function loadData(){
         if(Array.isArray(shs)) _shTmp=_shTmp.concat(shs);
       }
       allShinsa=_shTmp.map(function(r){
+        var lc=allCases.find(function(c){return c.id===r.case_id;})||null;
         return {id:r.id,case_id:r.case_id||'',name:r.name||'',date:r.date||'',caseNo:r.case_no||'',sub:r.sub||'',
-          driveUrl:r.drive_url||''};
+          driveUrl:r.drive_url||'',
+          company:lc?(lc.company||''):''}; // ver.20260518.07: 所属機関名を追加
       });
     }
     renderSidebar();renderMain();
