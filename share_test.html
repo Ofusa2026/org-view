@@ -124,7 +124,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260518.17</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260518.18</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -802,26 +802,27 @@ function buildTodayHighlights(scope){
   receipts.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
   shinsas.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
 
-  var h='<div style="background:linear-gradient(135deg,#eff6ff 0%,#f0fdf4 100%);border:2px solid #93c5fd;border-radius:12px;padding:14px 16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(37,99,235,.08);">';
-  h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">';
-  h+='<span style="font-size:20px;">📋</span>';
-  h+='<div style="font-size:14px;font-weight:800;color:#1d4ed8;">未確認の案件 <span style="font-size:11px;font-weight:400;color:#64748b;">※直近7日以内・確認したらチェックを入れてください</span></div>';
+  // ver.20260518.18: トンマナをリスト風に統一（縦1列、強調しすぎない）
+  // 控えめな背景・薄い枠で、申請記録テーブルと視線の流れを揃える
+  var h='<div style="background:#fafbfc;border:1px solid #e2e8f0;border-left:4px solid #2563eb;border-radius:6px;padding:10px 14px;margin-bottom:14px;">';
+  h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">';
+  h+='<span style="font-size:14px;">📋</span>';
+  h+='<div style="font-size:12px;font-weight:700;color:#1e293b;">未確認の案件 <span style="font-size:10px;font-weight:400;color:#94a3b8;margin-left:4px;">※直近7日以内</span></div>';
   h+='</div>';
 
   // ① 申請分
   if(showApplied){
   h+=_buildTodaySection('🟢 未確認の申請分', applied.length, '#16a34a', function(){
     if(!applied.length) return '<div style="font-size:11px;color:#94a3b8;padding:6px 8px;">未確認の申請はありません</div>';
-    var rh='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px;">';
-    applied.forEach(function(c){
+    var rh='<div style="display:flex;flex-direction:column;gap:0;background:white;border-radius:6px;overflow:hidden;border:1px solid #e2e8f0;">'; // ver.20260518.18: 縦1列リスト
+    applied.forEach(function(c,idx){
       var aid='case_'+c.id;
-      rh+='<div style="background:white;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:8px;">';
-      rh+='<input type="checkbox" data-aid="'+esc(aid)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)" style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;flex-shrink:0;">';
-      rh+='<div style="flex:1;min-width:0;">';
-      rh+='<div style="font-size:12px;font-weight:700;color:#0f2040;">'+esc(c.name||c.applicant||'')+'</div>';
-      rh+='<div style="font-size:10px;color:#64748b;">'+esc(c.company||'')+'</div>';
-      if(c.receiptNo)rh+='<div style="font-size:10px;color:#2563eb;font-weight:700;">'+esc(c.receiptNo)+'</div>';
-      rh+='</div>';
+      var border=idx===0?'':'border-top:1px solid #f1f5f9;';
+      rh+='<div style="'+border+'padding:6px 10px;display:flex;align-items:center;gap:10px;font-size:11px;">';
+      rh+='<input type="checkbox" data-aid="'+esc(aid)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:#16a34a;flex-shrink:0;">';
+      rh+='<span style="font-weight:700;color:#0f2040;min-width:140px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(c.name||c.applicant||'')+'</span>';
+      rh+='<span style="color:#64748b;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(c.company||'')+'</span>';
+      if(c.receiptNo)rh+='<span style="color:#2563eb;font-weight:700;white-space:nowrap;">'+esc(c.receiptNo)+'</span>';
       rh+='</div>';
     });
     rh+='</div>';
@@ -833,17 +834,16 @@ function buildTodayHighlights(scope){
   if(showReceipts){
   h+=_buildTodaySection('📮 未確認の申請受付番号', receipts.length, '#2563eb', function(){
     if(!receipts.length) return '<div style="font-size:11px;color:#94a3b8;padding:6px 8px;">未確認の受付番号はありません</div>';
-    var rh='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px;">';
-    receipts.forEach(function(r){
-      rh+='<div style="background:white;border:1px solid #93c5fd;border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:8px;">';
-      rh+='<input type="checkbox" data-aid="'+esc(r.id)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)" style="width:18px;height:18px;cursor:pointer;accent-color:#2563eb;flex-shrink:0;">';
-      rh+='<div style="flex:1;min-width:0;">';
-      rh+='<div style="font-size:12px;font-weight:700;color:#0f2040;">'+esc(r.name||'')+'</div>';
-      rh+='<div style="font-size:10px;color:#64748b;">'+esc(r.company||'')+'</div>';
-      if(r.caseNo)rh+='<div style="font-size:10px;color:#2563eb;font-weight:700;">'+esc(r.caseNo)+'</div>';
-      rh+='<div style="font-size:10px;color:#94a3b8;">'+(r.date?r.date.slice(0,10):'')+'</div>';
-      rh+='</div>';
-      if(r.driveUrl||r.pdfDone)rh+=_buildPdfButton(r, '#dc2626'); // ver.20260518.11: 準備中対応
+    var rh='<div style="display:flex;flex-direction:column;gap:0;background:white;border-radius:6px;overflow:hidden;border:1px solid #e2e8f0;">'; // ver.20260518.18: 縦1列リスト
+    receipts.forEach(function(r,idx){
+      var border=idx===0?'':'border-top:1px solid #f1f5f9;';
+      rh+='<div style="'+border+'padding:6px 10px;display:flex;align-items:center;gap:10px;font-size:11px;">';
+      rh+='<input type="checkbox" data-aid="'+esc(r.id)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:#2563eb;flex-shrink:0;">';
+      rh+='<span style="color:#94a3b8;white-space:nowrap;font-size:10px;">'+(r.date?r.date.slice(0,10):'')+'</span>';
+      rh+='<span style="font-weight:700;color:#0f2040;min-width:140px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(r.name||'')+'</span>';
+      rh+='<span style="color:#64748b;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(r.company||'')+'</span>';
+      if(r.caseNo)rh+='<span style="color:#2563eb;font-weight:700;white-space:nowrap;">'+esc(r.caseNo)+'</span>';
+      if(r.driveUrl||r.pdfDone)rh+=_buildPdfButton(r, '#dc2626');
       rh+='</div>';
     });
     rh+='</div>';
@@ -855,17 +855,16 @@ function buildTodayHighlights(scope){
   if(showShinsas){
   h+=_buildTodaySection('✅ 未確認の審査完了', shinsas.length, '#0369a1', function(){
     if(!shinsas.length) return '<div style="font-size:11px;color:#94a3b8;padding:6px 8px;">未確認の審査完了はありません</div>';
-    var rh='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px;">';
-    shinsas.forEach(function(s){
-      rh+='<div style="background:white;border:1px solid #7dd3fc;border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:8px;">';
-      rh+='<input type="checkbox" data-aid="'+esc(s.id)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)" style="width:18px;height:18px;cursor:pointer;accent-color:#0369a1;flex-shrink:0;">';
-      rh+='<div style="flex:1;min-width:0;">';
-      rh+='<div style="font-size:12px;font-weight:700;color:#0f2040;">'+esc(s.name||'')+'</div>';
-      rh+='<div style="font-size:10px;color:#64748b;">'+esc(s.company||'')+'</div>';
-      if(s.caseNo)rh+='<div style="font-size:10px;color:#2563eb;font-weight:700;">'+esc(s.caseNo)+'</div>';
-      rh+='<div style="font-size:10px;color:#94a3b8;">'+(s.date?s.date.slice(0,10):'')+'</div>';
-      rh+='</div>';
-      if(s.driveUrl||s.pdfDone)rh+=_buildPdfButton(s, '#16a34a'); // ver.20260518.11: 準備中対応
+    var rh='<div style="display:flex;flex-direction:column;gap:0;background:white;border-radius:6px;overflow:hidden;border:1px solid #e2e8f0;">'; // ver.20260518.18: 縦1列リスト
+    shinsas.forEach(function(s,idx){
+      var border=idx===0?'':'border-top:1px solid #f1f5f9;';
+      rh+='<div style="'+border+'padding:6px 10px;display:flex;align-items:center;gap:10px;font-size:11px;">';
+      rh+='<input type="checkbox" data-aid="'+esc(s.id)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:#0369a1;flex-shrink:0;">';
+      rh+='<span style="color:#94a3b8;white-space:nowrap;font-size:10px;">'+(s.date?s.date.slice(0,10):'')+'</span>';
+      rh+='<span style="font-weight:700;color:#0f2040;min-width:140px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(s.name||'')+'</span>';
+      rh+='<span style="color:#64748b;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(s.company||'')+'</span>';
+      if(s.caseNo)rh+='<span style="color:#2563eb;font-weight:700;white-space:nowrap;">'+esc(s.caseNo)+'</span>';
+      if(s.driveUrl||s.pdfDone)rh+=_buildPdfButton(s, '#16a34a');
       rh+='</div>';
     });
     rh+='</div>';
@@ -879,8 +878,9 @@ function buildTodayHighlights(scope){
 
 // セクションのヘッダー＋ボディを構築（折り畳み無し、シンプル）
 function _buildTodaySection(title, count, accentColor, bodyFn){
-  var h='<div style="margin-bottom:10px;">';
-  h+='<div style="font-size:12px;font-weight:700;color:'+accentColor+';margin-bottom:6px;">'+title+' <span style="background:'+accentColor+';color:white;padding:1px 7px;border-radius:99px;font-size:10px;margin-left:4px;">'+count+'</span></div>';
+  // ver.20260518.18: セクション見出しもコンパクトに
+  var h='<div style="margin-bottom:8px;">';
+  h+='<div style="font-size:11px;font-weight:700;color:'+accentColor+';margin-bottom:4px;">'+title+' <span style="background:'+accentColor+';color:white;padding:0 6px;border-radius:99px;font-size:9px;margin-left:2px;">'+count+'</span></div>';
   h+=bodyFn();
   h+='</div>';
   return h;
