@@ -124,7 +124,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260518.16</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260518.17</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -358,35 +358,47 @@ var GUIDANCE_LINKS={
   '1-17': 'https://ofusa2026.github.io/docs/1-17/1_17.html'
 };
 var REQUEST_16_FIX_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfPlaceholder/viewform'; // ※実フォームURLに差し替えてください
-// ver.20260518.16: PDFセル構築（受付番号PDF + 審査完了PDF を両方表示）
-// - drive_url がある場合：PDFボタンを表示
-// - drive_url 無し & pdf_done=true：『⏳ 準備中』バッジを表示
-// - どちらも無し：何も表示しない
-// 1つの案件に複数のPDFがある場合（複数回申請等）はすべて表示
+// ver.20260518.17: PDFセル構築（受付番号PDF + 審査完了PDF を両方表示）
+// 状態に応じた表示：
+// - drive_url がある場合：色付きの『PDF』ボタン（クリック可）
+// - drive_url 無し & pdf_done=true：黄色『準備中』バッジ（クリック不可）
+// - 何もない場合：グレー『未発行』バッジ（クリック不可）
+// 幅を統一して見やすく
 function buildDownloadCell(c){
   var receipts=allReceipts.filter(function(r){return r.case_id===c.id;});
   var shinsa=allShinsa.filter(function(r){return r.case_id===c.id;});
+  // 共通スタイル（全バッジ同じ幅）
+  var baseStyle='font-size:10px;padding:3px 6px;border-radius:4px;font-weight:700;text-decoration:none;white-space:nowrap;display:inline-block;width:110px;box-sizing:border-box;text-align:center;';
   var html='<div style="display:flex;flex-direction:column;gap:4px;">';
-  // 申請受付番号PDF（青）
-  receipts.forEach(function(r){
-    if(r.driveUrl){
-      html+='<a href="'+esc(r.driveUrl)+'" target="_blank" rel="noopener" style="font-size:10px;padding:2px 8px;background:#dc2626;color:white;border-radius:4px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;width:fit-content;" title="申請受付番号通知PDF">📄 受付番号</a>';
-    }else if(r.pdfDone){
-      html+='<span style="font-size:10px;padding:2px 8px;background:#fef3c7;color:#a16207;border-radius:4px;font-weight:700;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;width:fit-content;" title="受付番号PDFをアップロード中">📄 受付番号 ⏳</span>';
-    }
-  });
-  // 審査完了PDF（緑）
-  shinsa.forEach(function(s){
-    if(s.driveUrl){
-      html+='<a href="'+esc(s.driveUrl)+'" target="_blank" rel="noopener" style="font-size:10px;padding:2px 8px;background:#16a34a;color:white;border-radius:4px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;width:fit-content;" title="審査完了通知PDF">✅ 審査完了</a>';
-    }else if(s.pdfDone){
-      html+='<span style="font-size:10px;padding:2px 8px;background:#fef3c7;color:#a16207;border-radius:4px;font-weight:700;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;width:fit-content;" title="審査完了PDFをアップロード中">✅ 審査完了 ⏳</span>';
-    }
-  });
-  // 何もない場合は—
-  var hasAny=receipts.some(function(r){return r.driveUrl||r.pdfDone;}) || shinsa.some(function(s){return s.driveUrl||s.pdfDone;});
-  if(!hasAny){
-    html+='<span style="color:#cbd5e1;font-size:10px;">&mdash;</span>';
+  // === 受付番号 ===
+  if(receipts.length){
+    receipts.forEach(function(r){
+      if(r.driveUrl){
+        html+='<a href="'+esc(r.driveUrl)+'" target="_blank" rel="noopener" style="'+baseStyle+'background:#dc2626;color:white;" title="申請受付番号通知PDFを開く">📄 受付番号PDF</a>';
+      }else if(r.pdfDone){
+        html+='<span style="'+baseStyle+'background:#fef3c7;color:#a16207;" title="受付番号PDFをアップロード中">⏳ 受付番号PDF</span>';
+      }else{
+        html+='<span style="'+baseStyle+'background:#f1f5f9;color:#94a3b8;" title="受付番号PDFはまだ発行されていません">— 受付番号PDF</span>';
+      }
+    });
+  }else{
+    // 受付番号データ自体がない（まだ申請受付前）
+    html+='<span style="'+baseStyle+'background:#f1f5f9;color:#94a3b8;" title="受付番号PDFはまだ発行されていません">— 受付番号PDF</span>';
+  }
+  // === 審査完了 ===
+  if(shinsa.length){
+    shinsa.forEach(function(s){
+      if(s.driveUrl){
+        html+='<a href="'+esc(s.driveUrl)+'" target="_blank" rel="noopener" style="'+baseStyle+'background:#16a34a;color:white;" title="審査完了通知PDFを開く">✅ 審査完了PDF</a>';
+      }else if(s.pdfDone){
+        html+='<span style="'+baseStyle+'background:#fef3c7;color:#a16207;" title="審査完了PDFをアップロード中">⏳ 審査完了PDF</span>';
+      }else{
+        html+='<span style="'+baseStyle+'background:#f1f5f9;color:#94a3b8;" title="審査完了PDFはまだ発行されていません">— 審査完了PDF</span>';
+      }
+    });
+  }else{
+    // 審査完了データ自体がない（まだ審査中）
+    html+='<span style="'+baseStyle+'background:#f1f5f9;color:#94a3b8;" title="審査完了PDFはまだ発行されていません">— 審査完了PDF</span>';
   }
   html+='</div>';
   return html;
@@ -452,7 +464,7 @@ function buildRow(c){
   // 帰国予定
   h+='<td style="font-size:10px;white-space:nowrap;'+retStyle+'">'+(c.tempReturn||'<span style="color:#d1d5db;">—</span>')+'</td>';
   // ver.20260518.16: PDFカラム（受付番号PDF + 審査完了PDF）
-  h+='<td style="font-size:10px;min-width:110px;">'+buildDownloadCell(c)+'</td>';
+  h+='<td style="font-size:10px;min-width:130px;">'+buildDownloadCell(c)+'</td>';
   // 大房コメント（index.htmlから入力・表示のみ）
   h+='<td style="min-width:180px;max-width:220px;">';
   if(comment){
