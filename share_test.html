@@ -123,7 +123,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260518.13</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260518.14</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -592,14 +592,17 @@ function _buildPdfButton(r, color){
 function renderReceipts(){
   var el=document.getElementById('main');
   if(!el)return;
+  // ver.20260518.14: 未確認セクションを先頭に表示（申請分＋申請受付番号）
+  var topHtml=buildTodayHighlights('receipts');
   if(!allReceipts.length){
-    el.innerHTML='<div class="empty">申請記録はありません</div>';
+    el.innerHTML=topHtml+'<div class="empty">申請記録はありません</div>';
     return;
   }
   var sorted=allReceipts.slice().sort(function(a,b){
     return (b.date||'').localeCompare(a.date||'');
   });
-  var h='<div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;">';
+  var h=topHtml;
+  h+='<div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;">';
   h+='<span style="font-size:13px;font-weight:700;color:#0f2040;">申請記録</span>';
   h+='<span style="font-size:11px;color:#6b7280;">'+sorted.length+'件</span>';
   h+='</div>';
@@ -632,14 +635,17 @@ function renderReceipts(){
 function renderShinsa(){
   var el=document.getElementById('main');
   if(!el)return;
+  // ver.20260518.14: 未確認セクションを先頭に表示（審査完了のみ）
+  var topHtml=buildTodayHighlights('shinsa');
   if(!allShinsa.length){
-    el.innerHTML='<div class="empty">審査完了の記録はありません</div>';
+    el.innerHTML=topHtml+'<div class="empty">審査完了の記録はありません</div>';
     return;
   }
   var sorted=allShinsa.slice().sort(function(a,b){
     return (b.date||'').localeCompare(a.date||'');
   });
-  var h='<div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;">';
+  var h=topHtml;
+  h+='<div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;">';
   h+='<span style="font-size:13px;font-weight:700;color:#0f2040;">審査完了</span>';
   h+='<span style="font-size:11px;color:#6b7280;">'+sorted.length+'件</span>';
   h+='</div>';
@@ -737,7 +743,12 @@ function renderMain(){
 // ②本日の申請受付番号（receipt_archiveで未確認）
 // ③本日の審査完了（shinsa_archiveで未確認）
 // チェックすると一覧側のorgChecksと連動して消える
-function buildTodayHighlights(){
+// ver.20260518.14: scope引数で表示セクションを切り替え
+//   - 'all' (デフォルト): 3セクション全部 (ダッシュボード・進行中タブ用)
+//   - 'receipts': 申請分＋申請受付番号 (申請記録タブ用)
+//   - 'shinsa': 審査完了のみ (審査完了タブ用)
+function buildTodayHighlights(scope){
+  scope=scope||'all';
   // ver.20260518.12: 7日以内 & 未確認のものを表示（未確認が増えすぎないように期間を絞る）
   var today=new Date();today.setHours(0,0,0,0);
   var sevenDaysAgo=new Date(today);sevenDaysAgo.setDate(sevenDaysAgo.getDate()-7);
@@ -770,7 +781,16 @@ function buildTodayHighlights(){
     if(!within7Days(s.date)) return false; // ver.20260518.12: 7日以内のみ
     return true;
   });
-  if(!applied.length && !receipts.length && !shinsas.length) return '';
+  // scopeに応じて表示判定
+  var showApplied = (scope==='all' || scope==='receipts');
+  var showReceipts = (scope==='all' || scope==='receipts');
+  var showShinsas = (scope==='all' || scope==='shinsa');
+  // すべて0件なら何も出さない
+  var totalCount=0;
+  if(showApplied) totalCount+=applied.length;
+  if(showReceipts) totalCount+=receipts.length;
+  if(showShinsas) totalCount+=shinsas.length;
+  if(totalCount===0 && scope==='all') return ''; // ダッシュボード/進行中タブでは0件は非表示
   // 並び順: 受付日/完了日が新しい順
   receipts.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
   shinsas.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
@@ -782,6 +802,7 @@ function buildTodayHighlights(){
   h+='</div>';
 
   // ① 申請分
+  if(showApplied){
   h+=_buildTodaySection('🟢 未確認の申請分', applied.length, '#16a34a', function(){
     if(!applied.length) return '<div style="font-size:11px;color:#94a3b8;padding:6px 8px;">未確認の申請はありません</div>';
     var rh='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px;">';
@@ -799,8 +820,10 @@ function buildTodayHighlights(){
     rh+='</div>';
     return rh;
   });
+  }
 
   // ② 申請受付番号
+  if(showReceipts){
   h+=_buildTodaySection('📮 未確認の申請受付番号', receipts.length, '#2563eb', function(){
     if(!receipts.length) return '<div style="font-size:11px;color:#94a3b8;padding:6px 8px;">未確認の受付番号はありません</div>';
     var rh='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px;">';
@@ -819,8 +842,10 @@ function buildTodayHighlights(){
     rh+='</div>';
     return rh;
   });
+  }
 
   // ③ 審査完了
+  if(showShinsas){
   h+=_buildTodaySection('✅ 未確認の審査完了', shinsas.length, '#0369a1', function(){
     if(!shinsas.length) return '<div style="font-size:11px;color:#94a3b8;padding:6px 8px;">未確認の審査完了はありません</div>';
     var rh='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px;">';
@@ -839,6 +864,7 @@ function buildTodayHighlights(){
     rh+='</div>';
     return rh;
   });
+  }
 
   h+='</div>';
   return h;
