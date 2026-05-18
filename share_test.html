@@ -123,7 +123,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260518.11</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260518.12</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -689,29 +689,36 @@ function renderMain(){
 // ③本日の審査完了（shinsa_archiveで未確認）
 // チェックすると一覧側のorgChecksと連動して消える
 function buildTodayHighlights(){
-  // ver.20260518.10: 「本日」=今日の日付のみ（過去含めない）
-  var todayStr=new Date().toISOString().slice(0,10); // YYYY-MM-DD
+  // ver.20260518.12: 7日以内 & 未確認のものを表示（未確認が増えすぎないように期間を絞る）
+  var today=new Date();today.setHours(0,0,0,0);
+  var sevenDaysAgo=new Date(today);sevenDaysAgo.setDate(sevenDaysAgo.getDate()-7);
+  function within7Days(dateStr){
+    if(!dateStr) return false;
+    var d=new Date((dateStr||'').slice(0,10));
+    if(isNaN(d.getTime())) return false;
+    d.setHours(0,0,0,0);
+    return d>=sevenDaysAgo && d<=today;
+  }
   // ① 申請分（status=申請済(番号待)で、orgChecksに未登録の案件）
   // ※ 「申請済」のid管理: case.id を使う（receipt_archive.id とは別軸）
+  // 申請分は「番号待ち」状態が長くても2週間程度なので、期間フィルタなしで未確認分すべて表示
   var applied=allCases.filter(function(c){
     if(c.status!=='申請済(番号待)' && c.status!=='申請済 (番号待)') return false;
     if(orgChecks['case_'+c.id]) return false; // 確認済はスキップ
     return true;
   });
-  // ② 申請受付番号（receipt_archiveで、受付日=今日、かつ未確認）
+  // ② 申請受付番号（receipt_archiveで、受付日が7日以内、かつ未確認）
   var receipts=allReceipts.filter(function(r){
     if(!r.id) return false;
     if(orgChecks[r.id]) return false;
-    var rDate=(r.date||'').slice(0,10);
-    if(rDate!==todayStr) return false; // ver.20260518.10: 今日の日付のみ
+    if(!within7Days(r.date)) return false; // ver.20260518.12: 7日以内のみ
     return true;
   });
-  // ③ 審査完了（shinsa_archiveで、完了日=今日、かつ未確認）
+  // ③ 審査完了（shinsa_archiveで、完了日が7日以内、かつ未確認）
   var shinsas=allShinsa.filter(function(s){
     if(!s.id) return false;
     if(orgChecks[s.id]) return false;
-    var sDate=(s.date||'').slice(0,10);
-    if(sDate!==todayStr) return false; // ver.20260518.10: 今日の日付のみ
+    if(!within7Days(s.date)) return false; // ver.20260518.12: 7日以内のみ
     return true;
   });
   if(!applied.length && !receipts.length && !shinsas.length) return '';
@@ -722,7 +729,7 @@ function buildTodayHighlights(){
   var h='<div style="background:linear-gradient(135deg,#eff6ff 0%,#f0fdf4 100%);border:2px solid #93c5fd;border-radius:12px;padding:14px 16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(37,99,235,.08);">';
   h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">';
   h+='<span style="font-size:20px;">📋</span>';
-  h+='<div style="font-size:14px;font-weight:800;color:#1d4ed8;">未確認の案件 <span style="font-size:11px;font-weight:400;color:#64748b;">※確認したらチェックを入れてください</span></div>';
+  h+='<div style="font-size:14px;font-weight:800;color:#1d4ed8;">未確認の案件 <span style="font-size:11px;font-weight:400;color:#64748b;">※直近7日以内・確認したらチェックを入れてください</span></div>';
   h+='</div>';
 
   // ① 申請分
