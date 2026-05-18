@@ -124,7 +124,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260518.20</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260518.22</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -599,24 +599,45 @@ function _buildPdfButton(r, color){
 function renderReceipts(){
   var el=document.getElementById('main');
   if(!el)return;
-  if(!allReceipts.length){
+  // ver.20260518.21: 未確認テーブルに申請分（cases.status=申請済(番号待)）も統合
+  // 未確認の申請分（case_<id>）と未確認の受付番号（archive.id）を同じテーブルに表示
+  var unchecked=allReceipts.filter(function(r){return !orgChecks[r.id];});
+  var checked=allReceipts.filter(function(r){return !!orgChecks[r.id];});
+  // 申請分（status=申請済(番号待)で未チェック）をreceipt風オブジェクトに変換して unchecked に追加
+  var appliedCases=allCases.filter(function(c){
+    if(c.status!=='申請済(番号待)' && c.status!=='申請済 (番号待)') return false;
+    if(orgChecks['case_'+c.id]) return false;
+    return true;
+  });
+  appliedCases.forEach(function(c){
+    unchecked.push({
+      id: 'case_'+c.id,
+      _isApplied: true, // テーブル側で「申請分」として識別
+      date: '', // 申請分は受付日なし
+      name: c.name||c.applicant||'',
+      company: c.company||'',
+      caseNo: c.receiptNo||'',
+      sub: '', // 未確認の申請分は「案件」列なし
+      status: c.status,
+      pdfDone: false,
+      driveUrl: null
+    });
+  });
+  if(!allReceipts.length && !appliedCases.length){
     el.innerHTML='<div class="empty">申請記録はありません</div>';
     return;
   }
-  // ver.20260518.20: 未確認・確認済みの2セクションに分割
-  // 未確認 = orgChecksに含まれないもの（DBで7日より前は全件確認済みに初期化済み）
-  // 確認済み = orgChecksに含まれるもの
-  var unchecked=allReceipts.filter(function(r){return !orgChecks[r.id];});
-  var checked=allReceipts.filter(function(r){return !!orgChecks[r.id];});
-  unchecked.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+  unchecked.sort(function(a,b){
+    // 申請分は最上部に（日付なし）、残りは受付日降順
+    if(a._isApplied && !b._isApplied) return -1;
+    if(!a._isApplied && b._isApplied) return 1;
+    return (b.date||'').localeCompare(a.date||'');
+  });
   checked.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
 
   var h='';
-  // ▼ 未確認の申請分（cases.status=申請済）はトップに別枠で（受付番号テーブルとは別軸）
-  h+=buildTodayHighlights('receipts_applied_only');
-
-  // ▼ 上：未確認の申請受付番号
-  h+='<div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;margin-top:14px;">';
+  // ▼ 上：未確認の申請記録（申請分＋受付番号統合）
+  h+='<div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;">';
   h+='<span style="font-size:14px;">📮</span>';
   h+='<span style="font-size:13px;font-weight:700;color:#0f2040;">未確認の申請記録</span>';
   h+='<span style="font-size:11px;color:#fff;background:#2563eb;padding:1px 8px;border-radius:99px;font-weight:700;">'+unchecked.length+'</span>';
@@ -664,14 +685,33 @@ function _buildReceiptTable(rows, dimmed){
     var stBg=extCol.bg;
     var stCol=extCol.col;
     var isChecked=!!orgChecks[r.id];
-    h+='<tr'+(isChecked&&!dimmed?' style="background:#f0fdf4;"':'')+'>';
-    h+='<td style="white-space:nowrap;font-size:11px;color:#6b7280;">'+(r.date?r.date.slice(0,10):'&mdash;')+'</td>';
+    // ver.20260518.21: 申請分（_isApplied）は行頭に左ボーダーで識別
+    var rowStyle='';
+    if(r._isApplied && !dimmed) rowStyle=' style="background:#f0f9ff;border-left:3px solid #16a34a;"';
+    else if(isChecked && !dimmed) rowStyle=' style="background:#f0fdf4;"';
+    h+='<tr'+rowStyle+'>';
+    // 受付日（申請分は「申請分」ラベル）
+    if(r._isApplied){
+      h+='<td style="white-space:nowrap;font-size:10px;color:#16a34a;font-weight:700;">🟢 申請分</td>';
+    }else{
+      h+='<td style="white-space:nowrap;font-size:11px;color:#6b7280;">'+(r.date?r.date.slice(0,10):'&mdash;')+'</td>';
+    }
     h+='<td style="font-size:12px;font-weight:700;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(r.name||'')+'</td>';
     h+='<td style="font-size:11px;color:#374151;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(r.company||'')+'</td>';
     h+='<td style="font-size:11px;color:#2563eb;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.caseNo||'&mdash;')+'</td>';
-    h+='<td style="font-size:11px;color:#374151;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(r.sub||'')+'</td>';
+    // 案件列：申請分のときは「申請受付番号 待ち」と表示
+    if(r._isApplied){
+      h+='<td style="font-size:11px;color:#16a34a;font-weight:600;white-space:normal;word-break:break-word;line-height:1.4;">📬 申請受付番号 通知待ち</td>';
+    }else{
+      h+='<td style="font-size:11px;color:#374151;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(r.sub||'')+'</td>';
+    }
     h+='<td>'+(r.status?'<span style="font-size:10px;padding:2px 8px;border-radius:4px;background:'+stBg+';color:'+stCol+';border:1px solid '+stCol+'33;white-space:nowrap;">'+esc(extLabel)+'</span>':'&mdash;')+'</td>';
-    h+='<td style="text-align:center;white-space:nowrap;">'+_buildPdfCell(r, '#dc2626')+'</td>';
+    // PDF：申請分は「—」
+    if(r._isApplied){
+      h+='<td style="text-align:center;white-space:nowrap;"><span style="color:#cbd5e1;font-size:10px;">&mdash;</span></td>';
+    }else{
+      h+='<td style="text-align:center;white-space:nowrap;">'+_buildPdfCell(r, '#dc2626')+'</td>';
+    }
     h+='<td style="text-align:center;white-space:nowrap;"><input type="checkbox" data-aid="'+esc(r.id)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)"'+(isChecked?' checked':'')+' style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;">'+(isChecked&&orgChecks[r.id]?'<div style="font-size:9px;color:#16a34a;margin-top:2px;white-space:nowrap;">'+esc((orgChecks[r.id]||'').slice(0,10))+'</div>':'')+'</td>';
     h+='</tr>';
   });
@@ -763,14 +803,30 @@ function renderDashboard(){
   var fb=document.getElementById('filter-bar');
   if(fb) fb.innerHTML='';
   var h='';
-  // 件数サマリ（進行中・完了・全件）
-  var activeCnt=groupCases('active').length;
-  var doneCnt=groupCases('done').length;
-  var allCnt=allCases.length;
+  // ver.20260518.22: ダッシュボードの3カードを「今日分」の指標に置き換え
+  // 今日（JST）の日付文字列
+  var today=new Date();
+  // JSTで日付計算（タイムゾーンに依存しない: 今日0時のローカルタイム）
+  var todayStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  function isToday(dateStr){
+    if(!dateStr) return false;
+    return (dateStr||'').slice(0,10)===todayStr;
+  }
+  // ① 今日の申請 (cases.status=申請済(番号待) かつ updated_at=今日)
+  var todayApplied=allCases.filter(function(c){
+    if(c.status!=='申請済(番号待)' && c.status!=='申請済 (番号待)') return false;
+    if(!isToday(c.updated_at)) return false;
+    return true;
+  }).length;
+  // ② 今日の申請受付番号
+  var todayReceipts=allReceipts.filter(function(r){return isToday(r.date);}).length;
+  // ③ 今日の審査完了
+  var todayShinsa=allShinsa.filter(function(s){return isToday(s.date);}).length;
+  h+='<div style="font-size:11px;color:#64748b;font-weight:600;margin-bottom:8px;">📅 本日（'+todayStr+'）の動向</div>';
   h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px;">';
-  h+=_buildDashCard('🔄 進行中', activeCnt, '#2563eb', '#eff6ff', '#93c5fd', 'active');
-  h+=_buildDashCard('✅ 完了', doneCnt, '#16a34a', '#f0fdf4', '#86efac', 'done');
-  h+=_buildDashCard('📊 すべて', allCnt, '#64748b', '#f8fafc', '#cbd5e1', 'all');
+  h+=_buildDashCard('📝 申請', todayApplied, '#7c3aed', '#f5f3ff', '#c4b5fd', 'receipts');
+  h+=_buildDashCard('📮 申請受付番号', todayReceipts, '#2563eb', '#eff6ff', '#93c5fd', 'receipts');
+  h+=_buildDashCard('✅ 審査完了', todayShinsa, '#16a34a', '#f0fdf4', '#86efac', 'shinsa');
   h+='</div>';
   // 未確認の案件3セクション
   var todayHtml=buildTodayHighlights();
@@ -1415,9 +1471,9 @@ async function loadData(){
     // 案件取得（受付番号・帰国予定も含む）
     document.getElementById('headerOrg').textContent=orgName+' 様';
     document.title=orgName+' 様 | 案件進捗確認';
-    var r4=await sbFetch('cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,temp_return,applicant_field&order=expire.asc.nullslast');
+    var r4=await sbFetch('cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,temp_return,applicant_field,updated_at&order=expire.asc.nullslast');
     var cases=await r4.json();
-    allCases=(cases||[]).map(function(c){return{id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||''};});
+    allCases=(cases||[]).map(function(c){return{id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',updated_at:c.updated_at||''};});
     // personsテーブルからtempReturn(一時帰国予定日)を取得して補完
     if(allCases.length){
       var pids=allCases.map(function(c){return c.id;});
