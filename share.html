@@ -42,6 +42,8 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .sb-divider{height:1px;background:rgba(255,255,255,.08);margin:6px 0;}
 .main-wrap{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
 .filter-bar{background:white;border-bottom:1px solid #e2e8f0;padding:10px 12px;flex-shrink:0;position:sticky;top:48px;z-index:50;box-shadow:0 2px 4px rgba(0,0,0,.04);}
+/* ver.20260519.26: filter-bar が空のときは完全に潰す */
+.filter-bar:empty{padding:0;border:none;box-shadow:none;display:none;}
 .filter-bar-inner{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
 .main{flex:1;padding:12px;overflow:auto;min-width:0;}
 /* 検索バー */
@@ -279,7 +281,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.25</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.26</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -925,10 +927,7 @@ function renderFilterBar(){
   h+='</div>';
   h+='</div>';
   var _fb=document.getElementById('filter-bar');
-  if(_fb){
-    _fb.innerHTML=h;
-    _fb.style.display=''; // ver.20260519.22: display:noneを解除（タブ切替で再表示）
-  }
+  if(_fb) _fb.innerHTML=h;
 }
 
 
@@ -1186,7 +1185,7 @@ function renderMadoguchi(gid){
 
   // フィルタバーは非表示
   var fb=document.getElementById('filter-bar');
-  if(fb){ fb.innerHTML=''; fb.style.display='none'; } // ver.20260519.22
+  if(fb){ fb.innerHTML=''; } // ver.20260519.26: CSS :empty で自動非表示
 
   var isShinsei = (gid==='madoguchi_shinsei');
   var dateField = isShinsei ? 'madoguchiDate' : 'madoguchiReceiveDate';
@@ -1415,7 +1414,7 @@ function renderDashboard(){
   // フィルタバーは非表示（ダッシュボードではフィルタ不要）
   // ver.20260519.22: innerHTML='' だけでなく display:none にしないと余白が残る
   var fb=document.getElementById('filter-bar');
-  if(fb){ fb.innerHTML=''; fb.style.display='none'; }
+  if(fb){ fb.innerHTML=''; } // ver.20260519.26: CSS :empty で自動非表示
   var h='';
   // ver.20260518.22: ダッシュボードの3カードを「今日分」の指標に置き換え
   // 今日（JST）の日付文字列
