@@ -232,7 +232,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.24</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.25</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -856,7 +856,8 @@ function renderFilterBar(){
   var h='<div class="filter-bar-inner">';
   // テキスト検索
   // ver.20260519.22: debounce対応、入力中はフォーカス維持しfilter-barを再描画しない
-  h+='<input type="text" placeholder="🔍 フリーワード検索..." value="'+esc(searchQuery)+'" id="ms-search-input" autocomplete="off" autocorrect="off" autocapitalize="off" oninput="if(!_imeOn){_debouncedSearch(this.value);}" oncompositionstart="_imeOn=true" oncompositionend="_imeOn=false;_debouncedSearch(this.value);" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;font-family:inherit;min-width:200px;flex:1;">';
+  // ver.20260519.25: Enterキーで検索実行（IME変換中の挙動問題を解消、一文字検索も防げる）
+  h+='<input type="text" placeholder="🔍 フリーワード検索...（Enterで実行）" value="'+esc(searchQuery)+'" id="ms-search-input" autocomplete="off" onkeydown="if(event.key===\'Enter\' && !event.isComposing){event.preventDefault();searchQuery=this.value;renderSidebar();renderCurrent();}" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;font-family:inherit;min-width:200px;flex:1;">';
   // ステータスフィルター
   h+='<select onchange="filterStatus=this.value;renderSidebar();renderCurrent()" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;background:white;cursor:pointer;">';
   h+='<option value="">ステータス（全て）</option>';
