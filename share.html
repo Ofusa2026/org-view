@@ -43,7 +43,7 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .main-wrap{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
 .filter-bar{background:white;border-bottom:1px solid #e2e8f0;padding:10px 12px;flex-shrink:0;position:sticky;top:48px;z-index:50;box-shadow:0 2px 4px rgba(0,0,0,.04);}
 .filter-bar-inner{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
-.main{flex:1;padding:0 12px 12px;overflow:auto;min-width:0;}
+.main{flex:1;padding:12px;overflow:auto;min-width:0;}
 /* 検索バー */
 .search-bar{display:flex;gap:8px;margin-bottom:10px;align-items:center;}
 .search-bar input{flex:1;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;font-family:inherit;}
@@ -53,9 +53,9 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .tbl-wrap{overflow-x:auto;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);background:white;}
 table{border-collapse:collapse;width:100%;min-width:700px;}
 thead tr{background:#0f2040;color:white;}
-/* ver.20260519.23: thead を縦スクロール時に固定（filter-bar:48+50=98 の下に張り付く） */
-thead th{position:sticky;top:98px;background:#0f2040;color:white;z-index:10;padding:8px 10px;font-size:10px;font-weight:700;letter-spacing:.3px;white-space:nowrap;text-align:left;cursor:pointer;user-select:none;}
-thead th:hover{background:#1e3a5f;}
+/* ver.20260519.24: thead を縦スクロール時に固定（.main内スクロールに対してtop:0） */
+th{position:sticky;top:0;background:#0f2040;color:white;z-index:10;padding:8px 10px;font-size:10px;font-weight:700;letter-spacing:.3px;white-space:nowrap;text-align:left;cursor:pointer;user-select:none;}
+th:hover{background:#1e3a5f;}
 th .sort-icon{margin-left:4px;opacity:.5;font-size:9px;}
 th.sort-asc .sort-icon::after{content:'▲';}
 th.sort-desc .sort-icon::after{content:'▼';}
@@ -279,7 +279,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.23</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.24</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1804,10 +1804,9 @@ function switchGroup(gid){
   currentGroup=gid;
   renderSidebar();
   renderCurrent();
-  // ver.20260519.23: タブ切替で画面トップにスクロール
+  // ver.20260519.24: タブ切替で .main のスクロール位置をトップに戻す
   var mainEl=document.getElementById('main');
   if(mainEl) mainEl.scrollTop=0;
-  window.scrollTo(0,0);
 }
 
 async function saveComment(caseId){
