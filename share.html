@@ -281,7 +281,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.26</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.27</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1525,6 +1525,28 @@ function buildTodayHighlights(scope){
     if(orgChecks[s.id]) return false;
     return true;
   });
+  // ver.20260519.27: フリーワード検索を3セクション全てに適用
+  if(searchQuery){
+    var qBT=searchQuery.toLowerCase();
+    applied=applied.filter(function(c){
+      return (c.applicant||'').toLowerCase().indexOf(qBT)>=0 ||
+             (c.company||'').toLowerCase().indexOf(qBT)>=0 ||
+             (c.receiptNo||'').toLowerCase().indexOf(qBT)>=0 ||
+             (c.name||'').toLowerCase().indexOf(qBT)>=0;
+    });
+    receipts=receipts.filter(function(r){
+      return (r.name||'').toLowerCase().indexOf(qBT)>=0 ||
+             (r.company||'').toLowerCase().indexOf(qBT)>=0 ||
+             (r.caseNo||'').toLowerCase().indexOf(qBT)>=0 ||
+             (r.caseName||'').toLowerCase().indexOf(qBT)>=0;
+    });
+    shinsas=shinsas.filter(function(s){
+      return (s.name||'').toLowerCase().indexOf(qBT)>=0 ||
+             (s.company||'').toLowerCase().indexOf(qBT)>=0 ||
+             (s.caseNo||'').toLowerCase().indexOf(qBT)>=0 ||
+             (s.caseName||'').toLowerCase().indexOf(qBT)>=0;
+    });
+  }
   // scopeに応じて表示判定
   // 'all': 3つ全部 (ダッシュボード・進行中タブ)
   // 'receipts_applied_only': 申請分のみ (申請記録タブ用、受付番号は本体テーブルが扱う)
