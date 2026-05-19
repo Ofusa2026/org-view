@@ -228,7 +228,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
 .nc-paste-mode{display:flex;gap:8px;}
 .nc-paste-mode label{font-size:11px;color:#475569;display:flex;align-items:center;gap:4px;cursor:pointer;}
 
-/* ===== ver.20260519.10: 確認モーダル＆大きな成功表示 ===== */
+/* ===== ver.20260519.11: 確認モーダル＆大きな成功表示 ===== */
 .nc-confirm-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:700;display:none;align-items:center;justify-content:center;padding:24px 12px;}
 .nc-confirm-modal-bg.open{display:flex;}
 .nc-confirm-modal{background:white;border-radius:14px;width:100%;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden;display:flex;flex-direction:column;max-height:90vh;}
@@ -264,6 +264,13 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
 .nc-big-error-icon{font-size:56px;line-height:1;margin-bottom:14px;}
 .nc-big-error-title{font-size:18px;font-weight:800;color:#991b1b;margin-bottom:8px;}
 .nc-big-error-text{font-size:12px;color:#7f1d1d;line-height:1.6;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:10px 14px;margin:10px 0;word-break:break-word;}
+
+/* ===== ver.20260519.11: 受入れ経験ラジオボタン ===== */
+.nc-radio-group{display:flex;gap:8px;}
+.nc-radio-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 10px;border:1.2px solid #cbd5e1;border-radius:6px;font-size:12.5px;font-weight:600;color:#475569;cursor:pointer;background:white;transition:.15s;}
+.nc-radio-btn:hover{border-color:#94a3b8;background:#f8fafc;}
+.nc-radio-btn input[type="radio"]{margin:0;cursor:pointer;accent-color:#2563eb;}
+.nc-radio-btn:has(input[type="radio"]:checked){border-color:#2563eb;background:#eff6ff;color:#1e40af;font-weight:700;}
 </style>
 </head>
 <body>
@@ -271,7 +278,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.10</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.11</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -379,9 +386,18 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
           </div>
         </div>
 
-        <div class="nc-field">
-          <label class="nc-label">支援委託費（円・税抜）<span style="font-weight:500;color:#94a3b8;font-size:10px;margin-left:6px;">※ 入力した金額がこの案件のすべての人材に同額で反映されます</span></label>
-          <input type="text" class="nc-input" id="nc_supportFee" placeholder="例：30000" inputmode="numeric" style="max-width:240px;">
+        <div class="nc-grid-2">
+          <div class="nc-field">
+            <label class="nc-label">受入れ経験 <span class="req">*</span></label>
+            <div class="nc-radio-group">
+              <label class="nc-radio-btn"><input type="radio" name="nc_acceptExp" value="有"> 受入れ有</label>
+              <label class="nc-radio-btn"><input type="radio" name="nc_acceptExp" value="無"> 受入れ無</label>
+            </div>
+          </div>
+          <div class="nc-field">
+            <label class="nc-label">支援委託費（円・税抜）<span style="font-weight:500;color:#94a3b8;font-size:10px;margin-left:6px;">※ 全員同額で反映</span></label>
+            <input type="text" class="nc-input" id="nc_supportFee" placeholder="例：30000" inputmode="numeric">
+          </div>
         </div>
 
         <div class="nc-section-title">
@@ -452,7 +468,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   </div>
 </div>
 
-<!-- ===== ver.20260519.10: 送信前確認モーダル ===== -->
+<!-- ===== ver.20260519.11: 送信前確認モーダル ===== -->
 <div id="ncConfirmModalBg" class="nc-confirm-modal-bg" onclick="if(event.target===this)closeConfirmModal()">
   <div class="nc-confirm-modal">
     <div class="nc-confirm-head">📤 この内容で送信しますか？</div>
@@ -1948,6 +1964,8 @@ function openNewCaseModal(){
   document.getElementById('nc_company').value='';
   document.getElementById('nc_currentStatus').value='';
   document.getElementById('nc_desiredStatus').value='';
+  var radios = document.querySelectorAll('input[name="nc_acceptExp"]');
+  radios.forEach(function(r){ r.checked = false; });
   var feeEl=document.getElementById('nc_supportFee');
   if(feeEl) feeEl.value='';
   document.getElementById('ncError').style.display='none';
@@ -2064,7 +2082,7 @@ function _assignAidemStaff(caseName, desiredStatus, currentStatus){
   return '';
 }
 
-// ver.20260519.10: バリデーション→確認モーダル表示。実送信はexecuteSubmit()
+// ver.20260519.11: バリデーション→確認モーダル表示。実送信はexecuteSubmit()
 var _ncPendingPayload = null; // 確認モーダル内で参照する保留中データ
 
 async function submitNewCase(){
@@ -2074,6 +2092,8 @@ async function submitNewCase(){
   var company = document.getElementById('nc_company').value.trim();
   var currentStatus = document.getElementById('nc_currentStatus').value;
   var desiredStatus = document.getElementById('nc_desiredStatus').value;
+  var acceptExpEl = document.querySelector('input[name="nc_acceptExp"]:checked');
+  var acceptExp = acceptExpEl ? acceptExpEl.value : '';
   var supportFeeRaw = (document.getElementById('nc_supportFee')||{}).value || '';
   var supportFee = supportFeeRaw.replace(/[,，円\s]/g,'').trim();
 
@@ -2082,6 +2102,7 @@ async function submitNewCase(){
   if(!caseName){ showNcError('案件名を入力してください'); return; }
   if(!company){ showNcError('所属機関（企業名）を入力してください'); return; }
   if(!desiredStatus){ showNcError('希望在留資格を選択してください'); return; }
+  if(!acceptExp){ showNcError('受入れ経験を選択してください'); return; }
   if(supportFee && !/^\d+$/.test(supportFee)){
     showNcError('支援委託費は数字のみで入力してください（例：30000）');
     return;
@@ -2113,6 +2134,7 @@ async function submitNewCase(){
   _ncPendingPayload = {
     caseName: caseName, appType: appType, company: company,
     currentStatus: currentStatus, desiredStatus: desiredStatus,
+    acceptExp: acceptExp,
     supportFee: supportFee, supportStaff: supportStaff, jinzaiList: jinzaiList
   };
 
@@ -2136,9 +2158,10 @@ function _renderConfirmBody(p){
   h += '<div><div class="nc-cf-label">現在の在留資格</div><div class="nc-cf-value">' + esc(p.currentStatus || '（未選択）') + '</div></div>';
   h += '<div><div class="nc-cf-label">希望在留資格</div><div class="nc-cf-value">' + esc(p.desiredStatus) + '</div></div>';
   h += '</div>';
-  if(p.supportFee){
-    h += '<div class="nc-cf-label">支援委託費（税抜・全員に同額適用）</div><div class="nc-cf-value">¥ ' + Number(p.supportFee).toLocaleString() + '</div>';
-  }
+  h += '<div class="nc-cf-grid">';
+  h += '<div><div class="nc-cf-label">受入れ経験</div><div class="nc-cf-value">' + esc(p.acceptExp) + '</div></div>';
+  h += '<div><div class="nc-cf-label">支援委託費（税抜・全員に同額適用）</div><div class="nc-cf-value">' + (p.supportFee ? '¥ ' + Number(p.supportFee).toLocaleString() : '（未入力）') + '</div></div>';
+  h += '</div>';
   if(p.supportStaff){
     h += '<div class="nc-cf-label">OFUSA担当者（自動振り分け）</div><div class="nc-cf-value">' + esc(p.supportStaff) + '</div>';
   }
@@ -2171,6 +2194,7 @@ async function executeSubmit(){
         company: p.company,
         residence_status: p.currentStatus || '',
         desired_status: p.desiredStatus,
+        accept_exp: p.acceptExp,
         nationality: j.nationality,
         expire: j.expire || null,
         support_staff: p.supportStaff,
