@@ -185,7 +185,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.04</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.05</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -2106,32 +2106,39 @@ function _normalizeUkeMethod(s){
   return '';
 }
 
-// 列の内容から列種別を推定（"name"/"nationality"/"expire"/"uke"/"unknown"）
-function _detectColumnType(values){
-  var scores = {name:0, nationality:0, expire:0, uke:0};
-  values.forEach(function(v){
-    if(!v) return;
-    var s = String(v).trim();
-    if(!s) return;
-    // 受取方法（郵送/窓口を含む）
-    if(/郵送|窓口/.test(s)){ scores.uke++; return; }
-    // 在留期限（日付パターン）
-    if(/\d{4}[\/\.\-]\d{1,2}[\/\.\-]\d{1,2}/.test(s) || /^\d{4}-\d{2}-\d{2}$/.test(s)){ scores.expire++; return; }
-    // 国籍（既知のリスト）
-    var natMatch = false;
-    for(var i=0; i<_NC_NATIONALITY_LIST.length; i++){
-      if(s.indexOf(_NC_NATIONALITY_LIST[i]) >= 0){ natMatch = true; break; }
+// 1セルの内容から種別を推定
+function _detectCellType(s){
+  if(!s) return 'unknown';
+  s = String(s).trim();
+  if(!s) return 'unknown';
+  if(/郵送|窓口/.test(s)) return 'uke';
+  if(/^\d{4}[\/\.\-]\d{1,2}[\/\.\-]\d{1,2}$/.test(s)) return 'expire';
+  for(var i=0; i<_NC_NATIONALITY_LIST.length; i++){
+    if(s.indexOf(_NC_NATIONALITY_LIST[i]) >= 0) return 'nationality';
+  }
+  // 残り：氏名候補（英字またはカタカナ・空白を含む長い文字列）
+  if(/[A-Za-z\u30A0-\u30FF]/.test(s)) return 'name';
+  return 'unknown';
+}
+
+// 1行から各列の種別を判定して値を取り出す（行内で順不同OK）
+function _extractRowFields(cols){
+  var result = {name:'', nationality:'', expire:'', uke:''};
+  var unassigned = []; // 種別不明のセル
+  cols.forEach(function(c){
+    var t = _detectCellType(c);
+    if(t !== 'unknown' && !result[t]){
+      result[t] = String(c).trim();
+    } else if(t === 'unknown' && c){
+      unassigned.push(String(c).trim());
     }
-    if(natMatch){ scores.nationality++; return; }
-    // 氏名（英字を含む or カタカナ含む）
-    if(/[A-Za-z]/.test(s) || /[\u30A0-\u30FF]/.test(s)){ scores.name++; return; }
   });
-  // 最大スコアの種別を返す
-  var maxKey = 'unknown', maxVal = 0;
-  Object.keys(scores).forEach(function(k){
-    if(scores[k] > maxVal){ maxVal = scores[k]; maxKey = k; }
-  });
-  return maxVal > 0 ? maxKey : 'unknown';
+  // 氏名が空のときは、未割り当てセルから氏名候補を探す（最も長いもの）
+  if(!result.name && unassigned.length > 0){
+    unassigned.sort(function(a,b){return b.length - a.length;});
+    result.name = unassigned[0];
+  }
+  return result;
 }
 
 function previewPasteData(){
@@ -2145,49 +2152,14 @@ function previewPasteData(){
     return;
   }
 
-  // 全行を一旦分割して2次元配列に
-  var rows = lines.map(_parsePasteLine);
-  var maxCols = Math.max.apply(null, rows.map(function(r){return r.length;}));
-
-  // 各列の種別を判定（多数決）
-  var colTypes = [];
-  for(var c=0; c<maxCols; c++){
-    var colVals = rows.map(function(r){return r[c] || '';});
-    colTypes.push(_detectColumnType(colVals));
-  }
-
-  // 列マッピング: type → column index
-  var colMap = {name:-1, nationality:-1, expire:-1, uke:-1};
-  colTypes.forEach(function(t, idx){
-    if(colMap[t] === -1 && t !== 'unknown'){
-      colMap[t] = idx;
-    }
-  });
-
-  // フォールバック: 見つからない列は残った列を順番に割り当て
-  var assignedCols = {};
-  Object.keys(colMap).forEach(function(k){ if(colMap[k]>=0) assignedCols[colMap[k]] = true; });
-  var fallbackOrder = ['name', 'nationality', 'expire', 'uke'];
-  for(var c2=0; c2<maxCols; c2++){
-    if(!assignedCols[c2]){
-      for(var fi=0; fi<fallbackOrder.length; fi++){
-        var key = fallbackOrder[fi];
-        if(colMap[key] === -1){
-          colMap[key] = c2;
-          assignedCols[c2] = true;
-          break;
-        }
-      }
-    }
-  }
-
-  // データ抽出
   var errors = 0;
-  rows.forEach(function(cols){
-    var name = (cols[colMap.name] || '').trim();
-    var nat = _normalizeNationality((cols[colMap.nationality] || '').trim());
-    var exp = _normalizeDate((cols[colMap.expire] || '').trim());
-    var uke = _normalizeUkeMethod((cols[colMap.uke] || '').trim());
+  lines.forEach(function(line){
+    var cols = _parsePasteLine(line);
+    var f = _extractRowFields(cols);
+    var name = f.name;
+    var nat = _normalizeNationality(f.nationality);
+    var exp = _normalizeDate(f.expire);
+    var uke = _normalizeUkeMethod(f.uke);
 
     var nameOk = name.length > 0;
     var natOk = _NC_NATIONALITY_LIST.indexOf(nat) >= 0;
@@ -2213,16 +2185,7 @@ function previewPasteData(){
     return;
   }
 
-  // 列マッピング情報を表示
-  var mapInfo = '🔍 列の自動判定: ';
-  var typeJa = {name:'氏名', nationality:'国籍', expire:'在留期限', uke:'受取方法'};
-  var mapParts = [];
-  ['name','nationality','expire','uke'].forEach(function(k){
-    if(colMap[k] >= 0) mapParts.push((colMap[k]+1) + '列目→' + typeJa[k]);
-  });
-  mapInfo += mapParts.join(' / ');
-
-  var h = '<div style="font-size:10.5px;color:#0369a1;background:#e0f2fe;padding:5px 8px;border-radius:4px;margin-bottom:8px;">' + esc(mapInfo) + '</div>';
+  var h = '<div style="font-size:10.5px;color:#0369a1;background:#e0f2fe;padding:5px 8px;border-radius:4px;margin-bottom:8px;">🔍 各行の内容から氏名・国籍・在留期限・受取方法を自動判定しました（列の順序は問いません）</div>';
   h += '<table><thead><tr><th>#</th><th>氏名</th><th>国籍</th><th>在留期限</th><th>受取方法</th></tr></thead><tbody>';
   _ncPasteParsed.forEach(function(p, i){
     h += '<tr>';
