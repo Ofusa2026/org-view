@@ -181,7 +181,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
 .nc-paste-mode{display:flex;gap:8px;}
 .nc-paste-mode label{font-size:11px;color:#475569;display:flex;align-items:center;gap:4px;cursor:pointer;}
 
-/* ===== ver.20260519.16: 確認モーダル＆大きな成功表示 ===== */
+/* ===== ver.20260519.17: 確認モーダル＆大きな成功表示 ===== */
 .nc-confirm-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:700;display:none;align-items:center;justify-content:center;padding:24px 12px;}
 .nc-confirm-modal-bg.open{display:flex;}
 .nc-confirm-modal{background:white;border-radius:14px;width:100%;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden;display:flex;flex-direction:column;max-height:90vh;}
@@ -218,7 +218,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
 .nc-big-error-title{font-size:18px;font-weight:800;color:#991b1b;margin-bottom:8px;}
 .nc-big-error-text{font-size:12px;color:#7f1d1d;line-height:1.6;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:10px 14px;margin:10px 0;word-break:break-word;}
 
-/* ===== ver.20260519.16: 受入れ経験ラジオボタン ===== */
+/* ===== ver.20260519.17: 受入れ経験ラジオボタン ===== */
 .nc-radio-group{display:flex;gap:8px;}
 .nc-radio-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 10px;border:1.2px solid #cbd5e1;border-radius:6px;font-size:12.5px;font-weight:600;color:#475569;cursor:pointer;background:white;transition:.15s;}
 .nc-radio-btn:hover{border-color:#94a3b8;background:#f8fafc;}
@@ -231,7 +231,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.16</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.17</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -422,7 +422,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   </div>
 </div>
 
-<!-- ===== ver.20260519.16: 送信前確認モーダル ===== -->
+<!-- ===== ver.20260519.17: 送信前確認モーダル ===== -->
 <div id="ncConfirmModalBg" class="nc-confirm-modal-bg" onclick="if(event.target===this)closeConfirmModal()">
   <div class="nc-confirm-modal">
     <div class="nc-confirm-head">📤 この内容で送信しますか？</div>
@@ -599,7 +599,7 @@ var STATUS_COLS=[
   {label:'新在留カード発行済み',color:'#15803d',statuses:['完了','審査完了']}
 ];
 
-// ver.20260519.16: 窓口申請/窓口受取（アイデム専用サイドバー用）
+// ver.20260519.17: 窓口申請/窓口受取（アイデム専用サイドバー用）
 // 判定はステータスではなく、cases.madoguchi_date / madoguchi_receive_date に
 // 日付が入っているかで判定する（OFUSA index.htmlの申請情報セクションで入力された日付）
 function _hasMadoguchiShinsei(c){ return !!(c.madoguchiDate && c.madoguchiDate.trim()); }
@@ -608,7 +608,7 @@ function _hasMadoguchiUketori(c){ return !!(c.madoguchiReceiveDate && c.madoguch
 function classify(c){return DONE_ST.indexOf(c.status)>=0?'done':'active';}
 function groupCases(gid){
   var base;
-  // ver.20260519.16: アイデム専用 窓口申請/窓口受取グループ（日付ベース判定）
+  // ver.20260519.17: アイデム専用 窓口申請/窓口受取グループ（日付ベース判定）
   if(gid==='madoguchi_shinsei'){
     base = allCases.filter(_hasMadoguchiShinsei);
   } else if(gid==='madoguchi_uketori'){
@@ -808,7 +808,7 @@ function renderSidebar(){
   h+='<div class="sb-divider"></div>';
   h+='<div class="sb-item'+(currentGroup==='receipts'?' active':'')+'" onclick="switchGroup(\'receipts\')">申請記録 <span class="sb-badge">'+allReceipts.length+'</span></div>';
   h+='<div class="sb-item'+(currentGroup==='shinsa'?' active':'')+'" onclick="switchGroup(\'shinsa\')">審査完了 <span class="sb-badge">'+allShinsa.length+'</span></div>';
-  // ver.20260519.16: アイデム専用 窓口申請/窓口受取（日付ベース判定）
+  // ver.20260519.17: アイデム専用 窓口申請/窓口受取（日付ベース判定）
   if(orgName==='株式会社アイデム'){
     var mshinsei = allCases.filter(_hasMadoguchiShinsei).length;
     var muketori = allCases.filter(_hasMadoguchiUketori).length;
@@ -916,12 +916,13 @@ function renderReceipts(){
   appliedCases.forEach(function(c){
     unchecked.push({
       id: 'case_'+c.id,
-      _isApplied: true, // テーブル側で「申請分」として識別
-      date: '', // 申請分は受付日なし
-      name: c.name||c.applicant||'',
+      _isApplied: true,
+      date: '',
+      // ver.20260519.17: name=申請者列、sub=案件列
+      name: c.applicant||'',
       company: c.company||'',
       caseNo: c.receiptNo||'',
-      sub: '', // 未確認の申請分は「案件」列なし
+      sub: c.name||'',
       status: c.status,
       pdfDone: false,
       driveUrl: null
@@ -1003,9 +1004,10 @@ function _buildReceiptTable(rows, dimmed){
     h+='<td style="font-size:12px;font-weight:700;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(r.name||'')+'</td>';
     h+='<td style="font-size:11px;color:#374151;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(r.company||'')+'</td>';
     h+='<td style="font-size:11px;color:#2563eb;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.caseNo||'&mdash;')+'</td>';
-    // 案件列：申請分のときは「申請受付番号 待ち」と表示
+    // 案件列：申請分のときは案件名＋通知待ちバッジを併記
     if(r._isApplied){
-      h+='<td style="font-size:11px;color:#16a34a;font-weight:600;white-space:normal;word-break:break-word;line-height:1.4;">📬 申請受付番号 通知待ち</td>';
+      var caseName = esc(r.sub||'');
+      h+='<td style="font-size:11px;color:#374151;white-space:normal;word-break:break-word;line-height:1.4;">'+caseName+(caseName?'<br>':'')+'<span style="font-size:10px;color:#16a34a;font-weight:600;white-space:nowrap;">📬 申請受付番号 通知待ち</span></td>';
     }else{
       h+='<td style="font-size:11px;color:#374151;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(r.sub||'')+'</td>';
     }
@@ -1095,7 +1097,7 @@ function _buildShinsaTable(rows, dimmed){
   return h;
 }
 
-// ver.20260519.16: アイデム専用 窓口申請/窓口受取の専用画面
+// ver.20260519.17: アイデム専用 窓口申請/窓口受取の専用画面
 // 3セクション構成：直近7日以内 / その他未来（8日以降）/ 完了（過去）
 function renderMadoguchi(gid){
   var el=document.getElementById('main');
@@ -1355,7 +1357,7 @@ function renderMain(){
     return;
   }
   _renderMainPending=false;
-  // ver.20260519.16: アイデム専用 窓口申請/窓口受取は専用テーブル描画
+  // ver.20260519.17: アイデム専用 窓口申請/窓口受取は専用テーブル描画
   if(currentGroup==='madoguchi_shinsei' || currentGroup==='madoguchi_uketori'){
     renderMadoguchi(currentGroup);
     return;
@@ -2260,7 +2262,7 @@ function _assignAidemStaff(caseName, desiredStatus, currentStatus){
   return '';
 }
 
-// ver.20260519.16: バリデーション→確認モーダル表示。実送信はexecuteSubmit()
+// ver.20260519.17: バリデーション→確認モーダル表示。実送信はexecuteSubmit()
 var _ncPendingPayload = null; // 確認モーダル内で参照する保留中データ
 
 async function submitNewCase(){
