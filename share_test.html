@@ -119,7 +119,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
 .kanban-badge{font-size:9px;padding:1px 6px;border-radius:99px;font-weight:700;}
 
 /* ===== ver.20260519.01: アイデム新規案件依頼ボタン＆モーダル ===== */
-.new-case-btn{background:linear-gradient(135deg,#16a34a,#22c55e);color:white;border:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(34,197,94,.3);margin-right:8px;}
+.new-case-btn{background:linear-gradient(135deg,#16a34a,#22c55e);color:white;border:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(34,197,94,.3);margin-right:12px;}
 .new-case-btn:hover{background:linear-gradient(135deg,#15803d,#16a34a);box-shadow:0 3px 10px rgba(34,197,94,.4);}
 .nc-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:none;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto;}
 .nc-modal-bg.open{display:flex;}
@@ -155,7 +155,29 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
 .nc-submit-btn:disabled{background:#94a3b8;cursor:not-allowed;box-shadow:none;}
 .nc-error{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:8px 12px;border-radius:6px;font-size:11.5px;margin-bottom:10px;display:none;}
 .nc-success{background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;padding:14px 18px;border-radius:8px;font-size:13px;margin:8px 0;display:none;text-align:center;font-weight:700;}
-.nc-jinzai-count{font-size:11px;color:#64748b;font-weight:600;}
+.nc-jinzai-count{font-size:11px;color:#64748b;font-weight:600;margin-left:auto;}
+.nc-paste-btn{margin-left:8px;padding:4px 10px;background:#fef3c7;color:#92400e;border:1.2px solid #fbbf24;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;}
+.nc-paste-btn:hover{background:#fde68a;}
+.nc-paste-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:600;display:none;align-items:center;justify-content:center;padding:24px 12px;}
+.nc-paste-modal-bg.open{display:flex;}
+.nc-paste-modal{background:white;border-radius:12px;width:100%;max-width:640px;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden;display:flex;flex-direction:column;max-height:90vh;}
+.nc-paste-modal-head{padding:14px 18px;background:linear-gradient(135deg,#92400e,#b45309);color:white;display:flex;align-items:center;justify-content:space-between;}
+.nc-paste-modal-title{font-size:14px;font-weight:800;}
+.nc-paste-modal-body{padding:16px 20px;overflow-y:auto;}
+.nc-paste-help{background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;padding:10px 12px;font-size:11.5px;color:#78350f;line-height:1.6;margin-bottom:10px;}
+.nc-paste-help b{color:#92400e;}
+.nc-paste-help code{background:white;padding:1px 5px;border-radius:3px;border:1px solid #fcd34d;font-size:10.5px;}
+.nc-paste-textarea{width:100%;min-height:140px;padding:10px;border:1.5px solid #cbd5e1;border-radius:6px;font-family:monospace;font-size:11.5px;box-sizing:border-box;resize:vertical;}
+.nc-paste-textarea:focus{outline:none;border-color:#92400e;}
+.nc-paste-preview{margin-top:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:10px;font-size:11px;max-height:200px;overflow-y:auto;display:none;}
+.nc-paste-preview-title{font-weight:700;color:#475569;margin-bottom:6px;font-size:11px;}
+.nc-paste-preview table{width:100%;border-collapse:collapse;font-size:10.5px;}
+.nc-paste-preview th{background:#e2e8f0;padding:4px 6px;text-align:left;font-weight:700;}
+.nc-paste-preview td{padding:3px 6px;border-bottom:1px solid #e5e7eb;}
+.nc-paste-preview td.warn{color:#dc2626;font-weight:700;}
+.nc-paste-modal-foot{padding:12px 18px;background:#f8fafc;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.nc-paste-mode{display:flex;gap:8px;}
+.nc-paste-mode label{font-size:11px;color:#475569;display:flex;align-items:center;gap:4px;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -163,13 +185,13 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.02</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.04</div>
   </div>
-  <button id="newCaseBtn" class="new-case-btn" style="display:none;" onclick="openNewCaseModal()">＋ 新規案件依頼</button>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
   </button>
+  <button id="newCaseBtn" class="new-case-btn" style="display:none;" onclick="openNewCaseModal()">＋ 新規案件依頼</button>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 <div id="notifModalBg" class="notif-modal-bg" onclick="if(event.target===this)closeNotifModal()">
@@ -261,7 +283,8 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
 
         <div class="nc-section-title">
           👥 人材リスト
-          <span class="nc-jinzai-count" id="ncJinzaiCount" style="margin-left:auto;">0 / 30名</span>
+          <button type="button" class="nc-paste-btn" onclick="openPasteModal()">📋 まとめて貼り付け</button>
+          <span class="nc-jinzai-count" id="ncJinzaiCount">0 / 30名</span>
         </div>
 
         <table class="nc-jinzai-table">
@@ -287,6 +310,42 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
     <div class="nc-modal-foot">
       <button class="nc-cancel-btn" onclick="closeNewCaseModal()">キャンセル</button>
       <button class="nc-submit-btn" id="ncSubmitBtn" onclick="submitNewCase()">登録する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ver.20260519.03: 一括貼り付けモーダル ===== -->
+<div id="ncPasteModalBg" class="nc-paste-modal-bg" onclick="if(event.target===this)closePasteModal()">
+  <div class="nc-paste-modal">
+    <div class="nc-paste-modal-head">
+      <div class="nc-paste-modal-title">📋 人材を一括貼り付け</div>
+      <button class="nc-modal-close" onclick="closePasteModal()">✕</button>
+    </div>
+    <div class="nc-paste-modal-body">
+      <div class="nc-paste-help">
+        <b>使い方</b>：Excelやスプレッドシートの表をコピーして下のボックスに貼り付け、または改行・カンマ・タブ区切りのテキストを入力してください。<br>
+        <b>列の並び順は不問</b>：列の中身から <code>氏名</code> / <code>国籍</code> / <code>在留期限</code> / <code>受取方法（郵送交付or窓口受取）</code> を自動で判定します。<br>
+        <b>例</b>：<code>ベトナム&nbsp;&nbsp;NGUYEN VAN A&nbsp;&nbsp;郵送交付&nbsp;&nbsp;2026-08-01</code>
+      </div>
+
+      <textarea class="nc-paste-textarea" id="ncPasteTextarea"
+        placeholder="どの順序でもOK。例:&#10;ベトナム&#9;NGUYEN VAN A&#9;郵送交付&#9;2026-08-01&#10;2026-09-15&#9;NGUYEN VAN B&#9;インドネシア&#9;窓口受取&#10;NGUYEN VAN C&#9;ミャンマー&#9;2026-10-20&#9;郵送交付"
+        oninput="previewPasteData()"></textarea>
+
+      <div class="nc-paste-preview" id="ncPastePreview">
+        <div class="nc-paste-preview-title">✓ プレビュー（<span id="ncPasteCount">0</span>件）</div>
+        <div id="ncPastePreviewBody"></div>
+      </div>
+    </div>
+    <div class="nc-paste-modal-foot">
+      <div class="nc-paste-mode">
+        <label><input type="radio" name="ncPasteMode" value="append" checked> 既存行に追加</label>
+        <label><input type="radio" name="ncPasteMode" value="replace"> 既存行を置き換え</label>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="nc-cancel-btn" onclick="closePasteModal()">キャンセル</button>
+        <button class="nc-submit-btn" id="ncPasteApplyBtn" onclick="applyPasteData()" disabled>反映する</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1976,6 +2035,265 @@ async function submitNewCase(){
     showNcError('送信エラー: ' + e.message);
     document.getElementById('ncSubmitBtn').disabled = false;
     document.getElementById('ncSubmitBtn').textContent = '登録する';
+  }
+}
+
+// ===== ver.20260519.03: 一括貼り付け機能 =====
+var _ncPasteParsed = []; // パース済みデータ
+var _NC_NATIONALITY_LIST = ['ベトナム','インドネシア','ミャンマー','フィリピン','中国','ネパール','カンボジア','タイ','モンゴル','スリランカ','バングラデシュ'];
+
+function openPasteModal(){
+  document.getElementById('ncPasteTextarea').value = '';
+  document.getElementById('ncPastePreview').style.display = 'none';
+  document.getElementById('ncPasteApplyBtn').disabled = true;
+  _ncPasteParsed = [];
+  document.getElementById('ncPasteModalBg').classList.add('open');
+  setTimeout(function(){ document.getElementById('ncPasteTextarea').focus(); }, 100);
+}
+
+function closePasteModal(){
+  document.getElementById('ncPasteModalBg').classList.remove('open');
+}
+
+// 1行を分割（タブ → カンマ → 2連続スペース の順で試す）
+function _parsePasteLine(line){
+  if(line.indexOf('\t') >= 0){
+    return line.split('\t').map(function(s){return s.trim();});
+  }
+  if(line.indexOf(',') >= 0){
+    return line.split(',').map(function(s){return s.trim();});
+  }
+  if(/\s{2,}/.test(line)){
+    return line.split(/\s{2,}/).map(function(s){return s.trim();});
+  }
+  // 単一スペースだけの場合：氏名は通常スペース含むので、4列に分けるのは難しい
+  // 最後の3つを取って残りを氏名扱い（例: NGUYEN VAN A ベトナム 2026-08-01 郵送交付）
+  var parts = line.split(/\s+/);
+  if(parts.length >= 4){
+    var uke = parts[parts.length-1];
+    var exp = parts[parts.length-2];
+    var nat = parts[parts.length-3];
+    var name = parts.slice(0, parts.length-3).join(' ');
+    return [name, nat, exp, uke];
+  }
+  return parts;
+}
+
+// 国籍の補正（部分一致でマスターに合わせる）
+function _normalizeNationality(s){
+  if(!s) return '';
+  for(var i=0; i<_NC_NATIONALITY_LIST.length; i++){
+    if(s.indexOf(_NC_NATIONALITY_LIST[i]) >= 0) return _NC_NATIONALITY_LIST[i];
+  }
+  return s;
+}
+
+// 日付の正規化（2026/8/1 → 2026-08-01, 2026.8.1 → 2026-08-01）
+function _normalizeDate(s){
+  if(!s) return '';
+  var m = s.match(/(\d{4})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})/);
+  if(m){
+    return m[1] + '-' + ('0'+m[2]).slice(-2) + '-' + ('0'+m[3]).slice(-2);
+  }
+  return s;
+}
+
+// 受取方法の正規化
+function _normalizeUkeMethod(s){
+  if(!s) return '';
+  if(s.indexOf('郵送') >= 0) return '郵送交付';
+  if(s.indexOf('窓口') >= 0) return '窓口受取';
+  return '';
+}
+
+// 列の内容から列種別を推定（"name"/"nationality"/"expire"/"uke"/"unknown"）
+function _detectColumnType(values){
+  var scores = {name:0, nationality:0, expire:0, uke:0};
+  values.forEach(function(v){
+    if(!v) return;
+    var s = String(v).trim();
+    if(!s) return;
+    // 受取方法（郵送/窓口を含む）
+    if(/郵送|窓口/.test(s)){ scores.uke++; return; }
+    // 在留期限（日付パターン）
+    if(/\d{4}[\/\.\-]\d{1,2}[\/\.\-]\d{1,2}/.test(s) || /^\d{4}-\d{2}-\d{2}$/.test(s)){ scores.expire++; return; }
+    // 国籍（既知のリスト）
+    var natMatch = false;
+    for(var i=0; i<_NC_NATIONALITY_LIST.length; i++){
+      if(s.indexOf(_NC_NATIONALITY_LIST[i]) >= 0){ natMatch = true; break; }
+    }
+    if(natMatch){ scores.nationality++; return; }
+    // 氏名（英字を含む or カタカナ含む）
+    if(/[A-Za-z]/.test(s) || /[\u30A0-\u30FF]/.test(s)){ scores.name++; return; }
+  });
+  // 最大スコアの種別を返す
+  var maxKey = 'unknown', maxVal = 0;
+  Object.keys(scores).forEach(function(k){
+    if(scores[k] > maxVal){ maxVal = scores[k]; maxKey = k; }
+  });
+  return maxVal > 0 ? maxKey : 'unknown';
+}
+
+function previewPasteData(){
+  var text = document.getElementById('ncPasteTextarea').value;
+  var lines = text.split(/\r?\n/).map(function(l){return l.trim();}).filter(function(l){return l.length>0;});
+
+  _ncPasteParsed = [];
+  if(lines.length === 0){
+    document.getElementById('ncPastePreview').style.display = 'none';
+    document.getElementById('ncPasteApplyBtn').disabled = true;
+    return;
+  }
+
+  // 全行を一旦分割して2次元配列に
+  var rows = lines.map(_parsePasteLine);
+  var maxCols = Math.max.apply(null, rows.map(function(r){return r.length;}));
+
+  // 各列の種別を判定（多数決）
+  var colTypes = [];
+  for(var c=0; c<maxCols; c++){
+    var colVals = rows.map(function(r){return r[c] || '';});
+    colTypes.push(_detectColumnType(colVals));
+  }
+
+  // 列マッピング: type → column index
+  var colMap = {name:-1, nationality:-1, expire:-1, uke:-1};
+  colTypes.forEach(function(t, idx){
+    if(colMap[t] === -1 && t !== 'unknown'){
+      colMap[t] = idx;
+    }
+  });
+
+  // フォールバック: 見つからない列は残った列を順番に割り当て
+  var assignedCols = {};
+  Object.keys(colMap).forEach(function(k){ if(colMap[k]>=0) assignedCols[colMap[k]] = true; });
+  var fallbackOrder = ['name', 'nationality', 'expire', 'uke'];
+  for(var c2=0; c2<maxCols; c2++){
+    if(!assignedCols[c2]){
+      for(var fi=0; fi<fallbackOrder.length; fi++){
+        var key = fallbackOrder[fi];
+        if(colMap[key] === -1){
+          colMap[key] = c2;
+          assignedCols[c2] = true;
+          break;
+        }
+      }
+    }
+  }
+
+  // データ抽出
+  var errors = 0;
+  rows.forEach(function(cols){
+    var name = (cols[colMap.name] || '').trim();
+    var nat = _normalizeNationality((cols[colMap.nationality] || '').trim());
+    var exp = _normalizeDate((cols[colMap.expire] || '').trim());
+    var uke = _normalizeUkeMethod((cols[colMap.uke] || '').trim());
+
+    var nameOk = name.length > 0;
+    var natOk = _NC_NATIONALITY_LIST.indexOf(nat) >= 0;
+    var ukeOk = uke === '郵送交付' || uke === '窓口受取';
+    var expOk = !exp || /^\d{4}-\d{2}-\d{2}$/.test(exp);
+
+    if(!nameOk || !natOk || !ukeOk || !expOk) errors++;
+
+    _ncPasteParsed.push({
+      name: name, nationality: nat, expire: exp, ukeMethod: uke,
+      _nameOk: nameOk, _natOk: natOk, _expOk: expOk, _ukeOk: ukeOk
+    });
+  });
+
+  // プレビュー描画
+  var prevEl = document.getElementById('ncPastePreview');
+  var prevBody = document.getElementById('ncPastePreviewBody');
+  document.getElementById('ncPasteCount').textContent = _ncPasteParsed.length;
+
+  if(_ncPasteParsed.length === 0){
+    prevEl.style.display = 'none';
+    document.getElementById('ncPasteApplyBtn').disabled = true;
+    return;
+  }
+
+  // 列マッピング情報を表示
+  var mapInfo = '🔍 列の自動判定: ';
+  var typeJa = {name:'氏名', nationality:'国籍', expire:'在留期限', uke:'受取方法'};
+  var mapParts = [];
+  ['name','nationality','expire','uke'].forEach(function(k){
+    if(colMap[k] >= 0) mapParts.push((colMap[k]+1) + '列目→' + typeJa[k]);
+  });
+  mapInfo += mapParts.join(' / ');
+
+  var h = '<div style="font-size:10.5px;color:#0369a1;background:#e0f2fe;padding:5px 8px;border-radius:4px;margin-bottom:8px;">' + esc(mapInfo) + '</div>';
+  h += '<table><thead><tr><th>#</th><th>氏名</th><th>国籍</th><th>在留期限</th><th>受取方法</th></tr></thead><tbody>';
+  _ncPasteParsed.forEach(function(p, i){
+    h += '<tr>';
+    h += '<td>' + (i+1) + '</td>';
+    h += '<td class="' + (p._nameOk?'':'warn') + '">' + esc(p.name || '(空)') + '</td>';
+    h += '<td class="' + (p._natOk?'':'warn') + '">' + esc(p.nationality || '(不明)') + '</td>';
+    h += '<td class="' + (p._expOk?'':'warn') + '">' + esc(p.expire || '-') + '</td>';
+    h += '<td class="' + (p._ukeOk?'':'warn') + '">' + esc(p.ukeMethod || '(不明)') + '</td>';
+    h += '</tr>';
+  });
+  h += '</tbody></table>';
+  if(errors > 0){
+    h += '<div style="margin-top:8px;font-size:11px;color:#dc2626;">⚠️ ' + errors + '件に不備があります（赤字部分）。反映後に個別修正できます。</div>';
+  }
+  prevBody.innerHTML = h;
+  prevEl.style.display = '';
+  document.getElementById('ncPasteApplyBtn').disabled = false;
+}
+
+function applyPasteData(){
+  if(_ncPasteParsed.length === 0) return;
+
+  var mode = document.querySelector('input[name="ncPasteMode"]:checked').value;
+  var tbody = document.getElementById('ncJinzaiBody');
+
+  // 置き換えモード: 既存行をクリア
+  if(mode === 'replace'){
+    tbody.innerHTML = '';
+    _ncJinzaiRows = 0;
+  }
+
+  // 既存行のうち空行は削除（追加モード時に空行を残さない）
+  if(mode === 'append'){
+    var existingRows = Array.from(tbody.children);
+    existingRows.forEach(function(rowEl){
+      var nm = rowEl.querySelector('.nc-j-name').value.trim();
+      var nat = rowEl.querySelector('.nc-j-nat').value;
+      var uke = rowEl.querySelector('.nc-j-uke').value;
+      if(!nm && !nat && !uke) rowEl.remove();
+    });
+  }
+
+  // 30名上限チェック
+  var current = tbody.children.length;
+  var canAdd = _NC_MAX_JINZAI - current;
+  var willAdd = Math.min(_ncPasteParsed.length, canAdd);
+
+  for(var i=0; i<willAdd; i++){
+    var p = _ncPasteParsed[i];
+    addJinzaiRow();
+    var lastRow = tbody.children[tbody.children.length - 1];
+    lastRow.querySelector('.nc-j-name').value = p.name;
+    if(p.nationality && _NC_NATIONALITY_LIST.indexOf(p.nationality) >= 0){
+      lastRow.querySelector('.nc-j-nat').value = p.nationality;
+    }
+    if(p.expire) lastRow.querySelector('.nc-j-expire').value = p.expire;
+    if(p.ukeMethod) lastRow.querySelector('.nc-j-uke').value = p.ukeMethod;
+  }
+
+  // 行番号振り直し
+  var rows = tbody.children;
+  for(var j=0; j<rows.length; j++){
+    rows[j].querySelector('.nc-row-num').textContent = (j+1);
+  }
+  _ncJinzaiRows = rows.length;
+  updateJinzaiCount();
+
+  closePasteModal();
+
+  if(willAdd < _ncPasteParsed.length){
+    showNcError('上限30名のため、' + willAdd + '名のみ追加しました（' + (_ncPasteParsed.length - willAdd) + '名は反映されません）');
   }
 }
 </script>
