@@ -180,6 +180,43 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
 .nc-paste-modal-foot{padding:12px 18px;background:#f8fafc;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;gap:10px;}
 .nc-paste-mode{display:flex;gap:8px;}
 .nc-paste-mode label{font-size:11px;color:#475569;display:flex;align-items:center;gap:4px;cursor:pointer;}
+
+/* ===== ver.20260519.10: 確認モーダル＆大きな成功表示 ===== */
+.nc-confirm-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:700;display:none;align-items:center;justify-content:center;padding:24px 12px;}
+.nc-confirm-modal-bg.open{display:flex;}
+.nc-confirm-modal{background:white;border-radius:14px;width:100%;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden;display:flex;flex-direction:column;max-height:90vh;}
+.nc-confirm-head{padding:16px 22px;background:linear-gradient(135deg,#0369a1,#0284c7);color:white;font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;}
+.nc-confirm-body{padding:20px 24px;overflow-y:auto;flex:1;font-size:13px;color:#0f2040;line-height:1.7;}
+.nc-confirm-body .nc-cf-label{font-size:11px;font-weight:700;color:#64748b;letter-spacing:.04em;margin-top:14px;margin-bottom:4px;}
+.nc-confirm-body .nc-cf-label:first-child{margin-top:0;}
+.nc-confirm-body .nc-cf-value{background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;font-size:12.5px;}
+.nc-confirm-body .nc-cf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.nc-confirm-body .nc-cf-jinzai-list{max-height:200px;overflow-y:auto;font-size:11.5px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;}
+.nc-confirm-body .nc-cf-jinzai-list table{width:100%;border-collapse:collapse;}
+.nc-confirm-body .nc-cf-jinzai-list th{background:#e2e8f0;font-size:10.5px;font-weight:700;text-align:left;padding:4px 6px;}
+.nc-confirm-body .nc-cf-jinzai-list td{padding:4px 6px;border-bottom:1px solid #e5e7eb;font-size:11px;}
+.nc-confirm-foot{padding:14px 22px;background:#f8fafc;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:10px;}
+.nc-confirm-back-btn{padding:10px 18px;background:white;color:#475569;border:1.2px solid #cbd5e1;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;}
+.nc-confirm-send-btn{padding:10px 26px;background:linear-gradient(135deg,#16a34a,#22c55e);color:white;border:none;border-radius:7px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(34,197,94,.35);}
+.nc-confirm-send-btn:hover{background:linear-gradient(135deg,#15803d,#16a34a);}
+.nc-confirm-send-btn:disabled{background:#94a3b8;cursor:not-allowed;box-shadow:none;}
+
+/* 大きな成功表示 */
+.nc-big-success{display:none;text-align:center;padding:40px 24px;}
+.nc-big-success.show{display:block;}
+.nc-big-success-icon{font-size:64px;line-height:1;margin-bottom:16px;animation:nc-bounce .6s ease;}
+.nc-big-success-title{font-size:22px;font-weight:800;color:#15803d;margin-bottom:8px;}
+.nc-big-success-text{font-size:13px;color:#475569;line-height:1.7;margin-bottom:8px;}
+.nc-big-success-text strong{color:#0f2040;font-size:15px;}
+.nc-big-success-sub{font-size:11.5px;color:#94a3b8;margin-top:14px;line-height:1.6;}
+@keyframes nc-bounce{0%{transform:scale(.3);opacity:0;}50%{transform:scale(1.15);}100%{transform:scale(1);opacity:1;}}
+
+/* 大きなエラー表示 */
+.nc-big-error{display:none;text-align:center;padding:30px 24px;}
+.nc-big-error.show{display:block;}
+.nc-big-error-icon{font-size:56px;line-height:1;margin-bottom:14px;}
+.nc-big-error-title{font-size:18px;font-weight:800;color:#991b1b;margin-bottom:8px;}
+.nc-big-error-text{font-size:12px;color:#7f1d1d;line-height:1.6;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:10px 14px;margin:10px 0;word-break:break-word;}
 </style>
 </head>
 <body>
@@ -187,7 +224,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.09</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.10</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -226,6 +263,18 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
     <div class="nc-modal-body">
       <div class="nc-error" id="ncError"></div>
       <div class="nc-success" id="ncSuccess"></div>
+      <div class="nc-big-success" id="ncBigSuccess">
+        <div class="nc-big-success-icon">✅</div>
+        <div class="nc-big-success-title">送信が完了しました</div>
+        <div class="nc-big-success-text" id="ncBigSuccessText"></div>
+        <div class="nc-big-success-sub">OFUSAの担当者が確認後、正式な案件として登録されます。<br>確認の連絡が来るまでお待ちください。</div>
+      </div>
+      <div class="nc-big-error" id="ncBigError">
+        <div class="nc-big-error-icon">❌</div>
+        <div class="nc-big-error-title">送信に失敗しました</div>
+        <div class="nc-big-error-text" id="ncBigErrorText"></div>
+        <div class="nc-big-success-sub">お手数ですが、もう一度お試しいただくか、OFUSAまでご連絡ください。</div>
+      </div>
       <div id="ncFormArea">
 
         <div class="nc-section-title">📋 案件共通情報</div>
@@ -281,6 +330,11 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
               <option value="その他">その他</option>
             </select>
           </div>
+        </div>
+
+        <div class="nc-field">
+          <label class="nc-label">支援委託費（円・税抜）<span style="font-weight:500;color:#94a3b8;font-size:10px;margin-left:6px;">※ 入力した金額がこの案件のすべての人材に同額で反映されます</span></label>
+          <input type="text" class="nc-input" id="nc_supportFee" placeholder="例：30000" inputmode="numeric" style="max-width:240px;">
         </div>
 
         <div class="nc-section-title">
@@ -348,6 +402,18 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
         <button class="nc-cancel-btn" onclick="closePasteModal()">キャンセル</button>
         <button class="nc-submit-btn" id="ncPasteApplyBtn" onclick="applyPasteData()" disabled>反映する</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ver.20260519.10: 送信前確認モーダル ===== -->
+<div id="ncConfirmModalBg" class="nc-confirm-modal-bg" onclick="if(event.target===this)closeConfirmModal()">
+  <div class="nc-confirm-modal">
+    <div class="nc-confirm-head">📤 この内容で送信しますか？</div>
+    <div class="nc-confirm-body" id="ncConfirmBody"></div>
+    <div class="nc-confirm-foot">
+      <button class="nc-confirm-back-btn" onclick="closeConfirmModal()">← 戻って修正</button>
+      <button class="nc-confirm-send-btn" id="ncConfirmSendBtn" onclick="executeSubmit()">送信する</button>
     </div>
   </div>
 </div>
@@ -1836,13 +1902,20 @@ function openNewCaseModal(){
   document.getElementById('nc_company').value='';
   document.getElementById('nc_currentStatus').value='';
   document.getElementById('nc_desiredStatus').value='';
+  var feeEl=document.getElementById('nc_supportFee');
+  if(feeEl) feeEl.value='';
   document.getElementById('ncError').style.display='none';
   document.getElementById('ncSuccess').style.display='none';
+  var bigSuc=document.getElementById('ncBigSuccess');
+  var bigErr=document.getElementById('ncBigError');
+  if(bigSuc) bigSuc.classList.remove('show');
+  if(bigErr) bigErr.classList.remove('show');
   document.getElementById('ncFormArea').style.display='';
   document.getElementById('ncSubmitBtn').disabled=false;
   document.getElementById('ncSubmitBtn').style.display='';
-  document.querySelector('.nc-cancel-btn').style.display='';
-  document.querySelector('.nc-cancel-btn').textContent='キャンセル';
+  var cancelB=document.querySelector('#newCaseModalBg .nc-cancel-btn');
+  if(cancelB){ cancelB.style.display=''; cancelB.textContent='キャンセル'; }
+  _ncPendingPayload=null;
   // 人材リストを1行にリセット
   document.getElementById('ncJinzaiBody').innerHTML='';
   _ncJinzaiRows=0;
@@ -1945,6 +2018,9 @@ function _assignAidemStaff(caseName, desiredStatus, currentStatus){
   return '';
 }
 
+// ver.20260519.10: バリデーション→確認モーダル表示。実送信はexecuteSubmit()
+var _ncPendingPayload = null; // 確認モーダル内で参照する保留中データ
+
 async function submitNewCase(){
   // バリデーション
   var caseName = document.getElementById('nc_caseName').value.trim();
@@ -1952,12 +2028,18 @@ async function submitNewCase(){
   var company = document.getElementById('nc_company').value.trim();
   var currentStatus = document.getElementById('nc_currentStatus').value;
   var desiredStatus = document.getElementById('nc_desiredStatus').value;
+  var supportFeeRaw = (document.getElementById('nc_supportFee')||{}).value || '';
+  var supportFee = supportFeeRaw.replace(/[,，円\s]/g,'').trim();
 
   document.getElementById('ncError').style.display='none';
 
   if(!caseName){ showNcError('案件名を入力してください'); return; }
   if(!company){ showNcError('所属機関（企業名）を入力してください'); return; }
   if(!desiredStatus){ showNcError('希望在留資格を選択してください'); return; }
+  if(supportFee && !/^\d+$/.test(supportFee)){
+    showNcError('支援委託費は数字のみで入力してください（例：30000）');
+    return;
+  }
 
   // 人材データ収集
   var rows = document.getElementById('ncJinzaiBody').children;
@@ -1968,10 +2050,7 @@ async function submitNewCase(){
     var nat = rowEl.querySelector('.nc-j-nat').value;
     var exp = rowEl.querySelector('.nc-j-expire').value;
     var uke = rowEl.querySelector('.nc-j-uke').value;
-    if(!nm && !nat && !uke){
-      // 空行はスキップ
-      continue;
-    }
+    if(!nm && !nat && !uke){ continue; }
     if(!nm){ showNcError((i+1) + '人目の氏名を入力してください'); return; }
     if(!nat){ showNcError((i+1) + '人目の国籍を選択してください'); return; }
     if(!uke){ showNcError((i+1) + '人目の受取方法を選択してください'); return; }
@@ -1985,25 +2064,71 @@ async function submitNewCase(){
   // 担当者振り分け
   var supportStaff = _assignAidemStaff(caseName, desiredStatus, currentStatus);
 
-  // intake_requests に人材ごとに1行ずつINSERT
-  document.getElementById('ncSubmitBtn').disabled = true;
-  document.getElementById('ncSubmitBtn').textContent = '登録中...';
+  _ncPendingPayload = {
+    caseName: caseName, appType: appType, company: company,
+    currentStatus: currentStatus, desiredStatus: desiredStatus,
+    supportFee: supportFee, supportStaff: supportStaff, jinzaiList: jinzaiList
+  };
+
+  // 確認モーダル表示
+  _renderConfirmBody(_ncPendingPayload);
+  document.getElementById('ncConfirmModalBg').classList.add('open');
+}
+
+function closeConfirmModal(){
+  document.getElementById('ncConfirmModalBg').classList.remove('open');
+}
+
+function _renderConfirmBody(p){
+  var h = '';
+  h += '<div class="nc-cf-label">案件名</div><div class="nc-cf-value">' + esc(p.caseName) + '</div>';
+  h += '<div class="nc-cf-grid">';
+  h += '<div><div class="nc-cf-label">申請種別</div><div class="nc-cf-value">' + esc(p.appType) + '</div></div>';
+  h += '<div><div class="nc-cf-label">所属機関</div><div class="nc-cf-value">' + esc(p.company) + '</div></div>';
+  h += '</div>';
+  h += '<div class="nc-cf-grid">';
+  h += '<div><div class="nc-cf-label">現在の在留資格</div><div class="nc-cf-value">' + esc(p.currentStatus || '（未選択）') + '</div></div>';
+  h += '<div><div class="nc-cf-label">希望在留資格</div><div class="nc-cf-value">' + esc(p.desiredStatus) + '</div></div>';
+  h += '</div>';
+  if(p.supportFee){
+    h += '<div class="nc-cf-label">支援委託費（税抜・全員に同額適用）</div><div class="nc-cf-value">¥ ' + Number(p.supportFee).toLocaleString() + '</div>';
+  }
+  if(p.supportStaff){
+    h += '<div class="nc-cf-label">OFUSA担当者（自動振り分け）</div><div class="nc-cf-value">' + esc(p.supportStaff) + '</div>';
+  }
+  h += '<div class="nc-cf-label">人材リスト（' + p.jinzaiList.length + '名）</div>';
+  h += '<div class="nc-cf-jinzai-list"><table><thead><tr><th>#</th><th>氏名</th><th>国籍</th><th>在留期限</th><th>受取方法</th></tr></thead><tbody>';
+  p.jinzaiList.forEach(function(j, idx){
+    h += '<tr><td>' + (idx+1) + '</td><td>' + esc(j.name) + '</td><td>' + esc(j.nationality) + '</td><td>' + esc(j.expire || '-') + '</td><td>' + esc(j.ukeMethod) + '</td></tr>';
+  });
+  h += '</tbody></table></div>';
+  document.getElementById('ncConfirmBody').innerHTML = h;
+}
+
+async function executeSubmit(){
+  if(!_ncPendingPayload) return;
+  var p = _ncPendingPayload;
+  var sendBtn = document.getElementById('ncConfirmSendBtn');
+  sendBtn.disabled = true;
+  sendBtn.textContent = '送信中...';
 
   try{
     var nowIso = new Date().toISOString();
-    var records = jinzaiList.map(function(j, idx){
+    var feeStr = p.supportFee ? p.supportFee : '';
+    var records = p.jinzaiList.map(function(j, idx){
       return {
         applicant: j.name,
-        case_name: caseName,
-        app_type: appType,
+        case_name: p.caseName,
+        app_type: p.appType,
         team: '書類部',
         agency_name: '株式会社アイデム',
-        company: company,
-        residence_status: currentStatus || '',
-        desired_status: desiredStatus,
+        company: p.company,
+        residence_status: p.currentStatus || '',
+        desired_status: p.desiredStatus,
         nationality: j.nationality,
         expire: j.expire || null,
-        support_staff: supportStaff,
+        support_staff: p.supportStaff,
+        support_fee: feeStr,
         other_support_note: '受取方法: ' + j.ukeMethod + '（アイデムShareより登録）',
         received_at: nowIso,
         status: 'pending'
@@ -2024,21 +2149,33 @@ async function submitNewCase(){
     if(!res.ok){
       var errText = await res.text();
       console.error('[intake_requests INSERT failed]', res.status, errText);
-      throw new Error('登録失敗 (HTTP ' + res.status + '): ' + errText);
+      throw new Error('HTTP ' + res.status + ': ' + errText);
     }
 
-    // 成功表示
+    closeConfirmModal();
     document.getElementById('ncFormArea').style.display = 'none';
-    var sucEl = document.getElementById('ncSuccess');
-    sucEl.innerHTML = '✅ ' + jinzaiList.length + '名の案件依頼を送信しました。<br>' +
-                      '<span style="font-size:11px;font-weight:500;color:#15803d;">OFUSAの担当者が確認後、正式な案件として登録されます。</span>';
-    sucEl.style.display = '';
+    document.getElementById('ncBigError').classList.remove('show');
+    var bigSuc = document.getElementById('ncBigSuccess');
+    document.getElementById('ncBigSuccessText').innerHTML =
+      '<strong>' + p.jinzaiList.length + '名</strong> の案件依頼を送信しました。<br>' +
+      '案件名：' + esc(p.caseName);
+    bigSuc.classList.add('show');
     document.getElementById('ncSubmitBtn').style.display = 'none';
-    document.querySelector('.nc-cancel-btn').textContent = '閉じる';
+    var cancelBtn = document.querySelector('#newCaseModalBg .nc-cancel-btn');
+    if(cancelBtn) cancelBtn.textContent = '閉じる';
+    _ncPendingPayload = null;
   }catch(e){
-    showNcError('送信エラー: ' + e.message);
-    document.getElementById('ncSubmitBtn').disabled = false;
-    document.getElementById('ncSubmitBtn').textContent = '登録する';
+    closeConfirmModal();
+    document.getElementById('ncFormArea').style.display = 'none';
+    document.getElementById('ncBigSuccess').classList.remove('show');
+    var bigErr = document.getElementById('ncBigError');
+    document.getElementById('ncBigErrorText').textContent = e.message;
+    bigErr.classList.add('show');
+    document.getElementById('ncSubmitBtn').style.display = 'none';
+    var cancelBtn2 = document.querySelector('#newCaseModalBg .nc-cancel-btn');
+    if(cancelBtn2) cancelBtn2.textContent = '閉じる';
+    sendBtn.disabled = false;
+    sendBtn.textContent = '送信する';
   }
 }
 
