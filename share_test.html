@@ -181,7 +181,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
 .nc-paste-mode{display:flex;gap:8px;}
 .nc-paste-mode label{font-size:11px;color:#475569;display:flex;align-items:center;gap:4px;cursor:pointer;}
 
-/* ===== ver.20260519.14: 確認モーダル＆大きな成功表示 ===== */
+/* ===== ver.20260519.15: 確認モーダル＆大きな成功表示 ===== */
 .nc-confirm-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:700;display:none;align-items:center;justify-content:center;padding:24px 12px;}
 .nc-confirm-modal-bg.open{display:flex;}
 .nc-confirm-modal{background:white;border-radius:14px;width:100%;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden;display:flex;flex-direction:column;max-height:90vh;}
@@ -218,7 +218,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
 .nc-big-error-title{font-size:18px;font-weight:800;color:#991b1b;margin-bottom:8px;}
 .nc-big-error-text{font-size:12px;color:#7f1d1d;line-height:1.6;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:10px 14px;margin:10px 0;word-break:break-word;}
 
-/* ===== ver.20260519.14: 受入れ経験ラジオボタン ===== */
+/* ===== ver.20260519.15: 受入れ経験ラジオボタン ===== */
 .nc-radio-group{display:flex;gap:8px;}
 .nc-radio-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 10px;border:1.2px solid #cbd5e1;border-radius:6px;font-size:12.5px;font-weight:600;color:#475569;cursor:pointer;background:white;transition:.15s;}
 .nc-radio-btn:hover{border-color:#94a3b8;background:#f8fafc;}
@@ -231,7 +231,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.14</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.15</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -422,7 +422,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   </div>
 </div>
 
-<!-- ===== ver.20260519.14: 送信前確認モーダル ===== -->
+<!-- ===== ver.20260519.15: 送信前確認モーダル ===== -->
 <div id="ncConfirmModalBg" class="nc-confirm-modal-bg" onclick="if(event.target===this)closeConfirmModal()">
   <div class="nc-confirm-modal">
     <div class="nc-confirm-head">📤 この内容で送信しますか？</div>
@@ -599,7 +599,7 @@ var STATUS_COLS=[
   {label:'新在留カード発行済み',color:'#15803d',statuses:['完了','審査完了']}
 ];
 
-// ver.20260519.14: 窓口申請/窓口受取（アイデム専用サイドバー用）
+// ver.20260519.15: 窓口申請/窓口受取（アイデム専用サイドバー用）
 // 判定はステータスではなく、cases.madoguchi_date / madoguchi_receive_date に
 // 日付が入っているかで判定する（OFUSA index.htmlの申請情報セクションで入力された日付）
 function _hasMadoguchiShinsei(c){ return !!(c.madoguchiDate && c.madoguchiDate.trim()); }
@@ -608,7 +608,7 @@ function _hasMadoguchiUketori(c){ return !!(c.madoguchiReceiveDate && c.madoguch
 function classify(c){return DONE_ST.indexOf(c.status)>=0?'done':'active';}
 function groupCases(gid){
   var base;
-  // ver.20260519.14: アイデム専用 窓口申請/窓口受取グループ（日付ベース判定）
+  // ver.20260519.15: アイデム専用 窓口申請/窓口受取グループ（日付ベース判定）
   if(gid==='madoguchi_shinsei'){
     base = allCases.filter(_hasMadoguchiShinsei);
   } else if(gid==='madoguchi_uketori'){
@@ -808,7 +808,7 @@ function renderSidebar(){
   h+='<div class="sb-divider"></div>';
   h+='<div class="sb-item'+(currentGroup==='receipts'?' active':'')+'" onclick="switchGroup(\'receipts\')">申請記録 <span class="sb-badge">'+allReceipts.length+'</span></div>';
   h+='<div class="sb-item'+(currentGroup==='shinsa'?' active':'')+'" onclick="switchGroup(\'shinsa\')">審査完了 <span class="sb-badge">'+allShinsa.length+'</span></div>';
-  // ver.20260519.14: アイデム専用 窓口申請/窓口受取（日付ベース判定）
+  // ver.20260519.15: アイデム専用 窓口申請/窓口受取（日付ベース判定）
   if(orgName==='株式会社アイデム'){
     var mshinsei = allCases.filter(_hasMadoguchiShinsei).length;
     var muketori = allCases.filter(_hasMadoguchiUketori).length;
@@ -1095,7 +1095,8 @@ function _buildShinsaTable(rows, dimmed){
   return h;
 }
 
-// ver.20260519.14: アイデム専用 窓口申請/窓口受取の専用画面
+// ver.20260519.15: アイデム専用 窓口申請/窓口受取の専用画面
+// 3セクション構成：直近7日以内 / その他未来（8日以降）/ 完了（過去）
 function renderMadoguchi(gid){
   var el=document.getElementById('main');
   if(!el)return;
@@ -1116,61 +1117,155 @@ function renderMadoguchi(gid){
     return;
   }
 
-  var unchecked = allCs.filter(function(c){return !orgChecks[checkPrefix + c.id];});
-  var checked = allCs.filter(function(c){return !!orgChecks[checkPrefix + c.id];});
+  var today = new Date();
+  var todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  var d7 = new Date(today);
+  d7.setDate(d7.getDate()+7);
+  var d7Str = d7.getFullYear()+'-'+String(d7.getMonth()+1).padStart(2,'0')+'-'+String(d7.getDate()).padStart(2,'0');
+
+  var soon = [], future = [], pastDone = [];
+  allCs.forEach(function(c){
+    var d = (c[dateField]||'').slice(0,10);
+    var isManualChecked = !!orgChecks[checkPrefix + c.id];
+    if(isManualChecked){ pastDone.push(c); return; }
+    if(!d){ future.push(c); return; }
+    if(d < todayStr){ pastDone.push(c); }
+    else if(d <= d7Str){ soon.push(c); }
+    else { future.push(c); }
+  });
 
   function sortByDate(a, b){
     var av = a[dateField] || '9999-12-31';
     var bv = b[dateField] || '9999-12-31';
     return av < bv ? -1 : av > bv ? 1 : 0;
   }
-  unchecked.sort(sortByDate);
-  checked.sort(sortByDate);
+  soon.sort(sortByDate);
+  future.sort(sortByDate);
+  pastDone.sort(function(a,b){
+    var av = a[dateField] || '0000-01-01';
+    var bv = b[dateField] || '0000-01-01';
+    return av < bv ? 1 : av > bv ? -1 : 0;
+  });
 
   var h='';
   h+='<div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;">';
   h+='<span style="font-size:14px;">'+icon+'</span>';
-  h+='<span style="font-size:13px;font-weight:700;color:#0f2040;">未確認の'+sectionLabel+'</span>';
-  h+='<span style="font-size:11px;color:#fff;background:#0369a1;padding:1px 8px;border-radius:99px;font-weight:700;">'+unchecked.length+'</span>';
+  h+='<span style="font-size:13px;font-weight:700;color:#0f2040;">直近の'+sectionLabel+'（7日以内）</span>';
+  h+='<span style="font-size:11px;color:#fff;background:#0369a1;padding:1px 8px;border-radius:99px;font-weight:700;">'+soon.length+'</span>';
   h+='</div>';
-  if(!unchecked.length){
-    h+='<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;color:#15803d;font-size:12px;font-weight:600;margin-bottom:20px;">✨ 未確認の'+sectionLabel+'はありません</div>';
+  if(!soon.length){
+    h+='<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;color:#15803d;font-size:12px;font-weight:600;margin-bottom:20px;">✨ 直近の'+sectionLabel+'はありません</div>';
   }else{
-    h+=_buildMadoguchiTable(unchecked, false, dateField, dateLabel, checkPrefix);
+    h+=_buildMadoguchiByDate(soon, false, dateField, dateLabel, checkPrefix, todayStr);
   }
 
-  h+='<div style="margin-top:24px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">';
-  h+='<span style="font-size:14px;">✔️</span>';
-  h+='<span style="font-size:13px;font-weight:700;color:#64748b;">確認済みの'+sectionLabel+'</span>';
-  h+='<span style="font-size:11px;color:#64748b;background:#e2e8f0;padding:1px 8px;border-radius:99px;font-weight:700;">'+checked.length+'</span>';
-  h+='</div>';
-  if(!checked.length){
-    h+='<div style="color:#94a3b8;font-size:11px;padding:8px;">確認済みの記録はありません</div>';
-  }else{
-    h+=_buildMadoguchiTable(checked, true, dateField, dateLabel, checkPrefix);
+  if(future.length){
+    h+='<div style="margin-top:24px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">';
+    h+='<span style="font-size:14px;">📆</span>';
+    h+='<span style="font-size:13px;font-weight:700;color:#475569;">その他の'+sectionLabel+'（8日以降）</span>';
+    h+='<span style="font-size:11px;color:#fff;background:#64748b;padding:1px 8px;border-radius:99px;font-weight:700;">'+future.length+'</span>';
+    h+='</div>';
+    h+=_buildMadoguchiByDate(future, false, dateField, dateLabel, checkPrefix, todayStr);
   }
+
+  h+='<div style="margin-top:24px;margin-bottom:12px;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="toggleMadoguchiDone()">';
+  h+='<span style="font-size:14px;">✔️</span>';
+  h+='<span style="font-size:13px;font-weight:700;color:#64748b;">完了した'+sectionLabel+'</span>';
+  h+='<span style="font-size:11px;color:#64748b;background:#e2e8f0;padding:1px 8px;border-radius:99px;font-weight:700;">'+pastDone.length+'</span>';
+  h+='<span id="madoguchiDoneToggle" style="font-size:11px;color:#64748b;margin-left:auto;">▼ クリックで開閉</span>';
+  h+='</div>';
+  h+='<div id="madoguchiDoneBody" style="display:none;">';
+  if(!pastDone.length){
+    h+='<div style="color:#94a3b8;font-size:11px;padding:8px;">完了した案件はありません</div>';
+  }else{
+    h+=_buildMadoguchiByDate(pastDone, true, dateField, dateLabel, checkPrefix, todayStr);
+  }
+  h+='</div>';
+
   el.innerHTML=h;
 }
 
-function _buildMadoguchiTable(rows, dimmed, dateField, dateLabel, checkPrefix){
+function toggleMadoguchiDone(){
+  var body = document.getElementById('madoguchiDoneBody');
+  var tg = document.getElementById('madoguchiDoneToggle');
+  if(!body) return;
+  if(body.style.display === 'none'){
+    body.style.display = '';
+    if(tg) tg.textContent = '▲ 閉じる';
+  } else {
+    body.style.display = 'none';
+    if(tg) tg.textContent = '▼ クリックで開閉';
+  }
+}
+
+function _buildMadoguchiByDate(rows, dimmed, dateField, dateLabel, checkPrefix, todayStr){
+  var groups = {};
+  var dateOrder = [];
+  rows.forEach(function(c){
+    var d = (c[dateField]||'').slice(0,10) || '未設定';
+    if(!groups[d]){ groups[d]=[]; dateOrder.push(d); }
+    groups[d].push(c);
+  });
+
+  var h='';
+  dateOrder.forEach(function(d){
+    h+='<div style="background:#f8fafc;border-left:3px solid #0369a1;padding:6px 12px;font-size:12px;font-weight:700;color:#0f2040;margin-top:8px;margin-bottom:4px;display:flex;align-items:center;gap:8px;">';
+    h+='<span>📅 '+_fmtMadoguchiDate(d)+'</span>';
+    var hint = _madoguchiDateHint(d, todayStr);
+    if(hint){ h+='<span style="font-size:10.5px;font-weight:600;color:#dc2626;background:#fef2f2;padding:1px 8px;border-radius:99px;">'+hint+'</span>'; }
+    h+='<span style="font-size:10.5px;font-weight:600;color:#64748b;margin-left:auto;">'+groups[d].length+'件</span>';
+    h+='</div>';
+    h+=_buildMadoguchiTable(groups[d], dimmed, dateField, dateLabel, checkPrefix, false);
+  });
+  return h;
+}
+
+function _madoguchiDateHint(d, todayStr){
+  if(!d || d==='未設定') return '日付未設定';
+  if(d === todayStr) return '今日';
+  var dd = new Date(d+'T00:00:00');
+  var td = new Date(todayStr+'T00:00:00');
+  var diff = Math.round((dd - td) / 86400000);
+  if(diff === 1) return '明日';
+  if(diff === 2) return '明後日';
+  if(diff > 0 && diff <= 7) return diff+'日後';
+  if(diff < 0){
+    var ago = Math.abs(diff);
+    if(ago === 1) return '昨日';
+    return ago+'日前';
+  }
+  return '';
+}
+
+function _fmtMadoguchiDate(d){
+  if(!d || d==='未設定') return '未設定';
+  var m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!m) return d;
+  var dt = new Date(d+'T00:00:00');
+  var youbi = ['日','月','火','水','木','金','土'][dt.getDay()];
+  return m[2]+'/'+m[3]+'（'+youbi+'）';
+}
+
+function _buildMadoguchiTable(rows, dimmed, dateField, dateLabel, checkPrefix, hideHeader){
   var h='<div class="tbl-wrap"'+(dimmed?' style="opacity:.65;"':'')+'><table style="table-layout:fixed;">';
   h+='<colgroup>';
-  h+='<col style="width:110px;">';
   h+='<col style="width:160px;">';
-  h+='<col style="width:160px;">';
+  h+='<col style="width:200px;">';
   h+='<col style="width:280px;">';
   h+='<col style="width:80px;">';
   h+='<col style="width:110px;">';
   h+='<col style="width:70px;">';
   h+='</colgroup>';
-  h+='<thead><tr>';
-  h+='<th>'+esc(dateLabel)+'</th><th>申請者</th><th>所属機関</th><th>案件名</th><th>申請種別</th><th>担当者</th><th style="text-align:center;" title="完了/受取済みでチェック">確認</th>';
-  h+='</tr></thead><tbody>';
+  if(!hideHeader){
+    h+='<thead><tr>';
+    h+='<th>申請者</th><th>所属機関</th><th>案件名</th><th>申請種別</th><th>担当者</th><th style="text-align:center;" title="完了/受取済みでチェック">確認</th>';
+    h+='</tr></thead>';
+  }
+  h+='<tbody>';
   rows.forEach(function(c){
     var checkKey = checkPrefix + c.id;
     var isChecked = !!orgChecks[checkKey];
     h+='<tr'+(isChecked&&!dimmed?' style="background:#f0fdf4;"':'')+'>';
-    h+='<td style="white-space:nowrap;font-size:11px;color:#0f2040;font-weight:600;">'+(c[dateField]?c[dateField].slice(0,10):'&mdash;')+'</td>';
     h+='<td style="font-size:12px;font-weight:700;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(c.applicant||'')+'</td>';
     h+='<td style="font-size:11px;color:#374151;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(c.company||'')+'</td>';
     h+='<td style="font-size:11px;color:#374151;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(c.name||'')+'</td>';
@@ -1247,7 +1342,7 @@ function renderMain(){
     return;
   }
   _renderMainPending=false;
-  // ver.20260519.14: アイデム専用 窓口申請/窓口受取は専用テーブル描画
+  // ver.20260519.15: アイデム専用 窓口申請/窓口受取は専用テーブル描画
   if(currentGroup==='madoguchi_shinsei' || currentGroup==='madoguchi_uketori'){
     renderMadoguchi(currentGroup);
     return;
@@ -2152,7 +2247,7 @@ function _assignAidemStaff(caseName, desiredStatus, currentStatus){
   return '';
 }
 
-// ver.20260519.14: バリデーション→確認モーダル表示。実送信はexecuteSubmit()
+// ver.20260519.15: バリデーション→確認モーダル表示。実送信はexecuteSubmit()
 var _ncPendingPayload = null; // 確認モーダル内で参照する保留中データ
 
 async function submitNewCase(){
