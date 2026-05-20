@@ -285,7 +285,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260520.02</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260521.01</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -615,7 +615,7 @@ var NOTIF_LABELS={'審査中':'✅ 申請済み・受付番号紐付','許可済
 var DONE_ST=['完了','審査完了'];
 // ver.20260518.13: ダッシュボードを追加、完了の表記をシンプル化
 var GROUPS=[{id:'dashboard',label:'ダッシュボード'},{id:'active',label:'進行中'},{id:'done',label:'発行済み・完了'},{id:'all',label:'すべて'}];
-var allCases=[],allReceipts=[],allShinsa=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus='',filterCompany='',sortCol='',sortDir='',currentToken='',orgName='',_imeOn=false; // ver.20260518.13: 初期値ダッシュボード
+var allCases=[],allReceipts=[],allShinsa=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus='',filterCompany='',sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,_imeOn=false; // ver.20260521.01: progressUrlCfg追加
 // コメント入力中フラグ（再描画スキップ用）。値は編集中のtextareaのid（例:'owncmt_xxx'）
 var _editingCommentId=null;
 var _editingImeOn=false;
@@ -797,25 +797,26 @@ function buildRow(c){
   var rowCls=unconfirmed[c.id]?' class="row-notif"':'';
   var notifDot=unconfirmed[c.id]?'<span class="row-notif-dot" title="未確認のお知らせあり"></span>':'';
   var h='<tr'+rowCls+'>';
-  h+='<td style="min-width:200px;max-width:320px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div></td>'; // ver.20260518.06: 案件名を全文表示（折り返し）
-  h+='<td style="min-width:90px;max-width:120px;"><div style="font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:115px;">'+esc(c.company||'—')+'</div></td>';
-  h+='<td style="width:48px;">'+typeHtml+'</td>';
-  h+='<td style="width:65px;">'+(teamShort?'<div style="font-size:10px;font-weight:600;">'+esc(teamShort)+'</div>':'')+(staffShort?'<div style="font-size:10px;color:#6b7280;">'+esc(staffShort)+'</div>':'')+'</td>';
-  h+='<td style="white-space:nowrap;">'+stHtml+'</td>';
+  // ver.20260521.01: 各tdに data-col-key を付与（カスタマイズで列を隠せるように）
+  h+='<td data-col-key="name" style="min-width:200px;max-width:320px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div></td>'; // ver.20260518.06: 案件名を全文表示（折り返し）
+  h+='<td data-col-key="company" style="min-width:90px;max-width:120px;"><div style="font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:115px;">'+esc(c.company||'—')+'</div></td>';
+  h+='<td data-col-key="appType" style="width:48px;">'+typeHtml+'</td>';
+  h+='<td data-col-key="staff" style="width:65px;">'+(teamShort?'<div style="font-size:10px;font-weight:600;">'+esc(teamShort)+'</div>':'')+(staffShort?'<div style="font-size:10px;color:#6b7280;">'+esc(staffShort)+'</div>':'')+'</td>';
+  h+='<td data-col-key="status" style="white-space:nowrap;">'+stHtml+'</td>';
   // 他機関申請（国交省）列
-  h+='<td style="white-space:nowrap;min-width:140px;">'+mlitHtml+'</td>';
-  h+='<td style="'+expStyle+'font-size:10px;white-space:nowrap;min-width:88px;">';
+  h+='<td data-col-key="_mlit" style="white-space:nowrap;min-width:140px;">'+mlitHtml+'</td>';
+  h+='<td data-col-key="expire" style="'+expStyle+'font-size:10px;white-space:nowrap;min-width:88px;">';
   if(isShinsa){h+='<div style="font-size:9px;color:#9ca3af;">'+(c.expire||'—')+'</div><div style="font-size:10px;font-weight:700;">特例 '+tokStr+'</div>';}
   else{h+='<div>'+(c.expire||'—')+'</div><div style="color:#9ca3af;font-size:9px;">特例 '+tokStr+'</div>';if(days!==null&&days<=14&&days>0)h+='<div style="color:#ea580c;font-size:9px;">あと'+days+'日</div>';else if(days!==null&&days<=0&&c.expire)h+='<div style="color:#dc2626;font-size:9px;">期限切れ</div>';}
   h+='</td>';
   // 受付番号
-  h+='<td style="font-size:10px;white-space:nowrap;">'+(c.receiptNo?'<span style="color:#2563eb;font-weight:700;">'+esc(c.receiptNo)+'</span>':'<span style="color:#d1d5db;">—</span>')+'</td>';
+  h+='<td data-col-key="receiptNo" style="font-size:10px;white-space:nowrap;">'+(c.receiptNo?'<span style="color:#2563eb;font-weight:700;">'+esc(c.receiptNo)+'</span>':'<span style="color:#d1d5db;">—</span>')+'</td>';
   // 帰国予定
-  h+='<td style="font-size:10px;white-space:nowrap;'+retStyle+'">'+(c.tempReturn||'<span style="color:#d1d5db;">—</span>')+'</td>';
+  h+='<td data-col-key="tempReturn" style="font-size:10px;white-space:nowrap;'+retStyle+'">'+(c.tempReturn||'<span style="color:#d1d5db;">—</span>')+'</td>';
   // ver.20260518.16: PDFカラム（受付番号PDF + 審査完了PDF）
-  h+='<td style="font-size:10px;min-width:130px;">'+buildDownloadCell(c)+'</td>';
+  h+='<td data-col-key="_downloads" style="font-size:10px;min-width:130px;">'+buildDownloadCell(c)+'</td>';
   // 大房コメント（index.htmlから入力・表示のみ）
-  h+='<td style="min-width:180px;max-width:220px;">';
+  h+='<td data-col-key="_comment" style="min-width:180px;max-width:220px;">';
   if(comment){
     h+='<div style="font-size:11px;color:#374151;white-space:pre-wrap;line-height:1.5;">'+esc(comment)+'</div>';
   } else {
@@ -826,7 +827,7 @@ function buildRow(c){
   var ownComment=orgOwnComments[c.id]||'';
   var withdrawData=orgWithdraws[c.id]||{};
   var withdrawType=withdrawData.type||'';
-  h+='<td style="min-width:220px;">';
+  h+='<td data-col-key="_own_comment" style="min-width:220px;">';
   h+='<div style="display:flex;flex-direction:column;gap:4px;">';
   // 辞退・振替セレクト
   h+='<select id="withdraw_'+cid+'" data-cid="'+cid+'" onchange="changeWithdraw(this.dataset.cid,this.value)" style="font-size:10px;padding:3px 5px;border:1.5px solid '+(withdrawType?'#dc2626':'#e2e8f0')+';border-radius:5px;background:'+(withdrawType?'#fef2f2':'white')+';color:'+(withdrawType?'#dc2626':'#374151')+';font-weight:'+(withdrawType?'700':'400')+';">';
@@ -889,10 +890,37 @@ var COLS=[
   {key:'_own_comment',label:'登録支援機関様コメント',noSort:true}
 ];
 
+// ver.20260521.01: 進捗URLカスタマイズ設定 - デフォルト挙動と適用ヘルパー
+// 未設定機関のデフォルト:
+//   - メイン: 全列表示（ただしコメント2列は非表示）
+//   - 未確認3セクション: すべて非表示
+var DEFAULT_PROGRESS_CFG = {
+  main:    { enabled: true,  cols: ['name','company','appType','staff','status','_mlit','expire','receiptNo','tempReturn','_downloads'] },
+  applied: { enabled: false },
+  pending: { enabled: false },
+  review:  { enabled: false }
+};
+// 現在の設定（読み込み済みなら progressUrlCfg、それ以外はデフォルト）を返す
+function getEffectiveCfg(){
+  return progressUrlCfg || DEFAULT_PROGRESS_CFG;
+}
+// メイン列がカスタマイズで表示OKか
+function isColVisible(key){
+  var cfg=getEffectiveCfg();
+  if(!cfg.main || cfg.main.enabled===false) return false;
+  if(!cfg.main.cols) return true; // colsが未指定なら全表示
+  return cfg.main.cols.indexOf(key) >= 0;
+}
+// 表示する列だけを返す
+function visibleCols(){
+  return COLS.filter(function(c){return isColVisible(c.key);});
+}
+
 function thHtml(col){
-  if(col.noSort)return '<th>'+col.label+'</th>';
+  // ver.20260521.01: data-col-key付与
+  if(col.noSort)return '<th data-col-key="'+col.key+'">'+col.label+'</th>';
   var cls=sortCol===col.key?(sortDir==='asc'?'sort-asc':'sort-desc'):'';
-  return '<th class="'+cls+'" onclick="toggleSort(\''+col.key+'\')">'+col.label+' <span class="sort-icon"></span></th>';
+  return '<th data-col-key="'+col.key+'" class="'+cls+'" onclick="toggleSort(\''+col.key+'\')">'+col.label+' <span class="sort-icon"></span></th>';
 }
 
 function toggleSort(key){
@@ -1493,12 +1521,32 @@ function renderMain(){
   else if(currentView==='kanban'){h+=renderKanban(cases);}
   else{
     h+='<div class="tbl-wrap"><table><thead><tr>';
-    COLS.forEach(function(c){h+=thHtml(c);});
+    COLS.forEach(function(c){h+=thHtml(c);}); // ver.20260521.01: thead全表示。非表示はapplyColumnVisibilityで処理
     h+='</tr></thead><tbody>';
     cases.forEach(function(c){h+=buildRow(c);});
     h+='</tbody></table></div>';
   }
   document.getElementById('main').innerHTML=h;
+  // ver.20260521.01: 列カスタマイズ適用（非表示列のth/tdをdisplay:noneに）
+  applyColumnVisibility();
+}
+
+// ver.20260521.01: cfgで非表示の列のth/tdをdisplay:noneにする
+function applyColumnVisibility(){
+  try{
+    var cfg=getEffectiveCfg();
+    var cols=(cfg.main && cfg.main.cols) || null;
+    if(!cols) return; // 設定なし=全表示
+    var mainEl=document.getElementById('main');
+    if(!mainEl) return;
+    COLS.forEach(function(c){
+      var show=cols.indexOf(c.key)>=0;
+      var nodes=mainEl.querySelectorAll('[data-col-key="'+c.key+'"]');
+      for(var i=0;i<nodes.length;i++){
+        nodes[i].style.display = show ? '' : 'none';
+      }
+    });
+  }catch(e){console.warn('[applyColumnVisibility]',e);}
 }
 
 // ver.20260518.09: 進行中タブのトップに表示する「本日確認すべき」3セクション
@@ -1557,9 +1605,14 @@ function buildTodayHighlights(scope){
   // scopeに応じて表示判定
   // 'all': 3つ全部 (ダッシュボード・進行中タブ)
   // 'receipts_applied_only': 申請分のみ (申請記録タブ用、受付番号は本体テーブルが扱う)
-  var showApplied = (scope==='all' || scope==='receipts_applied_only');
-  var showReceipts = (scope==='all');
-  var showShinsas = (scope==='all');
+  // ver.20260521.01: progressUrlCfg で各セクションON/OFF
+  var _cfg=getEffectiveCfg();
+  var cfgApplied=_cfg.applied&&_cfg.applied.enabled!==false;
+  var cfgPending=_cfg.pending&&_cfg.pending.enabled!==false;
+  var cfgReview =_cfg.review &&_cfg.review.enabled !==false;
+  var showApplied = (scope==='all' || scope==='receipts_applied_only') && cfgApplied;
+  var showReceipts = (scope==='all') && cfgPending;
+  var showShinsas = (scope==='all') && cfgReview;
   // すべて0件なら何も出さない
   var totalCount=0;
   if(showApplied) totalCount+=applied.length;
@@ -2127,9 +2180,13 @@ async function init(){
     var sd=await r.json();
     if(!sd||!sd.length){document.getElementById('main').innerHTML='<div class="error-box">このURLは無効です。担当者にお問い合わせください。</div>';return;}
     var orgId=sd[0].value;
-    var r2=await sbFetch('support_orgs?id=eq.'+encodeURIComponent(orgId)+'&select=name');
+    currentOrgId=orgId;
+    var r2=await sbFetch('support_orgs?id=eq.'+encodeURIComponent(orgId)+'&select=name,extra');
     var od=await r2.json();
     orgName=(od&&od.length)?od[0].name:'';
+    // ver.20260521.01: 進捗URLカスタマイズ設定読込（support_orgs.extra.progress_url_cols）
+    var orgExtra=(od&&od.length&&od[0].extra)?od[0].extra:null;
+    progressUrlCfg=(orgExtra && orgExtra.progress_url_cols) ? orgExtra.progress_url_cols : null;
     // パスワードチェック
     var rp=await sbFetch('settings?key=eq.'+encodeURIComponent('org_view_pass_'+token)+'&select=value');
     var pd=await rp.json();
