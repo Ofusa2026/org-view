@@ -285,7 +285,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260519.36</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260520.01</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1681,6 +1681,8 @@ function _buildTodaySection(title, count, accentColor, bodyFn){
 // 申請済の案件は、申請受理されたら入管側の判断を待つだけなので、登録支援機関に
 // プレッシャーをかけるのではなく、申請前の案件だけ目立たせる
 function buildUrgentSummary(){
+  // ver.20260520.01: オープンケア系（「オープンケア」を含む組合）は期限切迫サマリを非表示
+  if(orgName && orgName.indexOf('オープンケア')>=0) return '';
   // 申請済とみなすステータス（=サマリから除外）
   var APPLIED_STATUSES={
     '★申請':1,'申請済(番号待)':1,'申請済 (番号待)':1,'審査中':1,'特活審査中':1,
