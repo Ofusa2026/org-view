@@ -238,7 +238,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260520.01</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260520.02</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -569,7 +569,7 @@ var NOTIF_LABELS={'審査中':'✅ 申請済み・受付番号紐付','許可済
 var DONE_ST=['完了','審査完了'];
 // ver.20260518.13: ダッシュボードを追加、完了の表記をシンプル化
 var GROUPS=[{id:'dashboard',label:'ダッシュボード'},{id:'active',label:'進行中'},{id:'done',label:'発行済み・完了'},{id:'all',label:'すべて'}];
-var allCases=[],allReceipts=[],allShinsa=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus='',filterCompany='',sortCol='expire',sortDir='asc',currentToken='',orgName='',_imeOn=false; // ver.20260518.13: 初期値ダッシュボード
+var allCases=[],allReceipts=[],allShinsa=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus='',filterCompany='',sortCol='',sortDir='',currentToken='',orgName='',_imeOn=false; // ver.20260518.13: 初期値ダッシュボード
 // コメント入力中フラグ（再描画スキップ用）。値は編集中のtextareaのid（例:'owncmt_xxx'）
 var _editingCommentId=null;
 var _editingImeOn=false;
@@ -2099,7 +2099,7 @@ async function loadData(){
         }
       }catch(e){ console.warn('[aidem companies load failed]', e); }
     }
-    var r4=await sbFetch('cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,temp_return,applicant_field,madoguchi_date,madoguchi_receive_date,updated_at&order=expire.asc.nullslast');
+    var r4=await sbFetch('cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,temp_return,applicant_field,madoguchi_date,madoguchi_receive_date,updated_at,created_at&order=created_at.desc');
     var cases=await r4.json();
     allCases=(cases||[]).map(function(c){return{id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',madoguchiDate:c.madoguchi_date||'',madoguchiReceiveDate:c.madoguchi_receive_date||'',updated_at:c.updated_at||''};});
     // personsテーブルからtempReturn(一時帰国予定日)を取得して補完
