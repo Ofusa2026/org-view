@@ -238,7 +238,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260521.03</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260521.04</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -367,6 +367,45 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
           <div class="nc-field">
             <label class="nc-label">支援委託費（円・税抜）<span style="font-weight:500;color:#94a3b8;font-size:10px;margin-left:6px;">※ 全員同額で反映</span></label>
             <input type="text" class="nc-input" id="nc_supportFee" placeholder="例：30000" inputmode="numeric">
+          </div>
+        </div>
+
+        <div class="nc-grid-2">
+          <div class="nc-field">
+            <label class="nc-label">アイデム拠点 <span class="req">*</span></label>
+            <select class="nc-select" id="nc_aidemBranch">
+              <option value="">-- 選択 --</option>
+              <option value="アイデム東">アイデム東</option>
+              <option value="アイデム西">アイデム西</option>
+              <option value="就労部門">就労部門</option>
+            </select>
+          </div>
+          <div class="nc-field">
+            <label class="nc-label">アイデム担当者 <span class="req">*</span></label>
+            <select class="nc-select" id="nc_clientStaff">
+              <option value="">-- 選択 --</option>
+              <option value="伊吹 沙希">伊吹 沙希</option>
+              <option value="上原 由">上原 由</option>
+              <option value="大島 詩乃">大島 詩乃</option>
+              <option value="大島 雛乃">大島 雛乃</option>
+              <option value="鴻上 美樹">鴻上 美樹</option>
+              <option value="中道 揺季乃">中道 揺季乃</option>
+              <option value="BUI THI TY">BUI THI TY</option>
+              <option value="DANG THI MINH">DANG THI MINH</option>
+              <option value="DOAN THI BINH YEN">DOAN THI BINH YEN</option>
+              <option value="FIRDA KHUSNUL">FIRDA KHUSNUL</option>
+              <option value="HOANG THI DOANH DOANH">HOANG THI DOANH DOANH</option>
+              <option value="MAY THET HAN">MAY THET HAN</option>
+              <option value="NGUYEN THI HUYNH NHU">NGUYEN THI HUYNH NHU</option>
+              <option value="NGUYEN TRAN TUONG VI">NGUYEN TRAN TUONG VI</option>
+              <option value="PHAM THI KIM CHI">PHAM THI KIM CHI</option>
+              <option value="PHAN LE KHANH TRANG">PHAN LE KHANH TRANG</option>
+              <option value="SRI DIAN NURSAPAAH">SRI DIAN NURSAPAAH</option>
+              <option value="TRINH MAI PHUONG">TRINH MAI PHUONG</option>
+              <option value="ZIN ZIN THU">ZIN ZIN THU</option>
+              <option value="アイデム西">アイデム西</option>
+              <option value="就労部門">就労部門</option>
+            </select>
           </div>
         </div>
 
@@ -2258,6 +2297,10 @@ function openNewCaseModal(){
   // 初期化
   var ofEl=document.getElementById('nc_agencyOffice');
   if(ofEl) ofEl.value='';
+  var brEl=document.getElementById('nc_aidemBranch');
+  if(brEl) brEl.value='';
+  var cstEl=document.getElementById('nc_clientStaff');
+  if(cstEl) cstEl.value='';
   document.getElementById('nc_caseName').value='';
   document.getElementById('nc_appType').value='認定';
   document.getElementById('nc_company').value='';
@@ -2362,14 +2405,16 @@ function showNcError(msg){
 }
 
 // 担当者振り分けロジック（ofusa-aidem-tantouスキル準拠）
-function _assignAidemStaff(caseName, desiredStatus, currentStatus){
+// ver.20260521.04: アイデム拠点ベースの振り分け
+function _assignAidemStaff(caseName, desiredStatus, currentStatus, aidemBranch){
+  if(aidemBranch === 'アイデム東') return '陳・大盛';
+  if(aidemBranch === 'アイデム西') return '内田';
+  if(aidemBranch === '就労部門') return '大盛　南美';
   var name = caseName || '';
   var status = (desiredStatus || '') + ' ' + (currentStatus || '');
-  // 1. 西 → 内田
   if(name.indexOf('西') >= 0){
     return '内田';
   }
-  // 2. 東 → インターン/技人国は大盛、それ以外は未振り分け
   if(name.indexOf('東') >= 0){
     var isIntern = /インターン|特定活動.*9号|特定活動9号/.test(status);
     var isGijinkoku = /技人国|技術.*人文.*国際|技術・人文知識・国際業務/.test(status);
@@ -2396,6 +2441,8 @@ async function submitNewCase(){
   var acceptExp = acceptExpEl ? acceptExpEl.value : '';
   var supportFeeRaw = (document.getElementById('nc_supportFee')||{}).value || '';
   var supportFee = supportFeeRaw.replace(/[,，円\s]/g,'').trim();
+  var aidemBranch = (document.getElementById('nc_aidemBranch')||{}).value || '';
+  var clientStaff = (document.getElementById('nc_clientStaff')||{}).value || '';
 
   document.getElementById('ncError').style.display='none';
 
@@ -2404,6 +2451,8 @@ async function submitNewCase(){
   if(!company){ showNcError('所属機関（企業名）を入力してください'); return; }
   if(!desiredStatus){ showNcError('希望在留資格を選択してください'); return; }
   if(!acceptExp){ showNcError('受入れ経験を選択してください'); return; }
+  if(!aidemBranch){ showNcError('アイデム拠点を選択してください'); return; }
+  if(!clientStaff){ showNcError('アイデム担当者を選択してください'); return; }
   if(supportFee && !/^\d+$/.test(supportFee)){
     showNcError('支援委託費は数字のみで入力してください（例：30000）');
     return;
@@ -2430,13 +2479,14 @@ async function submitNewCase(){
   }
 
   // 担当者振り分け
-  var supportStaff = _assignAidemStaff(caseName, desiredStatus, currentStatus);
+  var supportStaff = _assignAidemStaff(caseName, desiredStatus, currentStatus, aidemBranch);
 
   _ncPendingPayload = {
     agencyOffice: agencyOffice,
     caseName: caseName, appType: appType, company: company,
     currentStatus: currentStatus, desiredStatus: desiredStatus,
     acceptExp: acceptExp,
+    aidemBranch: aidemBranch, clientStaff: clientStaff,
     supportFee: supportFee, supportStaff: supportStaff, jinzaiList: jinzaiList
   };
 
@@ -2464,6 +2514,10 @@ function _renderConfirmBody(p){
   h += '<div class="nc-cf-grid">';
   h += '<div><div class="nc-cf-label">受入れ経験</div><div class="nc-cf-value">' + esc(p.acceptExp) + '</div></div>';
   h += '<div><div class="nc-cf-label">支援委託費（税抜・全員に同額適用）</div><div class="nc-cf-value">' + (p.supportFee ? '¥ ' + Number(p.supportFee).toLocaleString() : '（未入力）') + '</div></div>';
+  h += '</div>';
+  h += '<div class="nc-cf-grid">';
+  h += '<div><div class="nc-cf-label">アイデム拠点</div><div class="nc-cf-value">' + esc(p.aidemBranch||'') + '</div></div>';
+  h += '<div><div class="nc-cf-label">アイデム担当者</div><div class="nc-cf-value">' + esc(p.clientStaff||'') + '</div></div>';
   h += '</div>';
   if(p.supportStaff){
     h += '<div class="nc-cf-label">OFUSA担当者（自動振り分け）</div><div class="nc-cf-value">' + esc(p.supportStaff) + '</div>';
@@ -2499,6 +2553,8 @@ async function executeSubmit(){
         residence_status: p.currentStatus || '',
         desired_status: p.desiredStatus,
         accept_exp: p.acceptExp,
+        aidem_branch: p.aidemBranch || '',
+        client_staff: p.clientStaff || '',
         nationality: j.nationality,
         expire: j.expire || null,
         support_staff: p.supportStaff,
