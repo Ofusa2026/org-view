@@ -285,7 +285,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260521.06</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260521.07</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -963,6 +963,17 @@ function visibleCols(){
   return COLS.filter(function(c){return isColVisible(c.key);});
 }
 
+// ver.20260521.07: オープンケア協同組合専用の列順
+// 申請種別→在留期限/特例→ステータス→国交省の並び、担当/コメント2列は非表示
+// 進捗URLカスタマイズが未設定（デフォルト）のときだけ適用
+function _isOpenCareDefaultLayout(){
+  if(orgName !== 'オープンケア協同組合') return false;
+  return !progressUrlCfg; // カスタマイズが読み込まれていなければデフォルト挙動
+}
+// オープンケア協同組合用の表示列＆順序
+var OPENCARE_COL_ORDER = ['name','company','appType','expire','status','_mlit','receiptNo','tempReturn','_downloads'];
+var OPENCARE_LABEL_OVERRIDES = { 'appType':'申請種別', '_mlit':'国交省' };
+
 function thHtml(col){
   // ver.20260521.01: data-col-key付与
   if(col.noSort)return '<th data-col-key="'+col.key+'">'+col.label+'</th>';
@@ -1579,13 +1590,52 @@ function renderMain(){
 }
 
 // ver.20260521.01: cfgで非表示の列のth/tdをdisplay:noneにする
+// ver.20260521.07: オープンケアは独自レイアウト（DOM順序を入れ替え）
 function applyColumnVisibility(){
   try{
+    var mainEl=document.getElementById('main');
+    if(!mainEl) return;
+    // === オープンケア協同組合: 独自順序＆ラベル ===
+    if(_isOpenCareDefaultLayout()){
+      // 不要列を非表示
+      var allKeys = COLS.map(function(c){return c.key;});
+      allKeys.forEach(function(k){
+        var show = OPENCARE_COL_ORDER.indexOf(k) >= 0;
+        var nodes = mainEl.querySelectorAll('[data-col-key="'+k+'"]');
+        for(var i=0;i<nodes.length;i++){ nodes[i].style.display = show ? '' : 'none'; }
+      });
+      // ラベル差し替え（th）
+      Object.keys(OPENCARE_LABEL_OVERRIDES).forEach(function(k){
+        var th = mainEl.querySelector('thead th[data-col-key="'+k+'"]');
+        if(!th) return;
+        var newLabel = OPENCARE_LABEL_OVERRIDES[k];
+        // sort-iconスパンを保持しつつ、最初のテキストノードを差し替え
+        var iconHtml = '';
+        var iconEl = th.querySelector('.sort-icon');
+        if(iconEl) iconHtml = ' <span class="sort-icon">'+iconEl.innerHTML+'</span>';
+        th.innerHTML = newLabel + iconHtml;
+      });
+      // DOM順序の入れ替え
+      var thead = mainEl.querySelector('thead tr');
+      if(thead){
+        OPENCARE_COL_ORDER.forEach(function(k){
+          var el = thead.querySelector('th[data-col-key="'+k+'"]');
+          if(el) thead.appendChild(el);
+        });
+      }
+      var tbodyRows = mainEl.querySelectorAll('tbody tr');
+      tbodyRows.forEach(function(tr){
+        OPENCARE_COL_ORDER.forEach(function(k){
+          var el = tr.querySelector('td[data-col-key="'+k+'"]');
+          if(el) tr.appendChild(el);
+        });
+      });
+      return;
+    }
+    // === 通常: cfgで非表示列を制御 ===
     var cfg=getEffectiveCfg();
     var cols=(cfg.main && cfg.main.cols) || null;
     if(!cols) return; // 設定なし=全表示
-    var mainEl=document.getElementById('main');
-    if(!mainEl) return;
     COLS.forEach(function(c){
       var show=cols.indexOf(c.key)>=0;
       var nodes=mainEl.querySelectorAll('[data-col-key="'+c.key+'"]');
