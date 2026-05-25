@@ -285,7 +285,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260525.12</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260525.13</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -710,9 +710,10 @@ function groupCases(gid){
   if(searchQuery){
     var q=searchQuery.toLowerCase();
     base=base.filter(function(c){
+      // ver.20260525.12: 受付番号は検索対象から除外（「東オン」「西オン」等の入管局頭文字で誤マッチを防ぐ）
       return (c.name||'').toLowerCase().includes(q)||(c.applicant||'').toLowerCase().includes(q)||
              (c.company||'').toLowerCase().includes(q)||(c.status||'').toLowerCase().includes(q)||
-             (c.receiptNo||'').toLowerCase().includes(q)||(c.staff||'').toLowerCase().includes(q);
+             (c.staff||'').toLowerCase().includes(q);
     });
   }
   // ver.20260525.08: ステータスフィルタは「外部ラベル」で比較（内部ステータスは登録支援機関には見せない）
@@ -1128,13 +1129,13 @@ function renderReceipts(){
     el.innerHTML='<div class="empty">申請記録はありません</div>';
     return;
   }
-  // ver.20260519.21: フリーワード検索を適用（申請者名・所属機関・受付番号・案件名）
+  // ver.20260519.21: フリーワード検索を適用（申請者名・所属機関・案件名）
+  // ver.20260525.12: 受付番号(caseNo)は検索対象から除外（入管局頭文字で誤マッチを防ぐ）
   if(searchQuery){
     var qR=searchQuery.toLowerCase();
     function _matchR(r){
       return (r.name||'').toLowerCase().indexOf(qR)>=0 ||
              (r.company||'').toLowerCase().indexOf(qR)>=0 ||
-             (r.caseNo||'').toLowerCase().indexOf(qR)>=0 ||
              (r.caseName||'').toLowerCase().indexOf(qR)>=0;
     }
     unchecked=unchecked.filter(_matchR);
@@ -1276,12 +1277,12 @@ function renderShinsa(){
   var unchecked=allShinsa.filter(function(s){return !orgChecks[s.id];});
   var checked=allShinsa.filter(function(s){return !!orgChecks[s.id];});
   // ver.20260519.21: フリーワード検索を適用
+  // ver.20260525.12: 受付番号(caseNo)は検索対象から除外
   if(searchQuery){
     var qS=searchQuery.toLowerCase();
     function _matchS(s){
       return (s.name||'').toLowerCase().indexOf(qS)>=0 ||
              (s.company||'').toLowerCase().indexOf(qS)>=0 ||
-             (s.caseNo||'').toLowerCase().indexOf(qS)>=0 ||
              (s.caseName||'').toLowerCase().indexOf(qS)>=0;
     }
     unchecked=unchecked.filter(_matchS);
@@ -1753,24 +1754,22 @@ function buildTodayHighlights(scope){
     return true;
   });
   // ver.20260519.27: フリーワード検索を3セクション全てに適用
+  // ver.20260525.12: 受付番号は検索対象から除外
   if(searchQuery){
     var qBT=searchQuery.toLowerCase();
     applied=applied.filter(function(c){
       return (c.applicant||'').toLowerCase().indexOf(qBT)>=0 ||
              (c.company||'').toLowerCase().indexOf(qBT)>=0 ||
-             (c.receiptNo||'').toLowerCase().indexOf(qBT)>=0 ||
              (c.name||'').toLowerCase().indexOf(qBT)>=0;
     });
     receipts=receipts.filter(function(r){
       return (r.name||'').toLowerCase().indexOf(qBT)>=0 ||
              (r.company||'').toLowerCase().indexOf(qBT)>=0 ||
-             (r.caseNo||'').toLowerCase().indexOf(qBT)>=0 ||
              (r.caseName||'').toLowerCase().indexOf(qBT)>=0;
     });
     shinsas=shinsas.filter(function(s){
       return (s.name||'').toLowerCase().indexOf(qBT)>=0 ||
              (s.company||'').toLowerCase().indexOf(qBT)>=0 ||
-             (s.caseNo||'').toLowerCase().indexOf(qBT)>=0 ||
              (s.caseName||'').toLowerCase().indexOf(qBT)>=0;
     });
   }
