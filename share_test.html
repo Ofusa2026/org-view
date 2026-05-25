@@ -238,7 +238,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260525.02</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260525.03</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -292,16 +292,6 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
       <div id="ncFormArea">
 
         <div class="nc-section-title">📋 案件共通情報</div>
-
-        <div class="nc-field">
-          <label class="nc-label">使用する支援事業所 <span class="req">*</span></label>
-          <select class="nc-select" id="nc_agencyOffice">
-            <option value="">-- 選択 --</option>
-            <option value="株式会社アイデム（東京都新宿区）">株式会社アイデム（東京都新宿区）</option>
-            <option value="株式会社アイデムパート・グローバル人材紹介チーム（大阪府大阪市西区）">株式会社アイデムパート・グローバル人材紹介チーム（大阪府大阪市西区）</option>
-            <option value="その他">その他</option>
-          </select>
-        </div>
 
         <div class="nc-field">
           <label class="nc-label">案件名 <span class="req">*</span></label>
@@ -2294,8 +2284,7 @@ var _NC_MAX_JINZAI = 30;
 
 function openNewCaseModal(){
   // 初期化
-  var ofEl=document.getElementById('nc_agencyOffice');
-  if(ofEl) ofEl.value='';
+  // ver.20260525.03: 「使用する支援事業所」は拠点から自動マッピングするため削除
   var brEl=document.getElementById('nc_aidemBranch');
   if(brEl) brEl.value='';
   var cstEl=document.getElementById('nc_clientStaff');
@@ -2413,6 +2402,19 @@ function showNcError(msg){
   el.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
+// ver.20260525.03: アイデム拠点 → 使用する支援事業所の自動マッピング
+//   東 / 高育チーム → 株式会社アイデム（東京都新宿区）
+//   西            → 株式会社アイデムパート・グローバル人材紹介チーム（大阪府大阪市西区）
+function _mapAgencyOffice(aidemBranch){
+  if(aidemBranch === '東' || aidemBranch === '高育チーム'){
+    return '株式会社アイデム（東京都新宿区）';
+  }
+  if(aidemBranch === '西'){
+    return '株式会社アイデムパート・グローバル人材紹介チーム（大阪府大阪市西区）';
+  }
+  return '';
+}
+
 // 担当者振り分けロジック（ofusa-aidem-tantouスキル準拠）
 // ver.20260525.02: 新拠点名対応 - 東/西/高育チーム
 function _assignAidemStaff(caseName, desiredStatus, currentStatus, aidemBranch){
@@ -2458,7 +2460,6 @@ var _ncPendingPayload = null; // 確認モーダル内で参照する保留中�
 
 async function submitNewCase(){
   // バリデーション
-  var agencyOffice = document.getElementById('nc_agencyOffice').value;
   var caseName = document.getElementById('nc_caseName').value.trim();
   var appType = document.getElementById('nc_appType').value;
   var company = document.getElementById('nc_company').value.trim();
@@ -2470,10 +2471,11 @@ async function submitNewCase(){
   var supportFee = supportFeeRaw.replace(/[,，円\s]/g,'').trim();
   var aidemBranch = (document.getElementById('nc_aidemBranch')||{}).value || '';
   var clientStaff = (document.getElementById('nc_clientStaff')||{}).value || '';
+  // ver.20260525.03: 「使用する支援事業所」は拠点から自動マッピング
+  var agencyOffice = _mapAgencyOffice(aidemBranch);
 
   document.getElementById('ncError').style.display='none';
 
-  if(!agencyOffice){ showNcError('使用する支援事業所を選択してください'); return; }
   if(!caseName){ showNcError('案件名を入力してください'); return; }
   if(!company){ showNcError('所属機関（企業名）を入力してください'); return; }
   if(!desiredStatus){ showNcError('希望在留資格を選択してください'); return; }
