@@ -285,7 +285,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260525.10</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260525.11</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1537,16 +1537,17 @@ function _fmtMadoguchiDate(d){
 function _buildMadoguchiTable(rows, dimmed, dateField, dateLabel, checkPrefix, hideHeader){
   var h='<div class="tbl-wrap"'+(dimmed?' style="opacity:.65;"':'')+'><table style="table-layout:fixed;">';
   h+='<colgroup>';
-  h+='<col style="width:160px;">';    // 申請者
+  // ver.20260525.11: 確認 → 案件名/申請者(2行) → 所属機関 → 申請種別 → 担当者 の順に統一
+  // ※窓口テーブルはセクションヘッダーで日付グループ化されているため、行内に日付列はなし
+  h+='<col style="width:70px;">';     // 確認（左端）
+  h+='<col style="width:280px;">';    // 案件名 / 申請者
   h+='<col style="width:200px;">';    // 所属機関
-  h+='<col style="width:280px;">';    // 案件名
   h+='<col style="width:80px;">';     // 申請種別
   h+='<col style="width:110px;">';    // 担当者
-  h+='<col style="width:70px;">';     // 確認
   h+='</colgroup>';
   if(!hideHeader){
     h+='<thead><tr>';
-    h+='<th>申請者</th><th>所属機関</th><th>案件名</th><th>申請種別</th><th>担当者</th><th style="text-align:center;" title="完了/受取済みでチェック">確認</th>';
+    h+='<th style="text-align:center;" title="完了/受取済みでチェック">確認</th><th>案件名 / 申請者</th><th>所属機関</th><th>申請種別</th><th>担当者</th>';
     h+='</tr></thead>';
   }
   h+='<tbody>';
@@ -1554,12 +1555,19 @@ function _buildMadoguchiTable(rows, dimmed, dateField, dateLabel, checkPrefix, h
     var checkKey = checkPrefix + c.id;
     var isChecked = !!orgChecks[checkKey];
     h+='<tr'+(isChecked&&!dimmed?' style="background:#f0fdf4;"':'')+'>';
-    h+='<td style="font-size:12px;font-weight:700;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(c.applicant||'')+'</td>';
-    h+='<td style="font-size:11px;color:#374151;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(c.company||'')+'</td>';
-    h+='<td style="font-size:11px;color:#374151;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(c.name||'')+'</td>';
-    h+='<td style="font-size:11px;color:#475569;white-space:nowrap;">'+esc(c.appType||'')+'</td>';
-    h+='<td style="font-size:11px;color:#475569;white-space:nowrap;">'+esc(c.staff||'')+'</td>';
+    // 確認（左端）
     h+='<td style="text-align:center;white-space:nowrap;"><input type="checkbox" data-aid="'+esc(checkKey)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)"'+(isChecked?' checked':'')+' style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;">'+(isChecked&&orgChecks[checkKey]?'<div style="font-size:9px;color:#16a34a;margin-top:2px;white-space:nowrap;">'+esc((orgChecks[checkKey]||'').slice(0,10))+'</div>':'')+'</td>';
+    // 案件名 / 申請者（2行：案件名を上、申請者を下）
+    h+='<td style="min-width:200px;max-width:320px;">';
+    h+='<div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(c.name||'')+'</div>';
+    h+='<div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div>';
+    h+='</td>';
+    // 所属機関
+    h+='<td style="font-size:11px;color:#374151;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(c.company||'')+'</td>';
+    // 申請種別
+    h+='<td style="font-size:11px;color:#475569;white-space:nowrap;">'+esc(c.appType||'')+'</td>';
+    // 担当者
+    h+='<td style="font-size:11px;color:#475569;white-space:nowrap;">'+esc(c.staff||'')+'</td>';
     h+='</tr>';
   });
   h+='</tbody></table></div>';
