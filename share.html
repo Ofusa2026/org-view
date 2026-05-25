@@ -285,7 +285,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260525.06</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260525.07</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1625,7 +1625,10 @@ function renderMain(){
     h+=buildTodayHighlights();
   }
   // ver.20260512: 期限切迫案件サマリー (10日以内・特例期限含む)
-  h+=buildUrgentSummary();
+  // ver.20260525.07: 「発行済み・完了」「すべて」タブでは非表示
+  if(currentGroup !== 'done' && currentGroup !== 'all'){
+    h+=buildUrgentSummary();
+  }
   if(!cases.length){h+='<div class="empty">該当する案件はありません</div>';}
   else if(currentView==='kanban'){h+=renderKanban(cases);}
   else{
