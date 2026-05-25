@@ -285,7 +285,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260525.07</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260525.08</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -715,7 +715,8 @@ function groupCases(gid){
              (c.receiptNo||'').toLowerCase().includes(q)||(c.staff||'').toLowerCase().includes(q);
     });
   }
-  if(filterStatus) base=base.filter(function(c){return c.status===filterStatus;});
+  // ver.20260525.08: ステータスフィルタは「外部ラベル」で比較（内部ステータスは登録支援機関には見せない）
+  if(filterStatus) base=base.filter(function(c){return getExternalStatus(c.status)===filterStatus;});
   if(filterCompany) base=base.filter(function(c){return c.company===filterCompany;});
   // ソート
   base=base.slice().sort(function(a,b){
@@ -970,7 +971,8 @@ function setView(v){currentView=v;renderMain();}
 
 function renderFilterBar(){
   var baseAll=currentGroup==='all'?allCases:allCases.filter(function(c){return classify(c)===currentGroup;});
-  var statuses=[...new Set(baseAll.map(function(c){return c.status||'';}).filter(Boolean))].sort();
+  // ver.20260525.08: ステータスは外部ラベルで一意化（内部ステータスは登録支援機関には見せない）
+  var statuses=[...new Set(baseAll.map(function(c){return getExternalStatus(c.status)||'';}).filter(Boolean))].sort();
   var companies=[...new Set(baseAll.map(function(c){return c.company||'';}).filter(Boolean))].sort();
   var cases=groupCases(currentGroup);
   var h='<div class="filter-bar-inner">';
@@ -2330,7 +2332,8 @@ async function loadData(){
       if(hOrg) hOrg.style.marginLeft='0';
       try{
         // ver.20260521.03: folder_no も取得して番号順にソート、「[NN] 名前」表示
-        var rc=await sbFetch('companies?support_org_name=eq.'+encodeURIComponent('株式会社アイデム')+'&select=name,folder_no');
+        // ver.20260525.08: limit=2000 を明示（PostgRESTのmax-rowsに引っかからないように）
+        var rc=await sbFetch('companies?support_org_name=eq.'+encodeURIComponent('株式会社アイデム')+'&select=name,folder_no&limit=2000');
         var coList=await rc.json();
         var dl=document.getElementById('nc_companyList');
         if(dl && Array.isArray(coList)){
