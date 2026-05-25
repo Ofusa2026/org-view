@@ -285,7 +285,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260525.01</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260525.02</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -422,13 +422,13 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
             <label class="nc-label">アイデム拠点 <span class="req">*</span></label>
             <select class="nc-select" id="nc_aidemBranch" onchange="_onAidemBranchChange()">
               <option value="">-- 選択 --</option>
-              <option value="アイデム東">アイデム東</option>
-              <option value="アイデム西">アイデム西</option>
-              <option value="就労部門">就労部門</option>
+              <option value="東">東</option>
+              <option value="西">西</option>
+              <option value="高育チーム">高育チーム</option>
             </select>
           </div>
           <div class="nc-field" id="nc_clientStaffField">
-            <label class="nc-label">アイデム担当者 <span class="req" id="nc_clientStaffReq" style="display:none;">*</span><span style="font-weight:500;color:#94a3b8;font-size:10px;margin-left:6px;" id="nc_clientStaffHint">※ 拠点を選択してください</span></label>
+            <label class="nc-label">アイデム担当者 <span class="req" id="nc_clientStaffReq" style="display:none;">*</span></label>
             <input type="text" class="nc-input" id="nc_clientStaff" list="nc_clientStaffList" placeholder="例：伊吹 沙希（リストから選択 / 直接入力もOK）" autocomplete="off">
             <datalist id="nc_clientStaffList">
               <option value="伊吹 沙希"></option>
@@ -2433,13 +2433,11 @@ function openNewCaseModal(){
   if(brEl) brEl.value='';
   var cstEl=document.getElementById('nc_clientStaff');
   if(cstEl) cstEl.value='';
-  // ver.20260521.06: アイデム担当者欄は常に表示。拠点未選択時は必須マーク非表示＋ヒント
+  // ver.20260525.02: アイデム担当者欄は初期非表示（拠点で「東」を選んだとき表示）
   var cstField=document.getElementById('nc_clientStaffField');
-  if(cstField) cstField.style.display='';
+  if(cstField) cstField.style.display='none';
   var cstReq=document.getElementById('nc_clientStaffReq');
   if(cstReq) cstReq.style.display='none';
-  var cstHint=document.getElementById('nc_clientStaffHint');
-  if(cstHint) cstHint.textContent='※ 拠点を選択してください';
   document.getElementById('nc_caseName').value='';
   document.getElementById('nc_appType').value='認定';
   document.getElementById('nc_company').value='';
@@ -2549,15 +2547,15 @@ function showNcError(msg){
 }
 
 // 担当者振り分けロジック（ofusa-aidem-tantouスキル準拠）
-// ver.20260521.04: アイデム拠点ベースの振り分け
+// ver.20260525.02: 新拠点名対応 - 東/西/高育チーム
 // 第1優先: aidemBranch（必須項目）を見る
-// - アイデム東 → 陳・大盛
-// - アイデム西 → 内田
-// - 就労部門 → 大盛　南美
+// - 東 → 陳・大盛
+// - 西 → 内田
+// - 高育チーム → 大盛　南美
 function _assignAidemStaff(caseName, desiredStatus, currentStatus, aidemBranch){
-  if(aidemBranch === 'アイデム東') return '陳・大盛';
-  if(aidemBranch === 'アイデム西') return '内田';
-  if(aidemBranch === '就労部門') return '大盛　南美';
+  if(aidemBranch === '東') return '陳・大盛';
+  if(aidemBranch === '西') return '内田';
+  if(aidemBranch === '高育チーム') return '大盛　南美';
   // 拠点未入力時のフォールバック（既存ロジック）
   var name = caseName || '';
   var status = (desiredStatus || '') + ' ' + (currentStatus || '');
@@ -2575,27 +2573,24 @@ function _assignAidemStaff(caseName, desiredStatus, currentStatus, aidemBranch){
   return '';
 }
 
-// ver.20260521.06: アイデム拠点変更時 → 担当者欄は常に表示、必須/任意とヒントだけ切替
-// アイデム東: 必須マークON + ヒント「※ 必須」
-// アイデム西/就労部門: 必須マークOFF + ヒント「※ 個人名がある場合のみ任意入力」
-// 未選択: 必須マークOFF + ヒント「※ 拠点を選択してください」
+// ver.20260525.02: アイデム拠点変更時 → 「東」のみ担当者欄を表示・必須。それ以外は完全非表示
+// 東: 担当者欄表示、必須マークON
+// 西/高育チーム: 担当者欄を非表示（値もクリア）
+// 未選択: 担当者欄を非表示
 function _onAidemBranchChange(){
   var br = (document.getElementById('nc_aidemBranch')||{}).value || '';
   var field = document.getElementById('nc_clientStaffField');
   var input = document.getElementById('nc_clientStaff');
   var reqEl = document.getElementById('nc_clientStaffReq');
-  var hintEl = document.getElementById('nc_clientStaffHint');
   if(!field || !input) return;
-  field.style.display = ''; // 常に表示
-  if(br === 'アイデム東'){
+  if(br === '東'){
+    field.style.display = '';
     if(reqEl) reqEl.style.display = '';
-    if(hintEl) hintEl.textContent = '※ 必須';
-  } else if(br === 'アイデム西' || br === '就労部門'){
-    if(reqEl) reqEl.style.display = 'none';
-    if(hintEl) hintEl.textContent = '※ 個人名がある場合のみ入力（任意）';
   } else {
+    // 西/高育チーム/未選択は担当者欄を完全非表示
+    field.style.display = 'none';
     if(reqEl) reqEl.style.display = 'none';
-    if(hintEl) hintEl.textContent = '※ 拠点を選択してください';
+    input.value = ''; // 値もクリア
   }
 }
 
@@ -2625,9 +2620,9 @@ async function submitNewCase(){
   if(!desiredStatus){ showNcError('希望在留資格を選択してください'); return; }
   if(!acceptExp){ showNcError('受入れ経験を選択してください'); return; }
   if(!aidemBranch){ showNcError('アイデム拠点を選択してください'); return; }
-  // ver.20260521.06: 担当者必須はアイデム東のみ。西/就労部門は任意（空でもOK）
+  // ver.20260525.02: 担当者必須は「東」のみ。西/高育チームは入力欄ごと非表示
   clientStaff = (clientStaff||'').trim();
-  if(aidemBranch === 'アイデム東' && !clientStaff){
+  if(aidemBranch === '東' && !clientStaff){
     showNcError('アイデム担当者を入力してください（リストから選択 / 直接入力もOK）');
     return;
   }
