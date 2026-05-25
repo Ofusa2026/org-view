@@ -285,7 +285,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260525.08</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260525.09</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -719,12 +719,26 @@ function groupCases(gid){
   if(filterStatus) base=base.filter(function(c){return getExternalStatus(c.status)===filterStatus;});
   if(filterCompany) base=base.filter(function(c){return c.company===filterCompany;});
   // ソート
-  base=base.slice().sort(function(a,b){
-    var av=a[sortCol]||'',bv=b[sortCol]||'';
-    if(!av&&!bv)return 0; if(!av)return 1; if(!bv)return -1;
-    var r=av<bv?-1:av>bv?1:0;
-    return sortDir==='asc'?r:-r;
-  });
+  // ver.20260525.09: デフォルトは「受付日（receiptDate）が新しい順」（申請記録と同じロジック）
+  //                  受付日なしは末尾。列ヘッダークリック時の sortCol が優先。
+  if(sortCol){
+    base=base.slice().sort(function(a,b){
+      var av=a[sortCol]||'',bv=b[sortCol]||'';
+      if(!av&&!bv)return 0; if(!av)return 1; if(!bv)return -1;
+      var r=av<bv?-1:av>bv?1:0;
+      return sortDir==='asc'?r:-r;
+    });
+  }else{
+    base=base.slice().sort(function(a,b){
+      var av=a.receiptDate||'', bv=b.receiptDate||'';
+      // 受付日なしは末尾
+      if(!av && !bv) return 0;
+      if(!av) return 1;
+      if(!bv) return -1;
+      // 新しい順（降順）
+      return av<bv ? 1 : av>bv ? -1 : 0;
+    });
+  }
   return base;
 }
 
@@ -886,7 +900,10 @@ function buildRow(c){
 function renderSidebar(){
   var h='';
   // ver.20260518.13: ダッシュボードはバッジ無し、その他はgroupCasesの件数
+  // ver.20260525.09: アイデムは「ダッシュボード」を非表示
+  var isAidem = (orgName==='株式会社アイデム');
   GROUPS.forEach(function(g,i){
+    if(isAidem && g.id==='dashboard') return; // アイデムはダッシュボードを表示しない
     h+='<div class="sb-item'+(currentGroup===g.id?' active':'')+'" onclick="switchGroup(\''+g.id+'\')">';
     if(g.id==='dashboard'){
       h+='<span>'+g.label+'</span>';
@@ -896,7 +913,7 @@ function renderSidebar(){
     }
     h+='</div>';
     // dashboard の後と、最後（all の後）に区切り
-    if(g.id==='dashboard') h+='<div class="sb-divider"></div>';
+    if(g.id==='dashboard' && !isAidem) h+='<div class="sb-divider"></div>';
   });
   h+='<div class="sb-divider"></div>';
   h+='<div class="sb-item'+(currentGroup==='receipts'?' active':'')+'" onclick="switchGroup(\'receipts\')">申請記録 <span class="sb-badge">'+allReceipts.length+'</span></div>';
@@ -2330,6 +2347,8 @@ async function loadData(){
       if(ncBtn) ncBtn.style.display='';
       var hOrg=document.getElementById('headerOrg');
       if(hOrg) hOrg.style.marginLeft='0';
+      // ver.20260525.09: アイデムはダッシュボードを表示しないので、初期タブを「進行中」に
+      if(currentGroup==='dashboard') currentGroup='active';
       try{
         // ver.20260521.03: folder_no も取得して番号順にソート、「[NN] 名前」表示
         // ver.20260525.08: limit=2000 を明示（PostgRESTのmax-rowsに引っかからないように）
@@ -2356,9 +2375,9 @@ async function loadData(){
         }
       }catch(e){ console.warn('[aidem companies load failed]', e); }
     }
-    var r4=await sbFetch('cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,temp_return,applicant_field,madoguchi_date,madoguchi_receive_date,updated_at,created_at&order=created_at.desc');
+    var r4=await sbFetch('cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,receipt_date,temp_return,applicant_field,madoguchi_date,madoguchi_receive_date,updated_at,created_at&order=created_at.desc');
     var cases=await r4.json();
-    allCases=(cases||[]).map(function(c){return{id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',madoguchiDate:c.madoguchi_date||'',madoguchiReceiveDate:c.madoguchi_receive_date||'',updated_at:c.updated_at||''};});
+    allCases=(cases||[]).map(function(c){return{id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',receiptDate:c.receipt_date||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',madoguchiDate:c.madoguchi_date||'',madoguchiReceiveDate:c.madoguchi_receive_date||'',updated_at:c.updated_at||''};});
     // personsテーブルからtempReturn(一時帰国予定日)を取得して補完
     if(allCases.length){
       var pids=allCases.map(function(c){return c.id;});
