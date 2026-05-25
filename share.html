@@ -285,7 +285,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260525.05</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260525.06</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1055,7 +1055,16 @@ function renderReceipts(){
       caseName: c.name||'',
       status: c.status,
       pdfDone: false,
-      driveUrl: null
+      driveUrl: null,
+      // ver.20260525.06: メインテーブルと列を揃えるための追加情報
+      appType: c.appType||'',
+      expire: c.expire||'',
+      tokureiDate: c.tokureiDate||'',
+      tempReturn: c.tempReturn||'',
+      team: c.team||'',
+      staff: c.staff||'',
+      applicant: c.applicant||'',
+      receiptNo: c.receiptNo||''
     });
   });
   if(!allReceipts.length && !appliedCases.length){
