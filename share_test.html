@@ -238,7 +238,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260521.09</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260525.01</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -421,6 +421,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
               <th style="width:120px;">国籍 <span style="color:#dc2626;">*</span></th>
               <th style="width:140px;">在留期限</th>
               <th style="width:120px;">受取方法 <span style="color:#dc2626;">*</span></th>
+              <th style="width:80px;text-align:center;">推薦票</th>
               <th class="nc-row-del"></th>
             </tr>
           </thead>
@@ -2374,6 +2375,12 @@ function addJinzaiRow(){
         '<option value="窓口受取">窓口受取</option>' +
       '</select>' +
     '</td>' +
+    '<td style="text-align:center;">' +
+      '<label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;color:#64748b;">' +
+        '<input type="checkbox" class="nc-j-recommend" style="width:16px;height:16px;cursor:pointer;accent-color:#2563eb;">' +
+        '<span style="font-weight:600;">必要</span>' +
+      '</label>' +
+    '</td>' +
     '<td class="nc-row-del"><button class="nc-del-btn" onclick="removeJinzaiRow(\'' + rowId + '\')">✕</button></td>';
   document.getElementById('ncJinzaiBody').appendChild(tr);
   updateJinzaiCount();
@@ -2497,11 +2504,14 @@ async function submitNewCase(){
     var nat = rowEl.querySelector('.nc-j-nat').value;
     var exp = rowEl.querySelector('.nc-j-expire').value;
     var uke = rowEl.querySelector('.nc-j-uke').value;
+    // ver.20260525.01: 推薦票要否
+    var recEl = rowEl.querySelector('.nc-j-recommend');
+    var rec = recEl ? recEl.checked : false;
     if(!nm && !nat && !uke){ continue; }
     if(!nm){ showNcError((i+1) + '人目の氏名を入力してください'); return; }
     if(!nat){ showNcError((i+1) + '人目の国籍を選択してください'); return; }
     if(!uke){ showNcError((i+1) + '人目の受取方法を選択してください'); return; }
-    jinzaiList.push({name: nm, nationality: nat, expire: exp, ukeMethod: uke});
+    jinzaiList.push({name: nm, nationality: nat, expire: exp, ukeMethod: uke, recommendLetter: rec});
   }
   if(jinzaiList.length === 0){
     showNcError('人材を1名以上入力してください');
@@ -2553,9 +2563,10 @@ function _renderConfirmBody(p){
     h += '<div class="nc-cf-label">OFUSA担当者（自動振り分け）</div><div class="nc-cf-value">' + esc(p.supportStaff) + '</div>';
   }
   h += '<div class="nc-cf-label">人材リスト（' + p.jinzaiList.length + '名）</div>';
-  h += '<div class="nc-cf-jinzai-list"><table><thead><tr><th>#</th><th>氏名</th><th>国籍</th><th>在留期限</th><th>受取方法</th></tr></thead><tbody>';
+  h += '<div class="nc-cf-jinzai-list"><table><thead><tr><th>#</th><th>氏名</th><th>国籍</th><th>在留期限</th><th>受取方法</th><th>推薦票</th></tr></thead><tbody>';
   p.jinzaiList.forEach(function(j, idx){
-    h += '<tr><td>' + (idx+1) + '</td><td>' + esc(j.name) + '</td><td>' + esc(j.nationality) + '</td><td>' + esc(j.expire || '-') + '</td><td>' + esc(j.ukeMethod) + '</td></tr>';
+    var recMark = j.recommendLetter ? '<span style="color:#2563eb;font-weight:700;">必要</span>' : '<span style="color:#94a3b8;">—</span>';
+    h += '<tr><td>' + (idx+1) + '</td><td>' + esc(j.name) + '</td><td>' + esc(j.nationality) + '</td><td>' + esc(j.expire || '-') + '</td><td>' + esc(j.ukeMethod) + '</td><td style="text-align:center;">' + recMark + '</td></tr>';
   });
   h += '</tbody></table></div>';
   document.getElementById('ncConfirmBody').innerHTML = h;
@@ -2574,6 +2585,8 @@ async function executeSubmit(){
     var records = p.jinzaiList.map(function(j, idx){
       // ver.20260521.09: 受取方法を delivery_method 列に保存（mail/window）
       var dm = (j.ukeMethod === '窓口受取') ? 'window' : 'mail';
+      // ver.20260525.01: 推薦票要否
+      var rec = !!j.recommendLetter;
       return {
         applicant: j.name,
         case_name: p.caseName,
@@ -2592,7 +2605,8 @@ async function executeSubmit(){
         support_staff: p.supportStaff,
         support_fee: feeStr,
         delivery_method: dm,
-        other_support_note: '受取方法: ' + j.ukeMethod + '（アイデムShareより登録）',
+        recommend_letter_required: rec,
+        other_support_note: '受取方法: ' + j.ukeMethod + (rec ? ' / 推薦票: 必要' : '') + '（アイデムShareより登録）',
         received_at: nowIso,
         status: 'pending'
       };
