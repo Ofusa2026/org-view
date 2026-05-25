@@ -285,7 +285,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260525.11</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260525.12</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -901,9 +901,11 @@ function renderSidebar(){
   var h='';
   // ver.20260518.13: ダッシュボードはバッジ無し、その他はgroupCasesの件数
   // ver.20260525.09: アイデムは「ダッシュボード」を非表示
+  // ver.20260525.12: 進捗URLカスタマイズで各項目を表示/非表示制御
   var isAidem = (orgName==='株式会社アイデム');
   GROUPS.forEach(function(g,i){
     if(isAidem && g.id==='dashboard') return; // アイデムはダッシュボードを表示しない
+    if(!isSidebarItemVisible(g.id)) return;   // ver.20260525.12: カスタマイズで非表示
     h+='<div class="sb-item'+(currentGroup===g.id?' active':'')+'" onclick="switchGroup(\''+g.id+'\')">';
     if(g.id==='dashboard'){
       h+='<span>'+g.label+'</span>';
@@ -916,18 +918,32 @@ function renderSidebar(){
     if(g.id==='dashboard' && !isAidem) h+='<div class="sb-divider"></div>';
   });
   h+='<div class="sb-divider"></div>';
-  h+='<div class="sb-item'+(currentGroup==='receipts'?' active':'')+'" onclick="switchGroup(\'receipts\')">申請記録 <span class="sb-badge">'+allReceipts.length+'</span></div>';
-  h+='<div class="sb-item'+(currentGroup==='shinsa'?' active':'')+'" onclick="switchGroup(\'shinsa\')">審査完了 <span class="sb-badge">'+allShinsa.length+'</span></div>';
+  if(isSidebarItemVisible('receipts')){
+    h+='<div class="sb-item'+(currentGroup==='receipts'?' active':'')+'" onclick="switchGroup(\'receipts\')">申請記録 <span class="sb-badge">'+allReceipts.length+'</span></div>';
+  }
+  if(isSidebarItemVisible('shinsa')){
+    h+='<div class="sb-item'+(currentGroup==='shinsa'?' active':'')+'" onclick="switchGroup(\'shinsa\')">審査完了 <span class="sb-badge">'+allShinsa.length+'</span></div>';
+  }
   // ver.20260519.17: アイデム専用 窓口申請/窓口受取（日付ベース判定）
   if(orgName==='株式会社アイデム'){
-    var mshinsei = allCases.filter(_hasMadoguchiShinsei).length;
-    var muketori = allCases.filter(_hasMadoguchiUketori).length;
-    h+='<div class="sb-divider"></div>';
-    h+='<div class="sb-item'+(currentGroup==='madoguchi_shinsei'?' active':'')+'" onclick="switchGroup(\'madoguchi_shinsei\')">🏛 窓口申請 <span class="sb-badge">'+mshinsei+'</span></div>';
-    h+='<div class="sb-item'+(currentGroup==='madoguchi_uketori'?' active':'')+'" onclick="switchGroup(\'madoguchi_uketori\')">🏛 窓口受取 <span class="sb-badge">'+muketori+'</span></div>';
+    var showMshinsei = isSidebarItemVisible('madoguchi_shinsei');
+    var showMuketori = isSidebarItemVisible('madoguchi_uketori');
+    if(showMshinsei || showMuketori){
+      h+='<div class="sb-divider"></div>';
+      if(showMshinsei){
+        var mshinsei = allCases.filter(_hasMadoguchiShinsei).length;
+        h+='<div class="sb-item'+(currentGroup==='madoguchi_shinsei'?' active':'')+'" onclick="switchGroup(\'madoguchi_shinsei\')">🏛 窓口申請 <span class="sb-badge">'+mshinsei+'</span></div>';
+      }
+      if(showMuketori){
+        var muketori = allCases.filter(_hasMadoguchiUketori).length;
+        h+='<div class="sb-item'+(currentGroup==='madoguchi_uketori'?' active':'')+'" onclick="switchGroup(\'madoguchi_uketori\')">🏛 窓口受取 <span class="sb-badge">'+muketori+'</span></div>';
+      }
+    }
   }
-  h+='<div class="sb-divider"></div>';
-  h+='<div class="flow-sb-item" onclick="openFlowModal()">📋 申請の流れ <span style="margin-left:auto;font-size:10px;">ℹ️</span></div>';
+  if(isSidebarItemVisible('flow')){
+    h+='<div class="sb-divider"></div>';
+    h+='<div class="flow-sb-item" onclick="openFlowModal()">📋 申請の流れ <span style="margin-left:auto;font-size:10px;">ℹ️</span></div>';
+  }
   document.getElementById('sidebar').innerHTML=h;
 }
 
@@ -950,11 +966,25 @@ var COLS=[
 // 未設定機関のデフォルト:
 //   - メイン: 全列表示（ただしコメント2列は非表示）
 //   - 未確認3セクション: すべて非表示
+//   - サイドバー: 全項目表示 (ver.20260525.12)
 var DEFAULT_PROGRESS_CFG = {
   main:    { enabled: true,  cols: ['name','company','appType','staff','status','_mlit','expire','receiptNo','tempReturn','_downloads'] },
   applied: { enabled: false },
   pending: { enabled: false },
-  review:  { enabled: false }
+  review:  { enabled: false },
+  // ver.20260525.12: サイドバー表示設定（true = 表示）
+  // 未指定/未設定の項目は「表示」扱いがデフォルト
+  sidebar: {
+    dashboard: true,
+    active: true,
+    done: true,
+    all: true,
+    receipts: true,
+    shinsa: true,
+    madoguchi_shinsei: true,
+    madoguchi_uketori: true,
+    flow: true
+  }
 };
 // 現在の設定（読み込み済みなら progressUrlCfg、それ以外はデフォルト）を返す
 function getEffectiveCfg(){
@@ -970,6 +1000,14 @@ function isColVisible(key){
 // 表示する列だけを返す
 function visibleCols(){
   return COLS.filter(function(c){return isColVisible(c.key);});
+}
+
+// ver.20260525.12: サイドバー項目が表示OKか（未設定はtrue扱い）
+function isSidebarItemVisible(itemId){
+  var cfg=getEffectiveCfg();
+  if(!cfg.sidebar) return true;
+  // 明示的に false なら非表示、undefined や true は表示
+  return cfg.sidebar[itemId] !== false;
 }
 
 function thHtml(col){
