@@ -290,7 +290,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.32</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.33</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -2491,7 +2491,8 @@ async function loadData(){
         }
       }catch(e){ console.warn('[aidem companies load failed]', e); }
     }
-    var r4=await sbFetch('cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,receipt_date,temp_return,applicant_field,madoguchi_date,madoguchi_receive_date,client_staff,updated_at,created_at&order=created_at.desc');
+    // ver.20260527.33: limit=5000 を明示（PostgRESTのmax-rows=1000で頭打ちになり1000件超で取りこぼす問題を解消）
+    var r4=await sbFetch('cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,receipt_date,temp_return,applicant_field,madoguchi_date,madoguchi_receive_date,client_staff,updated_at,created_at&order=created_at.desc&limit=5000');
     var cases=await r4.json();
     allCases=(cases||[]).map(function(c){return{id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',receiptDate:c.receipt_date||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',madoguchiDate:c.madoguchi_date||'',madoguchiReceiveDate:c.madoguchi_receive_date||'',clientStaff:c.client_staff||'',updated_at:c.updated_at||''};});
     // personsテーブルからtempReturn(一時帰国予定日)を取得して補完
