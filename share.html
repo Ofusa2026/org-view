@@ -58,13 +58,10 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 /* テーブル */
 .tbl-wrap{overflow-x:auto;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);background:white;}
 table{border-collapse:collapse;width:100%;min-width:700px;}
-/* ver.20260527.18: ヘッダーを明るい背景＋濃い文字＋区切り線つきに変更（暗色テーマで読みづらかったため） */
-thead tr{background:#f1f5f9;color:#0f2040;}
+thead tr{background:#0f2040;color:white;}
 /* ver.20260519.24: thead を縦スクロール時に固定（.main内スクロールに対してtop:0） */
-/* ver.20260527.18: 明るい背景・濃い文字・区切り線 */
-th{position:sticky;top:0;background:#f1f5f9;color:#0f2040;z-index:10;padding:9px 10px;font-size:10.5px;font-weight:700;letter-spacing:.2px;white-space:nowrap;text-align:left;cursor:pointer;user-select:none;border-right:1px solid #cbd5e1;border-bottom:2px solid #94a3b8;}
-th:last-child{border-right:none;}
-th:hover{background:#e2e8f0;}
+th{position:sticky;top:0;background:#0f2040;color:white;z-index:10;padding:8px 10px;font-size:10px;font-weight:700;letter-spacing:.3px;white-space:nowrap;text-align:left;cursor:pointer;user-select:none;}
+th:hover{background:#1e3a5f;}
 th .sort-icon{margin-left:4px;opacity:.5;font-size:9px;}
 th.sort-asc .sort-icon::after{content:'▲';}
 th.sort-desc .sort-icon::after{content:'▼';}
@@ -288,7 +285,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.20</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.21</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
