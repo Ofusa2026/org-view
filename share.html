@@ -62,7 +62,8 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 table{border-collapse:collapse;width:100%;min-width:700px;}
 thead tr{background:#0f2040;color:white;}
 /* ver.20260519.24: thead を縦スクロール時に固定（.main内スクロールに対してtop:0） */
-th{position:sticky;top:0;background:#0f2040;color:white;z-index:10;padding:8px 10px;font-size:10px;font-weight:700;letter-spacing:.3px;white-space:nowrap;text-align:left;cursor:pointer;user-select:none;}
+/* ver.20260527.26: filter-bar (sticky, top:48, h:56) と被るので top:56 にしてその下に張り付ける */
+th{position:sticky;top:56px;background:#0f2040;color:white;z-index:10;padding:8px 10px;font-size:10px;font-weight:700;letter-spacing:.3px;white-space:nowrap;text-align:left;cursor:pointer;user-select:none;}
 th:hover{background:#1e3a5f;}
 th .sort-icon{margin-left:4px;opacity:.5;font-size:9px;}
 th.sort-asc .sort-icon::after{content:'▲';}
@@ -117,7 +118,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
 .view-btn.active{background:#2563eb;color:white;border-color:#2563eb;}
 .kanban-wrap{display:flex;gap:12px;overflow-x:auto;align-items:flex-start;padding-bottom:12px;}
 .kanban-col{flex-shrink:0;width:240px;background:#f8fafc;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;display:flex;flex-direction:column;max-height:calc(100vh - 160px);}
-.kanban-col-head{padding:8px 12px;font-size:11px;font-weight:800;color:white;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;flex-shrink:0;gap:6px;line-height:1.3;}
+.kanban-col-head{padding:8px 12px;font-size:11px;font-weight:800;color:white;display:flex;align-items:center;justify-content:space-between;position:sticky;top:56px;z-index:10;flex-shrink:0;gap:6px;line-height:1.3;}
 .kanban-col-head .kanban-col-label{flex:1;min-width:0;word-break:break-word;white-space:normal;}
 .kanban-col-body{overflow-y:auto;flex:1;padding:8px;display:flex;flex-direction:column;gap:6px;}
 .kanban-col-body{padding:8px;display:flex;flex-direction:column;gap:6px;min-height:60px;}
@@ -287,7 +288,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.25</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.26</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
