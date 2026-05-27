@@ -285,7 +285,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.15</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.16</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -329,6 +329,15 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
         <div class="nc-big-success-title">送信が完了しました</div>
         <div class="nc-big-success-text" id="ncBigSuccessText"></div>
         <div class="nc-big-success-sub">OFUSAの担当者が確認後、正式な案件として登録されます。<br>確認の連絡が来るまでお待ちください。</div>
+        <!-- ver.20260527.16: LINE報告用テキスト -->
+        <div id="ncLineTextBox" style="margin-top:20px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:10px;padding:14px;text-align:left;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap;">
+            <div style="font-size:12px;font-weight:800;color:#0f2040;">📝 LINE報告用テキスト</div>
+            <button onclick="copyLineText()" id="ncCopyLineBtn" style="padding:6px 14px;background:#10b981;color:white;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📋 クリップボードにコピー</button>
+          </div>
+          <textarea id="ncLineText" readonly style="width:100%;min-height:180px;padding:10px;border:1px solid #e2e8f0;border-radius:6px;font-size:11.5px;font-family:'SF Mono','Menlo','Consolas',monospace;line-height:1.6;background:white;color:#334155;resize:vertical;box-sizing:border-box;"></textarea>
+          <div style="font-size:10px;color:#64748b;margin-top:6px;">※ この内容をLINEにそのまま貼り付けてください</div>
+        </div>
       </div>
       <div class="nc-big-error" id="ncBigError">
         <div class="nc-big-error-icon">❌</div>
@@ -361,36 +370,17 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
           </div>
         </div>
 
-        <div class="nc-grid-2">
-          <div class="nc-field">
-            <label class="nc-label">現在の在留資格</label>
-            <select class="nc-select" id="nc_currentStatus">
-              <option value="">-- 選択 --</option>
-              <option value="特定技能1号">特定技能1号</option>
-              <option value="特定技能2号">特定技能2号</option>
-              <option value="特定活動">特定活動</option>
-              <option value="技能実習1号">技能実習1号</option>
-              <option value="技能実習2号">技能実習2号</option>
-              <option value="技能実習3号">技能実習3号</option>
-              <option value="技術・人文知識・国際業務">技術・人文知識・国際業務</option>
-              <option value="留学">留学</option>
-              <option value="家族滞在">家族滞在</option>
-              <option value="特定活動(インターン)">特定活動(インターン)</option>
-              <option value="その他">その他</option>
-            </select>
-          </div>
-          <div class="nc-field">
-            <label class="nc-label">希望在留資格 <span class="req">*</span></label>
-            <select class="nc-select" id="nc_desiredStatus">
-              <option value="">-- 選択 --</option>
-              <option value="特定技能1号">特定技能1号</option>
-              <option value="特定技能2号">特定技能2号</option>
-              <option value="特定活動">特定活動</option>
-              <option value="技術・人文知識・国際業務">技術・人文知識・国際業務</option>
-              <option value="特定活動(インターン)">特定活動(インターン)</option>
-              <option value="その他">その他</option>
-            </select>
-          </div>
+        <div class="nc-field">
+          <label class="nc-label">希望在留資格 <span class="req">*</span></label>
+          <select class="nc-select" id="nc_desiredStatus">
+            <option value="">-- 選択 --</option>
+            <option value="特定技能1号">特定技能1号</option>
+            <option value="特定技能2号">特定技能2号</option>
+            <option value="特定活動">特定活動</option>
+            <option value="技術・人文知識・国際業務">技術・人文知識・国際業務</option>
+            <option value="特定活動(インターン)">特定活動(インターン)</option>
+            <option value="その他">その他</option>
+          </select>
         </div>
 
         <div class="nc-grid-2">
@@ -456,6 +446,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
               <th class="nc-row-num">#</th>
               <th>氏名(英語)<span style="color:#dc2626;">*</span></th>
               <th style="width:120px;">国籍 <span style="color:#dc2626;">*</span></th>
+              <th style="width:155px;">現在の在留資格</th>
               <th style="width:140px;">在留期限</th>
               <th style="width:120px;">受取方法 <span style="color:#dc2626;">*</span></th>
               <th style="width:80px;text-align:center;">推薦票</th>
@@ -545,7 +536,7 @@ var ST_BOR={'未着手':'#e2e8f0','★ヒアリングフォーム送付':'#c4b5f
 
 // ===== ver.20260512: 登録支援機関側に見せる外部ステータス変換マップ =====
 // 内部の細かいステータスを、登録支援機関にわかりやすい大きなフェーズ名に変換
-// ver.20260527.15: ラベル変更
+// ver.20260527.16: ラベル変更
 //   「特定技能生サインご対応」→「申請人サイン対応」
 //   「出入国在留管理局審査中」→「審査中」
 var ST_EXTERNAL={
@@ -725,11 +716,13 @@ function groupCases(gid){
   // ソート
   // ver.20260525.09: デフォルトは「受付日（receiptDate）が新しい順」（申請記録と同じロジック）
   //                  受付日なしは末尾。列ヘッダークリック時の sortCol が優先。
+  // ver.20260527.16: 「担当」列(staff)ソートはアイデム担当者(clientStaff)で比較
   if(sortCol){
     base=base.slice().sort(function(a,b){
-      var av=a[sortCol]||'',bv=b[sortCol]||'';
+      var sortKey = (sortCol === 'staff') ? 'clientStaff' : sortCol;
+      var av=a[sortKey]||'',bv=b[sortKey]||'';
       if(!av&&!bv)return 0; if(!av)return 1; if(!bv)return -1;
-      var r=av<bv?-1:av>bv?1:0;
+      var r=av.localeCompare?av.localeCompare(bv,'ja'):(av<bv?-1:av>bv?1:0);
       return sortDir==='asc'?r:-r;
     });
   }else{
@@ -870,7 +863,8 @@ function buildRow(c){
   h+='<td data-col-key="name" style="min-width:200px;max-width:320px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div></td>'; // ver.20260518.06: 案件名を全文表示（折り返し）
   h+='<td data-col-key="company" style="min-width:90px;max-width:120px;"><div style="font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:115px;">'+esc(c.company||'—')+'</div></td>';
   h+='<td data-col-key="appType" style="width:48px;">'+typeHtml+'</td>';
-  h+='<td data-col-key="staff" style="width:65px;">'+(teamShort?'<div style="font-size:10px;font-weight:600;">'+esc(teamShort)+'</div>':'')+(staffShort?'<div style="font-size:10px;color:#6b7280;">'+esc(staffShort)+'</div>':'')+'</td>';
+  // ver.20260527.16: 「担当」列はアイデム担当者(client_staff)を表示。OFUSA担当(staff)は非表示。
+  h+='<td data-col-key="staff" style="width:90px;">'+(c.clientStaff?'<div style="font-size:10px;color:#475569;font-weight:600;word-break:break-word;line-height:1.3;">'+esc(c.clientStaff)+'</div>':'<span style="color:#cbd5e1;font-size:10px;">—</span>')+'</td>';
   h+='<td data-col-key="status" style="white-space:nowrap;">'+stHtml+'</td>';
   // 他機関申請（国交省）列
   h+='<td data-col-key="_mlit" style="white-space:nowrap;min-width:140px;">'+mlitHtml+'</td>';
@@ -2476,9 +2470,9 @@ async function loadData(){
         }
       }catch(e){ console.warn('[aidem companies load failed]', e); }
     }
-    var r4=await sbFetch('cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,receipt_date,temp_return,applicant_field,madoguchi_date,madoguchi_receive_date,updated_at,created_at&order=created_at.desc');
+    var r4=await sbFetch('cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,receipt_date,temp_return,applicant_field,madoguchi_date,madoguchi_receive_date,client_staff,updated_at,created_at&order=created_at.desc');
     var cases=await r4.json();
-    allCases=(cases||[]).map(function(c){return{id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',receiptDate:c.receipt_date||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',madoguchiDate:c.madoguchi_date||'',madoguchiReceiveDate:c.madoguchi_receive_date||'',updated_at:c.updated_at||''};});
+    allCases=(cases||[]).map(function(c){return{id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',receiptDate:c.receipt_date||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',madoguchiDate:c.madoguchi_date||'',madoguchiReceiveDate:c.madoguchi_receive_date||'',clientStaff:c.client_staff||'',updated_at:c.updated_at||''};});
     // personsテーブルからtempReturn(一時帰国予定日)を取得して補完
     // ver.20260527.14: 申請中証明書PDF・預かり証PDFのURL履歴も取得
     if(allCases.length){
@@ -2655,7 +2649,7 @@ function openNewCaseModal(){
   document.getElementById('nc_caseName').value='';
   document.getElementById('nc_appType').value='認定';
   document.getElementById('nc_company').value='';
-  document.getElementById('nc_currentStatus').value='';
+  // ver.20260527.16: nc_currentStatus は廃止（人材別に移行）
   document.getElementById('nc_desiredStatus').value='';
   var radios = document.querySelectorAll('input[name="nc_acceptExp"]');
   radios.forEach(function(r){ r.checked = false; });
@@ -2691,6 +2685,7 @@ function addJinzaiRow(){
   }
   _ncJinzaiRows++;
   var rowId = 'ncJ_' + Date.now() + '_' + _ncJinzaiRows;
+  var noteRowId = rowId + '_noteRow';
   var tr = document.createElement('tr');
   tr.id = rowId;
   tr.innerHTML =
@@ -2713,6 +2708,23 @@ function addJinzaiRow(){
         '<option value="その他">その他</option>' +
       '</select>' +
     '</td>' +
+    // ver.20260527.16: 現在の在留資格を個人別に
+    '<td>' +
+      '<select class="nc-select nc-j-current" onchange="_onJinzaiCurrentStatusChange(this, \'' + noteRowId + '\')">' +
+        '<option value="">-- 選択 --</option>' +
+        '<option value="特定技能1号">特定技能1号</option>' +
+        '<option value="特定技能2号">特定技能2号</option>' +
+        '<option value="特定活動">特定活動</option>' +
+        '<option value="技能実習1号">技能実習1号</option>' +
+        '<option value="技能実習2号">技能実習2号</option>' +
+        '<option value="技能実習3号">技能実習3号</option>' +
+        '<option value="技術・人文知識・国際業務">技術・人文知識・国際業務</option>' +
+        '<option value="留学">留学</option>' +
+        '<option value="家族滞在">家族滞在</option>' +
+        '<option value="特定活動(インターン)">特定活動(インターン)</option>' +
+        '<option value="その他">その他</option>' +
+      '</select>' +
+    '</td>' +
     '<td><input type="date" class="nc-input nc-j-expire"></td>' +
     '<td>' +
       '<select class="nc-select nc-j-uke">' +
@@ -2728,28 +2740,63 @@ function addJinzaiRow(){
     '</td>' +
     '<td class="nc-row-del"><button class="nc-del-btn" onclick="removeJinzaiRow(\'' + rowId + '\')">✕</button></td>';
   document.getElementById('ncJinzaiBody').appendChild(tr);
+  // ver.20260527.16: 「その他」選択時用のメモ展開行（初期は非表示）
+  var noteTr = document.createElement('tr');
+  noteTr.id = noteRowId;
+  noteTr.style.display = 'none';
+  noteTr.innerHTML =
+    '<td></td>' +
+    '<td colspan="7" style="padding:6px 4px 10px 4px;">' +
+      '<div style="display:flex;align-items:center;gap:8px;background:#fff7ed;border-left:3px solid #fb923c;border-radius:4px;padding:6px 10px;">' +
+        '<span style="font-size:10.5px;color:#9a3412;font-weight:700;white-space:nowrap;">📝 現在の在留資格 (詳細)</span>' +
+        '<input type="text" class="nc-input nc-j-current-note" placeholder="例：在留資格申請中、留学（語学）、永住者の配偶者等" style="flex:1;padding:5px 8px;font-size:11.5px;">' +
+      '</div>' +
+    '</td>';
+  document.getElementById('ncJinzaiBody').appendChild(noteTr);
   updateJinzaiCount();
+}
+
+// ver.20260527.16: 「その他」選択時、メモ展開行を表示/非表示
+function _onJinzaiCurrentStatusChange(selEl, noteRowId){
+  var noteTr = document.getElementById(noteRowId);
+  if(!noteTr) return;
+  if(selEl.value === 'その他'){
+    noteTr.style.display = '';
+    var inp = noteTr.querySelector('.nc-j-current-note');
+    if(inp){ setTimeout(function(){ inp.focus(); }, 50); }
+  } else {
+    noteTr.style.display = 'none';
+    var inp2 = noteTr.querySelector('.nc-j-current-note');
+    if(inp2) inp2.value = '';
+  }
 }
 
 function removeJinzaiRow(rowId){
   var row = document.getElementById(rowId);
   if(!row) return;
-  if(document.getElementById('ncJinzaiBody').children.length <= 1){
+  // ver.20260527.16: データ行のみカウント（メモ展開行は対象外）
+  var dataRows = document.querySelectorAll('#ncJinzaiBody > tr:not([id$="_noteRow"])');
+  if(dataRows.length <= 1){
     showNcError('人材は最低1名必要です');
     return;
   }
+  // メモ展開行も一緒に削除
+  var noteRow = document.getElementById(rowId + '_noteRow');
+  if(noteRow) noteRow.remove();
   row.remove();
-  // 行番号を振り直し
-  var rows = document.getElementById('ncJinzaiBody').children;
+  // 行番号を振り直し（データ行のみ）
+  var rows = document.querySelectorAll('#ncJinzaiBody > tr:not([id$="_noteRow"])');
   for(var i=0; i<rows.length; i++){
-    rows[i].querySelector('.nc-row-num').textContent = (i+1);
+    var numCell = rows[i].querySelector('.nc-row-num');
+    if(numCell) numCell.textContent = (i+1);
   }
   _ncJinzaiRows = rows.length;
   updateJinzaiCount();
 }
 
 function updateJinzaiCount(){
-  var count = document.getElementById('ncJinzaiBody').children.length;
+  // ver.20260527.16: データ行のみカウント
+  var count = document.querySelectorAll('#ncJinzaiBody > tr:not([id$="_noteRow"])').length;
   document.getElementById('ncJinzaiCount').textContent = '最大' + _NC_MAX_JINZAI + '名';
 }
 
@@ -2829,7 +2876,7 @@ async function submitNewCase(){
   var caseName = document.getElementById('nc_caseName').value.trim();
   var appType = document.getElementById('nc_appType').value;
   var company = document.getElementById('nc_company').value.trim();
-  var currentStatus = document.getElementById('nc_currentStatus').value;
+  // ver.20260527.16: 「現在の在留資格」は人材別へ移行（案件共通欄は廃止）
   var desiredStatus = document.getElementById('nc_desiredStatus').value;
   var acceptExpEl = document.querySelector('input[name="nc_acceptExp"]:checked');
   var acceptExp = acceptExpEl ? acceptExpEl.value : '';
@@ -2860,13 +2907,25 @@ async function submitNewCase(){
     return;
   }
 
-  // 人材データ収集
-  var rows = document.getElementById('ncJinzaiBody').children;
+  // 人材データ収集（メモ展開行は除外）
+  // ver.20260527.16: データ行のみ走査
+  var rows = document.querySelectorAll('#ncJinzaiBody > tr:not([id$="_noteRow"])');
   var jinzaiList = [];
   for(var i=0; i<rows.length; i++){
     var rowEl = rows[i];
     var nm = rowEl.querySelector('.nc-j-name').value.trim();
     var nat = rowEl.querySelector('.nc-j-nat').value;
+    // ver.20260527.16: 個人別の「現在の在留資格」と「その他」詳細メモ
+    var curEl = rowEl.querySelector('.nc-j-current');
+    var cur = curEl ? curEl.value : '';
+    var curNote = '';
+    if(cur === 'その他' && rowEl.id){
+      var noteRow = document.getElementById(rowEl.id + '_noteRow');
+      if(noteRow){
+        var noteInp = noteRow.querySelector('.nc-j-current-note');
+        curNote = noteInp ? (noteInp.value||'').trim() : '';
+      }
+    }
     var exp = rowEl.querySelector('.nc-j-expire').value;
     var uke = rowEl.querySelector('.nc-j-uke').value;
     // ver.20260525.01: 推薦票要否チェック
@@ -2876,7 +2935,14 @@ async function submitNewCase(){
     if(!nm){ showNcError((i+1) + '人目の氏名を入力してください'); return; }
     if(!nat){ showNcError((i+1) + '人目の国籍を選択してください'); return; }
     if(!uke){ showNcError((i+1) + '人目の受取方法を選択してください'); return; }
-    jinzaiList.push({name: nm, nationality: nat, expire: exp, ukeMethod: uke, recommendLetter: rec});
+    if(cur === 'その他' && !curNote){
+      showNcError((i+1) + '人目の現在の在留資格（その他）の詳細を入力してください');
+      return;
+    }
+    jinzaiList.push({
+      name: nm, nationality: nat, expire: exp, ukeMethod: uke, recommendLetter: rec,
+      currentStatus: cur, currentStatusNote: curNote
+    });
   }
   if(jinzaiList.length === 0){
     showNcError('人材を1名以上入力してください');
@@ -2884,12 +2950,14 @@ async function submitNewCase(){
   }
 
   // 担当者振り分け
-  var supportStaff = _assignAidemStaff(caseName, desiredStatus, currentStatus, aidemBranch);
+  // ver.20260527.16: 個人別の現在資格を渡せないため、最初の人材の現在資格で振り分け（既存の振り分けロジック仕様）
+  var firstCurrent = (jinzaiList[0] && jinzaiList[0].currentStatus) || '';
+  var supportStaff = _assignAidemStaff(caseName, desiredStatus, firstCurrent, aidemBranch);
 
   _ncPendingPayload = {
     agencyOffice: agencyOffice,
     caseName: caseName, appType: appType, company: company,
-    currentStatus: currentStatus, desiredStatus: desiredStatus,
+    desiredStatus: desiredStatus,
     acceptExp: acceptExp,
     aidemBranch: aidemBranch, clientStaff: clientStaff,
     supportFee: supportFee, supportStaff: supportStaff, jinzaiList: jinzaiList
@@ -2912,10 +2980,8 @@ function _renderConfirmBody(p){
   h += '<div><div class="nc-cf-label">申請種別</div><div class="nc-cf-value">' + esc(p.appType) + '</div></div>';
   h += '<div><div class="nc-cf-label">所属機関</div><div class="nc-cf-value">' + esc(p.company) + '</div></div>';
   h += '</div>';
-  h += '<div class="nc-cf-grid">';
-  h += '<div><div class="nc-cf-label">現在の在留資格</div><div class="nc-cf-value">' + esc(p.currentStatus || '（未選択）') + '</div></div>';
-  h += '<div><div class="nc-cf-label">希望在留資格</div><div class="nc-cf-value">' + esc(p.desiredStatus) + '</div></div>';
-  h += '</div>';
+  // ver.20260527.16: 「現在の在留資格」は人材別に移行したため、ここでは希望在留資格のみ
+  h += '<div class="nc-cf-label">希望在留資格</div><div class="nc-cf-value">' + esc(p.desiredStatus) + '</div>';
   h += '<div class="nc-cf-grid">';
   h += '<div><div class="nc-cf-label">受入れ経験</div><div class="nc-cf-value">' + esc(p.acceptExp) + '</div></div>';
   h += '<div><div class="nc-cf-label">支援委託費（税抜・全員に同額適用）</div><div class="nc-cf-value">' + (p.supportFee ? '¥ ' + Number(p.supportFee).toLocaleString() : '（未入力）') + '</div></div>';
@@ -2928,10 +2994,19 @@ function _renderConfirmBody(p){
     h += '<div class="nc-cf-label">OFUSA担当者（自動振り分け）</div><div class="nc-cf-value">' + esc(p.supportStaff) + '</div>';
   }
   h += '<div class="nc-cf-label">人材リスト（' + p.jinzaiList.length + '名）</div>';
-  h += '<div class="nc-cf-jinzai-list"><table><thead><tr><th>#</th><th>氏名</th><th>国籍</th><th>在留期限</th><th>受取方法</th><th>推薦票</th></tr></thead><tbody>';
+  h += '<div class="nc-cf-jinzai-list"><table><thead><tr><th>#</th><th>氏名</th><th>国籍</th><th>現在の在留資格</th><th>在留期限</th><th>受取方法</th><th>推薦票</th></tr></thead><tbody>';
   p.jinzaiList.forEach(function(j, idx){
     var recMark = j.recommendLetter ? '<span style="color:#2563eb;font-weight:700;">必要</span>' : '<span style="color:#94a3b8;">—</span>';
-    h += '<tr><td>' + (idx+1) + '</td><td>' + esc(j.name) + '</td><td>' + esc(j.nationality) + '</td><td>' + esc(j.expire || '-') + '</td><td>' + esc(j.ukeMethod) + '</td><td style="text-align:center;">' + recMark + '</td></tr>';
+    // ver.20260527.16: 現在資格を表示（その他は詳細メモを併記）
+    var curDisp = '—';
+    if(j.currentStatus){
+      if(j.currentStatus === 'その他' && j.currentStatusNote){
+        curDisp = 'その他: ' + esc(j.currentStatusNote);
+      } else {
+        curDisp = esc(j.currentStatus);
+      }
+    }
+    h += '<tr><td>' + (idx+1) + '</td><td>' + esc(j.name) + '</td><td>' + esc(j.nationality) + '</td><td style="font-size:10.5px;">' + curDisp + '</td><td>' + esc(j.expire || '-') + '</td><td>' + esc(j.ukeMethod) + '</td><td style="text-align:center;">' + recMark + '</td></tr>';
   });
   h += '</tbody></table></div>';
   document.getElementById('ncConfirmBody').innerHTML = h;
@@ -2952,6 +3027,18 @@ async function executeSubmit(){
       var dm = (j.ukeMethod === '窓口受取') ? 'window' : 'mail';
       // ver.20260525.01: 推薦票要否
       var rec = !!j.recommendLetter;
+      // ver.20260527.16: 現在の在留資格を個人別に。「その他」の場合は詳細メモを含めて保存
+      var residenceStatus = j.currentStatus || '';
+      if(j.currentStatus === 'その他' && j.currentStatusNote){
+        residenceStatus = 'その他: ' + j.currentStatusNote;
+      }
+      // 補足ノートも合体
+      var noteParts = ['受取方法: ' + j.ukeMethod];
+      if(rec) noteParts.push('推薦票: 必要');
+      if(j.currentStatus === 'その他' && j.currentStatusNote){
+        noteParts.push('現在資格(詳細): ' + j.currentStatusNote);
+      }
+      noteParts.push('（アイデムShareより登録）');
       return {
         applicant: j.name,
         case_name: p.caseName,
@@ -2960,7 +3047,7 @@ async function executeSubmit(){
         agency_name: '株式会社アイデム',
         agency_office: p.agencyOffice || '',
         company: p.company,
-        residence_status: p.currentStatus || '',
+        residence_status: residenceStatus,
         desired_status: p.desiredStatus,
         accept_exp: p.acceptExp,
         aidem_branch: p.aidemBranch || '',
@@ -2971,7 +3058,7 @@ async function executeSubmit(){
         support_fee: feeStr,
         delivery_method: dm,
         recommend_letter_required: rec,
-        other_support_note: '受取方法: ' + j.ukeMethod + (rec ? ' / 推薦票: 必要' : '') + '（アイデムShareより登録）',
+        other_support_note: noteParts.join(' / '),
         received_at: nowIso,
         status: 'pending'
       };
@@ -3004,6 +3091,10 @@ async function executeSubmit(){
     document.getElementById('ncBigSuccessText').innerHTML =
       '<strong>' + p.jinzaiList.length + '名</strong> の案件依頼を送信しました。<br>' +
       '案件名：' + esc(p.caseName);
+    // ver.20260527.16: LINE報告用テキストを生成してセット
+    var lineText = _buildLineReportText(p);
+    var lineTextEl = document.getElementById('ncLineText');
+    if(lineTextEl) lineTextEl.value = lineText;
     bigSuc.classList.add('show');
     // 下部ボタンの調整
     document.getElementById('ncSubmitBtn').style.display = 'none';
@@ -3024,6 +3115,95 @@ async function executeSubmit(){
     // 確認モーダルのボタンを戻す
     sendBtn.disabled = false;
     sendBtn.textContent = '送信する';
+  }
+}
+
+// ===== ver.20260527.16: LINE報告用テキスト生成 =====
+function _buildLineReportText(p){
+  var lines = [];
+  lines.push('【アイデム 新規案件依頼】');
+  lines.push('');
+  lines.push('■ 案件名: ' + p.caseName);
+  lines.push('■ 申請種別: ' + p.appType);
+  lines.push('■ 所属機関: ' + p.company);
+  lines.push('■ 希望在留資格: ' + p.desiredStatus);
+  lines.push('■ 受入れ経験: ' + p.acceptExp);
+  if(p.supportFee){
+    lines.push('■ 支援委託費(税抜): ¥' + Number(p.supportFee).toLocaleString());
+  }
+  lines.push('■ アイデム拠点: ' + (p.aidemBranch||''));
+  if(p.clientStaff){
+    lines.push('■ アイデム担当者: ' + p.clientStaff);
+  }
+  if(p.supportStaff){
+    lines.push('■ OFUSA担当者: ' + p.supportStaff);
+  }
+  lines.push('');
+  lines.push('■ 人材リスト（' + p.jinzaiList.length + '名）');
+  p.jinzaiList.forEach(function(j, idx){
+    var no = (idx+1);
+    lines.push('--- ' + no + '. ' + j.name + ' ---');
+    lines.push('  国籍: ' + j.nationality);
+    if(j.currentStatus){
+      var cur = j.currentStatus;
+      if(j.currentStatus === 'その他' && j.currentStatusNote){
+        cur = 'その他 (' + j.currentStatusNote + ')';
+      }
+      lines.push('  現在の在留資格: ' + cur);
+    }
+    if(j.expire) lines.push('  在留期限: ' + j.expire);
+    lines.push('  受取方法: ' + j.ukeMethod);
+    if(j.recommendLetter) lines.push('  推薦票: 必要');
+  });
+  return lines.join('\n');
+}
+
+function copyLineText(){
+  var ta = document.getElementById('ncLineText');
+  if(!ta) return;
+  var btn = document.getElementById('ncCopyLineBtn');
+  // navigator.clipboard 優先（HTTPS 必須）、fallback で execCommand
+  var text = ta.value;
+  function _flashBtn(ok){
+    if(!btn) return;
+    var origText = btn.textContent;
+    var origBg = btn.style.background;
+    if(ok){
+      btn.textContent = '✅ コピーしました';
+      btn.style.background = '#059669';
+    } else {
+      btn.textContent = '❌ コピー失敗';
+      btn.style.background = '#dc2626';
+    }
+    setTimeout(function(){
+      btn.textContent = origText;
+      btn.style.background = origBg;
+    }, 1800);
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){
+      _flashBtn(true);
+    }).catch(function(e){
+      console.error('[copyLineText] clipboard error:', e);
+      // フォールバック
+      _legacyCopyText(ta) ? _flashBtn(true) : _flashBtn(false);
+    });
+  } else {
+    _legacyCopyText(ta) ? _flashBtn(true) : _flashBtn(false);
+  }
+}
+
+function _legacyCopyText(ta){
+  try{
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    var ok = document.execCommand('copy');
+    ta.blur();
+    return !!ok;
+  }catch(e){
+    console.error('[_legacyCopyText] error:', e);
+    return false;
   }
 }
 
@@ -3200,32 +3380,40 @@ function applyPasteData(){
   var mode = document.querySelector('input[name="ncPasteMode"]:checked').value;
   var tbody = document.getElementById('ncJinzaiBody');
 
-  // 置き換えモード: 既存行をクリア
+  // 置き換えモード: 既存行をクリア（noteRow含めて全部）
   if(mode === 'replace'){
     tbody.innerHTML = '';
     _ncJinzaiRows = 0;
   }
 
   // 既存行のうち空行は削除（追加モード時に空行を残さない）
+  // ver.20260527.16: データ行のみが対象
   if(mode === 'append'){
-    var existingRows = Array.from(tbody.children);
-    existingRows.forEach(function(rowEl){
+    var existingDataRows = Array.from(document.querySelectorAll('#ncJinzaiBody > tr:not([id$="_noteRow"])'));
+    existingDataRows.forEach(function(rowEl){
       var nm = rowEl.querySelector('.nc-j-name').value.trim();
       var nat = rowEl.querySelector('.nc-j-nat').value;
       var uke = rowEl.querySelector('.nc-j-uke').value;
-      if(!nm && !nat && !uke) rowEl.remove();
+      if(!nm && !nat && !uke){
+        // 関連noteRowも削除
+        var noteRow = document.getElementById(rowEl.id + '_noteRow');
+        if(noteRow) noteRow.remove();
+        rowEl.remove();
+      }
     });
   }
 
-  // 30名上限チェック
-  var current = tbody.children.length;
-  var canAdd = _NC_MAX_JINZAI - current;
+  // 30名上限チェック（データ行のみカウント）
+  var currentDataRows = document.querySelectorAll('#ncJinzaiBody > tr:not([id$="_noteRow"])').length;
+  var canAdd = _NC_MAX_JINZAI - currentDataRows;
   var willAdd = Math.min(_ncPasteParsed.length, canAdd);
 
   for(var i=0; i<willAdd; i++){
     var p = _ncPasteParsed[i];
     addJinzaiRow();
-    var lastRow = tbody.children[tbody.children.length - 1];
+    // ver.20260527.16: 最後のデータ行を取得（addJinzaiRowはdataRow＋noteRowを追加するので、:not使用）
+    var allDataRows = document.querySelectorAll('#ncJinzaiBody > tr:not([id$="_noteRow"])');
+    var lastRow = allDataRows[allDataRows.length - 1];
     lastRow.querySelector('.nc-j-name').value = p.name;
     if(p.nationality && _NC_NATIONALITY_LIST.indexOf(p.nationality) >= 0){
       lastRow.querySelector('.nc-j-nat').value = p.nationality;
@@ -3234,10 +3422,11 @@ function applyPasteData(){
     if(p.ukeMethod) lastRow.querySelector('.nc-j-uke').value = p.ukeMethod;
   }
 
-  // 行番号振り直し
-  var rows = tbody.children;
+  // 行番号振り直し（データ行のみ）
+  var rows = document.querySelectorAll('#ncJinzaiBody > tr:not([id$="_noteRow"])');
   for(var j=0; j<rows.length; j++){
-    rows[j].querySelector('.nc-row-num').textContent = (j+1);
+    var numCell = rows[j].querySelector('.nc-row-num');
+    if(numCell) numCell.textContent = (j+1);
   }
   _ncJinzaiRows = rows.length;
   updateJinzaiCount();
