@@ -56,7 +56,9 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .search-bar input:focus{border-color:#6366f1;}
 .search-count{font-size:11px;color:#94a3b8;white-space:nowrap;}
 /* テーブル */
-.tbl-wrap{overflow-x:auto;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);background:white;}
+/* ver.20260527.19: overflow-x:auto を外して th の position:sticky を .main のスクロールに対して効かせる
+   （横スクロールは .main 全体が overflow:auto なのでそちらで対応） */
+.tbl-wrap{border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);background:white;}
 table{border-collapse:collapse;width:100%;min-width:700px;}
 /* ver.20260527.18: ヘッダーを明るい背景＋濃い文字＋区切り線つきに変更（暗色テーマで読みづらかったため） */
 thead tr{background:#f1f5f9;color:#0f2040;}
@@ -288,7 +290,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.18</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.19</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
