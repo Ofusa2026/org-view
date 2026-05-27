@@ -290,7 +290,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.33</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.34</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -701,6 +701,14 @@ function _hasMadoguchiShinsei(c){ return !!(c.madoguchiDate && c.madoguchiDate.t
 function _hasMadoguchiUketori(c){ return !!(c.madoguchiReceiveDate && c.madoguchiReceiveDate.trim()); }
 
 function classify(c){return DONE_ST.indexOf(c.status)>=0?'done':'active';}
+// ver.20260527.34: case_id から アイデム担当者(client_staff) を引くヘルパー（審査完了/申請記録/窓口テーブル用）
+function _getClientStaffByCaseId(caseId){
+  if(!caseId) return '';
+  for(var i=0;i<allCases.length;i++){
+    if(allCases[i].id===caseId) return allCases[i].clientStaff||'';
+  }
+  return '';
+}
 function groupCases(gid){
   var base;
   // ver.20260519.17: アイデム専用 窓口申請/窓口受取グループ（日付ベース判定）
@@ -1212,18 +1220,20 @@ function _buildReceiptTable(rows, dimmed){
   var h='<div class="tbl-wrap"'+(dimmed?' style="opacity:.65;"':'')+'><table style="table-layout:fixed;">';
   h+='<colgroup>';
   // ver.20260525.05: 確認チェック・受付日を左端に移動
+  // ver.20260527.34: 担当列を追加（アイデム担当者 client_staff）
   h+='<col style="width:70px;">';     // 確認（固有・左端）
   h+='<col style="width:90px;">';     // 受付日（固有・左端隣）
   h+='<col style="width:240px;">';    // 案件名 / 申請者
   h+='<col style="width:140px;">';    // 所属機関
   h+='<col style="width:60px;">';     // 種別
+  h+='<col style="width:90px;">';     // 担当（ver.20260527.34）
   h+='<col style="width:140px;">';    // ステータス
   h+='<col style="width:110px;">';    // 在留期限 / 特例
   h+='<col style="width:140px;">';    // 受付番号
   h+='<col style="width:140px;">';    // PDF
   h+='</colgroup>';
   h+='<thead><tr>';
-  h+='<th style="text-align:center;" title="確認したらチェック">確認</th><th>受付日</th><th>案件名 / 申請者</th><th>所属機関</th><th>種別</th><th>ステータス</th><th>在留期限 / 特例</th><th>受付番号</th><th style="text-align:center;">PDF</th>';
+  h+='<th style="text-align:center;" title="確認したらチェック">確認</th><th>受付日</th><th>案件名 / 申請者</th><th>所属機関</th><th>種別</th><th>担当</th><th>ステータス</th><th>在留期限 / 特例</th><th>受付番号</th><th style="text-align:center;">PDF</th>';
   h+='</tr></thead><tbody>';
   rows.forEach(function(r){
     var extLabel=getExternalStatus(r.status);
@@ -1256,6 +1266,9 @@ function _buildReceiptTable(rows, dimmed){
     var tCls=r.appType==='認定'?'type-nintei':r.appType==='更新'?'type-koshin':r.appType==='変更'?'type-henkou':'type-other';
     var typeHtml=r.appType?'<span class="type-badge '+tCls+'">'+esc(r.appType)+'</span>':'—';
     h+='<td style="width:48px;">'+typeHtml+'</td>';
+    // === 担当（ver.20260527.34: アイデム担当者 client_staff） ===
+    var _recStaff = r.clientStaff || '';
+    h+='<td style="font-size:10px;color:#475569;white-space:nowrap;">'+(_recStaff?esc(_recStaff):'<span style="color:#cbd5e1;">—</span>')+'</td>';
     // === ステータス（申請分は番号待ちバッジ） ===
     if(r._isApplied){
       h+='<td style="white-space:nowrap;"><span class="st-badge" style="background:#fef3c7;color:#d97706;border-color:#fcd34d;">📬 番号待ち</span></td>';
@@ -1354,18 +1367,20 @@ function _buildShinsaTable(rows, dimmed){
   var h='<div class="tbl-wrap"'+(dimmed?' style="opacity:.65;"':'')+'><table style="table-layout:fixed;">';
   h+='<colgroup>';
   // ver.20260525.04: メインテーブルと列構成を揃える
+  // ver.20260527.34: 担当列を追加（アイデム担当者 client_staff）
   h+='<col style="width:70px;">';     // 確認（固有・左端）
   h+='<col style="width:90px;">';     // 完了日（固有・左端隣）
   h+='<col style="width:240px;">';    // 案件名 / 申請者
   h+='<col style="width:140px;">';    // 所属機関
   h+='<col style="width:60px;">';     // 種別
+  h+='<col style="width:90px;">';     // 担当（ver.20260527.34）
   h+='<col style="width:140px;">';    // ステータス
   h+='<col style="width:110px;">';    // 在留期限 / 特例
   h+='<col style="width:140px;">';    // 受付番号
   h+='<col style="width:140px;">';    // PDF
   h+='</colgroup>';
   h+='<thead><tr>';
-  h+='<th style="text-align:center;" title="確認したらチェック">確認</th><th>完了日</th><th>案件名 / 申請者</th><th>所属機関</th><th>種別</th><th>ステータス</th><th>在留期限 / 特例</th><th>受付番号</th><th style="text-align:center;">PDF</th>';
+  h+='<th style="text-align:center;" title="確認したらチェック">確認</th><th>完了日</th><th>案件名 / 申請者</th><th>所属機関</th><th>種別</th><th>担当</th><th>ステータス</th><th>在留期限 / 特例</th><th>受付番号</th><th style="text-align:center;">PDF</th>';
   h+='</tr></thead><tbody>';
   rows.forEach(function(r){
     var isChecked=!!orgChecks[r.id];
@@ -1386,6 +1401,9 @@ function _buildShinsaTable(rows, dimmed){
     var tCls=r.appType==='認定'?'type-nintei':r.appType==='更新'?'type-koshin':r.appType==='変更'?'type-henkou':'type-other';
     var typeHtml=r.appType?'<span class="type-badge '+tCls+'">'+esc(r.appType)+'</span>':'—';
     h+='<td style="width:48px;">'+typeHtml+'</td>';
+    // === 担当（ver.20260527.34: アイデム担当者 client_staff） ===
+    var _shinsaStaff = r.clientStaff || '';
+    h+='<td style="font-size:10px;color:#475569;white-space:nowrap;">'+(_shinsaStaff?esc(_shinsaStaff):'<span style="color:#cbd5e1;">—</span>')+'</td>';
     // === ステータス（審査完了は新在留カード発行済みバッジ） ===
     var stBadge='<span class="st-badge" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">✓ 新在留カード発行済み</span>';
     h+='<td style="white-space:nowrap;">'+stBadge+'</td>';
@@ -1635,8 +1653,10 @@ function _buildMadoguchiTable(rows, dimmed, dateField, dateLabel, checkPrefix, h
     h+='<td style="font-size:11px;color:#374151;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(c.company||'')+'</td>';
     // 申請種別
     h+='<td style="font-size:11px;color:#475569;white-space:nowrap;">'+esc(c.appType||'')+'</td>';
-    // 担当者
-    h+='<td style="font-size:11px;color:#475569;white-space:nowrap;">'+esc(c.staff||'')+'</td>';
+    // 担当者（ver.20260527.34: アイデム担当者(client_staff)を表示。OFUSA担当(staff)は非表示。
+    // case_id 経由で allCases から clientStaff を引く。新規案件登録分から自然に反映される。）
+    var _madoStaff = _getClientStaffByCaseId(c.id) || c.clientStaff || '';
+    h+='<td style="font-size:11px;color:#475569;white-space:nowrap;">'+(_madoStaff?esc(_madoStaff):'<span style="color:#cbd5e1;">—</span>')+'</td>';
     h+='</tr>';
   });
   h+='</tbody></table></div>';
@@ -2491,9 +2511,18 @@ async function loadData(){
         }
       }catch(e){ console.warn('[aidem companies load failed]', e); }
     }
-    // ver.20260527.33: limit=5000 を明示（PostgRESTのmax-rows=1000で頭打ちになり1000件超で取りこぼす問題を解消）
-    var r4=await sbFetch('cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,receipt_date,temp_return,applicant_field,madoguchi_date,madoguchi_receive_date,client_staff,updated_at,created_at&order=created_at.desc&limit=5000');
-    var cases=await r4.json();
+    // ver.20260527.34: PostgRESTのdb-max-rows=1000を回避するため offset+limit でページング取得
+    var casesBase='cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,receipt_date,temp_return,applicant_field,madoguchi_date,madoguchi_receive_date,client_staff,updated_at,created_at&order=created_at.desc';
+    var cases=[];
+    var _off=0, _pageSize=1000, _safety=20;
+    while(_safety-->0){
+      var _r=await sbFetch(casesBase+'&limit='+_pageSize+'&offset='+_off);
+      var _page=await _r.json();
+      if(!_page||!_page.length) break;
+      cases=cases.concat(_page);
+      if(_page.length<_pageSize) break;
+      _off+=_pageSize;
+    }
     allCases=(cases||[]).map(function(c){return{id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',receiptDate:c.receipt_date||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',madoguchiDate:c.madoguchi_date||'',madoguchiReceiveDate:c.madoguchi_receive_date||'',clientStaff:c.client_staff||'',updated_at:c.updated_at||''};});
     // personsテーブルからtempReturn(一時帰国予定日)を取得して補完
     // ver.20260527.14: 申請中証明書PDF・預かり証PDFのURL履歴も取得
@@ -2603,6 +2632,7 @@ async function loadData(){
           tempReturn:lc?(lc.tempReturn||''):'',
           team:lc?(lc.team||''):'',
           staff:lc?(lc.staff||''):'',
+          clientStaff:lc?(lc.clientStaff||''):'',
           applicant:lc?(lc.applicant||''):'',
           receiptNo:lc?(lc.receiptNo||''):''};
       });
@@ -2629,6 +2659,7 @@ async function loadData(){
           tempReturn:lc?(lc.tempReturn||''):'',
           team:lc?(lc.team||''):'',
           staff:lc?(lc.staff||''):'',
+          clientStaff:lc?(lc.clientStaff||''):'',
           applicant:lc?(lc.applicant||''):'',
           receiptNo:lc?(lc.receiptNo||''):''};
       });
