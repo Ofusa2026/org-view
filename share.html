@@ -287,7 +287,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.23</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.24</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -374,7 +374,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
 
         <div class="nc-field">
           <label class="nc-label">希望在留資格 <span class="req">*</span></label>
-          <select class="nc-select" id="nc_desiredStatus">
+          <select class="nc-select" id="nc_desiredStatus" onchange="_onDesiredStatusChange()">
             <option value="">-- 選択 --</option>
             <option value="特定技能1号">特定技能1号</option>
             <option value="特定技能2号">特定技能2号</option>
@@ -383,6 +383,11 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
             <option value="特定活動(インターン)">特定活動(インターン)</option>
             <option value="その他">その他</option>
           </select>
+          <!-- ver.20260527.24: 「その他」選択時の詳細メモ（初期は非表示） -->
+          <div id="nc_desiredStatusNoteWrap" style="display:none;margin-top:8px;background:#fff7ed;border-left:3px solid #fb923c;border-radius:4px;padding:8px 12px;">
+            <label style="font-size:10.5px;color:#9a3412;font-weight:700;display:block;margin-bottom:4px;">📝 希望在留資格 (その他詳細) <span style="color:#dc2626;">*</span></label>
+            <input type="text" class="nc-input" id="nc_desiredStatusNote" placeholder="例：高度専門職、経営・管理、永住者の配偶者等" style="background:white;">
+          </div>
         </div>
 
         <div class="nc-grid-2">
@@ -2664,6 +2669,11 @@ function openNewCaseModal(){
   document.getElementById('nc_company').value='';
   // ver.20260527.16: nc_currentStatus は廃止（人材別に移行）
   document.getElementById('nc_desiredStatus').value='';
+  // ver.20260527.24: 希望在留資格「その他」詳細メモもリセット
+  var dsNote = document.getElementById('nc_desiredStatusNote');
+  if(dsNote) dsNote.value='';
+  var dsNoteWrap = document.getElementById('nc_desiredStatusNoteWrap');
+  if(dsNoteWrap) dsNoteWrap.style.display='none';
   var radios = document.querySelectorAll('input[name="nc_acceptExp"]');
   radios.forEach(function(r){ r.checked = false; });
   var feeEl=document.getElementById('nc_supportFee');
@@ -2784,6 +2794,22 @@ function _onJinzaiCurrentStatusChange(selEl, noteRowId){
   }
 }
 
+// ver.20260527.24: 希望在留資格の「その他」選択時、詳細メモ欄を表示/非表示
+function _onDesiredStatusChange(){
+  var sel = document.getElementById('nc_desiredStatus');
+  var wrap = document.getElementById('nc_desiredStatusNoteWrap');
+  if(!sel || !wrap) return;
+  if(sel.value === 'その他'){
+    wrap.style.display = '';
+    var inp = document.getElementById('nc_desiredStatusNote');
+    if(inp){ setTimeout(function(){ inp.focus(); }, 50); }
+  } else {
+    wrap.style.display = 'none';
+    var inp2 = document.getElementById('nc_desiredStatusNote');
+    if(inp2) inp2.value = '';
+  }
+}
+
 function removeJinzaiRow(rowId){
   var row = document.getElementById(rowId);
   if(!row) return;
@@ -2891,6 +2917,9 @@ async function submitNewCase(){
   var company = document.getElementById('nc_company').value.trim();
   // ver.20260527.16: 「現在の在留資格」は人材別へ移行（案件共通欄は廃止）
   var desiredStatus = document.getElementById('nc_desiredStatus').value;
+  // ver.20260527.24: 希望在留資格「その他」の詳細メモ
+  var desiredStatusNote = (document.getElementById('nc_desiredStatusNote')||{}).value || '';
+  desiredStatusNote = desiredStatusNote.trim();
   var acceptExpEl = document.querySelector('input[name="nc_acceptExp"]:checked');
   var acceptExp = acceptExpEl ? acceptExpEl.value : '';
   var supportFeeRaw = (document.getElementById('nc_supportFee')||{}).value || '';
@@ -2907,6 +2936,11 @@ async function submitNewCase(){
   if(!caseName){ showNcError('案件名を入力してください'); return; }
   if(!company){ showNcError('所属機関（企業名）を入力してください'); return; }
   if(!desiredStatus){ showNcError('希望在留資格を選択してください'); return; }
+  // ver.20260527.24: その他選択時は詳細必須
+  if(desiredStatus === 'その他' && !desiredStatusNote){
+    showNcError('希望在留資格（その他）の詳細を入力してください');
+    return;
+  }
   if(!acceptExp){ showNcError('受入れ経験を選択してください'); return; }
   if(!aidemBranch){ showNcError('アイデム拠点を選択してください'); return; }
   // ver.20260525.02: 担当者必須は「東」のみ。西/高育チームは入力欄ごと非表示
@@ -2971,6 +3005,8 @@ async function submitNewCase(){
     agencyOffice: agencyOffice,
     caseName: caseName, appType: appType, company: company,
     desiredStatus: desiredStatus,
+    // ver.20260527.24: 希望在留資格「その他」の詳細メモ
+    desiredStatusNote: desiredStatusNote,
     acceptExp: acceptExp,
     aidemBranch: aidemBranch, clientStaff: clientStaff,
     supportFee: supportFee, supportStaff: supportStaff, jinzaiList: jinzaiList
@@ -2994,7 +3030,12 @@ function _renderConfirmBody(p){
   h += '<div><div class="nc-cf-label">所属機関</div><div class="nc-cf-value">' + esc(p.company) + '</div></div>';
   h += '</div>';
   // ver.20260527.16: 「現在の在留資格」は人材別に移行したため、ここでは希望在留資格のみ
-  h += '<div class="nc-cf-label">希望在留資格</div><div class="nc-cf-value">' + esc(p.desiredStatus) + '</div>';
+  // ver.20260527.24: 「その他」のときは詳細を併記
+  var desiredDisp = esc(p.desiredStatus);
+  if(p.desiredStatus === 'その他' && p.desiredStatusNote){
+    desiredDisp = 'その他: ' + esc(p.desiredStatusNote);
+  }
+  h += '<div class="nc-cf-label">希望在留資格</div><div class="nc-cf-value">' + desiredDisp + '</div>';
   h += '<div class="nc-cf-grid">';
   h += '<div><div class="nc-cf-label">受入れ経験</div><div class="nc-cf-value">' + esc(p.acceptExp) + '</div></div>';
   h += '<div><div class="nc-cf-label">支援委託費（税抜・全員に同額適用）</div><div class="nc-cf-value">' + (p.supportFee ? '¥ ' + Number(p.supportFee).toLocaleString() : '（未入力）') + '</div></div>';
@@ -3045,11 +3086,20 @@ async function executeSubmit(){
       if(j.currentStatus === 'その他' && j.currentStatusNote){
         residenceStatus = 'その他: ' + j.currentStatusNote;
       }
+      // ver.20260527.24: 希望在留資格「その他」の場合は詳細メモを併記
+      var desiredStatusWithNote = p.desiredStatus || '';
+      if(p.desiredStatus === 'その他' && p.desiredStatusNote){
+        desiredStatusWithNote = 'その他: ' + p.desiredStatusNote;
+      }
       // 補足ノートも合体
       var noteParts = ['受取方法: ' + j.ukeMethod];
       if(rec) noteParts.push('推薦票: 必要');
       if(j.currentStatus === 'その他' && j.currentStatusNote){
         noteParts.push('現在資格(詳細): ' + j.currentStatusNote);
+      }
+      // ver.20260527.24: 希望在留資格その他詳細もノートに追加
+      if(p.desiredStatus === 'その他' && p.desiredStatusNote){
+        noteParts.push('希望資格(詳細): ' + p.desiredStatusNote);
       }
       noteParts.push('（アイデムShareより登録）');
       return {
@@ -3061,7 +3111,7 @@ async function executeSubmit(){
         agency_office: p.agencyOffice || '',
         company: p.company,
         residence_status: residenceStatus,
-        desired_status: p.desiredStatus,
+        desired_status: desiredStatusWithNote,
         accept_exp: p.acceptExp,
         aidem_branch: p.aidemBranch || '',
         client_staff: p.clientStaff || '',
@@ -3139,7 +3189,12 @@ function _buildLineReportText(p){
   lines.push('■ 案件名: ' + p.caseName);
   lines.push('■ 申請種別: ' + p.appType);
   lines.push('■ 所属機関: ' + p.company);
-  lines.push('■ 希望在留資格: ' + p.desiredStatus);
+  // ver.20260527.24: 希望在留資格その他の詳細を併記
+  var dsDisp = p.desiredStatus;
+  if(p.desiredStatus === 'その他' && p.desiredStatusNote){
+    dsDisp = 'その他 (' + p.desiredStatusNote + ')';
+  }
+  lines.push('■ 希望在留資格: ' + dsDisp);
   lines.push('■ 受入れ経験: ' + p.acceptExp);
   if(p.supportFee){
     lines.push('■ 支援委託費(税抜): ¥' + Number(p.supportFee).toLocaleString());
