@@ -285,7 +285,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.16</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.17</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -647,7 +647,7 @@ var NOTIF_LABELS={'審査中':'✅ 申請済み・受付番号紐付','許可済
 var DONE_ST=['完了','審査完了'];
 // ver.20260518.13: ダッシュボードを追加、完了の表記をシンプル化
 var GROUPS=[{id:'dashboard',label:'ダッシュボード'},{id:'active',label:'進行中'},{id:'done',label:'発行済み・完了'},{id:'all',label:'すべて'}];
-var allCases=[],allReceipts=[],allShinsa=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus='',filterCompany='',sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,_imeOn=false; // ver.20260521.01: progressUrlCfg追加
+var allCases=[],allReceipts=[],allShinsa=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus='',filterCompany='',filterClientStaff='',sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,_imeOn=false; // ver.20260521.01: progressUrlCfg追加 / ver.20260527.17: filterClientStaff追加
 // コメント入力中フラグ（再描画スキップ用）。値は編集中のtextareaのid（例:'owncmt_xxx'）
 var _editingCommentId=null;
 var _editingImeOn=false;
@@ -713,6 +713,8 @@ function groupCases(gid){
   // ver.20260525.08: ステータスフィルタは「外部ラベル」で比較（内部ステータスは登録支援機関には見せない）
   if(filterStatus) base=base.filter(function(c){return getExternalStatus(c.status)===filterStatus;});
   if(filterCompany) base=base.filter(function(c){return c.company===filterCompany;});
+  // ver.20260527.17: アイデム担当者フィルタ
+  if(filterClientStaff) base=base.filter(function(c){return c.clientStaff===filterClientStaff;});
   // ソート
   // ver.20260525.09: デフォルトは「受付日（receiptDate）が新しい順」（申請記録と同じロジック）
   //                  受付日なしは末尾。列ヘッダークリック時の sortCol が優先。
@@ -1039,6 +1041,8 @@ function renderFilterBar(){
   // ver.20260525.08: ステータスは外部ラベルで一意化（内部ステータスは登録支援機関には見せない）
   var statuses=[...new Set(baseAll.map(function(c){return getExternalStatus(c.status)||'';}).filter(Boolean))].sort();
   var companies=[...new Set(baseAll.map(function(c){return c.company||'';}).filter(Boolean))].sort();
+  // ver.20260527.17: アイデム担当者の選択肢
+  var clientStaffs=[...new Set(baseAll.map(function(c){return c.clientStaff||'';}).filter(Boolean))].sort(function(a,b){return a.localeCompare(b,'ja');});
   var cases=groupCases(currentGroup);
   var h='<div class="filter-bar-inner">';
   // テキスト検索
@@ -1054,8 +1058,15 @@ function renderFilterBar(){
   h+='<option value="">所属機関（全て）</option>';
   companies.forEach(function(c){h+='<option value="'+esc(c)+'"'+(filterCompany===c?' selected':'')+'>'+esc(c)+'</option>';});
   h+='</select>';
+  // ver.20260527.17: アイデム担当者フィルタ（担当者がいる案件が1件以上あるときのみ表示）
+  if(clientStaffs.length){
+    h+='<select onchange="filterClientStaff=this.value;renderSidebar();renderCurrent()" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;background:white;cursor:pointer;">';
+    h+='<option value="">担当（全て）</option>';
+    clientStaffs.forEach(function(s){h+='<option value="'+esc(s)+'"'+(filterClientStaff===s?' selected':'')+'>'+esc(s)+'</option>';});
+    h+='</select>';
+  }
   // クリアボタン
-  if(searchQuery||filterStatus||filterCompany) h+='<button onclick="searchQuery=\'\';filterStatus=\'\';filterCompany=\'\';renderSidebar();renderCurrent()" style="padding:7px 12px;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap;">✕ クリア</button>';
+  if(searchQuery||filterStatus||filterCompany||filterClientStaff) h+='<button onclick="searchQuery=\'\';filterStatus=\'\';filterCompany=\'\';filterClientStaff=\'\';renderSidebar();renderCurrent()" style="padding:7px 12px;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap;">✕ クリア</button>';
   h+='<span style="font-size:11px;color:#94a3b8;white-space:nowrap;">'+cases.length+'件</span>';
   // ビュー切り替えボタン
   h+='<div style="display:flex;gap:3px;background:#f1f5f9;border-radius:8px;padding:3px;margin-left:auto;">';
