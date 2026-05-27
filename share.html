@@ -285,7 +285,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260525.13</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.14</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -802,6 +802,18 @@ function buildDownloadCell(c){
   }else{
     // 審査完了データ自体がない（まだ審査中）
     html+='<span style="'+baseStyle+'background:#f1f5f9;color:#94a3b8;" title="審査完了PDFはまだ発行されていません">— 審査完了PDF</span>';
+  }
+  // === 申請中証明書 (ver.20260527.14) ===
+  if(c.applicationCertPdfUrl){
+    html+='<a href="'+esc(c.applicationCertPdfUrl)+'" target="_blank" rel="noopener" style="'+baseStyle+'background:#2563eb;color:white;" title="申請中証明書PDFを開く">🪪 申請中証明</a>';
+  }else{
+    html+='<span style="'+baseStyle+'background:#f1f5f9;color:#94a3b8;" title="申請中証明書PDFはまだ作成されていません">— 申請中証明</span>';
+  }
+  // === 預かり証 (ver.20260527.14) ===
+  if(c.custodyReceiptPdfUrl){
+    html+='<a href="'+esc(c.custodyReceiptPdfUrl)+'" target="_blank" rel="noopener" style="'+baseStyle+'background:#7c3aed;color:white;" title="預かり証PDFを開く">📋 預かり証</a>';
+  }else{
+    html+='<span style="'+baseStyle+'background:#f1f5f9;color:#94a3b8;" title="預かり証PDFはまだ作成されていません">— 預かり証</span>';
   }
   html+='</div>';
   return html;
@@ -2465,18 +2477,27 @@ async function loadData(){
     var cases=await r4.json();
     allCases=(cases||[]).map(function(c){return{id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',receiptDate:c.receipt_date||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',madoguchiDate:c.madoguchi_date||'',madoguchiReceiveDate:c.madoguchi_receive_date||'',updated_at:c.updated_at||''};});
     // personsテーブルからtempReturn(一時帰国予定日)を取得して補完
+    // ver.20260527.14: 申請中証明書PDF・預かり証PDFのURL履歴も取得
     if(allCases.length){
       var pids=allCases.map(function(c){return c.id;});
       var PCHUNK=50;
       for(var pi=0;pi<pids.length;pi+=PCHUNK){
         var pchunk=pids.slice(pi,pi+PCHUNK);
-        var rp=await sbFetch('persons?case_id=in.('+pchunk.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=case_id,temp_return');
+        var rp=await sbFetch('persons?case_id=in.('+pchunk.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=case_id,temp_return,application_cert_pdf_urls,custody_receipt_pdf_urls');
         var persons=await rp.json();
         if(Array.isArray(persons)){
           persons.forEach(function(p){
-            if(p.temp_return){
-              var c=allCases.find(function(x){return x.id===p.case_id;});
-              if(c&&!c.tempReturn) c.tempReturn=p.temp_return;
+            var c=allCases.find(function(x){return x.id===p.case_id;});
+            if(!c) return;
+            if(p.temp_return && !c.tempReturn) c.tempReturn=p.temp_return;
+            // PDF URL履歴を最新1件だけ取り出して allCases に注入
+            if(Array.isArray(p.application_cert_pdf_urls) && p.application_cert_pdf_urls.length){
+              var lastCert = p.application_cert_pdf_urls[p.application_cert_pdf_urls.length-1];
+              if(lastCert && lastCert.url) c.applicationCertPdfUrl = lastCert.url;
+            }
+            if(Array.isArray(p.custody_receipt_pdf_urls) && p.custody_receipt_pdf_urls.length){
+              var lastCust = p.custody_receipt_pdf_urls[p.custody_receipt_pdf_urls.length-1];
+              if(lastCust && lastCust.url) c.custodyReceiptPdfUrl = lastCust.url;
             }
           });
         }
