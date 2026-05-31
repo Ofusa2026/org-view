@@ -307,7 +307,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260531.03</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260531.04</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -3209,7 +3209,37 @@ function _renderConfirmBody(p){
     h += '<tr><td>' + (idx+1) + '</td><td>' + esc(j.name) + '</td><td>' + esc(j.nationality) + '</td><td style="font-size:10.5px;">' + curDisp + '</td><td>' + esc(j.expire || '-') + '</td><td>' + esc(j.ukeMethod) + '</td><td style="text-align:center;">' + recMark + '</td></tr>';
   });
   h += '</tbody></table></div>';
+  // ver.20260531.04: 送信前にも依頼テキストを生成してコピーできるようにする
+  var _reqText = _buildLineReportText(p);
+  h += '<div style="margin-top:14px;border-top:1px dashed #cbd5e1;padding-top:12px;">';
+  h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">';
+  h += '<div class="nc-cf-label" style="margin:0;">📋 依頼テキスト</div>';
+  h += '<button type="button" id="ncConfirmCopyBtn" onclick="copyConfirmReqText()" style="margin-left:auto;padding:5px 14px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">📋 コピー</button>';
+  h += '</div>';
+  h += '<textarea id="ncConfirmReqText" readonly style="width:100%;box-sizing:border-box;min-height:200px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;line-height:1.7;color:#334155;background:#f8fafc;font-family:inherit;resize:vertical;outline:none;">' + esc(_reqText) + '</textarea>';
+  h += '</div>';
   document.getElementById('ncConfirmBody').innerHTML = h;
+}
+
+// ver.20260531.04: 確認モーダル内の依頼テキストをコピー
+function copyConfirmReqText(){
+  var ta = document.getElementById('ncConfirmReqText');
+  if(!ta) return;
+  var btn = document.getElementById('ncConfirmCopyBtn');
+  function _flash(ok){
+    if(!btn) return;
+    var t = btn.textContent, b = btn.style.background;
+    btn.textContent = ok ? '✅ コピーしました' : '❌ コピー失敗';
+    btn.style.background = ok ? '#059669' : '#dc2626';
+    setTimeout(function(){ btn.textContent = t; btn.style.background = b; }, 1800);
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(ta.value).then(function(){ _flash(true); }).catch(function(){
+      _legacyCopyText(ta) ? _flash(true) : _flash(false);
+    });
+  } else {
+    _legacyCopyText(ta) ? _flash(true) : _flash(false);
+  }
 }
 
 async function executeSubmit(){
