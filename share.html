@@ -307,7 +307,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260531.02</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260531.03</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -3327,46 +3327,46 @@ async function executeSubmit(){
   }
 }
 
-// ===== ver.20260527.16: LINE報告用テキスト生成 =====
+// ===== ver.20260531.01: 依頼内容テンプレート形式に変更 =====
 function _buildLineReportText(p){
   var lines = [];
-  lines.push('【アイデム 新規案件依頼】');
-  lines.push('');
-  lines.push('■ 案件名: ' + p.caseName);
-  lines.push('■ 申請種別: ' + p.appType);
-  lines.push('■ 所属機関: ' + p.company);
-  // ver.20260527.24: 希望在留資格その他の詳細を併記
-  var dsDisp = p.desiredStatus;
-  if(p.desiredStatus === 'その他' && p.desiredStatusNote){
-    dsDisp = 'その他 (' + p.desiredStatusNote + ')';
-  }
-  lines.push('■ 希望在留資格: ' + dsDisp);
-  lines.push('■ 受入れ経験: ' + p.acceptExp);
-  if(p.supportFee){
-    lines.push('■ 支援委託費(税抜): ¥' + Number(p.supportFee).toLocaleString());
-  }
-  lines.push('■ アイデム拠点: ' + (p.aidemBranch||''));
-  if(p.clientStaff){
-    lines.push('■ アイデム担当者: ' + p.clientStaff);
-  }
-  // ver.20260526: OFUSA担当者は登録完了テキストから除外（社内向け情報のため）
-  lines.push('');
-  lines.push('■ 人材リスト（' + p.jinzaiList.length + '名）');
-  p.jinzaiList.forEach(function(j, idx){
-    var no = (idx+1);
-    lines.push('--- ' + no + '. ' + j.name + ' ---');
-    lines.push('  国籍: ' + j.nationality);
-    if(j.currentStatus){
-      var cur = j.currentStatus;
-      if(j.currentStatus === 'その他' && j.currentStatusNote){
-        cur = 'その他 (' + j.currentStatusNote + ')';
-      }
-      lines.push('  現在の在留資格: ' + cur);
+  var n = (p.jinzaiList && p.jinzaiList.length) || 0;
+  // 申請種別（認定/変更/更新）で自動出し分け。未設定なら「申請」
+  var appLabel = (p.appType ? p.appType : '') + '申請';
+  // 受入れ実績（有/無）→ あり/なし
+  var jisseki = (p.acceptExp === '有') ? 'あり' : (p.acceptExp === '無') ? 'なし' : '（　　）';
+  lines.push('［依頼内容］');
+  lines.push(' ' + (p.company || '（　　）') + '様　' + n + '名' + appLabel + '！');
+  lines.push(' 特定技能受け入れ実績：' + jisseki);
+  lines.push('■本人ステータス');
+  (p.jinzaiList || []).forEach(function(j, idx){
+    var marks = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
+    var mk = marks[idx] || ('(' + (idx+1) + ')');
+    // 現在の在留資格（その他は詳細を併記）
+    var cur = j.currentStatus || '';
+    if(j.currentStatus === 'その他' && j.currentStatusNote){
+      cur = 'その他 (' + j.currentStatusNote + ')';
     }
-    if(j.expire) lines.push('  在留期限: ' + j.expire);
-    lines.push('  受取方法: ' + j.ukeMethod);
-    if(j.recommendLetter) lines.push('  推薦票: 必要');
+    lines.push(mk + ' 氏名：' + (j.name || ''));
+    lines.push('　 国籍：' + (j.nationality || ''));
+    lines.push('　 在留資格：' + (cur || '（　　）'));
+    lines.push('　 在留期限：' + (j.expire || '（　　）'));
   });
+  lines.push('■勤務地');
+  lines.push('　（　　）');
+  lines.push('■雇用条件');
+  lines.push('　（　　）');
+  lines.push('■支援担当者');
+  lines.push('　氏名：（' + (p.clientStaff || '　　') + '）');
+  lines.push('■人材紹介手数料');
+  lines.push('　（　　）');
+  lines.push('■支援費');
+  // 支援委託費が入力されていれば反映、無ければ空欄
+  if(p.supportFee){
+    lines.push('　¥' + Number(p.supportFee).toLocaleString());
+  } else {
+    lines.push('　（　　）');
+  }
   return lines.join('\n');
 }
 
