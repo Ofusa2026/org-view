@@ -290,7 +290,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.34</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.35</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -3238,9 +3238,7 @@ function _buildLineReportText(p){
   if(p.clientStaff){
     lines.push('■ アイデム担当者: ' + p.clientStaff);
   }
-  if(p.supportStaff){
-    lines.push('■ OFUSA担当者: ' + p.supportStaff);
-  }
+  // ver.20260526: OFUSA担当者は登録完了テキストから除外（社内向け情報のため）
   lines.push('');
   lines.push('■ 人材リスト（' + p.jinzaiList.length + '名）');
   p.jinzaiList.forEach(function(j, idx){
