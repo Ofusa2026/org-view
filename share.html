@@ -290,7 +290,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.35</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260527.36</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1465,11 +1465,8 @@ function renderMadoguchi(gid){
 
   allCs.forEach(function(c){
     var d = (c[dateField]||'').slice(0,10);
-    var isManualChecked = !!orgChecks[checkPrefix + c.id];
-    if(isManualChecked){
-      pastDone.push(c);
-      return;
-    }
+    // ver.20260527.36: チェックボックスは完了判定に影響させない（メモ的な役割のみ）
+    //                  日付が過去になったときだけ自動的に「完了」セクションへ移動
     if(!d){
       future.push(c); // 日付なしは将来扱い（念のため）
       return;
