@@ -238,7 +238,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260601.test02</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260601.test03</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -808,9 +808,11 @@ function buildRow(c){
     var _mp = missingDocsPerson[c.id] || [];
     var _mc = missingDocsCompany[c.company] || [];
     var _mk = missingDocsKokko[c.id] || [];
+    var _isTokk = isTokkatsuCase(c);
     var parts=[];
     if(_mp.length) parts.push('<span style="display:inline-block;background:#dc2626;color:white;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;" title="人材の不足書類 '+_mp.length+'件">👤'+_mp.length+'</span>');
-    if(_mc.length) parts.push('<span style="display:inline-block;background:#ea580c;color:white;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;" title="企業の不足書類 '+_mc.length+'件">🏢'+_mc.length+'</span>');
+    // 特活案件のときは企業バッジを出さない
+    if(_mc.length && !_isTokk) parts.push('<span style="display:inline-block;background:#ea580c;color:white;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;" title="企業の不足書類 '+_mc.length+'件">🏢'+_mc.length+'</span>');
     if(_mk.length) parts.push('<span style="display:inline-block;background:#2563eb;color:white;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;" title="国交省の不足書類 '+_mk.length+'件">🏛'+_mk.length+'</span>');
     if(parts.length){
       missBadge='<div style="margin-top:3px;display:flex;gap:3px;flex-wrap:wrap;cursor:pointer;" onclick="event.stopPropagation();openCaseDetailModal(\''+cid+'\')" title="クリックで詳細表示">'+parts.join('')+'</div>';
@@ -894,7 +896,7 @@ function renderSidebar(){
     var missingCount = 0;
     allCases.forEach(function(c){
       var hasPerson = missingDocsPerson[c.id] && missingDocsPerson[c.id].length;
-      var hasCompany = missingDocsCompany[c.company] && missingDocsCompany[c.company].length;
+      var hasCompany = !isTokkatsuCase(c) && missingDocsCompany[c.company] && missingDocsCompany[c.company].length;
       var hasKokko = missingDocsKokko[c.id] && missingDocsKokko[c.id].length;
       if(hasPerson || hasCompany || hasKokko) missingCount++;
     });
@@ -927,6 +929,19 @@ var DOC_NUMBERING = {
 // オープンケアのトークンUUID（このトークンでログイン時のみ不足書類機能を表示）
 var OPENCARE_TOKEN = '2f038685-a8a9-484d-bdf2-17031e22af81';
 function isOpencareToken(){ return currentToken === OPENCARE_TOKEN; }
+// ver.20260601.test03: OFUSAが作成する書類（オープンケア側で用意する必要なし）
+// 6.委任状 / 8.同等説明書 / 12.雇用契約書 / 15.重要事項説明書
+var OFUSA_MADE_DOCS = [6, 8, 12, 15];
+function isOfusaMadeDoc(n){ return OFUSA_MADE_DOCS.indexOf(n) >= 0; }
+// 特活案件判定（企業書類が不要）
+function isTokkatsuCase(c){
+  if(!c) return false;
+  var st = (c.status||'');
+  // 「特活」「特定活動」のいずれかを含むステータス、または applicantField が特定活動
+  if(st.indexOf('特活')>=0 || st.indexOf('特定活動')>=0) return true;
+  if((c.applicantField||'').indexOf('特定活動')>=0) return true;
+  return false;
+}
 // 不足書類データ用キャッシュ（personId → [1,10,11], companyName → [1,5], caseId → [6,15]）
 var missingDocsPerson = {};
 var missingDocsCompany = {};
@@ -1261,19 +1276,21 @@ function renderMissingDocs(){
   var fb=document.getElementById('filter-bar');
   if(fb){ fb.innerHTML=''; fb.style.display='none'; }
 
-  // 不足書類が1件でもある案件だけを抽出
+  // 不足書類が1件でもある案件だけを抽出（特活案件の企業不足はカウントしない）
   var rows = allCases.filter(function(c){
     var hasPerson  = missingDocsPerson[c.id]  && missingDocsPerson[c.id].length;
-    var hasCompany = missingDocsCompany[c.company] && missingDocsCompany[c.company].length;
+    var hasCompany = !isTokkatsuCase(c) && missingDocsCompany[c.company] && missingDocsCompany[c.company].length;
     var hasKokko   = missingDocsKokko[c.id]   && missingDocsKokko[c.id].length;
     return hasPerson || hasCompany || hasKokko;
   });
 
   var h='';
   h+='<div style="padding:16px 18px;background:linear-gradient(135deg,#fcd34d 0%,#fbbf24 100%);border-radius:10px;margin-bottom:14px;border:2px solid #f59e0b;box-shadow:0 2px 4px rgba(245,158,11,.2);">';
-  h+='<div style="font-size:15px;font-weight:800;color:#7c2d12;margin-bottom:4px;">📋 不足書類一覧</div>';
-  h+='<div style="font-size:12px;color:#7c2d12;line-height:1.6;font-weight:600;">';
-  h+='不足書類は <span style="background:#dc2626;color:white;padding:1px 6px;border-radius:4px;">👤 人材</span> / <span style="background:#ea580c;color:white;padding:1px 6px;border-radius:4px;">🏢 企業</span> / <span style="background:#2563eb;color:white;padding:1px 6px;border-radius:4px;">🏛 国交省</span> の3カテゴリで管理されます。OFUSA側で更新されると、こちらにも反映されます。';
+  h+='<div style="font-size:15px;font-weight:800;color:#7c2d12;margin-bottom:6px;">📋 不足書類一覧</div>';
+  h+='<div style="font-size:12px;color:#7c2d12;line-height:1.7;font-weight:600;">';
+  h+='不足書類は <span style="background:#dc2626;color:white;padding:1px 6px;border-radius:4px;">👤 人材</span> / <span style="background:#ea580c;color:white;padding:1px 6px;border-radius:4px;">🏢 企業</span> / <span style="background:#2563eb;color:white;padding:1px 6px;border-radius:4px;">🏛 国交省</span> の3カテゴリで管理されます。';
+  h+='<br><span style="display:inline-block;background:#f1f5f9;color:#475569;border:1.5px dashed #94a3b8;padding:2px 8px;border-radius:4px;font-size:11px;margin-top:4px;">✏️ <strong>OFUSA作成</strong></span> のマークが付いている書類はOFUSA側で作成しますので、貴社でのご準備は不要です。';
+  h+='<br>また、<strong>特活案件</strong>は企業書類が対象外のため <em style="color:#94a3b8;">— 特活案件のため対象外 —</em> と表示されます。';
   h+='</div></div>';
 
   if(!rows.length){
@@ -1330,11 +1347,18 @@ function renderMissingDocs(){
     if(mp.length) h+=_buildDocList(mp,'person');
     else h+='<span style="color:#cbd5e1;">—</span>';
     h+='</td>';
-    // 企業
-    h+='<td style="font-size:10px;line-height:1.7;'+(mc.length?'background:#fff7ed;':'')+'">';
-    if(mc.length) h+=_buildDocList(mc,'company');
-    else h+='<span style="color:#cbd5e1;">—</span>';
-    h+='</td>';
+    // 企業（特活案件はグレーアウト）
+    var _isTokkatsu = isTokkatsuCase(c);
+    if(_isTokkatsu){
+      h+='<td style="font-size:10px;line-height:1.7;background:#f1f5f9;color:#94a3b8;text-align:center;font-style:italic;">';
+      h+='<span title="特活案件のため企業書類は対象外">— 特活案件のため対象外 —</span>';
+      h+='</td>';
+    } else {
+      h+='<td style="font-size:10px;line-height:1.7;'+(mc.length?'background:#fff7ed;':'')+'">';
+      if(mc.length) h+=_buildDocList(mc,'company');
+      else h+='<span style="color:#cbd5e1;">—</span>';
+      h+='</td>';
+    }
     // 国交省
     h+='<td style="font-size:10px;line-height:1.7;'+(mk.length?'background:#eff6ff;':'')+'">';
     if(mk.length) h+=_buildDocList(mk,'kokko');
@@ -1346,6 +1370,7 @@ function renderMissingDocs(){
   el.innerHTML=h;
 }
 // 番号配列をバッジ形式の縦リストに（カテゴリ別に色を変える）
+// 弊社作成書類（6,8,12,15）はグレー＋✏️アイコンで「OFUSA作成」と表示
 function _buildDocList(arr, category){
   if(!arr||!arr.length) return '';
   // category: 'person' | 'company' | 'kokko'
@@ -1361,6 +1386,10 @@ function _buildDocList(arr, category){
   }
   return arr.map(function(n){
     var label = DOC_NUMBERING[n] || ('書類'+n);
+    if(isOfusaMadeDoc(n)){
+      // 弊社作成書類: グレー背景＋✏️アイコン＋「OFUSA作成」サフィックス
+      return '<div style="display:inline-block;background:#f1f5f9;color:#475569;border:1.5px dashed #94a3b8;padding:3px 8px;border-radius:4px;margin:2px 3px;font-size:11px;font-weight:700;" title="OFUSA側で作成する書類です">✏️ <span style="opacity:.7;">'+n+'.</span> '+esc(label)+' <span style="font-size:9px;background:#64748b;color:white;padding:1px 4px;border-radius:3px;margin-left:2px;">OFUSA作成</span></div>';
+    }
     return '<div style="display:inline-block;background:'+bgColor+';color:'+textColor+';border:1.5px solid '+borderColor+';padding:3px 8px;border-radius:4px;margin:2px 3px;font-size:11px;font-weight:700;"><span style="opacity:.7;">'+n+'.</span> '+esc(label)+'</div>';
   }).join('');
 }
@@ -1399,12 +1428,20 @@ function openCaseDetailModal(caseId){
       if(mp.length) h+='<div>'+_buildDocList(mp,'person')+'</div>';
       else h+='<div style="color:#cbd5e1;font-size:11px;">なし</div>';
       h+='</div>';
-      // 企業
-      h+='<div style="margin-bottom:12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px;">';
-      h+='<div style="font-size:11px;font-weight:800;color:#9a3412;margin-bottom:6px;">🏢 企業の不足書類</div>';
-      if(mc.length) h+='<div>'+_buildDocList(mc,'company')+'</div>';
-      else h+='<div style="color:#cbd5e1;font-size:11px;">なし</div>';
-      h+='</div>';
+      // 企業（特活案件はグレーアウト）
+      var _isTokkatsuModal = isTokkatsuCase(c);
+      if(_isTokkatsuModal){
+        h+='<div style="margin-bottom:12px;background:#f1f5f9;border:1.5px dashed #cbd5e1;border-radius:8px;padding:10px 12px;color:#94a3b8;">';
+        h+='<div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:6px;">🏢 企業の不足書類</div>';
+        h+='<div style="font-size:11px;font-style:italic;">— 特活案件のため対象外 —</div>';
+        h+='</div>';
+      } else {
+        h+='<div style="margin-bottom:12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px;">';
+        h+='<div style="font-size:11px;font-weight:800;color:#9a3412;margin-bottom:6px;">🏢 企業の不足書類</div>';
+        if(mc.length) h+='<div>'+_buildDocList(mc,'company')+'</div>';
+        else h+='<div style="color:#cbd5e1;font-size:11px;">なし</div>';
+        h+='</div>';
+      }
       // 国交省
       h+='<div style="margin-bottom:6px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;">';
       h+='<div style="font-size:11px;font-weight:800;color:#1e40af;margin-bottom:6px;">🏛 国交省の不足書類</div>';
