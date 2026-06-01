@@ -238,7 +238,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260601.test04</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260601.test05</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -946,6 +946,34 @@ function isTokkatsuCase(c){
 var missingDocsPerson = {};
 var missingDocsCompany = {};
 var missingDocsKokko = {};
+// ver.20260601.test05: 案件ごとの最古依頼日（doc_check の req::* の最小値）
+// 書類自体に req:: が無くても、同じ案件で他に req:: があれば「同じ頃案内したはず」として推定経過日数を出す
+var caseOldestReqDate = {};   // case_id → 'YYYY-MM-DD'
+var docReqDate = {};          // case_id → {書類名: 'YYYY-MM-DD'} （書類個別の依頼日が入っていればそちらを優先）
+
+// 経過日数を返す（依頼日 YYYY-MM-DD → 今日との差日数）。null/不正なら null
+function _daysSince(ymd){
+  if(!ymd) return null;
+  var m=String(ymd).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(!m) return null;
+  var d=new Date(parseInt(m[1]),parseInt(m[2])-1,parseInt(m[3]));
+  if(isNaN(d.getTime())) return null;
+  var now=new Date(); now.setHours(0,0,0,0); d.setHours(0,0,0,0);
+  return Math.floor((now-d)/86400000);
+}
+// 書類1件あたりの「適用される依頼日」を取得（書類個別 > 案件最古 の優先順）
+function _docReqDateFor(caseId, docName){
+  if(caseId && docName && docReqDate[caseId] && docReqDate[caseId][docName]) return docReqDate[caseId][docName];
+  if(caseId && caseOldestReqDate[caseId]) return caseOldestReqDate[caseId];
+  return null;
+}
+// 経過日数からアラート色を返す（5日未満→null, 5-9→yellow, 10+→red）
+function _ageColor(days){
+  if(days==null) return null;
+  if(days>=10) return 'red';
+  if(days>=5) return 'yellow';
+  return null;
+}
 // 表示用ヘルパ：番号配列を「1.履歴 / 6.委任状」表記に
 function fmtMissingDocs(arr){
   if(!arr||!arr.length) return '';
@@ -1290,7 +1318,12 @@ function renderMissingDocs(){
   h+='<div style="font-size:12px;color:#7c2d12;line-height:1.7;font-weight:600;">';
   h+='不足書類は <span style="background:#dc2626;color:white;padding:1px 6px;border-radius:4px;">👤 人材</span> / <span style="background:#ea580c;color:white;padding:1px 6px;border-radius:4px;">🏢 企業</span> / <span style="background:#2563eb;color:white;padding:1px 6px;border-radius:4px;">🏛 国交省</span> の3カテゴリで管理されます。';
   h+='<br>人材の不足書類は案シスの<strong>「必要書類」タブ</strong>と連動しています（担当チェック✓もしくは「不要」が付いていない書類が不足扱い）。';
-  h+='<br><span style="display:inline-block;background:#f1f5f9;color:#475569;border:1.5px dashed #94a3b8;padding:2px 8px;border-radius:4px;font-size:11px;margin-top:4px;">✏️ <strong>OFUSA作成</strong></span> のマークが付いている書類はOFUSA側で作成しますので、貴社でのご準備は不要です。';
+  h+='<br><strong>配色ルール</strong>：';
+  h+=' <span style="display:inline-block;background:#ffffff;color:#334155;border:1.5px solid #cbd5e1;padding:1px 8px;border-radius:4px;font-size:11px;">通常</span>';
+  h+=' <span style="display:inline-block;background:#fef9c3;color:#854d0e;border:1.5px solid #fde047;padding:1px 8px;border-radius:4px;font-size:11px;margin-left:4px;">5日以上経過</span>';
+  h+=' <span style="display:inline-block;background:#fef2f2;color:#991b1b;border:1.5px solid #fca5a5;padding:1px 8px;border-radius:4px;font-size:11px;margin-left:4px;">10日以上経過</span>';
+  h+=' <span style="display:inline-block;background:#dcfce7;color:#166534;border:1.5px solid #86efac;padding:1px 8px;border-radius:4px;font-size:11px;margin-left:4px;">✏️ OFUSA作成</span>';
+  h+='<br><span style="font-size:11px;color:#7c2d12;opacity:.8;">※ 個別書類の依頼日が未入力でも、同じ案件で他書類の依頼日が記録されていれば、その日付から経過日数を推定します。</span>';
   h+='<br>また、<strong>特活案件</strong>は企業書類が対象外のため <em style="color:#94a3b8;">— 特活案件のため対象外 —</em> と表示されます。';
   h+='</div></div>';
 
@@ -1344,8 +1377,8 @@ function renderMissingDocs(){
     h+='<td style="font-size:11px;">'+esc(c.company||'')+'</td>';
     h+='<td style="font-size:10px;">'+esc(c.appType||'')+'</td>';
     // 人材
-    h+='<td style="font-size:10px;line-height:1.7;'+(mp.length?'background:#fef2f2;':'')+'">';
-    if(mp.length) h+=_buildDocList(mp,'person');
+    h+='<td style="font-size:10px;line-height:1.7;">';
+    if(mp.length) h+=_buildDocList(mp,'person',c.id);
     else h+='<span style="color:#cbd5e1;">—</span>';
     h+='</td>';
     // 企業（特活案件はグレーアウト）
@@ -1355,14 +1388,14 @@ function renderMissingDocs(){
       h+='<span title="特活案件のため企業書類は対象外">— 特活案件のため対象外 —</span>';
       h+='</td>';
     } else {
-      h+='<td style="font-size:10px;line-height:1.7;'+(mc.length?'background:#fff7ed;':'')+'">';
-      if(mc.length) h+=_buildDocList(mc,'company');
+      h+='<td style="font-size:10px;line-height:1.7;">';
+      if(mc.length) h+=_buildDocList(mc,'company',c.id);
       else h+='<span style="color:#cbd5e1;">—</span>';
       h+='</td>';
     }
     // 国交省
-    h+='<td style="font-size:10px;line-height:1.7;'+(mk.length?'background:#eff6ff;':'')+'">';
-    if(mk.length) h+=_buildDocList(mk,'kokko');
+    h+='<td style="font-size:10px;line-height:1.7;">';
+    if(mk.length) h+=_buildDocList(mk,'kokko',c.id);
     else h+='<span style="color:#cbd5e1;">—</span>';
     h+='</td>';
     h+='</tr>';
@@ -1370,39 +1403,51 @@ function renderMissingDocs(){
   h+='</tbody></table></div>';
   el.innerHTML=h;
 }
-// 番号配列または書類名配列をバッジ形式の縦リストに（カテゴリ別に色を変える）
+// 番号配列または書類名配列をバッジ形式の縦リストに
+// ver.20260601.test05: ベース無色＋依頼日経過で動的配色
+//   依頼日≧10日 → 赤 / 5〜9日 → 黄 / 5日未満or不明 → 色なし
+//   OFUSA作成書類（ナンバリング6/8/12/15）→ 緑固定（依頼日経過無関係）
+//   書類自体に req:: が無くても、同じ案件の最古 req:: を流用して推定経過日数を出す
 // 人材（doc_checkベース）: 書類名の文字列配列 例: ['顔写真','パスポート']
-// 企業・国交省: ナンバリング番号の配列 例: [1, 6, 12]（6,8,12,15は弊社作成扱い）
-function _buildDocList(arr, category){
+// 企業・国交省: ナンバリング番号の配列 例: [1, 6, 12]
+function _buildDocList(arr, category, caseId){
   if(!arr||!arr.length) return '';
-  // category: 'person' | 'company' | 'kokko'
-  var bgColor, textColor, borderColor;
-  if(category==='person'){
-    bgColor='#fef2f2'; textColor='#991b1b'; borderColor='#fca5a5';
-  } else if(category==='company'){
-    bgColor='#fff7ed'; textColor='#9a3412'; borderColor='#fdba74';
-  } else if(category==='kokko'){
-    bgColor='#eff6ff'; textColor='#1e40af'; borderColor='#93c5fd';
-  } else {
-    bgColor='white'; textColor='#0f172a'; borderColor='#cbd5e1';
-  }
   return arr.map(function(item){
-    // item が数値 → ナンバリング(企業・国交省), 文字列 → doc_check書類名(人材)
     var isNumber = (typeof item === 'number');
-    var label, n;
+    var label, n, docName;
     if(isNumber){
       n = item;
       label = DOC_NUMBERING[n] || ('書類'+n);
+      docName = label;  // ナンバリング書類はラベル名そのままで依頼日キーにする（企業/国交省側）
     } else {
       label = String(item);
       n = null;
+      docName = label;
     }
-    // 弊社作成判定: ナンバリング 6/8/12/15 のみ（人材側は doc_check の書類名なので対象外）
+    // ① OFUSA作成（ナンバリング6/8/12/15）→ 緑固定
     if(isNumber && isOfusaMadeDoc(n)){
-      return '<div style="display:inline-block;background:#f1f5f9;color:#475569;border:1.5px dashed #94a3b8;padding:3px 8px;border-radius:4px;margin:2px 3px;font-size:11px;font-weight:700;" title="OFUSA側で作成する書類です">✏️ <span style="opacity:.7;">'+n+'.</span> '+esc(label)+' <span style="font-size:9px;background:#64748b;color:white;padding:1px 4px;border-radius:3px;margin-left:2px;">OFUSA作成</span></div>';
+      return '<div style="display:inline-block;background:#dcfce7;color:#166534;border:1.5px solid #86efac;padding:3px 8px;border-radius:4px;margin:2px 3px;font-size:11px;font-weight:700;" title="OFUSA側で作成する書類です（貴社準備不要）">✏️ <span style="opacity:.7;">'+n+'.</span> '+esc(label)+' <span style="font-size:9px;background:#16a34a;color:white;padding:1px 4px;border-radius:3px;margin-left:2px;">OFUSA作成</span></div>';
+    }
+    // ② それ以外：依頼日経過で動的配色
+    var reqDate = _docReqDateFor(caseId, docName);
+    var days = _daysSince(reqDate);
+    var color = _ageColor(days);
+    var bg, fg, bd, ageLabel='';
+    if(color==='red'){
+      bg='#fef2f2'; fg='#991b1b'; bd='#fca5a5';
+      ageLabel='<span style="font-size:9px;background:#dc2626;color:white;padding:1px 4px;border-radius:3px;margin-left:4px;">'+days+'日経過</span>';
+    } else if(color==='yellow'){
+      bg='#fef9c3'; fg='#854d0e'; bd='#fde047';
+      ageLabel='<span style="font-size:9px;background:#ca8a04;color:white;padding:1px 4px;border-radius:3px;margin-left:4px;">'+days+'日経過</span>';
+    } else {
+      // ベース無色
+      bg='#ffffff'; fg='#334155'; bd='#cbd5e1';
+      if(days!=null && days>=0){
+        ageLabel='<span style="font-size:9px;color:#94a3b8;margin-left:4px;">'+days+'日</span>';
+      }
     }
     var prefix = isNumber ? ('<span style="opacity:.7;">'+n+'.</span> ') : '';
-    return '<div style="display:inline-block;background:'+bgColor+';color:'+textColor+';border:1.5px solid '+borderColor+';padding:3px 8px;border-radius:4px;margin:2px 3px;font-size:11px;font-weight:700;">'+prefix+esc(label)+'</div>';
+    return '<div style="display:inline-block;background:'+bg+';color:'+fg+';border:1.5px solid '+bd+';padding:3px 8px;border-radius:4px;margin:2px 3px;font-size:11px;font-weight:700;">'+prefix+esc(label)+ageLabel+'</div>';
   }).join('');
 }
 
@@ -1435,9 +1480,9 @@ function openCaseDetailModal(caseId){
       h+='<div style="padding:14px;background:#f0fdf4;color:#15803d;border-radius:8px;font-size:12px;font-weight:700;border:1px solid #bbf7d0;">✅ 現在、不足書類はありません</div>';
     } else {
       // 人材
-      h+='<div style="margin-bottom:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;">';
+      h+='<div style="margin-bottom:12px;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;">';
       h+='<div style="font-size:11px;font-weight:800;color:#991b1b;margin-bottom:6px;">👤 人材の不足書類</div>';
-      if(mp.length) h+='<div>'+_buildDocList(mp,'person')+'</div>';
+      if(mp.length) h+='<div>'+_buildDocList(mp,'person',c.id)+'</div>';
       else h+='<div style="color:#cbd5e1;font-size:11px;">なし</div>';
       h+='</div>';
       // 企業（特活案件はグレーアウト）
@@ -1448,16 +1493,16 @@ function openCaseDetailModal(caseId){
         h+='<div style="font-size:11px;font-style:italic;">— 特活案件のため対象外 —</div>';
         h+='</div>';
       } else {
-        h+='<div style="margin-bottom:12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px;">';
+        h+='<div style="margin-bottom:12px;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;">';
         h+='<div style="font-size:11px;font-weight:800;color:#9a3412;margin-bottom:6px;">🏢 企業の不足書類</div>';
-        if(mc.length) h+='<div>'+_buildDocList(mc,'company')+'</div>';
+        if(mc.length) h+='<div>'+_buildDocList(mc,'company',c.id)+'</div>';
         else h+='<div style="color:#cbd5e1;font-size:11px;">なし</div>';
         h+='</div>';
       }
       // 国交省
-      h+='<div style="margin-bottom:6px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;">';
+      h+='<div style="margin-bottom:6px;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;">';
       h+='<div style="font-size:11px;font-weight:800;color:#1e40af;margin-bottom:6px;">🏛 国交省の不足書類</div>';
-      if(mk.length) h+='<div>'+_buildDocList(mk,'kokko')+'</div>';
+      if(mk.length) h+='<div>'+_buildDocList(mk,'kokko',c.id)+'</div>';
       else h+='<div style="color:#cbd5e1;font-size:11px;">なし</div>';
       h+='</div>';
     }
@@ -2461,7 +2506,7 @@ async function loadData(){
     //   skip::<書類名>  = 1 で不要扱い（=完了とみなす）
     //   date::<書類名>  = 取得日
     // 不足 = staff::!=true かつ skip::!=1 の書類すべて
-    missingDocsPerson={};
+    missingDocsPerson={}; caseOldestReqDate={}; docReqDate={};
     if(isOpencareToken() && allCases.length){
       var cids=allCases.map(function(c){return c.id;});
       var MD_CHUNK=50;
@@ -2471,7 +2516,7 @@ async function loadData(){
           var rmp=await sbFetch('doc_check?case_id=in.('+mchunk.map(function(id){return '"'+id+'"';}).join(',')+')&select=case_id,doc_key,value');
           var rows=await rmp.json();
           if(Array.isArray(rows)){
-            // case_id → 書類名 → {staff, skip} のマップを構築
+            // case_id → 書類名 → {req, staff, skip, date} のマップを構築
             var byCase={};
             rows.forEach(function(r){
               var m=String(r.doc_key||'').match(/^(req|staff|skip|date)::(.+)$/);
@@ -2484,14 +2529,22 @@ async function loadData(){
             Object.keys(byCase).forEach(function(cid){
               var docs=byCase[cid];
               var missing=[];
+              var oldestReq=null;
+              if(!docReqDate[cid]) docReqDate[cid]={};
               Object.keys(docs).forEach(function(docName){
                 var d=docs[docName];
                 var isStaffOk = (d.staff==='true' || d.staff===true);
                 var isSkipped = (d.skip==='1' || d.skip===1 || d.skip==='true' || d.skip===true);
+                // 書類個別の依頼日を記録
+                if(d.req && /^\d{4}-\d{2}-\d{2}/.test(d.req)){
+                  docReqDate[cid][docName]=d.req;
+                  if(!oldestReq || d.req < oldestReq) oldestReq=d.req;
+                }
                 if(!isStaffOk && !isSkipped){
                   missing.push(docName);
                 }
               });
+              if(oldestReq) caseOldestReqDate[cid]=oldestReq;
               if(missing.length){
                 missingDocsPerson[cid] = missing;
               }
