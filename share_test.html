@@ -238,7 +238,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260601.test03</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260601.test04</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1289,6 +1289,7 @@ function renderMissingDocs(){
   h+='<div style="font-size:15px;font-weight:800;color:#7c2d12;margin-bottom:6px;">📋 不足書類一覧</div>';
   h+='<div style="font-size:12px;color:#7c2d12;line-height:1.7;font-weight:600;">';
   h+='不足書類は <span style="background:#dc2626;color:white;padding:1px 6px;border-radius:4px;">👤 人材</span> / <span style="background:#ea580c;color:white;padding:1px 6px;border-radius:4px;">🏢 企業</span> / <span style="background:#2563eb;color:white;padding:1px 6px;border-radius:4px;">🏛 国交省</span> の3カテゴリで管理されます。';
+  h+='<br>人材の不足書類は案シスの<strong>「必要書類」タブ</strong>と連動しています（担当チェック✓もしくは「不要」が付いていない書類が不足扱い）。';
   h+='<br><span style="display:inline-block;background:#f1f5f9;color:#475569;border:1.5px dashed #94a3b8;padding:2px 8px;border-radius:4px;font-size:11px;margin-top:4px;">✏️ <strong>OFUSA作成</strong></span> のマークが付いている書類はOFUSA側で作成しますので、貴社でのご準備は不要です。';
   h+='<br>また、<strong>特活案件</strong>は企業書類が対象外のため <em style="color:#94a3b8;">— 特活案件のため対象外 —</em> と表示されます。';
   h+='</div></div>';
@@ -1304,7 +1305,7 @@ function renderMissingDocs(){
 
   // ナンバリング凡例
   h+='<details style="margin-bottom:14px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;">';
-  h+='<summary style="padding:10px 14px;font-size:12px;font-weight:700;color:#475569;cursor:pointer;">📖 書類ナンバリング一覧（クリックで開く）</summary>';
+  h+='<summary style="padding:10px 14px;font-size:12px;font-weight:700;color:#475569;cursor:pointer;">📖 企業・国交省の書類ナンバリング一覧（クリックで開く）</summary>';
   h+='<div style="padding:8px 14px 14px;font-size:11px;color:#334155;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:4px 14px;">';
   Object.keys(DOC_NUMBERING).forEach(function(n){
     h+='<div>'+n+'. '+DOC_NUMBERING[n]+'</div>';
@@ -1369,8 +1370,9 @@ function renderMissingDocs(){
   h+='</tbody></table></div>';
   el.innerHTML=h;
 }
-// 番号配列をバッジ形式の縦リストに（カテゴリ別に色を変える）
-// 弊社作成書類（6,8,12,15）はグレー＋✏️アイコンで「OFUSA作成」と表示
+// 番号配列または書類名配列をバッジ形式の縦リストに（カテゴリ別に色を変える）
+// 人材（doc_checkベース）: 書類名の文字列配列 例: ['顔写真','パスポート']
+// 企業・国交省: ナンバリング番号の配列 例: [1, 6, 12]（6,8,12,15は弊社作成扱い）
 function _buildDocList(arr, category){
   if(!arr||!arr.length) return '';
   // category: 'person' | 'company' | 'kokko'
@@ -1384,13 +1386,23 @@ function _buildDocList(arr, category){
   } else {
     bgColor='white'; textColor='#0f172a'; borderColor='#cbd5e1';
   }
-  return arr.map(function(n){
-    var label = DOC_NUMBERING[n] || ('書類'+n);
-    if(isOfusaMadeDoc(n)){
-      // 弊社作成書類: グレー背景＋✏️アイコン＋「OFUSA作成」サフィックス
+  return arr.map(function(item){
+    // item が数値 → ナンバリング(企業・国交省), 文字列 → doc_check書類名(人材)
+    var isNumber = (typeof item === 'number');
+    var label, n;
+    if(isNumber){
+      n = item;
+      label = DOC_NUMBERING[n] || ('書類'+n);
+    } else {
+      label = String(item);
+      n = null;
+    }
+    // 弊社作成判定: ナンバリング 6/8/12/15 のみ（人材側は doc_check の書類名なので対象外）
+    if(isNumber && isOfusaMadeDoc(n)){
       return '<div style="display:inline-block;background:#f1f5f9;color:#475569;border:1.5px dashed #94a3b8;padding:3px 8px;border-radius:4px;margin:2px 3px;font-size:11px;font-weight:700;" title="OFUSA側で作成する書類です">✏️ <span style="opacity:.7;">'+n+'.</span> '+esc(label)+' <span style="font-size:9px;background:#64748b;color:white;padding:1px 4px;border-radius:3px;margin-left:2px;">OFUSA作成</span></div>';
     }
-    return '<div style="display:inline-block;background:'+bgColor+';color:'+textColor+';border:1.5px solid '+borderColor+';padding:3px 8px;border-radius:4px;margin:2px 3px;font-size:11px;font-weight:700;"><span style="opacity:.7;">'+n+'.</span> '+esc(label)+'</div>';
+    var prefix = isNumber ? ('<span style="opacity:.7;">'+n+'.</span> ') : '';
+    return '<div style="display:inline-block;background:'+bgColor+';color:'+textColor+';border:1.5px solid '+borderColor+';padding:3px 8px;border-radius:4px;margin:2px 3px;font-size:11px;font-weight:700;">'+prefix+esc(label)+'</div>';
   }).join('');
 }
 
@@ -2442,28 +2454,52 @@ async function loadData(){
         missingDocsKokko[c.id] = c.missingKokkoDocs;
       }
     });
-    // ver.20260601.test: 人材の不足書類を取得（オープンケアログイン時のみ）
-    // 注: persons テーブルには id カラムが無い（case_id が主キー）ので case_id ベースで取得
+    // ver.20260601.test04: 人材の不足書類を doc_check テーブルから計算（オープンケアログイン時のみ）
+    // doc_check の doc_key パターン:
+    //   req::<書類名>   = 依頼日
+    //   staff::<書類名> = true で担当チェック済（=完了）
+    //   skip::<書類名>  = 1 で不要扱い（=完了とみなす）
+    //   date::<書類名>  = 取得日
+    // 不足 = staff::!=true かつ skip::!=1 の書類すべて
+    missingDocsPerson={};
     if(isOpencareToken() && allCases.length){
       var cids=allCases.map(function(c){return c.id;});
       var MD_CHUNK=50;
-      missingDocsPerson={};
       for(var mi=0;mi<cids.length;mi+=MD_CHUNK){
         var mchunk=cids.slice(mi,mi+MD_CHUNK);
         try{
-          var rmp=await sbFetch('persons?case_id=in.('+mchunk.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=case_id,missing_docs');
-          var mpersons=await rmp.json();
-          if(Array.isArray(mpersons)){
-            mpersons.forEach(function(p){
-              if(p.missing_docs && Array.isArray(p.missing_docs) && p.missing_docs.length){
-                missingDocsPerson[p.case_id] = p.missing_docs;
+          var rmp=await sbFetch('doc_check?case_id=in.('+mchunk.map(function(id){return '"'+id+'"';}).join(',')+')&select=case_id,doc_key,value');
+          var rows=await rmp.json();
+          if(Array.isArray(rows)){
+            // case_id → 書類名 → {staff, skip} のマップを構築
+            var byCase={};
+            rows.forEach(function(r){
+              var m=String(r.doc_key||'').match(/^(req|staff|skip|date)::(.+)$/);
+              if(!m) return;
+              var prefix=m[1], docName=m[2];
+              if(!byCase[r.case_id]) byCase[r.case_id]={};
+              if(!byCase[r.case_id][docName]) byCase[r.case_id][docName]={};
+              byCase[r.case_id][docName][prefix]=r.value;
+            });
+            Object.keys(byCase).forEach(function(cid){
+              var docs=byCase[cid];
+              var missing=[];
+              Object.keys(docs).forEach(function(docName){
+                var d=docs[docName];
+                var isStaffOk = (d.staff==='true' || d.staff===true);
+                var isSkipped = (d.skip==='1' || d.skip===1 || d.skip==='true' || d.skip===true);
+                if(!isStaffOk && !isSkipped){
+                  missing.push(docName);
+                }
+              });
+              if(missing.length){
+                missingDocsPerson[cid] = missing;
               }
             });
           }
-        }catch(e){ console.warn('[missing_docs persons load failed]', e); }
+        }catch(e){ console.warn('[doc_check load failed]', e); }
       }
       // 企業の不足書類: support_org_name でオープンケア配下の全社一括取得
-      // （日本語社名のin.()検索は PostgREST のURL encoding問題で失敗するため）
       missingDocsCompany={};
       try{
         var rmc=await sbFetch('companies?support_org_name=in.('
