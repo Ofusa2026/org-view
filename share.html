@@ -307,7 +307,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260531.04</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260601.01</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -933,6 +933,17 @@ function buildRow(c){
   h+='<td data-col-key="receiptNo" style="font-size:10px;white-space:nowrap;">'+(c.receiptNo?'<span style="color:#2563eb;font-weight:700;">'+esc(c.receiptNo)+'</span>':'<span style="color:#d1d5db;">—</span>')+'</td>';
   // 帰国予定
   h+='<td data-col-key="tempReturn" style="font-size:10px;white-space:nowrap;'+retStyle+'">'+(c.tempReturn||'<span style="color:#d1d5db;">—</span>')+'</td>';
+  // ver.20260601.01: 受取方法（郵送交付 / 窓口受取）
+  var dm=c.deliveryMethod||'mail';
+  var dmLabel,dmStyle;
+  if(dm==='window'){
+    dmLabel='🏛 窓口受取';
+    dmStyle='background:#fef3c7;color:#92400e;border:1px solid #fcd34d;';
+  } else {
+    dmLabel='📮 郵送交付';
+    dmStyle='background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;';
+  }
+  h+='<td data-col-key="deliveryMethod" style="font-size:10px;white-space:nowrap;"><span style="display:inline-block;font-size:10px;padding:2px 8px;border-radius:4px;font-weight:700;'+dmStyle+'">'+dmLabel+'</span></td>';
   // ver.20260518.16: PDFカラム（受付番号PDF + 審査完了PDF）
   h+='<td data-col-key="_downloads" style="font-size:10px;min-width:130px;">'+buildDownloadCell(c)+'</td>';
   // 大房コメント（index.htmlから入力・表示のみ）
@@ -1024,6 +1035,7 @@ var COLS=[
   {key:'expire',label:'在留期限 / 特例'},
   {key:'receiptNo',label:'受付番号'},
   {key:'tempReturn',label:'帰国予定'},
+  {key:'deliveryMethod',label:'受取方法'}, // ver.20260601.01: 受取方法列を追加
   {key:'_downloads',label:'PDF',noSort:true}, // ver.20260518.16: 資料DL→PDFに変更
   {key:'_comment',label:'大房コメント',noSort:true},
   {key:'_own_comment',label:'登録支援機関様コメント',noSort:true}
@@ -1035,7 +1047,7 @@ var COLS=[
 //   - 未確認3セクション: すべて非表示
 //   - サイドバー: 全項目表示 (ver.20260525.12)
 var DEFAULT_PROGRESS_CFG = {
-  main:    { enabled: true,  cols: ['name','company','appType','staff','status','_mlit','expire','receiptNo','tempReturn','_downloads'] },
+  main:    { enabled: true,  cols: ['name','company','appType','staff','status','_mlit','expire','receiptNo','tempReturn','deliveryMethod','_downloads'] },
   applied: { enabled: false },
   pending: { enabled: false },
   review:  { enabled: false },
@@ -1197,7 +1209,9 @@ function renderReceipts(){
       team: c.team||'',
       staff: c.staff||'',
       applicant: c.applicant||'',
-      receiptNo: c.receiptNo||''
+      receiptNo: c.receiptNo||'',
+      // ver.20260601.01: 受取方法
+      deliveryMethod: c.deliveryMethod||'mail'
     });
   });
   if(!allReceipts.length && !appliedCases.length){
@@ -1258,6 +1272,7 @@ function _buildReceiptTable(rows, dimmed){
   h+='<colgroup>';
   // ver.20260525.05: 確認チェック・受付日を左端に移動
   // ver.20260527.34: 担当列を追加（アイデム担当者 client_staff）
+  // ver.20260601.01: 受取方法列を追加
   h+='<col style="width:70px;">';     // 確認（固有・左端）
   h+='<col style="width:90px;">';     // 受付日（固有・左端隣）
   h+='<col style="width:240px;">';    // 案件名 / 申請者
@@ -1267,10 +1282,11 @@ function _buildReceiptTable(rows, dimmed){
   h+='<col style="width:140px;">';    // ステータス
   h+='<col style="width:110px;">';    // 在留期限 / 特例
   h+='<col style="width:140px;">';    // 受付番号
+  h+='<col style="width:100px;">';    // 受取方法（ver.20260601.01）
   h+='<col style="width:140px;">';    // PDF
   h+='</colgroup>';
   h+='<thead><tr>';
-  h+='<th style="text-align:center;" title="確認したらチェック">確認</th><th>受付日</th><th>案件名 / 申請者</th><th>所属機関</th><th>種別</th><th>担当</th><th>ステータス</th><th>在留期限 / 特例</th><th>受付番号</th><th style="text-align:center;">PDF</th>';
+  h+='<th style="text-align:center;" title="確認したらチェック">確認</th><th>受付日</th><th>案件名 / 申請者</th><th>所属機関</th><th>種別</th><th>担当</th><th>ステータス</th><th>在留期限 / 特例</th><th>受付番号</th><th>受取方法</th><th style="text-align:center;">PDF</th>';
   h+='</tr></thead><tbody>';
   rows.forEach(function(r){
     var extLabel=getExternalStatus(r.status);
@@ -1332,6 +1348,17 @@ function _buildReceiptTable(rows, dimmed){
     h+='<td style="font-size:10px;white-space:nowrap;">'+expHtml+'</td>';
     // === 受付番号 ===
     h+='<td style="font-size:10px;white-space:nowrap;">'+(r.caseNo?'<span style="color:#2563eb;font-weight:700;">'+esc(r.caseNo)+'</span>':'<span style="color:#d1d5db;">—</span>')+'</td>';
+    // === 受取方法（ver.20260601.01） ===
+    var dmR=r.deliveryMethod||'mail';
+    var dmRLabel,dmRStyle;
+    if(dmR==='window'){
+      dmRLabel='🏛 窓口受取';
+      dmRStyle='background:#fef3c7;color:#92400e;border:1px solid #fcd34d;';
+    } else {
+      dmRLabel='📮 郵送交付';
+      dmRStyle='background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;';
+    }
+    h+='<td style="font-size:10px;white-space:nowrap;"><span style="display:inline-block;font-size:10px;padding:2px 8px;border-radius:4px;font-weight:700;'+dmRStyle+'">'+dmRLabel+'</span></td>';
     // === PDF ===
     if(r._isApplied){
       h+='<td style="text-align:center;white-space:nowrap;"><span style="color:#cbd5e1;font-size:10px;">&mdash;</span></td>';
@@ -1405,6 +1432,7 @@ function _buildShinsaTable(rows, dimmed){
   h+='<colgroup>';
   // ver.20260525.04: メインテーブルと列構成を揃える
   // ver.20260527.34: 担当列を追加（アイデム担当者 client_staff）
+  // ver.20260601.01: 受取方法列を追加
   h+='<col style="width:70px;">';     // 確認（固有・左端）
   h+='<col style="width:90px;">';     // 完了日（固有・左端隣）
   h+='<col style="width:240px;">';    // 案件名 / 申請者
@@ -1414,10 +1442,11 @@ function _buildShinsaTable(rows, dimmed){
   h+='<col style="width:140px;">';    // ステータス
   h+='<col style="width:110px;">';    // 在留期限 / 特例
   h+='<col style="width:140px;">';    // 受付番号
+  h+='<col style="width:100px;">';    // 受取方法（ver.20260601.01）
   h+='<col style="width:140px;">';    // PDF
   h+='</colgroup>';
   h+='<thead><tr>';
-  h+='<th style="text-align:center;" title="確認したらチェック">確認</th><th>完了日</th><th>案件名 / 申請者</th><th>所属機関</th><th>種別</th><th>担当</th><th>ステータス</th><th>在留期限 / 特例</th><th>受付番号</th><th style="text-align:center;">PDF</th>';
+  h+='<th style="text-align:center;" title="確認したらチェック">確認</th><th>完了日</th><th>案件名 / 申請者</th><th>所属機関</th><th>種別</th><th>担当</th><th>ステータス</th><th>在留期限 / 特例</th><th>受付番号</th><th>受取方法</th><th style="text-align:center;">PDF</th>';
   h+='</tr></thead><tbody>';
   rows.forEach(function(r){
     var isChecked=!!orgChecks[r.id];
@@ -1455,6 +1484,17 @@ function _buildShinsaTable(rows, dimmed){
     h+='<td style="font-size:10px;white-space:nowrap;">'+expHtml+'</td>';
     // === 受付番号 ===
     h+='<td style="font-size:10px;white-space:nowrap;">'+(r.caseNo?'<span style="color:#2563eb;font-weight:700;">'+esc(r.caseNo)+'</span>':'<span style="color:#d1d5db;">—</span>')+'</td>';
+    // === 受取方法（ver.20260601.01） ===
+    var dmS=r.deliveryMethod||'mail';
+    var dmSLabel,dmSStyle;
+    if(dmS==='window'){
+      dmSLabel='🏛 窓口受取';
+      dmSStyle='background:#fef3c7;color:#92400e;border:1px solid #fcd34d;';
+    } else {
+      dmSLabel='📮 郵送交付';
+      dmSStyle='background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;';
+    }
+    h+='<td style="font-size:10px;white-space:nowrap;"><span style="display:inline-block;font-size:10px;padding:2px 8px;border-radius:4px;font-weight:700;'+dmSStyle+'">'+dmSLabel+'</span></td>';
     // === PDF ===
     h+='<td style="text-align:center;white-space:nowrap;">'+_buildPdfCell(r, '#16a34a')+'</td>';
     h+='</tr>';
@@ -2623,7 +2663,7 @@ async function loadData(){
       }catch(e){ console.warn('[aidem companies load failed]', e); }
     }
     // ver.20260527.34: PostgRESTのdb-max-rows=1000を回避するため offset+limit でページング取得
-    var casesBase='cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,receipt_date,temp_return,applicant_field,madoguchi_date,madoguchi_receive_date,client_staff,updated_at,created_at&order=created_at.desc';
+    var casesBase='cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,receipt_date,temp_return,applicant_field,madoguchi_date,madoguchi_receive_date,client_staff,delivery_method,updated_at,created_at&order=created_at.desc';
     var cases=[];
     var _off=0, _pageSize=1000, _safety=20;
     while(_safety-->0){
@@ -2634,7 +2674,7 @@ async function loadData(){
       if(_page.length<_pageSize) break;
       _off+=_pageSize;
     }
-    allCases=(cases||[]).map(function(c){return{id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',receiptDate:c.receipt_date||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',madoguchiDate:c.madoguchi_date||'',madoguchiReceiveDate:c.madoguchi_receive_date||'',clientStaff:c.client_staff||'',updated_at:c.updated_at||''};});
+    allCases=(cases||[]).map(function(c){return{id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',receiptDate:c.receipt_date||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',madoguchiDate:c.madoguchi_date||'',madoguchiReceiveDate:c.madoguchi_receive_date||'',clientStaff:c.client_staff||'',deliveryMethod:c.delivery_method||'mail',updated_at:c.updated_at||''};});
     // personsテーブルからtempReturn(一時帰国予定日)を取得して補完
     // ver.20260527.14: 申請中証明書PDF・預かり証PDFのURL履歴も取得
     if(allCases.length){
@@ -2745,7 +2785,9 @@ async function loadData(){
           staff:lc?(lc.staff||''):'',
           clientStaff:lc?(lc.clientStaff||''):'',
           applicant:lc?(lc.applicant||''):'',
-          receiptNo:lc?(lc.receiptNo||''):''};
+          receiptNo:lc?(lc.receiptNo||''):'',
+          // ver.20260601.01: 受取方法
+          deliveryMethod:lc?(lc.deliveryMethod||'mail'):'mail'};
       });
       // 審査完了取得（同様にcase_idで絞り込み）
       var _shTmp=[];
@@ -2772,7 +2814,9 @@ async function loadData(){
           staff:lc?(lc.staff||''):'',
           clientStaff:lc?(lc.clientStaff||''):'',
           applicant:lc?(lc.applicant||''):'',
-          receiptNo:lc?(lc.receiptNo||''):''};
+          receiptNo:lc?(lc.receiptNo||''):'',
+          // ver.20260601.01: 受取方法
+          deliveryMethod:lc?(lc.deliveryMethod||'mail'):'mail'};
       });
     }
     renderSidebar();
@@ -3387,7 +3431,8 @@ function _buildLineReportText(p){
   lines.push('■雇用条件');
   lines.push('　（　　）');
   lines.push('■支援担当者');
-  lines.push('　氏名：（' + (p.clientStaff || '　　') + '）');
+  // ver.20260601.01: 担当者の値は空欄にする（行と項目名は残す、入力された担当者は反映しない）
+  lines.push('　氏名：（　　）');
   lines.push('■人材紹介手数料');
   lines.push('　（　　）');
   lines.push('■支援費');
