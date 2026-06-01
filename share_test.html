@@ -238,7 +238,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260601.test01</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260601.test02</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -802,8 +802,22 @@ function buildRow(c){
   var unconfirmed=getUnconfirmedCaseIds();
   var rowCls=unconfirmed[c.id]?' class="row-notif"':'';
   var notifDot=unconfirmed[c.id]?'<span class="row-notif-dot" title="未確認のお知らせあり"></span>':'';
+  // ver.20260601.test: 不足書類のミニバッジ（オープンケアのみ）
+  var missBadge='';
+  if(isOpencareToken()){
+    var _mp = missingDocsPerson[c.id] || [];
+    var _mc = missingDocsCompany[c.company] || [];
+    var _mk = missingDocsKokko[c.id] || [];
+    var parts=[];
+    if(_mp.length) parts.push('<span style="display:inline-block;background:#dc2626;color:white;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;" title="人材の不足書類 '+_mp.length+'件">👤'+_mp.length+'</span>');
+    if(_mc.length) parts.push('<span style="display:inline-block;background:#ea580c;color:white;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;" title="企業の不足書類 '+_mc.length+'件">🏢'+_mc.length+'</span>');
+    if(_mk.length) parts.push('<span style="display:inline-block;background:#2563eb;color:white;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;" title="国交省の不足書類 '+_mk.length+'件">🏛'+_mk.length+'</span>');
+    if(parts.length){
+      missBadge='<div style="margin-top:3px;display:flex;gap:3px;flex-wrap:wrap;cursor:pointer;" onclick="event.stopPropagation();openCaseDetailModal(\''+cid+'\')" title="クリックで詳細表示">'+parts.join('')+'</div>';
+    }
+  }
   var h='<tr'+rowCls+'>';
-  h+='<td style="min-width:200px;max-width:320px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div></td>'; // ver.20260518.06: 案件名を全文表示（折り返し）
+  h+='<td style="min-width:200px;max-width:320px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div>'+missBadge+'</td>';
   h+='<td style="min-width:90px;max-width:120px;"><div style="font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:115px;">'+esc(c.company||'—')+'</div></td>';
   h+='<td style="width:48px;">'+typeHtml+'</td>';
   h+='<td style="width:65px;">'+(teamShort?'<div style="font-size:10px;font-weight:600;">'+esc(teamShort)+'</div>':'')+(staffShort?'<div style="font-size:10px;color:#6b7280;">'+esc(staffShort)+'</div>':'')+'</td>';
@@ -1256,11 +1270,10 @@ function renderMissingDocs(){
   });
 
   var h='';
-  h+='<div style="padding:16px 18px;background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);border-radius:10px;margin-bottom:14px;border:1px solid #fcd34d;">';
-  h+='<div style="font-size:14px;font-weight:800;color:#92400e;margin-bottom:4px;">📋 不足書類一覧</div>';
-  h+='<div style="font-size:11px;color:#78350f;line-height:1.6;">';
-  h+='不足書類は、申請者ごと（人材）／企業ごと／国交省案件ごとの3カテゴリで管理されます。';
-  h+='OFUSA側で更新されると、こちらにも反映されます。';
+  h+='<div style="padding:16px 18px;background:linear-gradient(135deg,#fcd34d 0%,#fbbf24 100%);border-radius:10px;margin-bottom:14px;border:2px solid #f59e0b;box-shadow:0 2px 4px rgba(245,158,11,.2);">';
+  h+='<div style="font-size:15px;font-weight:800;color:#7c2d12;margin-bottom:4px;">📋 不足書類一覧</div>';
+  h+='<div style="font-size:12px;color:#7c2d12;line-height:1.6;font-weight:600;">';
+  h+='不足書類は <span style="background:#dc2626;color:white;padding:1px 6px;border-radius:4px;">👤 人材</span> / <span style="background:#ea580c;color:white;padding:1px 6px;border-radius:4px;">🏢 企業</span> / <span style="background:#2563eb;color:white;padding:1px 6px;border-radius:4px;">🏛 国交省</span> の3カテゴリで管理されます。OFUSA側で更新されると、こちらにも反映されます。';
   h+='</div></div>';
 
   if(!rows.length){
@@ -1295,9 +1308,9 @@ function renderMissingDocs(){
   h+='<th>案件名 / 申請者</th>';
   h+='<th>所属機関</th>';
   h+='<th>種別</th>';
-  h+='<th style="background:#fef2f2;">👤 人材の不足書類</th>';
-  h+='<th style="background:#fff7ed;">🏢 企業の不足書類</th>';
-  h+='<th style="background:#eff6ff;">🏛 国交省の不足書類</th>';
+  h+='<th style="background:#dc2626;color:white;text-align:center;">👤 人材の不足書類</th>';
+  h+='<th style="background:#ea580c;color:white;text-align:center;">🏢 企業の不足書類</th>';
+  h+='<th style="background:#2563eb;color:white;text-align:center;">🏛 国交省の不足書類</th>';
   h+='</tr></thead><tbody>';
 
   rows.forEach(function(c){
@@ -1313,18 +1326,18 @@ function renderMissingDocs(){
     h+='<td style="font-size:11px;">'+esc(c.company||'')+'</td>';
     h+='<td style="font-size:10px;">'+esc(c.appType||'')+'</td>';
     // 人材
-    h+='<td style="font-size:10px;line-height:1.5;'+(mp.length?'background:#fef2f2;':'')+'">';
-    if(mp.length) h+=_buildDocList(mp);
+    h+='<td style="font-size:10px;line-height:1.7;'+(mp.length?'background:#fef2f2;':'')+'">';
+    if(mp.length) h+=_buildDocList(mp,'person');
     else h+='<span style="color:#cbd5e1;">—</span>';
     h+='</td>';
     // 企業
-    h+='<td style="font-size:10px;line-height:1.5;'+(mc.length?'background:#fff7ed;':'')+'">';
-    if(mc.length) h+=_buildDocList(mc);
+    h+='<td style="font-size:10px;line-height:1.7;'+(mc.length?'background:#fff7ed;':'')+'">';
+    if(mc.length) h+=_buildDocList(mc,'company');
     else h+='<span style="color:#cbd5e1;">—</span>';
     h+='</td>';
     // 国交省
-    h+='<td style="font-size:10px;line-height:1.5;'+(mk.length?'background:#eff6ff;':'')+'">';
-    if(mk.length) h+=_buildDocList(mk);
+    h+='<td style="font-size:10px;line-height:1.7;'+(mk.length?'background:#eff6ff;':'')+'">';
+    if(mk.length) h+=_buildDocList(mk,'kokko');
     else h+='<span style="color:#cbd5e1;">—</span>';
     h+='</td>';
     h+='</tr>';
@@ -1332,12 +1345,23 @@ function renderMissingDocs(){
   h+='</tbody></table></div>';
   el.innerHTML=h;
 }
-// 番号配列をバッジ形式の縦リストに
-function _buildDocList(arr){
+// 番号配列をバッジ形式の縦リストに（カテゴリ別に色を変える）
+function _buildDocList(arr, category){
   if(!arr||!arr.length) return '';
+  // category: 'person' | 'company' | 'kokko'
+  var bgColor, textColor, borderColor;
+  if(category==='person'){
+    bgColor='#fef2f2'; textColor='#991b1b'; borderColor='#fca5a5';
+  } else if(category==='company'){
+    bgColor='#fff7ed'; textColor='#9a3412'; borderColor='#fdba74';
+  } else if(category==='kokko'){
+    bgColor='#eff6ff'; textColor='#1e40af'; borderColor='#93c5fd';
+  } else {
+    bgColor='white'; textColor='#0f172a'; borderColor='#cbd5e1';
+  }
   return arr.map(function(n){
     var label = DOC_NUMBERING[n] || ('書類'+n);
-    return '<div style="display:inline-block;background:white;border:1px solid #cbd5e1;padding:2px 6px;border-radius:4px;margin:1px 2px;font-size:10px;"><strong>'+n+'.</strong> '+esc(label)+'</div>';
+    return '<div style="display:inline-block;background:'+bgColor+';color:'+textColor+';border:1.5px solid '+borderColor+';padding:3px 8px;border-radius:4px;margin:2px 3px;font-size:11px;font-weight:700;"><span style="opacity:.7;">'+n+'.</span> '+esc(label)+'</div>';
   }).join('');
 }
 
@@ -1372,19 +1396,19 @@ function openCaseDetailModal(caseId){
       // 人材
       h+='<div style="margin-bottom:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;">';
       h+='<div style="font-size:11px;font-weight:800;color:#991b1b;margin-bottom:6px;">👤 人材の不足書類</div>';
-      if(mp.length) h+='<div>'+_buildDocList(mp)+'</div>';
+      if(mp.length) h+='<div>'+_buildDocList(mp,'person')+'</div>';
       else h+='<div style="color:#cbd5e1;font-size:11px;">なし</div>';
       h+='</div>';
       // 企業
       h+='<div style="margin-bottom:12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px;">';
       h+='<div style="font-size:11px;font-weight:800;color:#9a3412;margin-bottom:6px;">🏢 企業の不足書類</div>';
-      if(mc.length) h+='<div>'+_buildDocList(mc)+'</div>';
+      if(mc.length) h+='<div>'+_buildDocList(mc,'company')+'</div>';
       else h+='<div style="color:#cbd5e1;font-size:11px;">なし</div>';
       h+='</div>';
       // 国交省
       h+='<div style="margin-bottom:6px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;">';
       h+='<div style="font-size:11px;font-weight:800;color:#1e40af;margin-bottom:6px;">🏛 国交省の不足書類</div>';
-      if(mk.length) h+='<div>'+_buildDocList(mk)+'</div>';
+      if(mk.length) h+='<div>'+_buildDocList(mk,'kokko')+'</div>';
       else h+='<div style="color:#cbd5e1;font-size:11px;">なし</div>';
       h+='</div>';
     }
@@ -2382,6 +2406,7 @@ async function loadData(){
       }
     });
     // ver.20260601.test: 人材の不足書類を取得（オープンケアログイン時のみ）
+    // 注: persons テーブルには id カラムが無い（case_id が主キー）ので case_id ベースで取得
     if(isOpencareToken() && allCases.length){
       var cids=allCases.map(function(c){return c.id;});
       var MD_CHUNK=50;
@@ -2389,40 +2414,37 @@ async function loadData(){
       for(var mi=0;mi<cids.length;mi+=MD_CHUNK){
         var mchunk=cids.slice(mi,mi+MD_CHUNK);
         try{
-          var rmp=await sbFetch('persons?case_id=in.('+mchunk.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=id,case_id,missing_docs');
+          var rmp=await sbFetch('persons?case_id=in.('+mchunk.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=case_id,missing_docs');
           var mpersons=await rmp.json();
           if(Array.isArray(mpersons)){
             mpersons.forEach(function(p){
               if(p.missing_docs && Array.isArray(p.missing_docs) && p.missing_docs.length){
-                // case_id でも personId でも引けるよう両方保存
                 missingDocsPerson[p.case_id] = p.missing_docs;
-                missingDocsPerson['_pid_'+p.id] = p.missing_docs;
               }
             });
           }
         }catch(e){ console.warn('[missing_docs persons load failed]', e); }
       }
-      // 企業（会社名）ごとの不足書類
-      var companyNames=[];
-      allCases.forEach(function(c){ if(c.company && companyNames.indexOf(c.company)<0) companyNames.push(c.company); });
+      // 企業の不足書類: support_org_name でオープンケア配下の全社一括取得
+      // （日本語社名のin.()検索は PostgREST のURL encoding問題で失敗するため）
       missingDocsCompany={};
-      if(companyNames.length){
-        for(var ci=0;ci<companyNames.length;ci+=MD_CHUNK){
-          var cchunk=companyNames.slice(ci,ci+MD_CHUNK);
-          try{
-            var qstr=cchunk.map(function(n){return '"'+n.replace(/"/g,'\\"')+'"';}).join(',');
-            var rmc=await sbFetch('companies?name=in.('+encodeURIComponent(qstr)+')&select=name,missing_docs');
-            var mcompanies=await rmc.json();
-            if(Array.isArray(mcompanies)){
-              mcompanies.forEach(function(co){
-                if(co.missing_docs && Array.isArray(co.missing_docs) && co.missing_docs.length){
-                  missingDocsCompany[co.name] = co.missing_docs;
-                }
-              });
+      try{
+        var rmc=await sbFetch('companies?support_org_name=in.('
+          +encodeURIComponent('"オープンケア協同組合","オープンケア協同組合特技STA"')
+          +')&select=name,missing_docs');
+        var mcompanies=await rmc.json();
+        if(Array.isArray(mcompanies)){
+          mcompanies.forEach(function(co){
+            if(co.missing_docs && Array.isArray(co.missing_docs) && co.missing_docs.length){
+              missingDocsCompany[co.name] = co.missing_docs;
             }
-          }catch(e){ console.warn('[missing_docs companies load failed]', e); }
+          });
         }
-      }
+      }catch(e){ console.warn('[missing_docs companies load failed]', e); }
+      console.log('[missing_docs loaded]',
+        'persons=', Object.keys(missingDocsPerson).length,
+        'companies=', Object.keys(missingDocsCompany).length,
+        'kokko=', Object.keys(missingDocsKokko).length);
     }
     // personsテーブルからtempReturn(一時帰国予定日)を取得して補完
     if(allCases.length){
