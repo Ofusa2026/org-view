@@ -307,7 +307,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260601.01</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260602.01</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -2255,6 +2255,98 @@ async function saveComment(caseId){
 }
 
 // ver.20260518.08: 申請記録・審査完了の「確認」チェックボックスをトグル＆DB保存
+// ver.20260602.01: ベル通知 ⇔ メイン画面チェックの双方向ミラー同期
+// アーカイブと通知を case_id + 種別単位で一括同期する
+//   受付番号アーカイブ ↔ status='受付番号取込' の通知
+//   審査完了アーカイブ ↔ status='審査完了' の通知
+
+// アーカイブID → 対応する通知のキー {case_id, status} を返す
+function _archiveToNotifKey(archiveId){
+  if(!archiveId) return null;
+  var r = (typeof allReceipts!=='undefined') ? allReceipts.find(function(x){return x.id===archiveId;}) : null;
+  if(r) return {case_id:r.case_id, status:'受付番号取込'};
+  var s = (typeof allShinsa!=='undefined') ? allShinsa.find(function(x){return x.id===archiveId;}) : null;
+  if(s) return {case_id:s.case_id, status:'審査完了'};
+  return null;
+}
+
+// 通知 → 対応するアーカイブIDの配列を返す（case_id + 種別 で複数該当しうる）
+function _notifToArchiveIds(notification){
+  if(!notification||!notification.case_id) return [];
+  if(notification.status==='受付番号取込'){
+    if(typeof allReceipts==='undefined') return [];
+    return allReceipts.filter(function(r){return r.case_id===notification.case_id;}).map(function(r){return r.id;});
+  }
+  if(notification.status==='審査完了'){
+    if(typeof allShinsa==='undefined') return [];
+    return allShinsa.filter(function(s){return s.case_id===notification.case_id;}).map(function(s){return s.id;});
+  }
+  return [];
+}
+
+// メイン → ベル: アーカイブのチェック状態を、同じ case_id+種別の通知すべてに反映
+async function _mirrorCheckToNotif(archiveId, checked){
+  var key = _archiveToNotifKey(archiveId);
+  if(!key) return;
+  if(typeof notifications==='undefined' || !Array.isArray(notifications)) return;
+  // 対象通知: case_id一致 かつ status一致
+  var targets = notifications.filter(function(n){
+    return n.case_id===key.case_id && n.status===key.status;
+  });
+  // チェック状態と通知の確認状態が既に一致しているものは除外（無駄なPATCHを避ける）
+  var needsUpdate = targets.filter(function(n){
+    return checked ? !n.confirmed_at : !!n.confirmed_at;
+  });
+  if(!needsUpdate.length) return;
+  var ids = needsUpdate.map(function(n){return n.id;});
+  var idsParam = ids.map(function(id){return '"'+id+'"';}).join(',');
+  var now = new Date().toISOString();
+  try{
+    var body = checked
+      ? {confirmed_at:now, confirmed_by:orgName||''}
+      : {confirmed_at:null, confirmed_by:null};
+    var r = await sbFetch('share_notifications?id=in.('+idsParam+')',{
+      method:'PATCH',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify(body)
+    });
+    if(!r.ok){ console.warn('[_mirrorCheckToNotif] PATCH failed status='+r.status); return; }
+    // ローカル notifications も更新
+    needsUpdate.forEach(function(n){
+      if(checked){ n.confirmed_at=now; n.confirmed_by=orgName||''; }
+      else { n.confirmed_at=null; n.confirmed_by=null; }
+    });
+    if(typeof updateNotifBadge==='function') updateNotifBadge();
+    if(typeof renderNotifModal==='function') renderNotifModal();
+  }catch(e){ console.warn('[_mirrorCheckToNotif] error', e); }
+}
+
+// ベル → メイン: 通知の確認状態を、同じ case_id+種別のアーカイブのチェックすべてに反映
+async function _mirrorNotifToCheck(notifId, confirmed){
+  if(typeof notifications==='undefined' || !Array.isArray(notifications)) return;
+  var n = notifications.find(function(x){return x.id===notifId;});
+  if(!n) return;
+  var archiveIds = _notifToArchiveIds(n);
+  if(!archiveIds.length) return;
+  // 状態が既に一致しているものは除外
+  var changed = false;
+  archiveIds.forEach(function(aid){
+    var curr = !!orgChecks[aid];
+    if(confirmed && !curr){ orgChecks[aid] = new Date().toISOString(); changed=true; }
+    else if(!confirmed && curr){ delete orgChecks[aid]; changed=true; }
+  });
+  if(!changed) return;
+  // settings に保存
+  var key = 'org_checks_'+currentToken;
+  try{
+    await sbFetch('settings',{
+      method:'POST',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({key:key,value:JSON.stringify(orgChecks)})
+    });
+  }catch(e){ console.warn('[_mirrorNotifToCheck] settings save failed', e); }
+}
+
 async function toggleOrgCheck(archiveId, checked){
   if(!archiveId)return;
   if(checked){
@@ -2274,6 +2366,8 @@ async function toggleOrgCheck(archiveId, checked){
   var key='org_checks_'+currentToken;
   try{
     await sbFetch('settings',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:JSON.stringify(orgChecks)})});
+    // ver.20260602.01: メイン→ベルのミラー同期（同 case_id+種別の通知をまとめて確認/未確認に）
+    await _mirrorCheckToNotif(archiveId, checked);
     // ver.20260519.31: renderCurrent()に統一
     renderCurrent();
   }catch(e){
@@ -2433,6 +2527,25 @@ async function confirmAllNotifications(){
     }
     // ローカルのnotificationsも更新
     unconfirmed.forEach(function(n){ n.confirmed_at=now; n.confirmed_by=orgName||''; });
+    // ver.20260602.01: ベル→メインのミラー同期（一括）
+    //   対応するアーカイブをまとめて orgChecks にセットして、settings は1回だけ保存
+    var changed = false;
+    unconfirmed.forEach(function(n){
+      var archiveIds = _notifToArchiveIds(n);
+      archiveIds.forEach(function(aid){
+        if(!orgChecks[aid]){ orgChecks[aid] = now; changed=true; }
+      });
+    });
+    if(changed){
+      try{
+        var ckKey='org_checks_'+currentToken;
+        await sbFetch('settings',{
+          method:'POST',
+          headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+          body:JSON.stringify({key:ckKey,value:JSON.stringify(orgChecks)})
+        });
+      }catch(e){ console.warn('[confirmAllNotifications] mirror save failed', e); }
+    }
     updateNotifBadge();
     renderNotifModal();
     renderCurrent();
@@ -2521,6 +2634,8 @@ async function confirmNotification(id){
     var updated=await r.json();
     if(Array.isArray(updated)&&updated.length){ Object.assign(n,updated[0]); }
     else { n.confirmed_at=new Date().toISOString(); }
+    // ver.20260602.01: ベル→メインのミラー同期（同 case_id+種別のアーカイブをまとめてチェック済みに）
+    await _mirrorNotifToCheck(id, true);
     updateNotifBadge();
     renderNotifModal();
     renderCurrent();
