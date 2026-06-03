@@ -307,7 +307,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260602.03</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260603.01</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -3188,6 +3188,8 @@ function _mapAgencyOffice(aidemBranch){
 
 // 担当者振り分けロジック（ofusa-aidem-tantouスキル準拠）
 // ver.20260525.02: 新拠点名対応 - 東/西/高育チーム
+// ver.20260603.01: share.html では呼び出されなくなった（intake_requests.support_staff は '別紙参照' 固定）。
+//                  OFUSA担当者の自動振り分けは案シス側（index.html）で実装する想定。関数はそのまま残す。
 // 第1優先: aidemBranch（必須項目）を見る
 // - 東 → 陳・大盛
 // - 西 → 内田
@@ -3323,10 +3325,9 @@ async function submitNewCase(){
     return;
   }
 
-  // 担当者振り分け
-  // ver.20260527.16: 個人別の現在資格を渡せないため、最初の人材の現在資格で振り分け（既存の振り分けロジック仕様）
-  var firstCurrent = (jinzaiList[0] && jinzaiList[0].currentStatus) || '';
-  var supportStaff = _assignAidemStaff(caseName, desiredStatus, firstCurrent, aidemBranch);
+  // ver.20260603.01: アイデム経由案件の支援担当者は「別紙参照」固定
+  // 旧: _assignAidemStaff() で陳・大盛/内田/大盛 南美 を計算し intake_requests.support_staff に保存していた
+  // 新: support_staff = 受入企業の支援責任者（別紙参照が慣習）。OFUSA担当者は別物なので案シス側で振り分ける。
 
   _ncPendingPayload = {
     agencyOffice: agencyOffice,
@@ -3336,7 +3337,7 @@ async function submitNewCase(){
     desiredStatusNote: desiredStatusNote,
     acceptExp: acceptExp,
     aidemBranch: aidemBranch, clientStaff: clientStaff,
-    supportFee: supportFee, supportStaff: supportStaff, jinzaiList: jinzaiList
+    supportFee: supportFee, jinzaiList: jinzaiList
   };
 
   // 確認モーダル表示
@@ -3371,9 +3372,7 @@ function _renderConfirmBody(p){
   h += '<div><div class="nc-cf-label">アイデム拠点</div><div class="nc-cf-value">' + esc(p.aidemBranch||'') + '</div></div>';
   h += '<div><div class="nc-cf-label">アイデム担当者</div><div class="nc-cf-value">' + esc(p.clientStaff||'') + '</div></div>';
   h += '</div>';
-  if(p.supportStaff){
-    h += '<div class="nc-cf-label">OFUSA担当者（自動振り分け）</div><div class="nc-cf-value">' + esc(p.supportStaff) + '</div>';
-  }
+  // ver.20260603.01: OFUSA担当者の自動振り分け表示は削除（アイデム側には見せない、OFUSA内部で振り分ける）
   h += '<div class="nc-cf-label">人材リスト（' + p.jinzaiList.length + '名）</div>';
   h += '<div class="nc-cf-jinzai-list"><table><thead><tr><th>#</th><th>氏名</th><th>国籍</th><th>現在の在留資格</th><th>在留期限</th><th>受取方法</th><th>推薦票</th></tr></thead><tbody>';
   p.jinzaiList.forEach(function(j, idx){
@@ -3474,7 +3473,7 @@ async function executeSubmit(){
         client_staff: p.clientStaff || '',
         nationality: j.nationality,
         expire: j.expire || null,
-        support_staff: p.supportStaff,
+        support_staff: '別紙参照',
         support_fee: feeStr,
         delivery_method: dm,
         recommend_letter_required: rec,
