@@ -307,7 +307,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260602.01</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260602.02</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -2257,12 +2257,18 @@ async function saveComment(caseId){
 // ver.20260518.08: 申請記録・審査完了の「確認」チェックボックスをトグル＆DB保存
 // ver.20260602.01: ベル通知 ⇔ メイン画面チェックの双方向ミラー同期
 // アーカイブと通知を case_id + 種別単位で一括同期する
-//   受付番号アーカイブ ↔ status='受付番号取込' の通知
-//   審査完了アーカイブ ↔ status='審査完了' の通知
+//   受付番号アーカイブ ↔ status='受付番号取込' の通知 → orgChecks[receipt_archive.id]
+//   審査完了アーカイブ ↔ status='審査完了' の通知   → orgChecks[shinsa_archive.id]
+//   ver.20260602.02: 申請済(番号待)通知 ↔ buildTodayHighlights①申請分 → orgChecks['case_'+case_id]
 
-// アーカイブID → 対応する通知のキー {case_id, status} を返す
+// アーカイブID (archiveId) → 対応する通知のキー {case_id, status} を返す
+// archiveId は receipt_archive.id / shinsa_archive.id / 'case_<case_id>' のいずれか
 function _archiveToNotifKey(archiveId){
   if(!archiveId) return null;
+  // 'case_<case_id>' 形式（申請分セクション用）
+  if(typeof archiveId==='string' && archiveId.indexOf('case_')===0){
+    return {case_id:archiveId.substring(5), status:'申請済(番号待)'};
+  }
   var r = (typeof allReceipts!=='undefined') ? allReceipts.find(function(x){return x.id===archiveId;}) : null;
   if(r) return {case_id:r.case_id, status:'受付番号取込'};
   var s = (typeof allShinsa!=='undefined') ? allShinsa.find(function(x){return x.id===archiveId;}) : null;
@@ -2280,6 +2286,11 @@ function _notifToArchiveIds(notification){
   if(notification.status==='審査完了'){
     if(typeof allShinsa==='undefined') return [];
     return allShinsa.filter(function(s){return s.case_id===notification.case_id;}).map(function(s){return s.id;});
+  }
+  // 申請済(番号待) は archiveId 列ではなく case_<case_id> キーを返す
+  // スペースありなしの両方の status を許容
+  if(notification.status==='申請済(番号待)' || notification.status==='申請済 (番号待)'){
+    return ['case_'+notification.case_id];
   }
   return [];
 }
