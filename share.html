@@ -307,7 +307,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260602.02</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260602.03</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -2255,56 +2255,69 @@ async function saveComment(caseId){
 }
 
 // ver.20260518.08: 申請記録・審査完了の「確認」チェックボックスをトグル＆DB保存
-// ver.20260602.01: ベル通知 ⇔ メイン画面チェックの双方向ミラー同期
-// アーカイブと通知を case_id + 種別単位で一括同期する
-//   受付番号アーカイブ ↔ status='受付番号取込' の通知 → orgChecks[receipt_archive.id]
-//   審査完了アーカイブ ↔ status='審査完了' の通知   → orgChecks[shinsa_archive.id]
-//   ver.20260602.02: 申請済(番号待)通知 ↔ buildTodayHighlights①申請分 → orgChecks['case_'+case_id]
+// ver.20260602.03: ベル通知 ⇔ メイン画面チェックの完全双方向ミラー同期（case_idベース一括）
+// 1つの操作で同じ case_id のすべての未確認セクション/通知を一括同期する。
+// ミラー対象通知ステータス: 受付番号取込 / 審査完了 / 申請済(番号待)
+// ミラー対象 archiveId:    receipt_archive.id / shinsa_archive.id / 'case_<case_id>'
 
-// アーカイブID (archiveId) → 対応する通知のキー {case_id, status} を返す
-// archiveId は receipt_archive.id / shinsa_archive.id / 'case_<case_id>' のいずれか
-function _archiveToNotifKey(archiveId){
+var _MIRROR_NOTIF_STATUSES = ['受付番号取込','審査完了','申請済(番号待)','申請済 (番号待)'];
+
+// archiveId → case_id を逆引き（'case_<case_id>' / receipt_archive.id / shinsa_archive.id すべて対応）
+function _archiveToCaseId(archiveId){
   if(!archiveId) return null;
-  // 'case_<case_id>' 形式（申請分セクション用）
   if(typeof archiveId==='string' && archiveId.indexOf('case_')===0){
-    return {case_id:archiveId.substring(5), status:'申請済(番号待)'};
+    return archiveId.substring(5);
   }
-  var r = (typeof allReceipts!=='undefined') ? allReceipts.find(function(x){return x.id===archiveId;}) : null;
-  if(r) return {case_id:r.case_id, status:'受付番号取込'};
-  var s = (typeof allShinsa!=='undefined') ? allShinsa.find(function(x){return x.id===archiveId;}) : null;
-  if(s) return {case_id:s.case_id, status:'審査完了'};
+  if(typeof allReceipts!=='undefined'){
+    var r = allReceipts.find(function(x){return x.id===archiveId;});
+    if(r) return r.case_id;
+  }
+  if(typeof allShinsa!=='undefined'){
+    var s = allShinsa.find(function(x){return x.id===archiveId;});
+    if(s) return s.case_id;
+  }
   return null;
 }
 
-// 通知 → 対応するアーカイブIDの配列を返す（case_id + 種別 で複数該当しうる）
-function _notifToArchiveIds(notification){
-  if(!notification||!notification.case_id) return [];
-  if(notification.status==='受付番号取込'){
-    if(typeof allReceipts==='undefined') return [];
-    return allReceipts.filter(function(r){return r.case_id===notification.case_id;}).map(function(r){return r.id;});
+// 後方互換: 旧 _archiveToNotifKey は残しておく（外部呼び出し対策）
+function _archiveToNotifKey(archiveId){
+  var caseId = _archiveToCaseId(archiveId);
+  if(!caseId) return null;
+  if(typeof archiveId==='string' && archiveId.indexOf('case_')===0){
+    return {case_id:caseId, status:'申請済(番号待)'};
   }
-  if(notification.status==='審査完了'){
-    if(typeof allShinsa==='undefined') return [];
-    return allShinsa.filter(function(s){return s.case_id===notification.case_id;}).map(function(s){return s.id;});
+  if(typeof allReceipts!=='undefined' && allReceipts.some(function(x){return x.id===archiveId;})){
+    return {case_id:caseId, status:'受付番号取込'};
   }
-  // 申請済(番号待) は archiveId 列ではなく case_<case_id> キーを返す
-  // スペースありなしの両方の status を許容
-  if(notification.status==='申請済(番号待)' || notification.status==='申請済 (番号待)'){
-    return ['case_'+notification.case_id];
-  }
-  return [];
+  return {case_id:caseId, status:'審査完了'};
 }
 
-// メイン → ベル: アーカイブのチェック状態を、同じ case_id+種別の通知すべてに反映
+// 通知 → 同じ case_id の全アーカイブID（一括同期対象）を返す
+// 申請分セクション用の 'case_<case_id>' も含める
+function _notifToArchiveIds(notification){
+  if(!notification||!notification.case_id) return [];
+  if(_MIRROR_NOTIF_STATUSES.indexOf(notification.status)<0) return [];
+  var ids = [];
+  if(typeof allReceipts!=='undefined'){
+    allReceipts.filter(function(r){return r.case_id===notification.case_id;}).forEach(function(r){ids.push(r.id);});
+  }
+  if(typeof allShinsa!=='undefined'){
+    allShinsa.filter(function(s){return s.case_id===notification.case_id;}).forEach(function(s){ids.push(s.id);});
+  }
+  ids.push('case_'+notification.case_id);
+  return ids;
+}
+
+// メイン → ベル: archiveId のチェック状態を、同じ case_id のミラー対象通知すべてに反映
 async function _mirrorCheckToNotif(archiveId, checked){
-  var key = _archiveToNotifKey(archiveId);
-  if(!key) return;
+  var caseId = _archiveToCaseId(archiveId);
+  if(!caseId) return;
   if(typeof notifications==='undefined' || !Array.isArray(notifications)) return;
-  // 対象通知: case_id一致 かつ status一致
+  // 対象通知: 同じ case_id かつ ミラー対象ステータス
   var targets = notifications.filter(function(n){
-    return n.case_id===key.case_id && n.status===key.status;
+    return n.case_id===caseId && _MIRROR_NOTIF_STATUSES.indexOf(n.status)>=0;
   });
-  // チェック状態と通知の確認状態が既に一致しているものは除外（無駄なPATCHを避ける）
+  // 状態が既に一致しているものは除外
   var needsUpdate = targets.filter(function(n){
     return checked ? !n.confirmed_at : !!n.confirmed_at;
   });
@@ -2322,7 +2335,6 @@ async function _mirrorCheckToNotif(archiveId, checked){
       body:JSON.stringify(body)
     });
     if(!r.ok){ console.warn('[_mirrorCheckToNotif] PATCH failed status='+r.status); return; }
-    // ローカル notifications も更新
     needsUpdate.forEach(function(n){
       if(checked){ n.confirmed_at=now; n.confirmed_by=orgName||''; }
       else { n.confirmed_at=null; n.confirmed_by=null; }
@@ -2332,22 +2344,21 @@ async function _mirrorCheckToNotif(archiveId, checked){
   }catch(e){ console.warn('[_mirrorCheckToNotif] error', e); }
 }
 
-// ベル → メイン: 通知の確認状態を、同じ case_id+種別のアーカイブのチェックすべてに反映
+// ベル → メイン: 通知の確認状態を、同じ case_id の全アーカイブID（受付/審査/申請分）に一括反映
 async function _mirrorNotifToCheck(notifId, confirmed){
   if(typeof notifications==='undefined' || !Array.isArray(notifications)) return;
   var n = notifications.find(function(x){return x.id===notifId;});
   if(!n) return;
   var archiveIds = _notifToArchiveIds(n);
   if(!archiveIds.length) return;
-  // 状態が既に一致しているものは除外
   var changed = false;
+  var now = new Date().toISOString();
   archiveIds.forEach(function(aid){
     var curr = !!orgChecks[aid];
-    if(confirmed && !curr){ orgChecks[aid] = new Date().toISOString(); changed=true; }
+    if(confirmed && !curr){ orgChecks[aid] = now; changed=true; }
     else if(!confirmed && curr){ delete orgChecks[aid]; changed=true; }
   });
   if(!changed) return;
-  // settings に保存
   var key = 'org_checks_'+currentToken;
   try{
     await sbFetch('settings',{
