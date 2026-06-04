@@ -19,22 +19,22 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .notif-btn{position:relative;background:rgba(255,255,255,.12);border:none;color:white;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;gap:6px;}
 .notif-btn:hover{background:rgba(255,255,255,.22);}
 .notif-badge{position:absolute;top:-4px;right:-4px;background:#dc2626;color:white;min-width:16px;height:16px;border-radius:99px;font-size:9px;font-weight:800;padding:0 4px;display:flex;align-items:center;justify-content:center;animation:pulse 1.5s infinite;}
-/* ver.20260603.test05: 右下スライドイントースト（display切替なし、transform/opacityのみでアニメ） */
+/* ver.20260603.test06: 右上(ヘッダー直下)スライドイン + 濃紺背景で視認性UP */
 .whats-new-toast{
   position:fixed;
-  bottom:20px;
+  top:70px;
   right:20px;
-  background:white;
-  border:1px solid #e5e7eb;
+  background:#0f2040;
+  border:1px solid #1e3a5f;
   border-left:4px solid #7c3aed;
   border-radius:10px;
   padding:14px 16px;
-  box-shadow:0 8px 24px rgba(0,0,0,.15), 0 2px 6px rgba(0,0,0,.08);
+  box-shadow:0 12px 32px rgba(0,0,0,.35), 0 4px 10px rgba(124,58,237,.25);
   z-index:500;
-  width:320px;
+  width:340px;
   max-width:calc(100vw - 40px);
   font-family:inherit;
-  transform:translateX(400px);
+  transform:translateX(420px);
   opacity:0;
   pointer-events:none;
   transition:transform .4s cubic-bezier(.4,0,.2,1), opacity .4s;
@@ -58,24 +58,26 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .whats-new-toast-title{
   font-size:13px;
   font-weight:800;
-  color:#1f2937;
+  color:white;
   flex:1;
   line-height:1.3;
+  letter-spacing:.3px;
 }
 .whats-new-toast-close{
   background:none;
   border:none;
-  color:#9ca3af;
+  color:rgba(255,255,255,.6);
   font-size:16px;
   cursor:pointer;
   padding:0 2px;
   line-height:1;
   flex-shrink:0;
+  transition:color .15s;
 }
-.whats-new-toast-close:hover{color:#1f2937;}
+.whats-new-toast-close:hover{color:white;}
 .whats-new-toast-body{
   font-size:11px;
-  color:#6b7280;
+  color:rgba(255,255,255,.75);
   line-height:1.5;
   margin-bottom:10px;
   padding-left:28px;
@@ -95,9 +97,11 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
   font-size:11px;
   font-weight:700;
   cursor:pointer;
-  transition:background .15s;
+  transition:background .15s, transform .1s;
+  box-shadow:0 2px 6px rgba(124,58,237,.4);
 }
-.whats-new-toast-btn:hover{background:#6d28d9;}
+.whats-new-toast-btn:hover{background:#8b5cf6;}
+.whats-new-toast-btn:active{transform:scale(.97);}
 @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.15);}}
 .notif-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:none;align-items:flex-start;justify-content:center;padding:56px 12px 12px;overflow-y:auto;}
 .notif-modal-bg.open{display:flex;}
@@ -337,7 +341,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
     <!-- ver.20260603.test04: ver表記はクリックでアップデート履歴を見られる動線として残す（バッジは右下トーストに移行） -->
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.test05</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.test06</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -747,6 +751,14 @@ var NOTIF_LABELS={'審査中':'✅ 申請済み・受付番号紐付','許可済
 // 修正をリリースしたら、配列の先頭に { version, date, audience, items: [...] } を追加してください。
 // 新バージョン初見時に自動で右下トースト表示されます（localStorage 'share_last_seen_version_test' で記録）。
 var WHATS_NEW = [
+  {
+    version: 'ver.20260603.test06',
+    date: '2026-06-03',
+    audience: 'all',
+    items: [
+      '🎨 アップデート通知の位置を画面右上に変更し、配色も濃紺で目立つようにしました。'
+    ]
+  },
   {
     version: 'ver.20260603.test05',
     date: '2026-06-03',
