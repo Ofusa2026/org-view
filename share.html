@@ -361,7 +361,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.08</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.09</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -784,7 +784,7 @@ var WHATS_NEW = [
   {
     version: 'ver.20260603.06',
     date: '2026-06-03',
-    audience: 'aidem',
+    audience: 'all',
     notify: false,
     items: [
       '👤 「担当」列はアイデム経由案件専用の項目だったため、アイデム以外の所属機関では一覧から非表示にしました（進行中／すべて／申請記録／審査完了／窓口受取 すべてのタブ）。'
@@ -2939,8 +2939,9 @@ function openWhatsNew(opts){
   var bodyEl = document.getElementById('whatsNewBody');
   if(!bodyEl) return;
 
-  // 最初に audience フィルタを適用してから差分判定
-  var entries = _filterWhatsNewByAudience(WHATS_NEW || []);
+  // ver.20260603.09: 履歴モーダルでも notify:false のエントリは非表示（完全サイレント仕様）
+  // audience フィルタ → notify フィルタ の順で適用してから差分判定
+  var entries = _filterWhatsNewForNotify(_filterWhatsNewByAudience(WHATS_NEW || []));
   if(opts.autoOpened){
     var lastSeen = '';
     try{ lastSeen = localStorage.getItem(WHATS_NEW_STORAGE_KEY) || ''; }catch(e){}
@@ -2952,7 +2953,7 @@ function openWhatsNew(opts){
       entries = entries.slice(0, WHATS_NEW_INITIAL_LIMIT);
     }
   }
-  // 手動オープン（ver表記クリック等）の場合は audience 一致の全件表示
+  // 手動オープン（ver表記クリック等）の場合は audience + notify 通過の全件表示
 
   if(!entries.length){
     bodyEl.innerHTML = '<div style="text-align:center;padding:30px;color:#9ca3af;font-size:13px;">最近のアップデートはありません</div>';
