@@ -361,7 +361,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.05</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.06</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -770,6 +770,14 @@ var NOTIF_LABELS={'申請済(番号待)':'📤 申請済（番号待ち）','受
 // 修正をリリースしたら、配列の先頭に { version, date, audience, items: [...] } を追加してください。
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 var WHATS_NEW = [
+  {
+    version: 'ver.20260603.06',
+    date: '2026-06-03',
+    audience: 'all',
+    items: [
+      '👤 「担当」列はアイデム経由案件専用の項目だったため、アイデム以外の所属機関では一覧から非表示にしました（進行中／すべて／申請記録／審査完了／窓口受取 すべてのタブ）。'
+    ]
+  },
   {
     version: 'ver.20260603.05',
     date: '2026-06-03',
@@ -1206,6 +1214,11 @@ function getEffectiveCfg(){
 }
 // メイン列がカスタマイズで表示OKか
 function isColVisible(key){
+  // ver.20260603.06: 「担当」列はアイデム担当者(client_staff)を表示するためのもの。
+  // アイデム以外の org では client_staff が空でしか無く、表示しても空欄が並ぶだけなので、
+  // 進捗URL列カスタマイズ設定で staff が選ばれていても、orgがアイデム以外なら強制非表示。
+  if(key === 'staff' && orgName !== '株式会社アイデム') return false;
+
   var cfg=getEffectiveCfg();
   if(!cfg.main || cfg.main.enabled===false) return false;
   if(!cfg.main.cols) return true; // colsが未指定なら全表示
@@ -1408,12 +1421,14 @@ function _buildReceiptTable(rows, dimmed){
   // ver.20260525.05: 確認チェック・受付日を左端に移動
   // ver.20260527.34: 担当列を追加（アイデム担当者 client_staff）
   // ver.20260601.01: 受取方法列を追加
+  // ver.20260603.06: 担当列はアイデムのみ表示
+  var _showTanto = (orgName === '株式会社アイデム');
   h+='<col style="width:70px;">';     // 確認（固有・左端）
   h+='<col style="width:90px;">';     // 受付日（固有・左端隣）
   h+='<col style="width:240px;">';    // 案件名 / 申請者
   h+='<col style="width:140px;">';    // 所属機関
   h+='<col style="width:60px;">';     // 種別
-  h+='<col style="width:90px;">';     // 担当（ver.20260527.34）
+  if(_showTanto) h+='<col style="width:90px;">';     // 担当（ver.20260527.34）アイデムのみ
   h+='<col style="width:140px;">';    // ステータス
   h+='<col style="width:110px;">';    // 在留期限 / 特例
   h+='<col style="width:140px;">';    // 受付番号
@@ -1421,7 +1436,7 @@ function _buildReceiptTable(rows, dimmed){
   h+='<col style="width:140px;">';    // PDF
   h+='</colgroup>';
   h+='<thead><tr>';
-  h+='<th style="text-align:center;" title="確認したらチェック">確認</th><th>受付日</th><th>案件名 / 申請者</th><th>所属機関</th><th>種別</th><th>担当</th><th>ステータス</th><th>在留期限 / 特例</th><th>受付番号</th><th>受取方法</th><th style="text-align:center;">PDF</th>';
+  h+='<th style="text-align:center;" title="確認したらチェック">確認</th><th>受付日</th><th>案件名 / 申請者</th><th>所属機関</th><th>種別</th>'+(_showTanto?'<th>担当</th>':'')+'<th>ステータス</th><th>在留期限 / 特例</th><th>受付番号</th><th>受取方法</th><th style="text-align:center;">PDF</th>';
   h+='</tr></thead><tbody>';
   rows.forEach(function(r){
     var extLabel=getExternalStatus(r.status);
@@ -1455,8 +1470,11 @@ function _buildReceiptTable(rows, dimmed){
     var typeHtml=r.appType?'<span class="type-badge '+tCls+'">'+esc(r.appType)+'</span>':'—';
     h+='<td style="width:48px;">'+typeHtml+'</td>';
     // === 担当（ver.20260527.34: アイデム担当者 client_staff） ===
-    var _recStaff = r.clientStaff || '';
-    h+='<td style="font-size:10px;color:#475569;white-space:nowrap;">'+(_recStaff?esc(_recStaff):'<span style="color:#cbd5e1;">—</span>')+'</td>';
+    // ver.20260603.06: アイデムのみ表示
+    if(_showTanto){
+      var _recStaff = r.clientStaff || '';
+      h+='<td style="font-size:10px;color:#475569;white-space:nowrap;">'+(_recStaff?esc(_recStaff):'<span style="color:#cbd5e1;">—</span>')+'</td>';
+    }
     // === ステータス（申請分は番号待ちバッジ） ===
     if(r._isApplied){
       h+='<td style="white-space:nowrap;"><span class="st-badge" style="background:#fef3c7;color:#d97706;border-color:#fcd34d;">📬 番号待ち</span></td>';
@@ -1568,12 +1586,14 @@ function _buildShinsaTable(rows, dimmed){
   // ver.20260525.04: メインテーブルと列構成を揃える
   // ver.20260527.34: 担当列を追加（アイデム担当者 client_staff）
   // ver.20260601.01: 受取方法列を追加
+  // ver.20260603.06: 担当列はアイデムのみ表示
+  var _showTantoShinsa = (orgName === '株式会社アイデム');
   h+='<col style="width:70px;">';     // 確認（固有・左端）
   h+='<col style="width:90px;">';     // 完了日（固有・左端隣）
   h+='<col style="width:240px;">';    // 案件名 / 申請者
   h+='<col style="width:140px;">';    // 所属機関
   h+='<col style="width:60px;">';     // 種別
-  h+='<col style="width:90px;">';     // 担当（ver.20260527.34）
+  if(_showTantoShinsa) h+='<col style="width:90px;">';     // 担当（ver.20260527.34）アイデムのみ
   h+='<col style="width:140px;">';    // ステータス
   h+='<col style="width:110px;">';    // 在留期限 / 特例
   h+='<col style="width:140px;">';    // 受付番号
@@ -1581,7 +1601,7 @@ function _buildShinsaTable(rows, dimmed){
   h+='<col style="width:140px;">';    // PDF
   h+='</colgroup>';
   h+='<thead><tr>';
-  h+='<th style="text-align:center;" title="確認したらチェック">確認</th><th>完了日</th><th>案件名 / 申請者</th><th>所属機関</th><th>種別</th><th>担当</th><th>ステータス</th><th>在留期限 / 特例</th><th>受付番号</th><th>受取方法</th><th style="text-align:center;">PDF</th>';
+  h+='<th style="text-align:center;" title="確認したらチェック">確認</th><th>完了日</th><th>案件名 / 申請者</th><th>所属機関</th><th>種別</th>'+(_showTantoShinsa?'<th>担当</th>':'')+'<th>ステータス</th><th>在留期限 / 特例</th><th>受付番号</th><th>受取方法</th><th style="text-align:center;">PDF</th>';
   h+='</tr></thead><tbody>';
   rows.forEach(function(r){
     var isChecked=!!orgChecks[r.id];
@@ -1603,8 +1623,11 @@ function _buildShinsaTable(rows, dimmed){
     var typeHtml=r.appType?'<span class="type-badge '+tCls+'">'+esc(r.appType)+'</span>':'—';
     h+='<td style="width:48px;">'+typeHtml+'</td>';
     // === 担当（ver.20260527.34: アイデム担当者 client_staff） ===
-    var _shinsaStaff = r.clientStaff || '';
-    h+='<td style="font-size:10px;color:#475569;white-space:nowrap;">'+(_shinsaStaff?esc(_shinsaStaff):'<span style="color:#cbd5e1;">—</span>')+'</td>';
+    // ver.20260603.06: アイデムのみ表示
+    if(_showTantoShinsa){
+      var _shinsaStaff = r.clientStaff || '';
+      h+='<td style="font-size:10px;color:#475569;white-space:nowrap;">'+(_shinsaStaff?esc(_shinsaStaff):'<span style="color:#cbd5e1;">—</span>')+'</td>';
+    }
     // === ステータス（審査完了は新在留カード発行済みバッジ） ===
     var stBadge='<span class="st-badge" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">✓ 新在留カード発行済み</span>';
     h+='<td style="white-space:nowrap;">'+stBadge+'</td>';
@@ -1831,6 +1854,8 @@ function _fmtMadoguchiDate(d){
 }
 
 function _buildMadoguchiTable(rows, dimmed, dateField, dateLabel, checkPrefix, hideHeader){
+  // ver.20260603.06: 担当者列はアイデムのみ表示
+  var _showTantoMado = (orgName === '株式会社アイデム');
   var h='<div class="tbl-wrap"'+(dimmed?' style="opacity:.65;"':'')+'><table style="table-layout:fixed;">';
   h+='<colgroup>';
   // ver.20260525.11: 確認 → 案件名/申請者(2行) → 所属機関 → 申請種別 → 担当者 の順に統一
@@ -1839,11 +1864,11 @@ function _buildMadoguchiTable(rows, dimmed, dateField, dateLabel, checkPrefix, h
   h+='<col style="width:280px;">';    // 案件名 / 申請者
   h+='<col style="width:200px;">';    // 所属機関
   h+='<col style="width:80px;">';     // 申請種別
-  h+='<col style="width:110px;">';    // 担当者
+  if(_showTantoMado) h+='<col style="width:110px;">';    // 担当者（アイデムのみ）
   h+='</colgroup>';
   if(!hideHeader){
     h+='<thead><tr>';
-    h+='<th style="text-align:center;" title="完了/受取済みでチェック">確認</th><th>案件名 / 申請者</th><th>所属機関</th><th>申請種別</th><th>担当者</th>';
+    h+='<th style="text-align:center;" title="完了/受取済みでチェック">確認</th><th>案件名 / 申請者</th><th>所属機関</th><th>申請種別</th>'+(_showTantoMado?'<th>担当者</th>':'');
     h+='</tr></thead>';
   }
   h+='<tbody>';
@@ -1864,8 +1889,11 @@ function _buildMadoguchiTable(rows, dimmed, dateField, dateLabel, checkPrefix, h
     h+='<td style="font-size:11px;color:#475569;white-space:nowrap;">'+esc(c.appType||'')+'</td>';
     // 担当者（ver.20260527.34: アイデム担当者(client_staff)を表示。OFUSA担当(staff)は非表示。
     // case_id 経由で allCases から clientStaff を引く。新規案件登録分から自然に反映される。）
-    var _madoStaff = _getClientStaffByCaseId(c.id) || c.clientStaff || '';
-    h+='<td style="font-size:11px;color:#475569;white-space:nowrap;">'+(_madoStaff?esc(_madoStaff):'<span style="color:#cbd5e1;">—</span>')+'</td>';
+    // ver.20260603.06: アイデムのみ表示
+    if(_showTantoMado){
+      var _madoStaff = _getClientStaffByCaseId(c.id) || c.clientStaff || '';
+      h+='<td style="font-size:11px;color:#475569;white-space:nowrap;">'+(_madoStaff?esc(_madoStaff):'<span style="color:#cbd5e1;">—</span>')+'</td>';
+    }
     h+='</tr>';
   });
   h+='</tbody></table></div>';
