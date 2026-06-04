@@ -361,7 +361,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.06</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.07</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -767,13 +767,25 @@ var NOTIF_LABELS={'申請済(番号待)':'📤 申請済（番号待ち）','受
 
 // ver.20260603.03: What's New アップデート履歴
 // ver.20260603.04: audience による表示制御を追加 ('all' | 'aidem')
-// 修正をリリースしたら、配列の先頭に { version, date, audience, items: [...] } を追加してください。
+// ver.20260603.07: notify フラグを追加（true: トースト通知あり / false: 履歴のみ）
+// 修正をリリースしたら、配列の先頭に { version, date, audience, notify, items: [...] } を追加してください。
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
+// 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20260603.07',
+    date: '2026-06-03',
+    audience: 'all',
+    notify: false,
+    items: [
+      '🔕 アップデートのお知らせを「通知する／しない」を選べるようにしました（運用側の改善）。'
+    ]
+  },
   {
     version: 'ver.20260603.06',
     date: '2026-06-03',
     audience: 'all',
+    notify: false,
     items: [
       '👤 「担当」列はアイデム経由案件専用の項目だったため、アイデム以外の所属機関では一覧から非表示にしました（進行中／すべて／申請記録／審査完了／窓口受取 すべてのタブ）。'
     ]
@@ -782,6 +794,7 @@ var WHATS_NEW = [
     version: 'ver.20260603.05',
     date: '2026-06-03',
     audience: 'all',
+    notify: true,
     items: [
       '🔔 「申請済（番号待ち）」のベル通知を確認しても、メイン画面の案件チェックは入らないようになりました。<br>（受付番号取込・審査完了の通知については従来どおり、確認するとメイン画面のチェックも自動で連動します。）'
     ]
@@ -790,6 +803,7 @@ var WHATS_NEW = [
     version: 'ver.20260603.04',
     date: '2026-06-03',
     audience: 'all',
+    notify: true,
     items: [
       '🎉 アップデート通知機能を追加しました。画面が更新された時に右上にお知らせが表示されます。「詳細を見る」で内容、「✕」で閉じます。いつでも左上のバージョン表記からも履歴を確認できます。'
     ]
@@ -798,6 +812,7 @@ var WHATS_NEW = [
     version: 'ver.20260603.02',
     date: '2026-06-03',
     audience: 'aidem',
+    notify: true,
     items: [
       '🔧 アイデムShareの新規案件依頼を、リロードせずに連続で登録できるようになりました（2件目以降が「送信中…」のまま押せなくなる不具合を修正）。'
     ]
@@ -806,6 +821,7 @@ var WHATS_NEW = [
     version: 'ver.20260602.03',
     date: '2026-06-02',
     audience: 'all',
+    notify: true,
     items: [
       '🔗 ベル通知の確認とメイン画面のチェック状態が、双方向で自動連動するようになりました。どちらか片方を確認/チェックすると、もう片方も自動的に同期されます。'
     ]
@@ -814,6 +830,7 @@ var WHATS_NEW = [
     version: 'ver.20260601.01',
     date: '2026-06-01',
     audience: 'all',
+    notify: true,
     items: [
       '📦 「進行中」「すべて」「申請記録」「審査完了」タブに <strong>受取方法</strong> 列を追加しました（郵送 / 窓口受取）。',
       '✏️ メイン画面で生成されるテキストから「OFUSA担当者」行を削除しました（個別案件のテキストには反映されません）。'
@@ -823,6 +840,7 @@ var WHATS_NEW = [
     version: 'ver.20260531.02',
     date: '2026-05-31',
     audience: 'all',
+    notify: true,
     items: [
       '⚠️ 未確認の通知がある場合、画面上部にアラートバーを表示するようになりました。'
     ]
@@ -2846,11 +2864,26 @@ function _whatsNewCurrentVersionForViewer(){
   return (filtered && filtered.length) ? filtered[0].version : '';
 }
 
+// ver.20260603.07: 通知 (notify=true) 対象だけに絞ったエントリ
+function _filterWhatsNewForNotify(entries){
+  if(!entries) return [];
+  return entries.filter(function(e){
+    return e.notify !== false;  // 未指定 or true なら通知対象
+  });
+}
+
+// 通知判定用：notify=true かつ閲覧者向け（audience match）の最新バージョン
+function _whatsNewCurrentNotifyVersion(){
+  var filtered = _filterWhatsNewForNotify(_filterWhatsNewByAudience(WHATS_NEW));
+  return (filtered && filtered.length) ? filtered[0].version : '';
+}
+
 function checkAndShowWhatsNew(){
   try{
     if(!WHATS_NEW || !WHATS_NEW.length) return;
-    var current = _whatsNewCurrentVersionForViewer();
-    if(!current) return;  // この閲覧者向けエントリが1件もなければスキップ
+    // ver.20260603.07: 通知対象（notify=true）のみで最新判定
+    var current = _whatsNewCurrentNotifyVersion();
+    if(!current) return;  // この閲覧者向けに通知すべきエントリがなければスキップ
     var lastSeen = '';
     try{ lastSeen = localStorage.getItem(WHATS_NEW_STORAGE_KEY) || ''; }catch(e){}
     if(current !== lastSeen){
@@ -2864,8 +2897,8 @@ function showWhatsNewToast(){
   var toast = document.getElementById('whatsNewToast');
   var bodyEl = document.getElementById('whatsNewToastBody');
   if(!toast || !bodyEl) return;
-  // 閲覧者向けの最新エントリの最初の項目をサマリ表示
-  var filtered = _filterWhatsNewByAudience(WHATS_NEW);
+  // ver.20260603.07: 通知対象エントリのうち、閲覧者向けで最新のものをサマリ表示
+  var filtered = _filterWhatsNewForNotify(_filterWhatsNewByAudience(WHATS_NEW));
   var latest = filtered[0];
   if(latest && latest.items && latest.items.length){
     var firstItem = latest.items[0].replace(/<[^>]+>/g, '');
@@ -2886,7 +2919,7 @@ function dismissWhatsNewToast(){
     toast.classList.remove('show');  // CSSの transform/opacity でフェードアウト＆クリック不可化
   }
   try{
-    var current = _whatsNewCurrentVersionForViewer();
+    var current = _whatsNewCurrentNotifyVersion();
     if(current) localStorage.setItem(WHATS_NEW_STORAGE_KEY, current);
   }catch(e){}
 }
@@ -2944,7 +2977,7 @@ function openWhatsNew(opts){
 function closeWhatsNew(){
   document.getElementById('whatsNewModalBg').classList.remove('open');
   try{
-    var current = _whatsNewCurrentVersionForViewer();
+    var current = _whatsNewCurrentNotifyVersion();
     if(current) localStorage.setItem(WHATS_NEW_STORAGE_KEY, current);
   }catch(e){}
 }
