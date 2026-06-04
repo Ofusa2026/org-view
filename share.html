@@ -45,6 +45,60 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .notif-close{background:none;border:none;color:white;font-size:18px;cursor:pointer;opacity:.7;}
 .notif-close:hover{opacity:1;}
 .notif-body{max-height:60vh;overflow-y:auto;padding:10px;}
+/* ver.20260603.03: What's New モーダル */
+.whats-new-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;display:none;align-items:center;justify-content:center;padding:24px 12px;overflow-y:auto;}
+.whats-new-bg.open{display:flex;}
+.whats-new-modal{background:white;border-radius:16px;width:100%;max-width:520px;box-shadow:0 24px 80px rgba(0,0,0,.4);overflow:hidden;display:flex;flex-direction:column;}
+.whats-new-head{padding:16px 20px;background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);color:white;display:flex;align-items:center;justify-content:space-between;}
+.whats-new-title{font-size:16px;font-weight:800;letter-spacing:.5px;}
+.whats-new-close{background:none;border:none;color:white;font-size:20px;cursor:pointer;opacity:.75;line-height:1;padding:0 4px;}
+.whats-new-close:hover{opacity:1;}
+.whats-new-body{max-height:60vh;overflow-y:auto;padding:18px 20px;background:#fafafa;}
+.whats-new-version{font-size:11px;font-weight:700;color:#7c3aed;background:#f5f3ff;border:1.5px solid #ddd6fe;padding:3px 10px;border-radius:12px;display:inline-block;margin-bottom:8px;letter-spacing:.5px;}
+.whats-new-version .wn-date{color:#6b7280;font-weight:500;margin-left:6px;}
+.whats-new-section{background:white;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;margin-bottom:10px;}
+.whats-new-section ul{margin:0;padding-left:20px;}
+.whats-new-section ul li{font-size:13px;line-height:1.7;color:#1f2937;margin-bottom:4px;}
+.whats-new-section ul li:last-child{margin-bottom:0;}
+.whats-new-section ul li strong{color:#7c3aed;font-weight:700;}
+.whats-new-foot{padding:14px 20px;background:white;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;}
+.whats-new-ok{background:#7c3aed;color:white;border:none;border-radius:8px;padding:9px 24px;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s;}
+.whats-new-ok:hover{background:#6d28d9;}
+/* ver.20260603.04: 右上スライドイントースト */
+.whats-new-toast{
+  position:fixed;
+  top:70px;
+  right:20px;
+  background:#0f2040;
+  border:1px solid #1e3a5f;
+  border-left:4px solid #7c3aed;
+  border-radius:10px;
+  padding:14px 16px;
+  box-shadow:0 12px 32px rgba(0,0,0,.35), 0 4px 10px rgba(124,58,237,.25);
+  z-index:500;
+  width:340px;
+  max-width:calc(100vw - 40px);
+  font-family:inherit;
+  transform:translateX(420px);
+  opacity:0;
+  pointer-events:none;
+  transition:transform .4s cubic-bezier(.4,0,.2,1), opacity .4s;
+}
+.whats-new-toast.show{
+  transform:translateX(0);
+  opacity:1;
+  pointer-events:auto;
+}
+.whats-new-toast-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:6px;}
+.whats-new-toast-icon{font-size:18px;flex-shrink:0;line-height:1.2;}
+.whats-new-toast-title{font-size:13px;font-weight:800;color:white;flex:1;line-height:1.3;letter-spacing:.3px;}
+.whats-new-toast-close{background:none;border:none;color:rgba(255,255,255,.6);font-size:16px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0;transition:color .15s;}
+.whats-new-toast-close:hover{color:white;}
+.whats-new-toast-body{font-size:11px;color:rgba(255,255,255,.75);line-height:1.5;margin-bottom:10px;padding-left:28px;}
+.whats-new-toast-actions{display:flex;gap:8px;justify-content:flex-end;padding-left:28px;}
+.whats-new-toast-btn{background:#7c3aed;color:white;border:none;border-radius:6px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;transition:background .15s, transform .1s;box-shadow:0 2px 6px rgba(124,58,237,.4);}
+.whats-new-toast-btn:hover{background:#8b5cf6;}
+.whats-new-toast-btn:active{transform:scale(.97);}
 .notif-item{background:#fffbeb;border:1px solid #fcd34d;border-left:3px solid #f59e0b;border-radius:8px;padding:10px 12px;margin-bottom:8px;}
 .notif-item.confirmed{background:#f8fafc;border-color:#e2e8f0;border-left-color:#94a3b8;opacity:.7;}
 .notif-case-name{font-size:13px;font-weight:800;color:#0f2040;margin-bottom:3px;}
@@ -307,7 +361,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260603.02</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.04</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -323,6 +377,31 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
       <button class="notif-close" onclick="closeNotifModal()">✕</button>
     </div>
     <div id="notifBody" class="notif-body"><div class="notif-empty">読み込み中...</div></div>
+  </div>
+</div>
+<!-- ver.20260603.03: What's New モーダル -->
+<div id="whatsNewModalBg" class="whats-new-bg" onclick="if(event.target===this)closeWhatsNew()">
+  <div class="whats-new-modal">
+    <div class="whats-new-head">
+      <div class="whats-new-title">🎉 アップデートのお知らせ</div>
+      <button class="whats-new-close" onclick="closeWhatsNew()">✕</button>
+    </div>
+    <div id="whatsNewBody" class="whats-new-body"></div>
+    <div class="whats-new-foot">
+      <button class="whats-new-ok" onclick="closeWhatsNew()">確認しました</button>
+    </div>
+  </div>
+</div>
+<!-- ver.20260603.04: 右上スライドイントースト -->
+<div id="whatsNewToast" class="whats-new-toast">
+  <div class="whats-new-toast-head">
+    <span class="whats-new-toast-icon">📢</span>
+    <div class="whats-new-toast-title">アップデートのお知らせ</div>
+    <button class="whats-new-toast-close" onclick="dismissWhatsNewToast()" title="閉じる">✕</button>
+  </div>
+  <div class="whats-new-toast-body" id="whatsNewToastBody">画面が更新されました。</div>
+  <div class="whats-new-toast-actions">
+    <button class="whats-new-toast-btn" onclick="openWhatsNewFromToast()">詳細を見る</button>
   </div>
 </div>
 <div id="passScreen" class="pass-screen" style="display:none;">
@@ -685,6 +764,54 @@ function getMlitStatus(c){
 
 // お知らせモーダル内のステータス表示ラベル
 var NOTIF_LABELS={'申請済(番号待)':'📤 申請済（番号待ち）','受付番号取込':'🔢 受付番号が付きました','審査完了':'✅ 審査完了','認定証発行':'🎉 認定証明書 発行','審査中':'✅ 申請済み・受付番号紐付','許可済 受取方法調整中':'🎉 許可済 受取方法調整中','入管受取ステータス変更中':'🏛 入管受取ステータス変更中','郵送交付':'📮 郵送交付','★郵送交付':'📮 郵送交付','★窓口受取':'🏢 窓口受取','窓口受取（本人）':'🏢 窓口受取（本人）'};
+
+// ver.20260603.03: What's New アップデート履歴
+// ver.20260603.04: audience による表示制御を追加 ('all' | 'aidem')
+// 修正をリリースしたら、配列の先頭に { version, date, audience, items: [...] } を追加してください。
+// 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
+var WHATS_NEW = [
+  {
+    version: 'ver.20260603.04',
+    date: '2026-06-03',
+    audience: 'all',
+    items: [
+      '🎉 アップデート通知機能を追加しました。画面が更新された時に右上にお知らせが表示されます。「詳細を見る」で内容、「✕」で閉じます。いつでも左上のバージョン表記からも履歴を確認できます。'
+    ]
+  },
+  {
+    version: 'ver.20260603.02',
+    date: '2026-06-03',
+    audience: 'aidem',
+    items: [
+      '🔧 アイデムShareの新規案件依頼を、リロードせずに連続で登録できるようになりました（2件目以降が「送信中…」のまま押せなくなる不具合を修正）。'
+    ]
+  },
+  {
+    version: 'ver.20260602.03',
+    date: '2026-06-02',
+    audience: 'all',
+    items: [
+      '🔗 ベル通知の確認とメイン画面のチェック状態が、双方向で自動連動するようになりました。どちらか片方を確認/チェックすると、もう片方も自動的に同期されます。'
+    ]
+  },
+  {
+    version: 'ver.20260601.01',
+    date: '2026-06-01',
+    audience: 'all',
+    items: [
+      '📦 「進行中」「すべて」「申請記録」「審査完了」タブに <strong>受取方法</strong> 列を追加しました（郵送 / 窓口受取）。',
+      '✏️ メイン画面で生成されるテキストから「OFUSA担当者」行を削除しました（個別案件のテキストには反映されません）。'
+    ]
+  },
+  {
+    version: 'ver.20260531.02',
+    date: '2026-05-31',
+    audience: 'all',
+    items: [
+      '⚠️ 未確認の通知がある場合、画面上部にアラートバーを表示するようになりました。'
+    ]
+  }
+];
 
 // ver.20260531.02: ヘッダーアラートバー用の短縮ラベル（バッジで使う）
 var NOTIF_SHORT_LABELS={'受付番号取込':'受付番号','申請済(番号待)':'番号待ち','審査完了':'審査完了','認定証発行':'認定証'};
@@ -2643,6 +2770,143 @@ function closeNotifModal(){
   document.getElementById('notifModalBg').classList.remove('open');
 }
 
+// ver.20260603.03: What's New（アップデートのお知らせ）
+// ver.20260603.04: 右上スライドイントースト + audience による表示制御
+//   旧仕様（モーダル自動展開・NEWバッジ）は撤去。トーストの「詳細を見る」を押した時に大きなモーダルが開く。
+var WHATS_NEW_STORAGE_KEY = 'share_last_seen_version';
+var WHATS_NEW_INITIAL_LIMIT = 3;  // 初回訪問時に表示する最大件数
+
+// 現在の最新バージョン（WHATS_NEW の先頭、audience フィルタ前）
+function _whatsNewCurrentVersion(){
+  return (WHATS_NEW && WHATS_NEW.length) ? WHATS_NEW[0].version : '';
+}
+
+// 現在の閲覧者がアイデム関連かを判定（orgName ベース）
+function _isAidemViewer(){
+  return (orgName === '株式会社アイデム' || orgName === '株式会社アイデム(自前)');
+}
+
+// audience フィルタ: 表示対象の WHATS_NEW エントリだけに絞る
+function _filterWhatsNewByAudience(entries){
+  if(!entries) return [];
+  var isAidem = _isAidemViewer();
+  return entries.filter(function(e){
+    var aud = e.audience || 'all';
+    if(aud === 'all') return true;
+    if(aud === 'aidem') return isAidem;
+    return true;  // 未知の audience は安全側に倒して表示
+  });
+}
+
+// audience フィルタ適用後の最新バージョン（その閲覧者にとっての最新）
+function _whatsNewCurrentVersionForViewer(){
+  var filtered = _filterWhatsNewByAudience(WHATS_NEW);
+  return (filtered && filtered.length) ? filtered[0].version : '';
+}
+
+function checkAndShowWhatsNew(){
+  try{
+    if(!WHATS_NEW || !WHATS_NEW.length) return;
+    var current = _whatsNewCurrentVersionForViewer();
+    if(!current) return;  // この閲覧者向けエントリが1件もなければスキップ
+    var lastSeen = '';
+    try{ lastSeen = localStorage.getItem(WHATS_NEW_STORAGE_KEY) || ''; }catch(e){}
+    if(current !== lastSeen){
+      showWhatsNewToast();
+    }
+  }catch(e){ console.warn('[checkAndShowWhatsNew] error', e); }
+}
+
+// 右上トースト表示
+function showWhatsNewToast(){
+  var toast = document.getElementById('whatsNewToast');
+  var bodyEl = document.getElementById('whatsNewToastBody');
+  if(!toast || !bodyEl) return;
+  // 閲覧者向けの最新エントリの最初の項目をサマリ表示
+  var filtered = _filterWhatsNewByAudience(WHATS_NEW);
+  var latest = filtered[0];
+  if(latest && latest.items && latest.items.length){
+    var firstItem = latest.items[0].replace(/<[^>]+>/g, '');
+    if(firstItem.length > 70) firstItem = firstItem.substring(0, 67) + '...';
+    bodyEl.textContent = firstItem;
+  } else {
+    bodyEl.textContent = '画面が更新されました。';
+  }
+  setTimeout(function(){
+    toast.classList.add('show');
+  }, 600);
+}
+
+// トーストの「✕」: 確認したことにする（再表示しない）
+function dismissWhatsNewToast(){
+  var toast = document.getElementById('whatsNewToast');
+  if(toast){
+    toast.classList.remove('show');  // CSSの transform/opacity でフェードアウト＆クリック不可化
+  }
+  try{
+    var current = _whatsNewCurrentVersionForViewer();
+    if(current) localStorage.setItem(WHATS_NEW_STORAGE_KEY, current);
+  }catch(e){}
+}
+
+// トーストの「詳細を見る」: トーストを閉じてモーダル展開
+function openWhatsNewFromToast(){
+  var toast = document.getElementById('whatsNewToast');
+  if(toast){
+    toast.classList.remove('show');
+  }
+  openWhatsNew({autoOpened:true});
+}
+
+// 履歴モーダルを開く（手動 or 自動）
+function openWhatsNew(opts){
+  opts = opts || {};
+  var bodyEl = document.getElementById('whatsNewBody');
+  if(!bodyEl) return;
+
+  // 最初に audience フィルタを適用してから差分判定
+  var entries = _filterWhatsNewByAudience(WHATS_NEW || []);
+  if(opts.autoOpened){
+    var lastSeen = '';
+    try{ lastSeen = localStorage.getItem(WHATS_NEW_STORAGE_KEY) || ''; }catch(e){}
+    if(lastSeen){
+      var idx = entries.findIndex(function(e){return e.version===lastSeen;});
+      if(idx > 0) entries = entries.slice(0, idx);
+      else if(idx === -1) entries = entries.slice(0, WHATS_NEW_INITIAL_LIMIT);
+    } else {
+      entries = entries.slice(0, WHATS_NEW_INITIAL_LIMIT);
+    }
+  }
+  // 手動オープン（ver表記クリック等）の場合は audience 一致の全件表示
+
+  if(!entries.length){
+    bodyEl.innerHTML = '<div style="text-align:center;padding:30px;color:#9ca3af;font-size:13px;">最近のアップデートはありません</div>';
+  } else {
+    var h = '';
+    if(opts.autoOpened){
+      h += '<div style="font-size:12px;color:#6b7280;margin-bottom:14px;">画面が更新されました。主な変更点は以下のとおりです。</div>';
+    }
+    entries.forEach(function(e){
+      h += '<div class="whats-new-section">';
+      h += '<div class="whats-new-version">' + esc(e.version) + '<span class="wn-date">' + esc(e.date||'') + '</span></div>';
+      h += '<ul>';
+      (e.items||[]).forEach(function(it){ h += '<li>' + it + '</li>'; });
+      h += '</ul>';
+      h += '</div>';
+    });
+    bodyEl.innerHTML = h;
+  }
+  document.getElementById('whatsNewModalBg').classList.add('open');
+}
+
+function closeWhatsNew(){
+  document.getElementById('whatsNewModalBg').classList.remove('open');
+  try{
+    var current = _whatsNewCurrentVersionForViewer();
+    if(current) localStorage.setItem(WHATS_NEW_STORAGE_KEY, current);
+  }catch(e){}
+}
+
 async function confirmNotification(id){
   var n=notifications.find(function(x){return x.id===id;});
   if(!n||n.confirmed_at) return;
@@ -2963,6 +3227,8 @@ async function loadData(){
     if(!_dataReloadTimer){
       startNotifPolling();
       startDataReloadTimer();
+      // ver.20260603.03: 初回ロード時に What's New を表示判定（リロードでは出さない）
+      checkAndShowWhatsNew();
     }
   }catch(e){
     // ver.20260518.10: バックグラウンドリロード中は画面を上書きしない
