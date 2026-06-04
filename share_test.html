@@ -19,7 +19,7 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .notif-btn{position:relative;background:rgba(255,255,255,.12);border:none;color:white;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;gap:6px;}
 .notif-btn:hover{background:rgba(255,255,255,.22);}
 .notif-badge{position:absolute;top:-4px;right:-4px;background:#dc2626;color:white;min-width:16px;height:16px;border-radius:99px;font-size:9px;font-weight:800;padding:0 4px;display:flex;align-items:center;justify-content:center;animation:pulse 1.5s infinite;}
-/* ver.20260603.test04: 右下スライドイントースト（Adobeスタイル） */
+/* ver.20260603.test05: 右下スライドイントースト（display切替なし、transform/opacityのみでアニメ） */
 .whats-new-toast{
   position:fixed;
   bottom:20px;
@@ -33,14 +33,16 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
   z-index:500;
   width:320px;
   max-width:calc(100vw - 40px);
-  display:none;
   font-family:inherit;
-  transform:translateX(380px);
-  transition:transform .4s cubic-bezier(.4,0,.2,1);
+  transform:translateX(400px);
+  opacity:0;
+  pointer-events:none;
+  transition:transform .4s cubic-bezier(.4,0,.2,1), opacity .4s;
 }
 .whats-new-toast.show{
-  display:block;
   transform:translateX(0);
+  opacity:1;
+  pointer-events:auto;
 }
 .whats-new-toast-head{
   display:flex;
@@ -335,7 +337,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
     <!-- ver.20260603.test04: ver表記はクリックでアップデート履歴を見られる動線として残す（バッジは右下トーストに移行） -->
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.test04</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.test05</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -739,12 +741,24 @@ function getMlitStatus(c){
 var NOTIF_LABELS={'審査中':'✅ 申請済み・受付番号紐付','許可済 受取方法調整中':'🎉 許可済 受取方法調整中','入管受取ステータス変更中':'🏛 入管受取ステータス変更中','郵送交付':'📮 郵送交付','★郵送交付':'📮 郵送交付','★窓口受取':'🏢 窓口受取','窓口受取（本人）':'🏢 窓口受取（本人）'};
 
 // ver.20260603.test01: What's New アップデート履歴
-// 修正をリリースしたら、配列の先頭に { version, date, items: [...] } を追加してください。
-// 新バージョン初見時に自動でモーダル表示されます（localStorage 'share_last_seen_version_test' で記録）。
+// ver.20260603.test05: 各エントリに audience を追加（'all' | 'aidem'）
+//   - 'all'   : 全 org に表示
+//   - 'aidem' : アイデム ('株式会社アイデム' / '株式会社アイデム(自前)') のみに表示
+// 修正をリリースしたら、配列の先頭に { version, date, audience, items: [...] } を追加してください。
+// 新バージョン初見時に自動で右下トースト表示されます（localStorage 'share_last_seen_version_test' で記録）。
 var WHATS_NEW = [
+  {
+    version: 'ver.20260603.test05',
+    date: '2026-06-03',
+    audience: 'all',
+    items: [
+      '🔧 アップデートのお知らせ通知の表示処理を修正しました。右下にスライドイン表示されるようになります。'
+    ]
+  },
   {
     version: 'ver.20260603.test04',
     date: '2026-06-03',
+    audience: 'all',
     items: [
       '📢 アップデートのお知らせを、画面右下のポップアップ通知でご案内するようにしました。「詳細を見る」で内容、「✕」で閉じます。'
     ]
@@ -752,6 +766,7 @@ var WHATS_NEW = [
   {
     version: 'ver.20260603.test01',
     date: '2026-06-03',
+    audience: 'all',
     items: [
       '🎉 このアップデート通知機能を追加しました。今後、画面が更新された時にどこが変わったかをご案内します。'
     ]
@@ -759,6 +774,7 @@ var WHATS_NEW = [
   {
     version: 'ver.20260603.02',
     date: '2026-06-03',
+    audience: 'aidem',
     items: [
       '🔧 アイデムShareの新規案件依頼を、リロードせずに連続で登録できるようになりました（2件目以降が「送信中…」のまま押せなくなる不具合を修正）。'
     ]
@@ -766,6 +782,7 @@ var WHATS_NEW = [
   {
     version: 'ver.20260602.03',
     date: '2026-06-02',
+    audience: 'all',
     items: [
       '🔗 ベル通知の確認とメイン画面のチェック状態が、双方向で自動連動するようになりました。どちらか片方を確認/チェックすると、もう片方も自動的に同期されます。'
     ]
@@ -773,6 +790,7 @@ var WHATS_NEW = [
   {
     version: 'ver.20260601.01',
     date: '2026-06-01',
+    audience: 'all',
     items: [
       '📦 「進行中」「すべて」「申請記録」「審査完了」タブに <strong>受取方法</strong> 列を追加しました（郵送 / 窓口受取）。',
       '✏️ メイン画面で生成されるテキストから「OFUSA担当者」行を削除しました（個別案件のテキストには反映されません）。'
@@ -781,6 +799,7 @@ var WHATS_NEW = [
   {
     version: 'ver.20260531.02',
     date: '2026-05-31',
+    audience: 'all',
     items: [
       '⚠️ 未確認の通知がある場合、画面上部にアラートバーを表示するようになりました。'
     ]
@@ -2524,37 +2543,61 @@ function _whatsNewCurrentVersion(){
 }
 
 // ver.20260603.test04: 右下トーストでのアップデート通知（Adobeスタイル）
-// 旧仕様（モーダル自動展開・NEWバッジ）は撤去。ユーザーが「詳細を見る」を押した時のみ大きなモーダルを開く。
+// ver.20260603.test05: audience による表示制御を追加
+//   各エントリの audience: 'all' は全org表示、'aidem' はアイデム関連のみ表示
+//   旧仕様（モーダル自動展開・NEWバッジ）は撤去。ユーザーが「詳細を見る」を押した時のみ大きなモーダルを開く。
+
+// 現在の閲覧者がアイデム関連かを判定（orgName ベース）
+function _isAidemViewer(){
+  return (orgName === '株式会社アイデム' || orgName === '株式会社アイデム(自前)');
+}
+
+// audience フィルタ: 表示対象の WHATS_NEW エントリだけに絞る
+function _filterWhatsNewByAudience(entries){
+  if(!entries) return [];
+  var isAidem = _isAidemViewer();
+  return entries.filter(function(e){
+    var aud = e.audience || 'all';
+    if(aud === 'all') return true;
+    if(aud === 'aidem') return isAidem;
+    return true;  // 未知の audience は安全側に倒して表示
+  });
+}
+
+// audience フィルタ適用後の最新バージョン（その閲覧者にとっての最新）
+function _whatsNewCurrentVersionForViewer(){
+  var filtered = _filterWhatsNewByAudience(WHATS_NEW);
+  return (filtered && filtered.length) ? filtered[0].version : '';
+}
 
 function checkAndShowWhatsNew(){
   try{
     if(!WHATS_NEW || !WHATS_NEW.length) return;
-    var current = _whatsNewCurrentVersion();
+    var current = _whatsNewCurrentVersionForViewer();
+    if(!current) return;  // この閲覧者向けエントリが1件もなければスキップ
     var lastSeen = '';
     try{ lastSeen = localStorage.getItem(WHATS_NEW_STORAGE_KEY) || ''; }catch(e){}
-    if(current && current !== lastSeen){
+    if(current !== lastSeen){
       showWhatsNewToast();
     }
   }catch(e){ console.warn('[checkAndShowWhatsNew] error', e); }
 }
 
-// 右下トースト表示（少し遅延させて、画面ロード完了後にスライドイン）
+// 右下トースト表示
 function showWhatsNewToast(){
   var toast = document.getElementById('whatsNewToast');
   var bodyEl = document.getElementById('whatsNewToastBody');
   if(!toast || !bodyEl) return;
-  // トーストのサブテキスト: 最新版の最初の項目を抜粋表示
-  var latest = WHATS_NEW[0];
+  // 閲覧者向けの最新エントリの最初の項目をサマリ表示
+  var filtered = _filterWhatsNewByAudience(WHATS_NEW);
+  var latest = filtered[0];
   if(latest && latest.items && latest.items.length){
-    // HTMLタグを除去してプレーンテキストで表示（先頭1項目を簡潔に）
     var firstItem = latest.items[0].replace(/<[^>]+>/g, '');
-    // 長すぎる場合は切り詰め
     if(firstItem.length > 70) firstItem = firstItem.substring(0, 67) + '...';
     bodyEl.textContent = firstItem;
   } else {
     bodyEl.textContent = '画面が更新されました。';
   }
-  // 少し遅らせてスライドイン（読み込み完了直後の慌ただしさを避ける）
   setTimeout(function(){
     toast.classList.add('show');
   }, 600);
@@ -2564,11 +2607,11 @@ function showWhatsNewToast(){
 function dismissWhatsNewToast(){
   var toast = document.getElementById('whatsNewToast');
   if(toast){
-    toast.classList.remove('show');
-    setTimeout(function(){ toast.style.display='none'; }, 400);
+    toast.classList.remove('show');  // CSSの transform/opacity でフェードアウト＆クリック不可化
   }
   try{
-    var current = _whatsNewCurrentVersion();
+    // ver.20260603.test05: 閲覧者向けの最新版を記録
+    var current = _whatsNewCurrentVersionForViewer();
     if(current) localStorage.setItem(WHATS_NEW_STORAGE_KEY, current);
   }catch(e){}
 }
@@ -2578,7 +2621,6 @@ function openWhatsNewFromToast(){
   var toast = document.getElementById('whatsNewToast');
   if(toast){
     toast.classList.remove('show');
-    setTimeout(function(){ toast.style.display='none'; }, 400);
   }
   openWhatsNew({autoOpened:true});
 }
@@ -2588,7 +2630,8 @@ function openWhatsNew(opts){
   var bodyEl = document.getElementById('whatsNewBody');
   if(!bodyEl) return;
 
-  var entries = WHATS_NEW || [];
+  // ver.20260603.test05: 最初に audience フィルタを適用してから差分判定する
+  var entries = _filterWhatsNewByAudience(WHATS_NEW || []);
   if(opts.autoOpened){
     // トーストからの遷移 → 前回確認以降の差分を表示
     var lastSeen = '';
@@ -2601,7 +2644,7 @@ function openWhatsNew(opts){
       entries = entries.slice(0, WHATS_NEW_INITIAL_LIMIT);
     }
   }
-  // 手動オープン（ver表記クリック等）の場合は全件表示
+  // 手動オープン（ver表記クリック等）の場合は audience 一致の全件表示
 
   if(!entries.length){
     bodyEl.innerHTML = '<div style="text-align:center;padding:30px;color:#9ca3af;font-size:13px;">最近のアップデートはありません</div>';
@@ -2626,7 +2669,8 @@ function openWhatsNew(opts){
 function closeWhatsNew(){
   document.getElementById('whatsNewModalBg').classList.remove('open');
   try{
-    var current = _whatsNewCurrentVersion();
+    // ver.20260603.test05: 閲覧者向けの最新バージョンを記録（audience フィルタ後）
+    var current = _whatsNewCurrentVersionForViewer();
     if(current) localStorage.setItem(WHATS_NEW_STORAGE_KEY, current);
   }catch(e){}
 }
