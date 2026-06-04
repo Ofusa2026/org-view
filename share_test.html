@@ -19,6 +19,62 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .notif-btn{position:relative;background:rgba(255,255,255,.12);border:none;color:white;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;gap:6px;}
 .notif-btn:hover{background:rgba(255,255,255,.22);}
 .notif-badge{position:absolute;top:-4px;right:-4px;background:#dc2626;color:white;min-width:16px;height:16px;border-radius:99px;font-size:9px;font-weight:800;padding:0 4px;display:flex;align-items:center;justify-content:center;animation:pulse 1.5s infinite;}
+/* ver.20260603.test07: ヘルプボタンと使い方モーダル */
+.help-btn{
+  background:rgba(255,255,255,.12);
+  border:none;
+  color:white;
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  cursor:pointer;
+  font-size:15px;
+  font-weight:800;
+  line-height:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:background .15s;
+  margin-right:8px;
+}
+.help-btn:hover{background:rgba(255,255,255,.25);}
+.help-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;display:none;align-items:flex-start;justify-content:center;padding:40px 12px;overflow-y:auto;}
+.help-modal-bg.open{display:flex;}
+.help-modal{background:white;border-radius:14px;width:100%;max-width:720px;box-shadow:0 24px 80px rgba(0,0,0,.4);overflow:hidden;display:flex;flex-direction:column;max-height:calc(100vh - 80px);}
+.help-modal-head{padding:18px 24px;background:linear-gradient(135deg,#0f2040 0%,#1e3a5f 100%);color:white;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.help-modal-title{font-size:17px;font-weight:800;letter-spacing:.5px;}
+.help-modal-close{background:none;border:none;color:white;font-size:22px;cursor:pointer;opacity:.75;line-height:1;padding:0 4px;}
+.help-modal-close:hover{opacity:1;}
+.help-modal-body{padding:24px 28px;overflow-y:auto;background:#f9fafb;}
+.help-intro{font-size:13px;color:#4b5563;line-height:1.7;margin-bottom:24px;padding:12px 16px;background:white;border:1px solid #e5e7eb;border-radius:10px;border-left:4px solid #7c3aed;}
+.help-section{background:white;border:1px solid #e5e7eb;border-radius:10px;padding:18px 22px;margin-bottom:14px;}
+.help-section h3{font-size:15px;font-weight:800;color:#0f2040;margin:0 0 12px 0;display:flex;align-items:center;gap:8px;}
+.help-section h3 .help-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:#7c3aed;color:white;border-radius:50%;font-size:11px;flex-shrink:0;}
+.help-section p{font-size:13px;color:#374151;line-height:1.7;margin:0 0 10px 0;}
+.help-section p:last-child{margin-bottom:0;}
+.help-section ul{font-size:13px;color:#374151;line-height:1.8;margin:8px 0 0 0;padding-left:22px;}
+.help-section ul li{margin-bottom:4px;}
+.help-section ul li:last-child{margin-bottom:0;}
+.help-section strong{color:#0f2040;font-weight:700;}
+.help-section code{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:4px;padding:1px 6px;font-size:12px;font-family:Menlo,Consolas,monospace;color:#7c3aed;}
+.help-image-placeholder{
+  background:#f3f4f6;
+  border:1.5px dashed #cbd5e1;
+  border-radius:8px;
+  padding:20px;
+  text-align:center;
+  color:#9ca3af;
+  font-size:11px;
+  margin:12px 0;
+  font-style:italic;
+}
+.help-tag{display:inline-block;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:6px;font-size:10px;font-weight:700;padding:1px 7px;margin-left:6px;letter-spacing:.3px;}
+.help-tag.aidem{background:#dbeafe;color:#1e40af;border-color:#93c5fd;}
+.help-tag.opencare{background:#dcfce7;color:#166534;border-color:#86efac;}
+.help-section-divider{margin:28px 0 14px;font-size:11px;font-weight:800;color:#6b7280;letter-spacing:1.5px;border-bottom:1px solid #e5e7eb;padding-bottom:6px;}
+.help-contact{background:#fef9c3;border:1px solid #fde047;border-radius:10px;padding:14px 18px;margin-top:14px;}
+.help-contact h3{font-size:14px;font-weight:800;color:#854d0e;margin:0 0 8px 0;}
+.help-contact p{font-size:13px;color:#713f12;line-height:1.7;margin:0;}
 /* ver.20260603.test06: 右上(ヘッダー直下)スライドイン + 濃紺背景で視認性UP */
 .whats-new-toast{
   position:fixed;
@@ -341,11 +397,15 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
     <!-- ver.20260603.test04: ver表記はクリックでアップデート履歴を見られる動線として残す（バッジは右下トーストに移行） -->
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.test06</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.test07</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
+  </button>
+  <!-- ver.20260603.test07: ヘルプボタン -->
+  <button id="helpBtn" class="help-btn" onclick="openHelpModal()" title="使い方ガイド">
+    <span>?</span>
   </button>
   <button id="newCaseBtn" class="new-case-btn" style="display:none;" onclick="openNewCaseModal()">＋ 新規案件依頼</button>
   <div class="header-org" id="headerOrg">読み込み中...</div>
@@ -382,6 +442,120 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div class="whats-new-toast-body" id="whatsNewToastBody">画面が更新されました。</div>
   <div class="whats-new-toast-actions">
     <button class="whats-new-toast-btn" onclick="openWhatsNewFromToast()">詳細を見る</button>
+  </div>
+</div>
+<!-- ver.20260603.test07: ヘルプモーダル -->
+<div id="helpModalBg" class="help-modal-bg" onclick="if(event.target===this)closeHelpModal()">
+  <div class="help-modal">
+    <div class="help-modal-head">
+      <div class="help-modal-title">📖 使い方ガイド</div>
+      <button class="help-modal-close" onclick="closeHelpModal()" title="閉じる">✕</button>
+    </div>
+    <div class="help-modal-body">
+      <div class="help-intro">
+        この画面でできること・各機能の使い方をご案内します。<br>
+        いつでも画面右上の <strong>?</strong> ボタンからこのガイドを開けます。
+      </div>
+
+      <div class="help-section-divider">基本</div>
+
+      <div class="help-section">
+        <h3><span class="help-num">1</span>画面の基本構成</h3>
+        <p>画面は3つのエリアに分かれています：</p>
+        <ul>
+          <li><strong>上部ヘッダー</strong>: ロゴ・通知・更新情報・新規依頼ボタン</li>
+          <li><strong>左サイドバー</strong>: 案件のグループ別件数（進行中／発行済み・完了／すべて／申請記録／審査完了 など）</li>
+          <li><strong>メインエリア</strong>: 選択中グループの案件一覧と日次サマリ</li>
+        </ul>
+        <div class="help-image-placeholder">📷 画面全体のスクリーンショット（後日掲載）</div>
+      </div>
+
+      <div class="help-section">
+        <h3><span class="help-num">2</span>案件の見方</h3>
+        <p>各案件は次の項目で表示されます：</p>
+        <ul>
+          <li><strong>申請日</strong> / <strong>申請者名（氏名）</strong> / <strong>所属企業</strong></li>
+          <li><strong>申請種別</strong>（認定・更新・変更）</li>
+          <li><strong>在留資格</strong> / <strong>在留期限</strong></li>
+          <li><strong>ステータス</strong>（書類部・申請済・受付番号取込・審査中・審査完了 など）</li>
+          <li><strong>受取方法</strong>（📮 郵送 / 🏢 窓口受取）</li>
+        </ul>
+        <p>案件名をクリックすると、その案件の詳細情報が確認できます。</p>
+        <div class="help-image-placeholder">📷 案件カードの拡大スクリーンショット（後日掲載）</div>
+      </div>
+
+      <div class="help-section-divider">通知とチェック</div>
+
+      <div class="help-section">
+        <h3><span class="help-num">3</span>ベル通知 🔔 の見方</h3>
+        <p>右上の <strong>🔔 ボタン</strong>に赤いバッジが付いている時は、未確認のお知らせがあります。</p>
+        <p>主な通知:</p>
+        <ul>
+          <li><strong>🔢 受付番号が付きました</strong> — 入管に申請が受理され受付番号が発行された</li>
+          <li><strong>✅ 審査完了</strong> — 入管の審査が完了した</li>
+          <li><strong>📤 申請済（番号待ち）</strong> — 申請は提出済み、受付番号が来るのを待っている状態</li>
+        </ul>
+        <p><strong>確認</strong>ボタンを押すと既読化します。メイン画面のチェックも自動連動します。</p>
+        <div class="help-image-placeholder">📷 ベル通知モーダルのスクリーンショット（後日掲載）</div>
+      </div>
+
+      <div class="help-section">
+        <h3><span class="help-num">4</span>案件をチェックする</h3>
+        <p>各案件の左にあるチェックボックスをクリックすると、その案件を「確認済」マークできます。</p>
+        <p>ベル通知の確認とメイン画面のチェックは <strong>双方向で自動連動</strong> します。どちらか片方で確認・チェックすれば、もう片方も自動的に同期されます。</p>
+      </div>
+
+      <div class="help-section-divider">アクション（org により表示が異なる場合があります）</div>
+
+      <div class="help-section">
+        <h3><span class="help-num">5</span>不足書類への対応 <span class="help-tag opencare">オープンケアのみ</span></h3>
+        <p>案件名の横に <strong>📋 ◯件</strong> のバッジが表示されている場合、その案件には不足書類があります。</p>
+        <p>バッジをクリックすると不足書類の一覧が表示されます。</p>
+        <ul>
+          <li>書類の準備ができたら <strong>OFUSAに送付</strong></li>
+          <li>不明点があれば担当者にご相談ください</li>
+        </ul>
+        <div class="help-image-placeholder">📷 不足書類モーダルのスクリーンショット（後日掲載）</div>
+      </div>
+
+      <div class="help-section">
+        <h3><span class="help-num">6</span>新規案件依頼の作成 <span class="help-tag aidem">アイデムのみ</span></h3>
+        <p>ヘッダー右側の <strong>＋ 新規案件依頼</strong> ボタンから、新しい案件の依頼を作成できます。</p>
+        <p>手順:</p>
+        <ul>
+          <li>案件名・申請種別・希望在留資格・所属企業を入力</li>
+          <li>人材情報（氏名・国籍・在留期限・現在の資格・受取方法など）を入力</li>
+          <li>支援委託費・拠点（東/西/高育チーム）・アイデム担当者を入力</li>
+          <li><strong>登録する</strong> → プレビュー → <strong>送信する</strong></li>
+        </ul>
+        <p>送信後、案件は OFUSA 案件管理に「ペンディング」として登録され、担当者が確認後に正式登録されます。</p>
+        <div class="help-image-placeholder">📷 新規案件依頼モーダルのスクリーンショット（後日掲載）</div>
+      </div>
+
+      <div class="help-section-divider">そのほか</div>
+
+      <div class="help-section">
+        <h3><span class="help-num">7</span>アップデート情報の確認</h3>
+        <p>システムが更新された時は、画面右上に <strong>📢 アップデートのお知らせ</strong> がスライド表示されます。</p>
+        <p>「詳細を見る」で内容を確認、「✕」で閉じます。一度確認したら、次のアップデートまで再表示されません。</p>
+        <p>いつでも左上の <strong>ver. 表記</strong>（点線アンダーライン）をクリックすると過去のアップデート履歴を確認できます。</p>
+        <div class="help-image-placeholder">📷 アップデート通知トーストのスクリーンショット（後日掲載）</div>
+      </div>
+
+      <div class="help-section">
+        <h3><span class="help-num">8</span>検索・絞り込み</h3>
+        <p>メインエリア上部のフィルターで案件を絞り込めます：</p>
+        <ul>
+          <li><strong>🔍 フリーワード検索</strong>（Enterで実行）— 案件名・申請者名・企業名で検索</li>
+          <li><strong>ステータス</strong> / <strong>企業</strong> でも絞り込み可能</li>
+        </ul>
+      </div>
+
+      <div class="help-contact">
+        <h3>💬 困ったときは</h3>
+        <p>このガイドで解決しない場合や、不具合を見つけた場合は、お手数ですが <strong>OFUSA 大房行政書士法人 担当者</strong> までご連絡ください。</p>
+      </div>
+    </div>
   </div>
 </div>
 <div id="passScreen" class="pass-screen" style="display:none;">
@@ -751,6 +925,14 @@ var NOTIF_LABELS={'審査中':'✅ 申請済み・受付番号紐付','許可済
 // 修正をリリースしたら、配列の先頭に { version, date, audience, items: [...] } を追加してください。
 // 新バージョン初見時に自動で右下トースト表示されます（localStorage 'share_last_seen_version_test' で記録）。
 var WHATS_NEW = [
+  {
+    version: 'ver.20260603.test07',
+    date: '2026-06-03',
+    audience: 'all',
+    items: [
+      '📖 ヘッダーに <strong>使い方ガイド</strong> ボタン（<strong>?</strong>）を追加しました。画面の基本構成、ベル通知の見方、不足書類への対応、新規案件依頼の作成方法などをいつでも確認できます。'
+    ]
+  },
   {
     version: 'ver.20260603.test06',
     date: '2026-06-03',
@@ -2685,6 +2867,16 @@ function closeWhatsNew(){
     var current = _whatsNewCurrentVersionForViewer();
     if(current) localStorage.setItem(WHATS_NEW_STORAGE_KEY, current);
   }catch(e){}
+}
+
+// ver.20260603.test07: 使い方ガイド（ヘルプ）モーダル
+function openHelpModal(){
+  var el = document.getElementById('helpModalBg');
+  if(el) el.classList.add('open');
+}
+function closeHelpModal(){
+  var el = document.getElementById('helpModalBg');
+  if(el) el.classList.remove('open');
 }
 
 async function confirmNotification(id){
