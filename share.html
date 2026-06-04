@@ -361,7 +361,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.04</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.05</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -770,6 +770,14 @@ var NOTIF_LABELS={'申請済(番号待)':'📤 申請済（番号待ち）','受
 // 修正をリリースしたら、配列の先頭に { version, date, audience, items: [...] } を追加してください。
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 var WHATS_NEW = [
+  {
+    version: 'ver.20260603.05',
+    date: '2026-06-03',
+    audience: 'all',
+    items: [
+      '🔔 「申請済（番号待ち）」のベル通知を確認しても、メイン画面の案件チェックは入らないようになりました。<br>（受付番号取込・審査完了の通知については従来どおり、確認するとメイン画面のチェックも自動で連動します。）'
+    ]
+  },
   {
     version: 'ver.20260603.04',
     date: '2026-06-03',
@@ -2388,6 +2396,9 @@ async function saveComment(caseId){
 // ミラー対象 archiveId:    receipt_archive.id / shinsa_archive.id / 'case_<case_id>'
 
 var _MIRROR_NOTIF_STATUSES = ['受付番号取込','審査完了','申請済(番号待)','申請済 (番号待)'];
+// ver.20260603.05: ベル→メイン連動を除外する通知ステータス（片方向: メイン→ベルは引き続き同期される）
+// 「申請済(番号待)」は「申請しました」のお知らせなので、確認しただけで案件チェック完了扱いにしない
+var _NO_MIRROR_NOTIF_TO_CHECK = ['申請済(番号待)','申請済 (番号待)'];
 
 // archiveId → case_id を逆引き（'case_<case_id>' / receipt_archive.id / shinsa_archive.id すべて対応）
 function _archiveToCaseId(archiveId){
@@ -2476,6 +2487,9 @@ async function _mirrorNotifToCheck(notifId, confirmed){
   if(typeof notifications==='undefined' || !Array.isArray(notifications)) return;
   var n = notifications.find(function(x){return x.id===notifId;});
   if(!n) return;
+  // ver.20260603.05: 「申請済(番号待)」はベル→メイン方向の連動をスキップ
+  // 「申請しました」のお知らせを確認しただけで案件のチェックが入って完了扱いになるのを防ぐ
+  if(_NO_MIRROR_NOTIF_TO_CHECK.indexOf(n.status) >= 0) return;
   var archiveIds = _notifToArchiveIds(n);
   if(!archiveIds.length) return;
   var changed = false;
