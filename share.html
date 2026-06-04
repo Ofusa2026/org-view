@@ -307,7 +307,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260603.01</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260603.02</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -3347,6 +3347,13 @@ async function submitNewCase(){
 
 function closeConfirmModal(){
   document.getElementById('ncConfirmModalBg').classList.remove('open');
+  // ver.20260603.02: 確認モーダルを閉じるたびに「送信する」ボタンの状態をリセット
+  // 旧: executeSubmit の成功フローで sendBtn.disabled=false の戻し漏れあり、2回目の登録で「送信中...」のままホールドされていた
+  var sendBtn = document.getElementById('ncConfirmSendBtn');
+  if(sendBtn){
+    sendBtn.disabled = false;
+    sendBtn.textContent = '送信する';
+  }
 }
 
 function _renderConfirmBody(p){
