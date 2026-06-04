@@ -19,24 +19,83 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .notif-btn{position:relative;background:rgba(255,255,255,.12);border:none;color:white;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;gap:6px;}
 .notif-btn:hover{background:rgba(255,255,255,.22);}
 .notif-badge{position:absolute;top:-4px;right:-4px;background:#dc2626;color:white;min-width:16px;height:16px;border-radius:99px;font-size:9px;font-weight:800;padding:0 4px;display:flex;align-items:center;justify-content:center;animation:pulse 1.5s infinite;}
-/* ver.20260603.test03: ver表記の横の控えめなNEWバッジ */
-.whats-new-badge-mini{
+/* ver.20260603.test04: 右下スライドイントースト（Adobeスタイル） */
+.whats-new-toast{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:white;
+  border:1px solid #e5e7eb;
+  border-left:4px solid #7c3aed;
+  border-radius:10px;
+  padding:14px 16px;
+  box-shadow:0 8px 24px rgba(0,0,0,.15), 0 2px 6px rgba(0,0,0,.08);
+  z-index:500;
+  width:320px;
+  max-width:calc(100vw - 40px);
+  display:none;
+  font-family:inherit;
+  transform:translateX(380px);
+  transition:transform .4s cubic-bezier(.4,0,.2,1);
+}
+.whats-new-toast.show{
+  display:block;
+  transform:translateX(0);
+}
+.whats-new-toast-head{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:6px;
+}
+.whats-new-toast-icon{
+  font-size:18px;
+  flex-shrink:0;
+  line-height:1.2;
+}
+.whats-new-toast-title{
+  font-size:13px;
+  font-weight:800;
+  color:#1f2937;
+  flex:1;
+  line-height:1.3;
+}
+.whats-new-toast-close{
+  background:none;
+  border:none;
+  color:#9ca3af;
+  font-size:16px;
+  cursor:pointer;
+  padding:0 2px;
+  line-height:1;
+  flex-shrink:0;
+}
+.whats-new-toast-close:hover{color:#1f2937;}
+.whats-new-toast-body{
+  font-size:11px;
+  color:#6b7280;
+  line-height:1.5;
+  margin-bottom:10px;
+  padding-left:28px;
+}
+.whats-new-toast-actions{
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+  padding-left:28px;
+}
+.whats-new-toast-btn{
   background:#7c3aed;
   color:white;
-  font-size:8px;
-  font-weight:800;
-  padding:1px 5px;
+  border:none;
   border-radius:6px;
+  padding:6px 14px;
+  font-size:11px;
+  font-weight:700;
   cursor:pointer;
-  animation:pulse 2s infinite;
-  letter-spacing:.5px;
-  line-height:1.2;
-  box-shadow:0 1px 3px rgba(124,58,237,.5);
   transition:background .15s;
 }
-.whats-new-badge-mini:hover{
-  background:#6d28d9;
-}
+.whats-new-toast-btn:hover{background:#6d28d9;}
 @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.15);}}
 .notif-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:none;align-items:flex-start;justify-content:center;padding:56px 12px 12px;overflow-y:auto;}
 .notif-modal-bg.open{display:flex;}
@@ -275,11 +334,8 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <!-- ver.20260603.test03: ver表記の右に控えめなNEWバッジを表示 -->
-    <div style="display:flex;align-items:center;gap:6px;font-size:9px;letter-spacing:.3px;line-height:1;">
-      <span style="opacity:.4;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.test03</span>
-      <span id="whatsNewBadgeMini" class="whats-new-badge-mini" style="display:none;" onclick="openWhatsNew()" title="新しいアップデートがあります">NEW</span>
-    </div>
+    <!-- ver.20260603.test04: ver表記はクリックでアップデート履歴を見られる動線として残す（バッジは右下トーストに移行） -->
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.test04</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -308,6 +364,18 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
     <div class="whats-new-foot">
       <button class="whats-new-ok" onclick="closeWhatsNew()">確認しました</button>
     </div>
+  </div>
+</div>
+<!-- ver.20260603.test04: 右下スライドイントースト -->
+<div id="whatsNewToast" class="whats-new-toast">
+  <div class="whats-new-toast-head">
+    <span class="whats-new-toast-icon">📢</span>
+    <div class="whats-new-toast-title">アップデートのお知らせ</div>
+    <button class="whats-new-toast-close" onclick="dismissWhatsNewToast()" title="閉じる">✕</button>
+  </div>
+  <div class="whats-new-toast-body" id="whatsNewToastBody">画面が更新されました。</div>
+  <div class="whats-new-toast-actions">
+    <button class="whats-new-toast-btn" onclick="openWhatsNewFromToast()">詳細を見る</button>
   </div>
 </div>
 <div id="passScreen" class="pass-screen" style="display:none;">
@@ -675,10 +743,10 @@ var NOTIF_LABELS={'審査中':'✅ 申請済み・受付番号紐付','許可済
 // 新バージョン初見時に自動でモーダル表示されます（localStorage 'share_last_seen_version_test' で記録）。
 var WHATS_NEW = [
   {
-    version: 'ver.20260603.test03',
+    version: 'ver.20260603.test04',
     date: '2026-06-03',
     items: [
-      '📢 アップデートがあると、画面左上の <strong>ver表記の横に紫の「NEW」バッジ</strong> が表示されます。クリックでいつでも履歴を見られます。'
+      '📢 アップデートのお知らせを、画面右下のポップアップ通知でご案内するようにしました。「詳細を見る」で内容、「✕」で閉じます。'
     ]
   },
   {
@@ -2455,35 +2523,64 @@ function _whatsNewCurrentVersion(){
   return (WHATS_NEW && WHATS_NEW.length) ? WHATS_NEW[0].version : '';
 }
 
-// ver.20260603.test03: ver表記の横の控えめなNEWバッジ表示制御
-function updateWhatsNewBadge(){
-  var badge = document.getElementById('whatsNewBadgeMini');
-  if(!badge) return;
-  if(!WHATS_NEW || !WHATS_NEW.length){
-    badge.style.display='none';
-    return;
-  }
-  var current = _whatsNewCurrentVersion();
-  var lastSeen = '';
-  try{ lastSeen = localStorage.getItem(WHATS_NEW_STORAGE_KEY) || ''; }catch(e){}
-  if(current && current !== lastSeen){
-    badge.style.display='inline-block';
-  } else {
-    badge.style.display='none';
-  }
-}
+// ver.20260603.test04: 右下トーストでのアップデート通知（Adobeスタイル）
+// 旧仕様（モーダル自動展開・NEWバッジ）は撤去。ユーザーが「詳細を見る」を押した時のみ大きなモーダルを開く。
 
 function checkAndShowWhatsNew(){
   try{
     if(!WHATS_NEW || !WHATS_NEW.length) return;
-    updateWhatsNewBadge();
     var current = _whatsNewCurrentVersion();
     var lastSeen = '';
     try{ lastSeen = localStorage.getItem(WHATS_NEW_STORAGE_KEY) || ''; }catch(e){}
     if(current && current !== lastSeen){
-      openWhatsNew({autoOpened:true, lastSeen:lastSeen});
+      showWhatsNewToast();
     }
   }catch(e){ console.warn('[checkAndShowWhatsNew] error', e); }
+}
+
+// 右下トースト表示（少し遅延させて、画面ロード完了後にスライドイン）
+function showWhatsNewToast(){
+  var toast = document.getElementById('whatsNewToast');
+  var bodyEl = document.getElementById('whatsNewToastBody');
+  if(!toast || !bodyEl) return;
+  // トーストのサブテキスト: 最新版の最初の項目を抜粋表示
+  var latest = WHATS_NEW[0];
+  if(latest && latest.items && latest.items.length){
+    // HTMLタグを除去してプレーンテキストで表示（先頭1項目を簡潔に）
+    var firstItem = latest.items[0].replace(/<[^>]+>/g, '');
+    // 長すぎる場合は切り詰め
+    if(firstItem.length > 70) firstItem = firstItem.substring(0, 67) + '...';
+    bodyEl.textContent = firstItem;
+  } else {
+    bodyEl.textContent = '画面が更新されました。';
+  }
+  // 少し遅らせてスライドイン（読み込み完了直後の慌ただしさを避ける）
+  setTimeout(function(){
+    toast.classList.add('show');
+  }, 600);
+}
+
+// トーストの「✕」: 確認したことにする（再表示しない）
+function dismissWhatsNewToast(){
+  var toast = document.getElementById('whatsNewToast');
+  if(toast){
+    toast.classList.remove('show');
+    setTimeout(function(){ toast.style.display='none'; }, 400);
+  }
+  try{
+    var current = _whatsNewCurrentVersion();
+    if(current) localStorage.setItem(WHATS_NEW_STORAGE_KEY, current);
+  }catch(e){}
+}
+
+// トーストの「詳細を見る」: トーストを閉じてモーダル展開
+function openWhatsNewFromToast(){
+  var toast = document.getElementById('whatsNewToast');
+  if(toast){
+    toast.classList.remove('show');
+    setTimeout(function(){ toast.style.display='none'; }, 400);
+  }
+  openWhatsNew({autoOpened:true});
 }
 
 function openWhatsNew(opts){
@@ -2492,13 +2589,19 @@ function openWhatsNew(opts){
   if(!bodyEl) return;
 
   var entries = WHATS_NEW || [];
-  if(opts.autoOpened && opts.lastSeen){
-    var idx = entries.findIndex(function(e){return e.version===opts.lastSeen;});
-    if(idx > 0) entries = entries.slice(0, idx);
-    else if(idx === -1) entries = entries.slice(0, WHATS_NEW_INITIAL_LIMIT);
-  } else if(opts.autoOpened){
-    entries = entries.slice(0, WHATS_NEW_INITIAL_LIMIT);
+  if(opts.autoOpened){
+    // トーストからの遷移 → 前回確認以降の差分を表示
+    var lastSeen = '';
+    try{ lastSeen = localStorage.getItem(WHATS_NEW_STORAGE_KEY) || ''; }catch(e){}
+    if(lastSeen){
+      var idx = entries.findIndex(function(e){return e.version===lastSeen;});
+      if(idx > 0) entries = entries.slice(0, idx);
+      else if(idx === -1) entries = entries.slice(0, WHATS_NEW_INITIAL_LIMIT);
+    } else {
+      entries = entries.slice(0, WHATS_NEW_INITIAL_LIMIT);
+    }
   }
+  // 手動オープン（ver表記クリック等）の場合は全件表示
 
   if(!entries.length){
     bodyEl.innerHTML = '<div style="text-align:center;padding:30px;color:#9ca3af;font-size:13px;">最近のアップデートはありません</div>';
@@ -2526,7 +2629,6 @@ function closeWhatsNew(){
     var current = _whatsNewCurrentVersion();
     if(current) localStorage.setItem(WHATS_NEW_STORAGE_KEY, current);
   }catch(e){}
-  updateWhatsNewBadge();  // バッジを消す
 }
 
 async function confirmNotification(id){
