@@ -28,6 +28,25 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .notif-close{background:none;border:none;color:white;font-size:18px;cursor:pointer;opacity:.7;}
 .notif-close:hover{opacity:1;}
 .notif-body{max-height:60vh;overflow-y:auto;padding:10px;}
+/* ver.20260603.test01: What's New モーダル */
+.whats-new-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;display:none;align-items:center;justify-content:center;padding:24px 12px;overflow-y:auto;}
+.whats-new-bg.open{display:flex;}
+.whats-new-modal{background:white;border-radius:16px;width:100%;max-width:520px;box-shadow:0 24px 80px rgba(0,0,0,.4);overflow:hidden;display:flex;flex-direction:column;}
+.whats-new-head{padding:16px 20px;background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);color:white;display:flex;align-items:center;justify-content:space-between;}
+.whats-new-title{font-size:16px;font-weight:800;letter-spacing:.5px;}
+.whats-new-close{background:none;border:none;color:white;font-size:20px;cursor:pointer;opacity:.75;line-height:1;padding:0 4px;}
+.whats-new-close:hover{opacity:1;}
+.whats-new-body{max-height:60vh;overflow-y:auto;padding:18px 20px;background:#fafafa;}
+.whats-new-version{font-size:11px;font-weight:700;color:#7c3aed;background:#f5f3ff;border:1.5px solid #ddd6fe;padding:3px 10px;border-radius:12px;display:inline-block;margin-bottom:8px;letter-spacing:.5px;}
+.whats-new-version .wn-date{color:#6b7280;font-weight:500;margin-left:6px;}
+.whats-new-section{background:white;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;margin-bottom:10px;}
+.whats-new-section ul{margin:0;padding-left:20px;}
+.whats-new-section ul li{font-size:13px;line-height:1.7;color:#1f2937;margin-bottom:4px;}
+.whats-new-section ul li:last-child{margin-bottom:0;}
+.whats-new-section ul li strong{color:#7c3aed;font-weight:700;}
+.whats-new-foot{padding:14px 20px;background:white;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;}
+.whats-new-ok{background:#7c3aed;color:white;border:none;border-radius:8px;padding:9px 24px;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s;}
+.whats-new-ok:hover{background:#6d28d9;}
 .notif-item{background:#fffbeb;border:1px solid #fcd34d;border-left:3px solid #f59e0b;border-radius:8px;padding:10px 12px;margin-bottom:8px;}
 .notif-item.confirmed{background:#f8fafc;border-color:#e2e8f0;border-left-color:#94a3b8;opacity:.7;}
 .notif-case-name{font-size:13px;font-weight:800;color:#0f2040;margin-bottom:3px;}
@@ -238,7 +257,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;">ver.20260601.test05</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.test01</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -254,6 +273,19 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
       <button class="notif-close" onclick="closeNotifModal()">✕</button>
     </div>
     <div id="notifBody" class="notif-body"><div class="notif-empty">読み込み中...</div></div>
+  </div>
+</div>
+<!-- ver.20260603.test01: What's New モーダル -->
+<div id="whatsNewModalBg" class="whats-new-bg" onclick="if(event.target===this)closeWhatsNew()">
+  <div class="whats-new-modal">
+    <div class="whats-new-head">
+      <div class="whats-new-title">🎉 アップデートのお知らせ</div>
+      <button class="whats-new-close" onclick="closeWhatsNew()">✕</button>
+    </div>
+    <div id="whatsNewBody" class="whats-new-body"></div>
+    <div class="whats-new-foot">
+      <button class="whats-new-ok" onclick="closeWhatsNew()">確認しました</button>
+    </div>
   </div>
 </div>
 <div id="passScreen" class="pass-screen" style="display:none;">
@@ -615,6 +647,48 @@ function getMlitStatus(c){
 
 // お知らせモーダル内のステータス表示ラベル
 var NOTIF_LABELS={'審査中':'✅ 申請済み・受付番号紐付','許可済 受取方法調整中':'🎉 許可済 受取方法調整中','入管受取ステータス変更中':'🏛 入管受取ステータス変更中','郵送交付':'📮 郵送交付','★郵送交付':'📮 郵送交付','★窓口受取':'🏢 窓口受取','窓口受取（本人）':'🏢 窓口受取（本人）'};
+
+// ver.20260603.test01: What's New アップデート履歴
+// 修正をリリースしたら、配列の先頭に { version, date, items: [...] } を追加してください。
+// 新バージョン初見時に自動でモーダル表示されます（localStorage 'share_last_seen_version_test' で記録）。
+var WHATS_NEW = [
+  {
+    version: 'ver.20260603.test01',
+    date: '2026-06-03',
+    items: [
+      '🎉 このアップデート通知機能を追加しました。今後、画面が更新された時にどこが変わったかをご案内します。'
+    ]
+  },
+  {
+    version: 'ver.20260603.02',
+    date: '2026-06-03',
+    items: [
+      '🔧 アイデムShareの新規案件依頼を、リロードせずに連続で登録できるようになりました（2件目以降が「送信中…」のまま押せなくなる不具合を修正）。'
+    ]
+  },
+  {
+    version: 'ver.20260602.03',
+    date: '2026-06-02',
+    items: [
+      '🔗 ベル通知の確認とメイン画面のチェック状態が、双方向で自動連動するようになりました。どちらか片方を確認/チェックすると、もう片方も自動的に同期されます。'
+    ]
+  },
+  {
+    version: 'ver.20260601.01',
+    date: '2026-06-01',
+    items: [
+      '📦 「進行中」「すべて」「申請記録」「審査完了」タブに <strong>受取方法</strong> 列を追加しました（郵送 / 窓口受取）。',
+      '✏️ メイン画面で生成されるテキストから「OFUSA担当者」行を削除しました（個別案件のテキストには反映されません）。'
+    ]
+  },
+  {
+    version: 'ver.20260531.02',
+    date: '2026-05-31',
+    items: [
+      '⚠️ 未確認の通知がある場合、画面上部にアラートバーを表示するようになりました。'
+    ]
+  }
+];
 
 // ver.20260518.10: 登録支援機関向けの「完了」は「新在留カード発行済み」のみ
 // （許可済/郵送交付/窓口受取は「審査完了・新在留カード交付」フェーズで、進行中タブに残す）
@@ -2343,6 +2417,69 @@ function closeNotifModal(){
   document.getElementById('notifModalBg').classList.remove('open');
 }
 
+// ver.20260603.test01: What's New（アップデートのお知らせ）
+// localStorage キーは share_test 用に別名（本番と混ざらないように）
+var WHATS_NEW_STORAGE_KEY = 'share_last_seen_version_test';
+var WHATS_NEW_INITIAL_LIMIT = 3;
+
+function _whatsNewCurrentVersion(){
+  return (WHATS_NEW && WHATS_NEW.length) ? WHATS_NEW[0].version : '';
+}
+
+function checkAndShowWhatsNew(){
+  try{
+    if(!WHATS_NEW || !WHATS_NEW.length) return;
+    var current = _whatsNewCurrentVersion();
+    var lastSeen = '';
+    try{ lastSeen = localStorage.getItem(WHATS_NEW_STORAGE_KEY) || ''; }catch(e){}
+    if(current && current !== lastSeen){
+      openWhatsNew({autoOpened:true, lastSeen:lastSeen});
+    }
+  }catch(e){ console.warn('[checkAndShowWhatsNew] error', e); }
+}
+
+function openWhatsNew(opts){
+  opts = opts || {};
+  var bodyEl = document.getElementById('whatsNewBody');
+  if(!bodyEl) return;
+
+  var entries = WHATS_NEW || [];
+  if(opts.autoOpened && opts.lastSeen){
+    var idx = entries.findIndex(function(e){return e.version===opts.lastSeen;});
+    if(idx > 0) entries = entries.slice(0, idx);
+    else if(idx === -1) entries = entries.slice(0, WHATS_NEW_INITIAL_LIMIT);
+  } else if(opts.autoOpened){
+    entries = entries.slice(0, WHATS_NEW_INITIAL_LIMIT);
+  }
+
+  if(!entries.length){
+    bodyEl.innerHTML = '<div style="text-align:center;padding:30px;color:#9ca3af;font-size:13px;">最近のアップデートはありません</div>';
+  } else {
+    var h = '';
+    if(opts.autoOpened){
+      h += '<div style="font-size:12px;color:#6b7280;margin-bottom:14px;">画面が更新されました。主な変更点は以下のとおりです。</div>';
+    }
+    entries.forEach(function(e){
+      h += '<div class="whats-new-section">';
+      h += '<div class="whats-new-version">' + esc(e.version) + '<span class="wn-date">' + esc(e.date||'') + '</span></div>';
+      h += '<ul>';
+      (e.items||[]).forEach(function(it){ h += '<li>' + it + '</li>'; });
+      h += '</ul>';
+      h += '</div>';
+    });
+    bodyEl.innerHTML = h;
+  }
+  document.getElementById('whatsNewModalBg').classList.add('open');
+}
+
+function closeWhatsNew(){
+  document.getElementById('whatsNewModalBg').classList.remove('open');
+  try{
+    var current = _whatsNewCurrentVersion();
+    if(current) localStorage.setItem(WHATS_NEW_STORAGE_KEY, current);
+  }catch(e){}
+}
+
 async function confirmNotification(id){
   var n=notifications.find(function(x){return x.id===id;});
   if(!n||n.confirmed_at) return;
@@ -2689,6 +2826,8 @@ async function loadData(){
     if(!_dataReloadTimer){
       startNotifPolling();
       startDataReloadTimer();
+      // ver.20260603.test01: 初回ロード時に What's New を表示判定（リロードでは出さない）
+      checkAndShowWhatsNew();
     }
   }catch(e){
     // ver.20260518.10: バックグラウンドリロード中は画面を上書きしない
