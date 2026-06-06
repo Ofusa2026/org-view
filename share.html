@@ -361,7 +361,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.04</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.05</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1034,6 +1034,62 @@ function showGpMissing(caseId){
   document.body.appendChild(modal);
 }
 
+// ver.20260606.05: GPモード CSV出力（現在のフィルタ結果を出力）
+function exportGpCsv(){
+  try{
+    var rows=groupCases(currentGroup);
+    if(!rows.length){ alert('出力する案件がありません'); return; }
+    var todayD=new Date(); todayD.setHours(0,0,0,0);
+    var headers=['受注ID','案件名','企業名','申請者','在留資格(種別)','ステータス','在留期限','組合受領日','依頼日','経過日数','人材不足書類','企業不足書類','人材不足書類一覧','企業不足書類一覧'];
+    var lines=[headers.join(',')];
+    rows.forEach(function(c){
+      var elapsed='';
+      if(c.gpIraiDate){
+        try{
+          var d=new Date(c.gpIraiDate); d.setHours(0,0,0,0);
+          var e=Math.floor((todayD-d)/86400000);
+          if(e>=0) elapsed=String(e);
+        }catch(eX){}
+      }
+      var pMis=c.gpPersonMissing||[];
+      var cMis=c.gpCoMissing||[];
+      var row=[
+        c.gpOrderId||'',
+        c.name||'',
+        c.company||'',
+        c.applicant||'',
+        c.appType||'',
+        getExternalStatus(c.status)||c.status||'',
+        c.expire||'',
+        c.gpKumiaiDate||'',
+        c.gpIraiDate||'',
+        elapsed,
+        pMis.length,
+        cMis.length,
+        pMis.join(' | '),
+        cMis.join(' | ')
+      ];
+      lines.push(row.map(function(v){
+        var s=String(v==null?'':v);
+        if(s.indexOf(',')>=0||s.indexOf('"')>=0||s.indexOf('\n')>=0){
+          return '"'+s.replace(/"/g,'""')+'"';
+        }
+        return s;
+      }).join(','));
+    });
+    var csv='\uFEFF'+lines.join('\r\n'); // BOM for Excel
+    var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    var url=URL.createObjectURL(blob);
+    var ts=new Date();
+    var pad=function(n){return n<10?'0'+n:String(n);};
+    var fname='グローバルパートナーズ_進捗_'+ts.getFullYear()+pad(ts.getMonth()+1)+pad(ts.getDate())+'_'+pad(ts.getHours())+pad(ts.getMinutes())+'.csv';
+    var a=document.createElement('a');
+    a.href=url; a.download=fname;
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); },100);
+  }catch(e){ alert('CSV出力エラー: '+e.message); }
+}
+
 function buildDownloadCell(c){
   var receipts=allReceipts.filter(function(r){return r.case_id===c.id;});
   var shinsa=allShinsa.filter(function(r){return r.case_id===c.id;});
@@ -1133,11 +1189,15 @@ function buildRow(c){
   // ver.20260521.01: 各tdに data-col-key を付与（カスタマイズで列を隠せるように）
   // ver.20260606.01: GPモードの場合、氏名セルに受注ID・組合受領日→依頼日（経過日数）を併記
   // ver.20260606.03: GPモードの氏名セル再構成（受注ID／案件名／企業名／人材名／組合→依頼(N日)を縦に）
+  // ver.20260606.05: 受注IDを独立列(gpOrderId)に切り出し、氏名セルからは除外
   if(isGpMode){
+    // 受注ID独立列
+    var _orderTd = c.gpOrderId
+      ? '<span style="display:inline-block;font-size:10px;color:#0369a1;background:#e0f2fe;padding:3px 8px;border-radius:5px;font-weight:700;letter-spacing:.3px;white-space:nowrap;">'+esc(c.gpOrderId)+'</span>'
+      : '<span style="color:#cbd5e1;font-size:10px;">—</span>';
+    h+='<td data-col-key="gpOrderId" style="white-space:nowrap;text-align:center;min-width:100px;">'+_orderTd+'</td>';
+    // 氏名セル（受注IDタグ無し版）
     var _todayD2=new Date(); _todayD2.setHours(0,0,0,0);
-    var _gpOrderTag=c.gpOrderId
-      ? '<div style="margin-bottom:4px;"><span style="display:inline-block;font-size:10px;color:#0369a1;background:#e0f2fe;padding:2px 7px;border-radius:4px;font-weight:700;letter-spacing:.3px;">'+esc(c.gpOrderId)+'</span></div>'
-      : '';
     var _gpDates='';
     if(c.gpKumiaiDate||c.gpIraiDate){
       _gpDates+='<div style="margin-top:4px;font-size:10px;color:#64748b;line-height:1.4;">';
@@ -1157,7 +1217,6 @@ function buildRow(c){
       _gpDates+='</div>';
     }
     h+='<td data-col-key="name" style="min-width:240px;max-width:360px;">'
-      +_gpOrderTag
       +'<div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div>'
       +'<div style="font-size:10px;color:#475569;font-weight:600;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(c.company||'—')+'</div>'
       +'<div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div>'
@@ -1287,6 +1346,7 @@ function renderSidebar(){
 }
 
 var COLS=[
+  {key:'gpOrderId',label:'受注ID',noSort:true}, // ver.20260606.05: GPモード専用 受注ID独立列
   {key:'name',label:'案件名 / 申請者'},
   {key:'company',label:'所属機関'},
   {key:'appType',label:'種別'},
@@ -1402,6 +1462,10 @@ function renderFilterBar(){
   // クリアボタン
   if(searchQuery||filterStatus||filterCompany||filterClientStaff) h+='<button onclick="searchQuery=\'\';filterStatus=\'\';filterCompany=\'\';filterClientStaff=\'\';renderSidebar();renderCurrent()" style="padding:7px 12px;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap;">✕ クリア</button>';
   h+='<span style="font-size:11px;color:#94a3b8;white-space:nowrap;">'+cases.length+'件</span>';
+  // ver.20260606.05: GPモード CSV出力ボタン
+  if(isGpMode){
+    h+='<button onclick="exportGpCsv()" style="padding:6px 12px;background:#0f2040;color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">📥 CSV出力 ('+cases.length+'件)</button>';
+  }
   // ビュー切り替えボタン
   h+='<div style="display:flex;gap:3px;background:#f1f5f9;border-radius:8px;padding:3px;margin-left:auto;">';
   h+='<button onclick="setView(\'list\')" style="padding:4px 10px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;'+(currentView==='list'?'background:white;color:#0f2040;box-shadow:0 1px 3px rgba(0,0,0,.1);':'background:none;color:#94a3b8;')+'">☰ リスト</button>';
