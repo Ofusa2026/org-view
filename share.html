@@ -366,7 +366,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.11</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.12</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1387,10 +1387,10 @@ function renderSidebar(){
 }
 
 var COLS=[
-  {key:'gpOrderId',label:'受注ID',noSort:true}, // ver.20260606.05: GPモード専用 受注ID独立列
+  {key:'gpOrderId',label:'受注ID'}, // ver.20260606.12: クリックでソート可能に
   {key:'name',label:'案件名 / 申請者'},
-  {key:'gpKumiaiDate',label:'組合受領',noSort:true}, // ver.20260606.11: 組合受領日 独立列
-  {key:'gpIraiDate',label:'依頼日',noSort:true},     // ver.20260606.11: 依頼日 + 経過日数 独立列
+  {key:'gpKumiaiDate',label:'組合受領'}, // ver.20260606.12: クリックでソート可能に
+  {key:'gpIraiDate',label:'依頼日'},     // ver.20260606.12: クリックでソート可能に
   {key:'company',label:'所属機関'},
   {key:'appType',label:'種別'},
   {key:'staff',label:'担当'},
@@ -3297,6 +3297,8 @@ async function init(){
     // ver.20260606.11: GPモード時は body にクラスを付けて文字サイズアップCSSを適用
     if(isGpMode){ document.body.classList.add('gp-mode'); }
     else{ document.body.classList.remove('gp-mode'); }
+    // ver.20260606.12: GPモード時の初期ソートを「受注ID昇順」に（クリックで降順切替可能）
+    if(isGpMode && !sortCol){ sortCol='gpOrderId'; sortDir='asc'; }
     if(isGpMode){
       try{
         var rGp=await sbFetch('gp_case_map?case_id=not.is.null&select=case_id,oc_order_id,kumiai_receipt_date,irai_date&limit=2000');
