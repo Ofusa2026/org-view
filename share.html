@@ -361,7 +361,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.07</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.08</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1175,11 +1175,14 @@ function buildRow(c){
   var exp=new Date(c.expire);exp.setHours(0,0,0,0);
   var days=c.expire?Math.ceil((exp-today)/86400000):null;
   var isShinsa=(c.status==='審査中'||c.status==='特活審査中');
+  // ver.20260606.08: 「申請後」（受付番号あり or 審査中/完了系ステータス）は在留期限の赤/黄色強調をやめて、安心感ある緑表示に
+  var _statusStr=c.status||'';
+  var isAfterApply=isShinsa || !!c.receiptNo || /審査|完了|発行|新在留|受領|許可|不交付|押印|預か|交付/.test(_statusStr);
   var tokStr='—';
   if(c.tokureiDate){tokStr=c.tokureiDate;}
   else if(c.expire&&!isNaN(exp.getTime())){var t2=new Date(exp);t2.setMonth(t2.getMonth()+2);tokStr=t2.toISOString().split('T')[0];}
   var expStyle='';
-  if(c.expire&&!isShinsa){
+  if(c.expire&&!isShinsa&&!isAfterApply){
     if(days<=0)expStyle='background:#fee2e2;color:#dc2626;font-weight:800;';
     else if(days<=14)expStyle='background:#fff7ed;color:#ea580c;font-weight:700;';
     else if(days<=30)expStyle='color:#d97706;font-weight:700;';
@@ -1259,6 +1262,12 @@ function buildRow(c){
   h+='<td data-col-key="_mlit" style="white-space:nowrap;min-width:140px;">'+mlitHtml+'</td>';
   h+='<td data-col-key="expire" style="'+expStyle+'font-size:10px;white-space:nowrap;min-width:88px;">';
   if(isShinsa){h+='<div style="font-size:9px;color:#9ca3af;">'+(c.expire||'—')+'</div><div style="font-size:10px;font-weight:700;">特例 '+tokStr+'</div>';}
+  else if(isAfterApply){
+    // ver.20260606.08: 申請後は安心感のある緑表示（強調なし）
+    h+='<div style="color:#94a3b8;font-size:10px;">'+(c.expire||'—')+'</div>';
+    h+='<div style="color:#cbd5e1;font-size:9px;">特例 '+tokStr+'</div>';
+    h+='<div style="display:inline-block;margin-top:3px;font-size:9px;color:#059669;background:#d1fae5;padding:1px 6px;border-radius:3px;font-weight:600;">🛡 申請済</div>';
+  }
   else{h+='<div>'+(c.expire||'—')+'</div><div style="color:#9ca3af;font-size:9px;">特例 '+tokStr+'</div>';if(days!==null&&days<=14&&days>0)h+='<div style="color:#ea580c;font-size:9px;">あと'+days+'日</div>';else if(days!==null&&days<=0&&c.expire)h+='<div style="color:#dc2626;font-size:9px;">期限切れ</div>';}
   h+='</td>';
   // 受付番号
