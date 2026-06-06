@@ -361,7 +361,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.10</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.01</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -873,7 +873,7 @@ var NOTIF_SHORT_LABELS={'受付番号取込':'受付番号','申請済(番号待
 var DONE_ST=['完了','審査完了'];
 // ver.20260518.13: ダッシュボードを追加、完了の表記をシンプル化
 var GROUPS=[{id:'dashboard',label:'ダッシュボード'},{id:'active',label:'進行中'},{id:'done',label:'発行済み・完了'},{id:'all',label:'すべて'}];
-var allCases=[],allReceipts=[],allShinsa=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus='',filterCompany='',filterClientStaff='',sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,_imeOn=false; // ver.20260521.01: progressUrlCfg追加 / ver.20260527.17: filterClientStaff追加
+var allCases=[],allReceipts=[],allShinsa=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus='',filterCompany='',filterClientStaff='',sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,isGpMode=false,gpInfoByCaseId={},_imeOn=false; // ver.20260521.01: progressUrlCfg追加 / ver.20260527.17: filterClientStaff追加 / ver.20260606.01: isGpMode追加（オープンケアGP代理店分の絞込モード）
 // コメント入力中フラグ（再描画スキップ用）。値は編集中のtextareaのid（例:'owncmt_xxx'）
 var _editingCommentId=null;
 var _editingImeOn=false;
@@ -1096,7 +1096,29 @@ function buildRow(c){
   var notifDot=unconfirmed[c.id]?'<span class="row-notif-dot" title="未確認のお知らせあり"></span>':'';
   var h='<tr'+rowCls+'>';
   // ver.20260521.01: 各tdに data-col-key を付与（カスタマイズで列を隠せるように）
-  h+='<td data-col-key="name" style="min-width:200px;max-width:320px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div></td>'; // ver.20260518.06: 案件名を全文表示（折り返し）
+  // ver.20260606.01: GPモードの場合、氏名セルに受注ID・組合受領日→依頼日（経過日数）を併記
+  var gpInfoHtml='';
+  if(isGpMode){
+    var _todayD=new Date(); _todayD.setHours(0,0,0,0);
+    var _gpOrderTag=c.gpOrderId?'<span style="display:inline-block;font-size:9px;color:#0369a1;background:#e0f2fe;padding:1px 5px;border-radius:3px;font-weight:600;margin-right:4px;">'+esc(c.gpOrderId)+'</span>':'';
+    var _gpDates='';
+    if(c.gpKumiaiDate||c.gpIraiDate){
+      _gpDates+='<span style="font-size:9px;color:#64748b;">';
+      if(c.gpKumiaiDate) _gpDates+='組合:'+esc(c.gpKumiaiDate);
+      if(c.gpKumiaiDate && c.gpIraiDate) _gpDates+=' → ';
+      if(c.gpIraiDate){
+        _gpDates+='依頼:'+esc(c.gpIraiDate);
+        try{
+          var _iraiD=new Date(c.gpIraiDate); _iraiD.setHours(0,0,0,0);
+          var _elapsed=Math.floor((_todayD-_iraiD)/86400000);
+          if(_elapsed>=0) _gpDates+=' <span style="color:#0f2040;font-weight:600;">('+_elapsed+'日経過)</span>';
+        }catch(e){}
+      }
+      _gpDates+='</span>';
+    }
+    if(_gpOrderTag||_gpDates) gpInfoHtml='<div style="margin-top:3px;">'+_gpOrderTag+_gpDates+'</div>';
+  }
+  h+='<td data-col-key="name" style="min-width:200px;max-width:320px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div>'+gpInfoHtml+'</td>'; // ver.20260518.06: 案件名を全文表示（折り返し）
   h+='<td data-col-key="company" style="min-width:90px;max-width:120px;"><div style="font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:115px;">'+esc(c.company||'—')+'</div></td>';
   h+='<td data-col-key="appType" style="width:48px;">'+typeHtml+'</td>';
   // ver.20260527.16: 「担当」列はアイデム担当者(client_staff)を表示。OFUSA担当(staff)は非表示。
@@ -3100,6 +3122,16 @@ async function init(){
     // ver.20260521.01: 進捗URLカスタマイズ設定読込（support_orgs.extra.progress_url_cols）
     var orgExtra=(od&&od.length&&od[0].extra)?od[0].extra:null;
     progressUrlCfg=(orgExtra && orgExtra.progress_url_cols) ? orgExtra.progress_url_cols : null;
+    // ver.20260606.01: GP代理店分モード判定（オープンケア協同組合 GP代理店分の絞込URL用）
+    isGpMode = !!(orgExtra && orgExtra.gp_filter === true);
+    if(isGpMode){
+      try{
+        var rGp=await sbFetch('gp_case_map?case_id=not.is.null&select=case_id,oc_order_id,kumiai_receipt_date,irai_date&limit=2000');
+        var gpRows=await rGp.json();
+        gpInfoByCaseId={};
+        (gpRows||[]).forEach(function(g){ if(!gpInfoByCaseId[g.case_id]) gpInfoByCaseId[g.case_id]=g; });
+      }catch(eGp){ console.warn('[gp_case_map load failed]', eGp); }
+    }
     // パスワードチェック
     var rp=await sbFetch('settings?key=eq.'+encodeURIComponent('org_view_pass_'+token)+'&select=value');
     var pd=await rp.json();
@@ -3158,7 +3190,12 @@ async function loadData(){
       }catch(e){ console.warn('[aidem companies load failed]', e); }
     }
     // ver.20260527.34: PostgRESTのdb-max-rows=1000を回避するため offset+limit でページング取得
-    var casesBase='cases?org=eq.'+encodeURIComponent(orgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,receipt_date,temp_return,applicant_field,madoguchi_date,madoguchi_receive_date,client_staff,delivery_method,updated_at,created_at&order=created_at.desc';
+    // ver.20260606.01: GPモードの場合、cases.org は本体('オープンケア協同組合')でフィルタし、後で gp_case_map にマッチするものだけ残す
+    var _effectiveOrgName = orgName;
+    if(isGpMode){
+      _effectiveOrgName = (orgExtra && orgExtra.parent_org_name) ? orgExtra.parent_org_name : 'オープンケア協同組合';
+    }
+    var casesBase='cases?org=eq.'+encodeURIComponent(_effectiveOrgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,receipt_date,temp_return,applicant_field,madoguchi_date,madoguchi_receive_date,client_staff,delivery_method,updated_at,created_at&order=created_at.desc';
     var cases=[];
     var _off=0, _pageSize=1000, _safety=20;
     while(_safety-->0){
@@ -3169,7 +3206,21 @@ async function loadData(){
       if(_page.length<_pageSize) break;
       _off+=_pageSize;
     }
-    allCases=(cases||[]).map(function(c){return{id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',receiptDate:c.receipt_date||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',madoguchiDate:c.madoguchi_date||'',madoguchiReceiveDate:c.madoguchi_receive_date||'',clientStaff:c.client_staff||'',deliveryMethod:c.delivery_method||'mail',updated_at:c.updated_at||''};});
+    allCases=(cases||[]).map(function(c){
+      var base={id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',receiptDate:c.receipt_date||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',madoguchiDate:c.madoguchi_date||'',madoguchiReceiveDate:c.madoguchi_receive_date||'',clientStaff:c.client_staff||'',deliveryMethod:c.delivery_method||'mail',updated_at:c.updated_at||''};
+      // ver.20260606.01: GPモードならGP情報を付与
+      if(isGpMode){
+        var g=gpInfoByCaseId[c.id];
+        base.gpOrderId=g?(g.oc_order_id||''):'';
+        base.gpKumiaiDate=g?(g.kumiai_receipt_date||''):'';
+        base.gpIraiDate=g?(g.irai_date||''):'';
+      }
+      return base;
+    });
+    // ver.20260606.01: GPモードでは gp_case_map にマッチしない案件を除外（466件のみ表示）
+    if(isGpMode){
+      allCases=allCases.filter(function(c){ return !!gpInfoByCaseId[c.id]; });
+    }
     // personsテーブルからtempReturn(一時帰国予定日)を取得して補完
     // ver.20260527.14: 申請中証明書PDF・預かり証PDFのURL履歴も取得
     if(allCases.length){
