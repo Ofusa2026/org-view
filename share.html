@@ -150,6 +150,11 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
 .row-notif-dot{display:inline-block;width:6px;height:6px;background:#dc2626;border-radius:99px;margin-right:5px;animation:pulse 1.5s infinite;vertical-align:middle;}
 .st-badge{font-size:9px;font-weight:600;padding:1px 5px;border-radius:10px;border:1px solid;display:inline-block;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;}
 .type-badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;display:inline-block;}
+/* ver.20260606.11: GPモード時の文字サイズ底上げ (グローバルパートナーズ様用) */
+body.gp-mode table td{font-size:12px;}
+body.gp-mode table th{font-size:12px;font-weight:700;}
+body.gp-mode .st-badge{font-size:11px;padding:3px 8px;}
+body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 .type-nintei{background:#ede9fe;color:#7c3aed;}
 .type-koshin{background:#eff6ff;color:#2563eb;}
 .type-henkou{background:#fff7ed;color:#ea580c;}
@@ -361,7 +366,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.10</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.11</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1217,41 +1222,40 @@ function buildRow(c){
   var notifDot=unconfirmed[c.id]?'<span class="row-notif-dot" title="未確認のお知らせあり"></span>':'';
   var h='<tr'+rowCls+'>';
   // ver.20260521.01: 各tdに data-col-key を付与（カスタマイズで列を隠せるように）
-  // ver.20260606.01: GPモードの場合、氏名セルに受注ID・組合受領日→依頼日（経過日数）を併記
-  // ver.20260606.03: GPモードの氏名セル再構成（受注ID／案件名／企業名／人材名／組合→依頼(N日)を縦に）
-  // ver.20260606.05: 受注IDを独立列(gpOrderId)に切り出し、氏名セルからは除外
+  // ver.20260606.11: GPモードの氏名セルから日付情報を分離して独立列に / 文字サイズアップ
   if(isGpMode){
     // 受注ID独立列
     var _orderTd = c.gpOrderId
-      ? '<span style="display:inline-block;font-size:9px;color:#0369a1;background:#e0f2fe;padding:2px 5px;border-radius:3px;font-weight:700;letter-spacing:.2px;white-space:nowrap;">'+esc(c.gpOrderId)+'</span>'
-      : '<span style="color:#cbd5e1;font-size:10px;">—</span>';
-    h+='<td data-col-key="gpOrderId" style="white-space:nowrap;text-align:center;width:90px;min-width:90px;max-width:90px;">'+_orderTd+'</td>';
-    // 氏名セル（受注IDタグ無し版）
-    var _todayD2=new Date(); _todayD2.setHours(0,0,0,0);
-    var _gpDates='';
-    if(c.gpKumiaiDate||c.gpIraiDate){
-      _gpDates+='<div style="margin-top:4px;font-size:10px;color:#64748b;line-height:1.4;">';
-      if(c.gpKumiaiDate) _gpDates+='組合:'+esc(c.gpKumiaiDate);
-      if(c.gpKumiaiDate && c.gpIraiDate) _gpDates+=' → ';
-      if(c.gpIraiDate){
-        _gpDates+='依頼:'+esc(c.gpIraiDate);
-        try{
-          var _iraiD2=new Date(c.gpIraiDate); _iraiD2.setHours(0,0,0,0);
-          var _elapsed2=Math.floor((_todayD2-_iraiD2)/86400000);
-          if(_elapsed2>=0){
-            var _eCol = _elapsed2>=60?'#dc2626':(_elapsed2>=30?'#ea580c':'#0f2040');
-            _gpDates+='、<span style="color:'+_eCol+';font-weight:700;">'+_elapsed2+'日経過</span>';
-          }
-        }catch(e){}
-      }
-      _gpDates+='</div>';
-    }
-    h+='<td data-col-key="name" style="min-width:240px;max-width:360px;">'
-      +'<div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div>'
-      +'<div style="font-size:10px;color:#475569;font-weight:600;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(c.company||'—')+'</div>'
-      +'<div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div>'
-      +_gpDates
+      ? '<span style="display:inline-block;font-size:11px;color:#0369a1;background:#e0f2fe;padding:3px 7px;border-radius:4px;font-weight:700;letter-spacing:.2px;white-space:nowrap;">'+esc(c.gpOrderId)+'</span>'
+      : '<span style="color:#cbd5e1;font-size:11px;">—</span>';
+    h+='<td data-col-key="gpOrderId" style="white-space:nowrap;text-align:center;width:100px;min-width:100px;max-width:100px;">'+_orderTd+'</td>';
+    // 氏名セル（案件名・企業名・人材名のみ、日付は別列に）
+    h+='<td data-col-key="name" style="min-width:260px;max-width:380px;">'
+      +'<div style="font-size:13px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.45;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div>'
+      +'<div style="font-size:12px;color:#475569;font-weight:600;white-space:normal;word-break:break-word;line-height:1.4;margin-top:2px;">'+esc(c.company||'—')+'</div>'
+      +'<div style="font-size:12px;color:#6b7280;line-height:1.4;">'+esc(c.applicant||'')+'</div>'
       +'</td>';
+    // 組合受領日 独立列
+    h+='<td data-col-key="gpKumiaiDate" style="white-space:nowrap;text-align:center;font-size:12px;color:#475569;min-width:96px;">'
+      +(c.gpKumiaiDate?esc(c.gpKumiaiDate):'<span style="color:#cbd5e1;">—</span>')
+      +'</td>';
+    // 依頼日 + 経過日数 独立列
+    var _iraiHtml='';
+    if(c.gpIraiDate){
+      _iraiHtml+='<div style="font-size:12px;color:#475569;">'+esc(c.gpIraiDate)+'</div>';
+      try{
+        var _todayD3=new Date(); _todayD3.setHours(0,0,0,0);
+        var _iraiD3=new Date(c.gpIraiDate); _iraiD3.setHours(0,0,0,0);
+        var _elapsed3=Math.floor((_todayD3-_iraiD3)/86400000);
+        if(_elapsed3>=0){
+          var _eCol3 = _elapsed3>=60?'#dc2626':(_elapsed3>=30?'#ea580c':'#0f2040');
+          _iraiHtml+='<div style="font-size:11px;color:'+_eCol3+';font-weight:700;margin-top:2px;">'+_elapsed3+'日経過</div>';
+        }
+      }catch(e){}
+    } else {
+      _iraiHtml='<span style="color:#cbd5e1;font-size:12px;">—</span>';
+    }
+    h+='<td data-col-key="gpIraiDate" style="white-space:nowrap;text-align:center;min-width:100px;">'+_iraiHtml+'</td>';
   } else {
     h+='<td data-col-key="name" style="min-width:200px;max-width:320px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div></td>'; // ver.20260518.06: 案件名を全文表示（折り返し）
   }
@@ -1288,15 +1292,16 @@ function buildRow(c){
   }
   h+='<td data-col-key="deliveryMethod" style="font-size:10px;white-space:nowrap;"><span style="display:inline-block;font-size:10px;padding:2px 8px;border-radius:4px;font-weight:700;'+dmStyle+'">'+dmLabel+'</span></td>';
   // ver.20260606.04: GPモード - 不足書類列（クリックで詳細表示）
+  // ver.20260606.11: 文字サイズアップ
   if(isGpMode){
     var _pMis=(c.gpPersonMissing||[]).length;
     var _cMis=(c.gpCoMissing||[]).length;
     var _missTotal=_pMis+_cMis;
     var _missHtml;
     if(_missTotal===0){
-      _missHtml='<span style="color:#10b981;font-size:13px;font-weight:700;">✓</span>';
+      _missHtml='<span style="color:#10b981;font-size:16px;font-weight:700;">✓</span>';
     } else {
-      _missHtml='<span onclick="showGpMissing(\''+c.id+'\')" style="cursor:pointer;display:inline-block;font-size:10px;color:#dc2626;background:#fee2e2;padding:3px 9px;border-radius:5px;font-weight:700;border:1px solid #fca5a5;line-height:1.3;" title="クリックで不足書類の詳細">人材'+_pMis+' / 企業'+_cMis+'</span>';
+      _missHtml='<span onclick="showGpMissing(\''+c.id+'\')" style="cursor:pointer;display:inline-block;font-size:12px;color:#dc2626;background:#fee2e2;padding:4px 10px;border-radius:5px;font-weight:700;border:1px solid #fca5a5;line-height:1.3;" title="クリックで不足書類の詳細">人材'+_pMis+' / 企業'+_cMis+'</span>';
     }
     h+='<td data-col-key="gpMissingDocs" style="white-space:nowrap;text-align:center;">'+_missHtml+'</td>';
   }
@@ -1384,6 +1389,8 @@ function renderSidebar(){
 var COLS=[
   {key:'gpOrderId',label:'受注ID',noSort:true}, // ver.20260606.05: GPモード専用 受注ID独立列
   {key:'name',label:'案件名 / 申請者'},
+  {key:'gpKumiaiDate',label:'組合受領',noSort:true}, // ver.20260606.11: 組合受領日 独立列
+  {key:'gpIraiDate',label:'依頼日',noSort:true},     // ver.20260606.11: 依頼日 + 経過日数 独立列
   {key:'company',label:'所属機関'},
   {key:'appType',label:'種別'},
   {key:'staff',label:'担当'},
@@ -3287,6 +3294,9 @@ async function init(){
     progressUrlCfg=(orgExtra && orgExtra.progress_url_cols) ? orgExtra.progress_url_cols : null;
     // ver.20260606.01: GP代理店分モード判定（オープンケア協同組合 GP代理店分の絞込URL用）
     isGpMode = !!(orgExtra && orgExtra.gp_filter === true);
+    // ver.20260606.11: GPモード時は body にクラスを付けて文字サイズアップCSSを適用
+    if(isGpMode){ document.body.classList.add('gp-mode'); }
+    else{ document.body.classList.remove('gp-mode'); }
     if(isGpMode){
       try{
         var rGp=await sbFetch('gp_case_map?case_id=not.is.null&select=case_id,oc_order_id,kumiai_receipt_date,irai_date&limit=2000');
@@ -3359,7 +3369,7 @@ async function loadData(){
     if(isGpMode){
       _effectiveOrgName = 'オープンケア協同組合';
     }
-    var casesBase='cases?org=eq.'+encodeURIComponent(_effectiveOrgName)+'&select=id,applicant,name,company,company_id,status,expire,tokurei_date,staff,team,app_type,receipt_no,receipt_date,temp_return,applicant_field,madoguchi_date,madoguchi_receive_date,client_staff,delivery_method,updated_at,created_at&order=created_at.desc';
+    var casesBase='cases?org=eq.'+encodeURIComponent(_effectiveOrgName)+'&select=id,applicant,name,company,company_id,residence_status,status,expire,tokurei_date,staff,team,app_type,receipt_no,receipt_date,temp_return,applicant_field,madoguchi_date,madoguchi_receive_date,client_staff,delivery_method,updated_at,created_at&order=created_at.desc';
     var cases=[];
     var _off=0, _pageSize=1000, _safety=20;
     while(_safety-->0){
@@ -3371,7 +3381,7 @@ async function loadData(){
       _off+=_pageSize;
     }
     allCases=(cases||[]).map(function(c){
-      var base={id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',companyId:c.company_id||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',receiptDate:c.receipt_date||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',madoguchiDate:c.madoguchi_date||'',madoguchiReceiveDate:c.madoguchi_receive_date||'',clientStaff:c.client_staff||'',deliveryMethod:c.delivery_method||'mail',updated_at:c.updated_at||''};
+      var base={id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',companyId:c.company_id||'',residenceStatus:c.residence_status||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',receiptDate:c.receipt_date||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',madoguchiDate:c.madoguchi_date||'',madoguchiReceiveDate:c.madoguchi_receive_date||'',clientStaff:c.client_staff||'',deliveryMethod:c.delivery_method||'mail',updated_at:c.updated_at||''};
       // ver.20260606.01: GPモードならGP情報を付与
       if(isGpMode){
         var g=gpInfoByCaseId[c.id];
@@ -3384,12 +3394,15 @@ async function loadData(){
     // ver.20260606.01: GPモードでは gp_case_map にマッチしない案件を除外（466件のみ表示）
     if(isGpMode){
       allCases=allCases.filter(function(c){ return !!gpInfoByCaseId[c.id]; });
-      // ver.20260606.07: 不足書類取得（人材: doc_check / 企業: co_doc_check）
-      // 仕様: staff::xxx に値あり(日付or'true')=確認済 / skip::xxx に値あり=不要 / req:: or date:: にあるのに staff:: が無い=不足
+      // ver.20260606.11: 不足書類取得（在留資格別ロジック）
+      // - 特定活動のみ (residence_status に「特定活動」含み「特定技能」含まない)  → 入管書類は不足に出さない
+      // - 特定技能希望 (residence_status に「特定技能」含む / 「特定活動⇒特定技能」も該当)
+      //   → 入管書類は req::に日付あるもののみ不足扱い（案内日が入っている書類のみ）
+      // - その他 → 入管書類は従来どおり (staff::無値/'false' で不足)
       try{
         var _hasVal=function(v){ return v!=null && v!=='' && v!=='false'; };
         // 人材書類
-        var personDocs={}; // case_id -> docName -> {staff,skip,req,date}
+        var personDocs={};
         for(var pOff=0;pOff<allCases.length;pOff+=100){
           var pChunk=allCases.slice(pOff,pOff+100);
           var pIds=pChunk.map(function(c){return '"'+c.id+'"';}).join(',');
@@ -3424,27 +3437,37 @@ async function loadData(){
             coDocs[r.co_id][name][prefix]=r.value;
           });
         }
-        // 判定関数: 
-        //   skip::に値あり(日付/'true'/'1'等) → 不要扱い
-        //   staff::が日付or'true' → 確認済み
-        //   それ以外（staff::='false'/空/レコードなし、かつ skip::も無し）→ 不足
-        var _calcMissing=function(docMap){
+        // 判定関数（mode別）
+        // mode='skip': 完全スキップ (特活のみ案件)
+        // mode='annaiOnly': req::に日付があるもののみ対象 (特定技能希望)
+        // mode='default': 従来どおり (staff::無値/'false' で不足)
+        var _calcMissing=function(docMap,mode){
           var missing=[];
-          if(!docMap) return missing;
+          if(!docMap||mode==='skip') return missing;
           Object.keys(docMap).forEach(function(name){
             var d=docMap[name];
             // 1. 不要扱い (skipに値あり)
             if(_hasVal(d.skip)) return;
             // 2. 確認済 (staffが日付or'true'。'false'や空は確認済みではない)
             if(_hasVal(d.staff)) return;
-            // 3. 上記以外で、docMapにエントリがあれば対象書類 = 不足
+            // 3. 特定技能希望 (annaiOnly) は req::に日付(案内日)があるもののみ不足扱い
+            if(mode==='annaiOnly' && !_hasVal(d.req)) return;
+            // 4. それ以外で対象書類あり = 不足
             missing.push(name);
           });
           return missing;
         };
         allCases.forEach(function(c){
-          c.gpPersonMissing=_calcMissing(personDocs[c.id]);
-          c.gpCoMissing=c.companyId?_calcMissing(coDocs[c.companyId]):[];
+          // 在留資格別モード判定
+          var rs=c.residenceStatus||'';
+          var hasTokutei=/特定技能/.test(rs);
+          var hasKatsudo=/特定活動/.test(rs);
+          var mode='default';
+          if(hasKatsudo && !hasTokutei) mode='skip';       // 特活のみ → 入管書類スキップ
+          else if(hasTokutei) mode='annaiOnly';            // 特定技能希望 → req::あるもののみ
+          c._immiMode=mode;
+          c.gpPersonMissing=_calcMissing(personDocs[c.id],mode);
+          c.gpCoMissing=c.companyId?_calcMissing(coDocs[c.companyId],mode):[];
         });
       }catch(eDc){ console.warn('[gp missing docs load]', eDc); }
     }
