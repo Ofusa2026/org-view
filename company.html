@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.13: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
+<!-- ver.20260607.14: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -82,6 +82,12 @@ tr:hover td{background:#fcfcfd;}
 .dt-l{color:#94a3b8;width:100px;flex-shrink:0;font-weight:700;}
 .dt-v{color:#1e293b;font-weight:600;word-break:break-all;}
 .people-row{cursor:pointer;}
+.card{cursor:pointer;}
+.list-wrap{margin-top:10px;}
+.list-item{padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:8px;cursor:pointer;}
+.list-item:hover{background:#f8fafc;}
+.li-nm{font-size:13px;font-weight:800;color:#0f2040;}
+.li-sub{font-size:10px;color:#64748b;margin-top:2px;}
 </style>
 </head>
 <body>
@@ -310,10 +316,10 @@ function renderDashboard(){
   var soon=allCases.filter(function(c){if(!_expireTracked(c))return false;var i=expInfo(c.expire);return i.days!=null&&i.days>=0&&i.days<=90;}).length;
   var expired=allCases.filter(function(c){if(!_expireTracked(c))return false;var i=expInfo(c.expire);return i.days!=null&&i.days<0;}).length;
   var h='<div class="cards">';
-  h+='<div class="card"><div class="lbl">全申請件数</div><div class="num">'+total+'<small> 件</small></div></div>';
-  h+='<div class="card"><div class="lbl">進行中の申請</div><div class="num">'+active+'<small> 件</small></div></div>';
-  h+='<div class="card"><div class="lbl">手続き完了</div><div class="num">'+done+'<small> 件</small></div></div>';
-  h+='<div class="card '+(missingDocCount>0?'warn':'')+'"><div class="lbl">未提出の書類</div><div class="num">'+missingDocCount+'<small> 件</small></div></div>';
+  h+='<div class="card" onclick="openList(\'all\')"><div class="lbl">全申請件数</div><div class="num">'+total+'<small> 件</small></div></div>';
+  h+='<div class="card" onclick="openList(\'active\')"><div class="lbl">進行中の申請</div><div class="num">'+active+'<small> 件</small></div></div>';
+  h+='<div class="card" onclick="openList(\'done\')"><div class="lbl">手続き完了</div><div class="num">'+done+'<small> 件</small></div></div>';
+  h+='<div class="card '+(missingDocCount>0?'warn':'')+'" onclick="switchTab(\'docs\')"><div class="lbl">未提出の書類</div><div class="num">'+missingDocCount+'<small> 件</small></div></div>';
   h+='</div>';
   // OFUSA担当窓口（部署=案件チーム最頻値 / 担当=ofusa_staff）
   var teamCount={}; allCases.forEach(function(c){var t=(c.team||'').trim();if(t)teamCount[t]=(teamCount[t]||0)+1;});
@@ -331,10 +337,10 @@ function renderDashboard(){
   if(expired>0||soon>0||tokOver>0||tokSoon>0){
     h+='<div class="section-title">⏰ 期限アラート</div>';
     h+='<div class="cards">';
-    if(expired>0) h+='<div class="card warn"><div class="lbl">在留期限切れ</div><div class="num">'+expired+'<small> 名</small></div></div>';
-    if(soon>0) h+='<div class="card alert"><div class="lbl">在留期限 90日以内</div><div class="num">'+soon+'<small> 名</small></div></div>';
-    if(tokOver>0) h+='<div class="card warn"><div class="lbl">特例期限 超過</div><div class="num">'+tokOver+'<small> 名</small></div></div>';
-    if(tokSoon>0) h+='<div class="card alert"><div class="lbl">特例期限 30日以内</div><div class="num">'+tokSoon+'<small> 名</small></div></div>';
+    if(expired>0) h+='<div class="card warn" onclick="openList(\'expired\')"><div class="lbl">在留期限切れ</div><div class="num">'+expired+'<small> 名</small></div></div>';
+    if(soon>0) h+='<div class="card alert" onclick="openList(\'soon\')"><div class="lbl">在留期限 90日以内</div><div class="num">'+soon+'<small> 名</small></div></div>';
+    if(tokOver>0) h+='<div class="card warn" onclick="openList(\'tokOver\')"><div class="lbl">特例期限 超過</div><div class="num">'+tokOver+'<small> 名</small></div></div>';
+    if(tokSoon>0) h+='<div class="card alert" onclick="openList(\'tokSoon\')"><div class="lbl">特例期限 30日以内</div><div class="num">'+tokSoon+'<small> 名</small></div></div>';
     h+='</div>';
   }
   if(missingDocCount>0){
@@ -420,6 +426,36 @@ function renderFlow(){
     +'<div class="note">各申請の現在地は「申請一覧」タブの「進捗」列でご確認いただけます。</div>';
 }
 
+function casesByKey(key){
+  return allCases.filter(function(c){
+    if(key==='all') return true;
+    if(key==='active') return !isDone(c.status);
+    if(key==='done') return isDone(c.status);
+    var ei=expInfo(c.expire);
+    if(key==='expired') return _expireTracked(c)&&ei.days!=null&&ei.days<0;
+    if(key==='soon') return _expireTracked(c)&&ei.days!=null&&ei.days>=0&&ei.days<=90;
+    if(key==='tokOver'){ if(!_tokureiTracked(c))return false; var t=expInfo(_tokureiDate(c)); return t.days!=null&&t.days<0; }
+    if(key==='tokSoon'){ if(!_tokureiTracked(c))return false; var t=expInfo(_tokureiDate(c)); return t.days!=null&&t.days>=0&&t.days<=30; }
+    return false;
+  });
+}
+var _LIST_TITLES={all:'全申請',active:'進行中の申請',done:'手続き完了',expired:'在留期限切れ',soon:'在留期限 90日以内',tokOver:'特例期限 超過',tokSoon:'特例期限 30日以内'};
+function openList(key){
+  var list=casesByKey(key);
+  var h='<div class="dt-name">'+(_LIST_TITLES[key]||'')+'</div><div class="dt-sub">'+list.length+'件 ・ タップで詳細</div>';
+  if(!list.length){ h+='<div class="empty">該当する申請はありません。</div>'; }
+  else {
+    h+='<div class="list-wrap">';
+    list.forEach(function(c){
+      var nm=c.applicant||c.name||'—';
+      var sub=[c.residence_status,c.status].filter(Boolean).join(' / ');
+      h+='<div class="list-item" onclick="openDetail(\''+esc(c.id)+'\')"><div class="li-nm">'+esc(nm)+'</div><div class="li-sub">'+esc(sub)+'</div></div>';
+    });
+    h+='</div>';
+  }
+  document.getElementById('detailBody').innerHTML=h;
+  document.getElementById('detailScreen').classList.remove('hide');
+}
 function openDetail(caseId){
   var c=allCases.filter(function(x){return x.id===caseId;})[0]; if(!c) return;
   var p=personsByCase[caseId]||{};
