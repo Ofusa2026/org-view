@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.07: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
+<!-- ver.20260607.08: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -277,6 +277,7 @@ function renderDashboard(){
     h+='<div class="ct-row"><span class="ct-l">担当</span><span class="ct-v">'+esc(companyOfusaStaff||'—')+'</span></div>';
     h+='</div>';
   }
+  if(expired>0||soon>0){
     h+='<div class="section-title">⏰ 在留期限アラート</div>';
     h+='<div class="cards">';
     h+='<div class="card warn"><div class="lbl">期限切れ</div><div class="num">'+expired+'<small> 名</small></div></div>';
