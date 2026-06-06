@@ -361,7 +361,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.02</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.03</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1097,28 +1097,40 @@ function buildRow(c){
   var h='<tr'+rowCls+'>';
   // ver.20260521.01: 各tdに data-col-key を付与（カスタマイズで列を隠せるように）
   // ver.20260606.01: GPモードの場合、氏名セルに受注ID・組合受領日→依頼日（経過日数）を併記
-  var gpInfoHtml='';
+  // ver.20260606.03: GPモードの氏名セル再構成（受注ID／案件名／企業名／人材名／組合→依頼(N日)を縦に）
   if(isGpMode){
-    var _todayD=new Date(); _todayD.setHours(0,0,0,0);
-    var _gpOrderTag=c.gpOrderId?'<span style="display:inline-block;font-size:9px;color:#0369a1;background:#e0f2fe;padding:1px 5px;border-radius:3px;font-weight:600;margin-right:4px;">'+esc(c.gpOrderId)+'</span>':'';
+    var _todayD2=new Date(); _todayD2.setHours(0,0,0,0);
+    var _gpOrderTag=c.gpOrderId
+      ? '<div style="margin-bottom:4px;"><span style="display:inline-block;font-size:10px;color:#0369a1;background:#e0f2fe;padding:2px 7px;border-radius:4px;font-weight:700;letter-spacing:.3px;">'+esc(c.gpOrderId)+'</span></div>'
+      : '';
     var _gpDates='';
     if(c.gpKumiaiDate||c.gpIraiDate){
-      _gpDates+='<span style="font-size:9px;color:#64748b;">';
+      _gpDates+='<div style="margin-top:4px;font-size:10px;color:#64748b;line-height:1.4;">';
       if(c.gpKumiaiDate) _gpDates+='組合:'+esc(c.gpKumiaiDate);
       if(c.gpKumiaiDate && c.gpIraiDate) _gpDates+=' → ';
       if(c.gpIraiDate){
         _gpDates+='依頼:'+esc(c.gpIraiDate);
         try{
-          var _iraiD=new Date(c.gpIraiDate); _iraiD.setHours(0,0,0,0);
-          var _elapsed=Math.floor((_todayD-_iraiD)/86400000);
-          if(_elapsed>=0) _gpDates+=' <span style="color:#0f2040;font-weight:600;">('+_elapsed+'日経過)</span>';
+          var _iraiD2=new Date(c.gpIraiDate); _iraiD2.setHours(0,0,0,0);
+          var _elapsed2=Math.floor((_todayD2-_iraiD2)/86400000);
+          if(_elapsed2>=0){
+            var _eCol = _elapsed2>=60?'#dc2626':(_elapsed2>=30?'#ea580c':'#0f2040');
+            _gpDates+='、<span style="color:'+_eCol+';font-weight:700;">'+_elapsed2+'日経過</span>';
+          }
         }catch(e){}
       }
-      _gpDates+='</span>';
+      _gpDates+='</div>';
     }
-    if(_gpOrderTag||_gpDates) gpInfoHtml='<div style="margin-top:3px;">'+_gpOrderTag+_gpDates+'</div>';
+    h+='<td data-col-key="name" style="min-width:240px;max-width:360px;">'
+      +_gpOrderTag
+      +'<div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div>'
+      +'<div style="font-size:10px;color:#475569;font-weight:600;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(c.company||'—')+'</div>'
+      +'<div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div>'
+      +_gpDates
+      +'</td>';
+  } else {
+    h+='<td data-col-key="name" style="min-width:200px;max-width:320px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div></td>'; // ver.20260518.06: 案件名を全文表示（折り返し）
   }
-  h+='<td data-col-key="name" style="min-width:200px;max-width:320px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div>'+gpInfoHtml+'</td>'; // ver.20260518.06: 案件名を全文表示（折り返し）
   h+='<td data-col-key="company" style="min-width:90px;max-width:120px;"><div style="font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:115px;">'+esc(c.company||'—')+'</div></td>';
   h+='<td data-col-key="appType" style="width:48px;">'+typeHtml+'</td>';
   // ver.20260527.16: 「担当」列はアイデム担当者(client_staff)を表示。OFUSA担当(staff)は非表示。
