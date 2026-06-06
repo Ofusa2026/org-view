@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.04: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
+<!-- ver.20260607.05: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -51,6 +51,8 @@ tr:hover td{background:#fcfcfd;}
 .s-todo{background:#fff7ed;color:#ea580c;border:1px solid #fdba74;}
 .s-na{background:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0;}
 .note{font-size:11px;color:#64748b;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:10px 14px;margin-bottom:14px;line-height:1.6;}
+.upload-btn{display:inline-flex;align-items:center;gap:8px;background:#16a34a;color:#fff;text-decoration:none;font-size:12px;font-weight:800;padding:11px 18px;border-radius:10px;margin-bottom:14px;box-shadow:0 2px 6px rgba(22,163,74,.25);}
+.upload-btn:hover{background:#15803d;}
 .empty{padding:40px 16px;text-align:center;color:#94a3b8;font-size:12px;}
 .loading{padding:48px 16px;text-align:center;color:#64748b;}
 .error-box{margin:40px auto;max-width:420px;background:#fff;border:1px solid #fecaca;border-radius:12px;padding:24px;text-align:center;color:#b91c1c;font-weight:700;}
@@ -114,7 +116,7 @@ function stStyle(s){
 /* 完了とみなすステータス（ダッシュボード集計用） */
 function isDone(s){ return /受取|交付|完了|許可済/.test(s||''); }
 
-var companyId='', companyName='', currentToken='', _correctPass='';
+var companyId='', companyName='', companyDrive='', currentToken='', _correctPass='';
 var allCases=[], coDocs={}, missingDocCount=0, currentTab='dashboard';
 
 function checkPass(){
@@ -138,9 +140,10 @@ async function init(){
     if(!sd||!sd.length){ document.getElementById('main').innerHTML='<div class="error-box">このURLは無効です。担当者にお問い合わせください。</div>'; return; }
     companyId=sd[0].value;
     // 会社名
-    var r2=await sbFetch('companies?id=eq.'+encodeURIComponent(companyId)+'&select=name');
+    var r2=await sbFetch('companies?id=eq.'+encodeURIComponent(companyId)+'&select=name,drive_url');
     var cd=await r2.json();
     companyName=(cd&&cd.length)?cd[0].name:'';
+    companyDrive=(cd&&cd.length&&cd[0].drive_url)?cd[0].drive_url:'';
     // パスワード（任意）
     var rp=await sbFetch('settings?key=eq.'+encodeURIComponent('company_view_pass_'+token)+'&select=value');
     var pd=await rp.json();
@@ -263,6 +266,7 @@ function renderDocs(){
   });
   var h='<div class="section-title">📄 御社の提出書類チェックリスト</div>';
   h+='<div class="note">OFUSAでチェックが入った書類は「提出済（または不要）」になります。「未提出」の書類はご提出をお願いいたします。ご不明点は担当者までご連絡ください。</div>';
+  if(companyDrive){ h+='<div><a class="upload-btn" href="'+esc(companyDrive)+'" target="_blank" rel="noopener">📤 書類をアップロード（Google Drive）</a></div>'; }
   h+='<div class="doc-co">';
   names.forEach(function(name){
     var st=docState(coDocs[name]);
