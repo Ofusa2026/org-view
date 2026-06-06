@@ -361,7 +361,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.09</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260603.10</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -686,6 +686,14 @@ var ST_EXTERNAL={
   '企業書類待ち':'企業押印ご対応・書類収集・申請準備',
   'スキャン書類作成':'企業押印ご対応・書類収集・申請準備',
   '★申請':'企業押印ご対応・書類収集・申請準備',
+  // ver.20260603.10: 未マッピングだったステータスを追加（取引先側で内部用語のまま見えていた問題を解消）
+  '申請':'企業押印ご対応・書類収集・申請準備',
+  '★申請(不足あり)':'企業押印ご対応・書類収集・申請準備',
+  '★申請 (不足あり)':'企業押印ご対応・書類収集・申請準備',
+  '申請ステイ':'企業押印ご対応・書類収集・申請準備',
+  '申請ステイ(不足あり)':'企業押印ご対応・書類収集・申請準備',
+  '申請ステイ (不足あり)':'企業押印ご対応・書類収集・申請準備',
+  '他社申請中':'雇用条件作成・企業確認',
   '申請済(番号待)':'審査中',
   '申請済 (番号待)':'審査中',
   '審査中':'審査中',
@@ -693,6 +701,7 @@ var ST_EXTERNAL={
   '★要追完':'審査中',
   '要追完 企業不足書類待ち':'審査中',
   '要追完 人材不足書類待ち':'審査中',
+  '要追完 人材と企業不足書類待ち':'審査中',
   '許可済 受取方法調整中':'審査完了・新在留カード交付',
   '入管受取ステータス変更中':'審査完了・新在留カード交付',
   '郵送交付':'審査完了・新在留カード交付',
