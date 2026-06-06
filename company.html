@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.12: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
+<!-- ver.20260607.13: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -94,7 +94,7 @@ tr:hover td{background:#fcfcfd;}
 <div class="tabs" id="tabs" style="display:none;">
   <button class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">ダッシュボード</button>
   <button class="tab" data-tab="docs" onclick="switchTab('docs')">提出書類<span class="badge hide" id="tabDocBadge">0</span></button>
-  <button class="tab" data-tab="people" onclick="switchTab('people')">人材一覧</button>
+  <button class="tab" data-tab="people" onclick="switchTab('people')">申請一覧</button>
   <button class="tab" data-tab="flow" onclick="switchTab('flow')">申請の流れ</button>
 </div>
 
@@ -310,7 +310,7 @@ function renderDashboard(){
   var soon=allCases.filter(function(c){if(!_expireTracked(c))return false;var i=expInfo(c.expire);return i.days!=null&&i.days>=0&&i.days<=90;}).length;
   var expired=allCases.filter(function(c){if(!_expireTracked(c))return false;var i=expInfo(c.expire);return i.days!=null&&i.days<0;}).length;
   var h='<div class="cards">';
-  h+='<div class="card"><div class="lbl">在籍人材</div><div class="num">'+total+'<small> 名</small></div></div>';
+  h+='<div class="card"><div class="lbl">全申請件数</div><div class="num">'+total+'<small> 件</small></div></div>';
   h+='<div class="card"><div class="lbl">進行中の申請</div><div class="num">'+active+'<small> 件</small></div></div>';
   h+='<div class="card"><div class="lbl">手続き完了</div><div class="num">'+done+'<small> 件</small></div></div>';
   h+='<div class="card '+(missingDocCount>0?'warn':'')+'"><div class="lbl">未提出の書類</div><div class="num">'+missingDocCount+'<small> 件</small></div></div>';
@@ -375,7 +375,7 @@ function renderDocs(){
 
 function renderPeople(){
   if(!allCases.length) return '<div class="empty">対象の人材がありません。</div>';
-  var h='<div class="section-title">👥 御社の在籍人材（'+allCases.length+'名）</div>';
+  var h='<div class="section-title">📋 御社の申請一覧（'+allCases.length+'件）</div>';
   h+='<div class="note">行をタップすると、在留カード番号・パスポート・住所などの詳細が表示されます。</div>';
   h+='<div class="tbl-wrap"><table><thead><tr>'
     +'<th>氏名</th><th>国籍</th><th>在留資格</th><th>申請種別</th><th>分野・職種</th>'
@@ -417,7 +417,7 @@ function renderFlow(){
     +'<li>審査</li>'
     +'<li>許可・在留カード/認定証明書の交付</li>'
     +'</ol></div>'
-    +'<div class="note">各人材の現在地は「人材一覧」タブの「進捗」列でご確認いただけます。</div>';
+    +'<div class="note">各申請の現在地は「申請一覧」タブの「進捗」列でご確認いただけます。</div>';
 }
 
 function openDetail(caseId){
