@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.14: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
+<!-- ver.20260607.15: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -161,6 +161,77 @@ function stStyle(s){
   var bg=ST_BG[s]||'#f1f5f9', col=ST_COL[s]||'#475569', bor=ST_BOR[s]||'#e2e8f0';
   return 'background:'+bg+';color:'+col+';border-color:'+bor+';';
 }
+
+// ===== ver.20260512: 登録支援機関側に見せる外部ステータス変換マップ =====
+// 内部の細かいステータスを、登録支援機関にわかりやすい大きなフェーズ名に変換
+// ver.20260527.16: ラベル変更
+//   「特定技能生サインご対応」→「申請人サイン対応」
+//   「出入国在留管理局審査中」→「審査中」
+var ST_EXTERNAL={
+  '未着手':'雇用条件作成・企業確認',
+  '★ヒアリングフォーム送付':'雇用条件作成・企業確認',
+  'ヒアリングフォーム回答待ち(送付済)':'雇用条件作成・企業確認',
+  'ヒアリングフォーム回答待ち (送付済)':'雇用条件作成・企業確認',
+  '雇用条件待ち':'雇用条件作成・企業確認',
+  '1-6作成':'雇用条件作成・企業確認',
+  '★1-6企業送付':'雇用条件作成・企業確認',
+  '1-6企業確認待ち(送付済)':'雇用条件作成・企業確認',
+  '1-6企業確認待ち (送付済)':'雇用条件作成・企業確認',
+  '1-6修正':'雇用条件作成・企業確認',
+  '★1-6修正送付':'雇用条件作成・企業確認',
+  'サイン書類作成':'申請人サイン対応',
+  '★サイン書類送付':'申請人サイン対応',
+  'サイン書類返送待ち(送付済)':'申請人サイン対応',
+  'サイン書類返送待ち (送付済)':'申請人サイン対応',
+  '企業書類作成':'企業押印ご対応・書類収集・申請準備',
+  '★企業押印送付':'企業押印ご対応・書類収集・申請準備',
+  '企業押印返送待ち(送付済)':'企業押印ご対応・書類収集・申請準備',
+  '企業押印返送待ち (送付済)':'企業押印ご対応・書類収集・申請準備',
+  '人材書類待ち':'企業押印ご対応・書類収集・申請準備',
+  '企業書類待ち':'企業押印ご対応・書類収集・申請準備',
+  'スキャン書類作成':'企業押印ご対応・書類収集・申請準備',
+  '★申請':'企業押印ご対応・書類収集・申請準備',
+  // ver.20260603.10: 未マッピングだったステータスを追加（取引先側で内部用語のまま見えていた問題を解消）
+  '申請':'企業押印ご対応・書類収集・申請準備',
+  '★申請(不足あり)':'企業押印ご対応・書類収集・申請準備',
+  '★申請 (不足あり)':'企業押印ご対応・書類収集・申請準備',
+  '申請ステイ':'企業押印ご対応・書類収集・申請準備',
+  '申請ステイ(不足あり)':'企業押印ご対応・書類収集・申請準備',
+  '申請ステイ (不足あり)':'企業押印ご対応・書類収集・申請準備',
+  '他社申請中':'雇用条件作成・企業確認',
+  '申請済(番号待)':'審査中',
+  '申請済 (番号待)':'審査中',
+  '審査中':'審査中',
+  '特活審査中':'審査中',
+  '★要追完':'審査中',
+  '要追完 企業不足書類待ち':'審査中',
+  '要追完 人材不足書類待ち':'審査中',
+  '要追完 人材と企業不足書類待ち':'審査中',
+  '許可済 受取方法調整中':'審査完了・新在留カード交付',
+  '入管受取ステータス変更中':'審査完了・新在留カード交付',
+  '郵送交付':'審査完了・新在留カード交付',
+  '★郵送交付':'審査完了・新在留カード交付',
+  '郵送交付中':'審査完了・新在留カード交付',
+  '窓口受取':'審査完了・新在留カード交付',
+  '★窓口受取':'審査完了・新在留カード交付',
+  '窓口受取（本人）':'審査完了・新在留カード交付',
+  '窓口受取 (本人)':'審査完了・新在留カード交付',
+  '完了':'新在留カード発行済み',
+  '審査完了':'新在留カード発行済み'
+};
+// 外部ステータスごとの色（バッジ用）
+var ST_EXT_COL={
+  '雇用条件作成・企業確認':{bg:'#eff6ff',col:'#2563eb',bor:'#93c5fd'},
+  '申請人サイン対応':{bg:'#fdf4ff',col:'#a21caf',bor:'#e9d5ff'},
+  '企業押印ご対応・書類収集・申請準備':{bg:'#fff7ed',col:'#ea580c',bor:'#fed7aa'},
+  '審査中':{bg:'#fef3c7',col:'#b45309',bor:'#fcd34d'},
+  '審査完了・新在留カード交付':{bg:'#dbeafe',col:'#1d4ed8',bor:'#93c5fd'},
+  '新在留カード発行済み':{bg:'#dcfce7',col:'#15803d',bor:'#86efac'}
+};
+function getExternalStatus(s){return ST_EXTERNAL[s]||s||'未着手';}
+
+function stExtStyle(ext){ var s=ST_EXT_COL[ext]; if(!s) return 'background:#f1f5f9;color:#475569;border-color:#e2e8f0;'; return 'background:'+s.bg+';color:'+s.col+';border-color:'+s.bor+';'; }
+
 
 /* 完了とみなすステータス（ダッシュボード集計用） */
 function isDone(s){ return /受取|交付|完了|許可済/.test(s||''); }
@@ -397,7 +468,7 @@ function renderPeople(){
     h+='<td>'+esc(c.residence_status||'—')+'</td>';
     h+='<td>'+esc(c.app_type||'—')+'</td>';
     h+='<td>'+esc(field)+'</td>';
-    h+='<td><span class="badge-st" style="'+stStyle(c.status)+'">'+esc(c.status||'—')+'</span></td>';
+    var est=getExternalStatus(c.status); h+='<td><span class="badge-st" style="'+stExtStyle(est)+'">'+esc(est)+'</span></td>';
     h+='<td>'+esc(c.receipt_no||'—')+'</td>';
     h+='<td>'+esc(c.shinsa_date||'—')+'</td>';
     if(_tokureiTracked(c)){
@@ -448,7 +519,7 @@ function openList(key){
     h+='<div class="list-wrap">';
     list.forEach(function(c){
       var nm=c.applicant||c.name||'—';
-      var sub=[c.residence_status,c.status].filter(Boolean).join(' / ');
+      var sub=[c.residence_status,getExternalStatus(c.status)].filter(Boolean).join(' / ');
       h+='<div class="list-item" onclick="openDetail(\''+esc(c.id)+'\')"><div class="li-nm">'+esc(nm)+'</div><div class="li-sub">'+esc(sub)+'</div></div>';
     });
     h+='</div>';
@@ -490,7 +561,7 @@ function renderDetail(c,p){
   h+=row('在留期限',_dv(c.expire));
   if(ti) h+=row('特例期限',ti.txt);
   h+=row('申請種別',_dv(c.app_type));
-  h+=row('進捗',_dv(c.status));
+  h+=row('進捗',esc(getExternalStatus(c.status)));
   h+=row('受付番号',_dv(c.receipt_no));
   h+=row('審査完了',_dv(c.shinsa_date));
   h+='<div class="dt-sec">OFUSA担当</div>';
