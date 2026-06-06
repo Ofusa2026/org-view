@@ -361,7 +361,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.05</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.06</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -962,15 +962,40 @@ function groupCases(gid){
       return sortDir==='asc'?r:-r;
     });
   }else{
-    base=base.slice().sort(function(a,b){
-      var av=a.receiptDate||'', bv=b.receiptDate||'';
-      // 受付日なしは末尾
-      if(!av && !bv) return 0;
-      if(!av) return 1;
-      if(!bv) return -1;
-      // 新しい順（降順）
-      return av<bv ? 1 : av>bv ? -1 : 0;
-    });
+    // ver.20260606.06: GPモード時は案件名でグループ化（同じ案件名を上下に並べる）
+    if(isGpMode){
+      base=base.slice().sort(function(a,b){
+        // 1. 案件名で昇順（同じ案件名がまとまる）
+        var nA=(a.name||'').trim(), nB=(b.name||'').trim();
+        var r=nA.localeCompare(nB,'ja');
+        if(r!==0) return r;
+        // 2. 同じ案件名内では受注ID昇順（ID無しは末尾）
+        var oA=a.gpOrderId||'', oB=b.gpOrderId||'';
+        if(oA!==oB){
+          if(oA && !oB) return -1;
+          if(!oA && oB) return 1;
+          return oA.localeCompare(oB);
+        }
+        // 3. 同じ案件名・受注IDなら依頼日新しい順
+        var dA=a.gpIraiDate||'', dB=b.gpIraiDate||'';
+        if(dA!==dB){
+          if(!dA) return 1; if(!dB) return -1;
+          return dB.localeCompare(dA);
+        }
+        // 4. 最後に申請者名で昇順
+        return (a.applicant||'').localeCompare(b.applicant||'','ja');
+      });
+    } else {
+      base=base.slice().sort(function(a,b){
+        var av=a.receiptDate||'', bv=b.receiptDate||'';
+        // 受付日なしは末尾
+        if(!av && !bv) return 0;
+        if(!av) return 1;
+        if(!bv) return -1;
+        // 新しい順（降順）
+        return av<bv ? 1 : av>bv ? -1 : 0;
+      });
+    }
   }
   return base;
 }
