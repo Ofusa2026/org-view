@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.11: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
+<!-- ver.20260607.12: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -457,9 +457,6 @@ function renderDetail(c,p){
   h+=row('進捗',_dv(c.status));
   h+=row('受付番号',_dv(c.receipt_no));
   h+=row('審査完了',_dv(c.shinsa_date));
-  h+='<div class="dt-sec">雇用</div>';
-  h+=row('入社日',_dv(p.hire_date));
-  h+=row('契約期間',_dv([c.contract_start||p.contract_start,c.contract_end||p.contract_end].filter(Boolean).join(' 〜 ')||''));
   h+='<div class="dt-sec">OFUSA担当</div>';
   h+=row('部署',_dv(c.team));
   h+=row('担当',_dv(c.staff));
