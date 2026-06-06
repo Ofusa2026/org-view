@@ -361,7 +361,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.06</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.07</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -3371,66 +3371,62 @@ async function loadData(){
     // ver.20260606.01: GPモードでは gp_case_map にマッチしない案件を除外（466件のみ表示）
     if(isGpMode){
       allCases=allCases.filter(function(c){ return !!gpInfoByCaseId[c.id]; });
-      // ver.20260606.04: 不足書類取得（人材: doc_check / 企業: co_doc_check）
+      // ver.20260606.07: 不足書類取得（人材: doc_check / 企業: co_doc_check）
+      // 仕様: staff::xxx に値あり(日付or'true')=確認済 / skip::xxx に値あり=不要 / req:: or date:: にあるのに staff:: が無い=不足
       try{
-        // 人材書類: staff::xxx と autoskip::xxx を取得
-        var personMap={};
+        var _hasVal=function(v){ return v!=null && v!=='' && v!=='false'; };
+        // 人材書類
+        var personDocs={}; // case_id -> docName -> {staff,skip,req,date}
         for(var pOff=0;pOff<allCases.length;pOff+=100){
           var pChunk=allCases.slice(pOff,pOff+100);
           var pIds=pChunk.map(function(c){return '"'+c.id+'"';}).join(',');
-          var rDc=await sbFetch('doc_check?case_id=in.('+pIds+')&or=(doc_key.like.staff::*,doc_key.like.autoskip::*)&select=case_id,doc_key,value&limit=10000');
+          var rDc=await sbFetch('doc_check?case_id=in.('+pIds+')&select=case_id,doc_key,value&limit=20000');
           var dcRows=await rDc.json();
           (dcRows||[]).forEach(function(r){
-            if(!personMap[r.case_id]) personMap[r.case_id]={staff:{},skip:{}};
-            if(r.doc_key.indexOf('staff::')===0){
-              personMap[r.case_id].staff[r.doc_key.substring(7)]=r.value;
-            } else if(r.doc_key.indexOf('autoskip::')===0){
-              if(r.value==='1'||r.value==='true') personMap[r.case_id].skip[r.doc_key.substring(10)]=true;
-            }
+            var idx=r.doc_key.indexOf('::');
+            if(idx<0) return;
+            var prefix=r.doc_key.substring(0,idx);
+            var name=r.doc_key.substring(idx+2);
+            if(!personDocs[r.case_id]) personDocs[r.case_id]={};
+            if(!personDocs[r.case_id][name]) personDocs[r.case_id][name]={};
+            personDocs[r.case_id][name][prefix]=r.value;
           });
         }
-        // 企業書類: ai::xxx と skip::xxx
+        // 企業書類
         var coIds={}; allCases.forEach(function(c){if(c.companyId) coIds[c.companyId]=true;});
         var coIdList=Object.keys(coIds);
-        var coMap={};
+        var coDocs={};
         for(var cOff=0;cOff<coIdList.length;cOff+=100){
           var cChunk=coIdList.slice(cOff,cOff+100);
           var cIds=cChunk.map(function(id){return '"'+id+'"';}).join(',');
-          var rCo=await sbFetch('co_doc_check?co_id=in.('+cIds+')&or=(doc_key.like.ai::*,doc_key.like.skip::*)&select=co_id,doc_key,value&limit=20000');
+          var rCo=await sbFetch('co_doc_check?co_id=in.('+cIds+')&select=co_id,doc_key,value&limit=30000');
           var coRows=await rCo.json();
           (coRows||[]).forEach(function(r){
-            if(!coMap[r.co_id]) coMap[r.co_id]={ai:{},skip:{}};
-            if(r.doc_key.indexOf('ai::')===0){
-              coMap[r.co_id].ai[r.doc_key.substring(4)]=r.value;
-            } else if(r.doc_key.indexOf('skip::')===0){
-              if(r.value==='true'||r.value==='1') coMap[r.co_id].skip[r.doc_key.substring(6)]=true;
-            }
+            var idx=r.doc_key.indexOf('::');
+            if(idx<0) return;
+            var prefix=r.doc_key.substring(0,idx);
+            var name=r.doc_key.substring(idx+2);
+            if(!coDocs[r.co_id]) coDocs[r.co_id]={};
+            if(!coDocs[r.co_id][name]) coDocs[r.co_id][name]={};
+            coDocs[r.co_id][name][prefix]=r.value;
           });
         }
-        // allCasesに不足リストを付与
+        // 判定関数: 不要じゃない & 確認済みでない & (req:: or date:: に登録あり)
+        var _calcMissing=function(docMap){
+          var missing=[];
+          if(!docMap) return missing;
+          Object.keys(docMap).forEach(function(name){
+            var d=docMap[name];
+            if(_hasVal(d.skip)) return;   // 不要扱い → スキップ
+            if(_hasVal(d.staff)) return;  // 確認済み → スキップ
+            // req::/date:: のどちらかに登録があれば「必要書類なのに未確認」=不足
+            if(_hasVal(d.req)||_hasVal(d.date)) missing.push(name);
+          });
+          return missing;
+        };
         allCases.forEach(function(c){
-          var pMis=[];
-          var pData=personMap[c.id];
-          if(pData){
-            Object.keys(pData.staff).forEach(function(k){
-              if(pData.skip[k]) return; // 不要扱い
-              if(pData.staff[k]==='true') return; // 確認済み
-              pMis.push(k);
-            });
-          }
-          c.gpPersonMissing=pMis;
-          var cMis=[];
-          if(c.companyId){
-            var cData=coMap[c.companyId];
-            if(cData){
-              Object.keys(cData.ai).forEach(function(k){
-                if(cData.skip[k]) return;
-                if(cData.ai[k]==='true') return;
-                cMis.push(k);
-              });
-            }
-          }
-          c.gpCoMissing=cMis;
+          c.gpPersonMissing=_calcMissing(personDocs[c.id]);
+          c.gpCoMissing=c.companyId?_calcMissing(coDocs[c.companyId]):[];
         });
       }catch(eDc){ console.warn('[gp missing docs load]', eDc); }
     }
