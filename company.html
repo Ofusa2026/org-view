@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.10: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
+<!-- ver.20260607.11: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -72,6 +72,16 @@ tr:hover td{background:#fcfcfd;}
 .pass-btn{width:100%;padding:11px;background:#0f2040;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:800;cursor:pointer;}
 .pass-err{color:#dc2626;font-size:11px;margin-top:10px;min-height:14px;}
 .hide{display:none!important;}
+.detail-overlay{position:fixed;inset:0;background:rgba(15,32,64,.55);display:flex;align-items:flex-start;justify-content:center;z-index:400;padding:20px;overflow:auto;}
+.detail-box{background:#fff;border-radius:16px;max-width:520px;width:100%;padding:22px 22px 26px;position:relative;margin:auto;}
+.detail-close{position:absolute;top:12px;right:12px;background:#f1f5f9;border:none;border-radius:8px;width:30px;height:30px;font-size:14px;cursor:pointer;color:#64748b;}
+.dt-name{font-size:18px;font-weight:900;color:#0f2040;padding-right:34px;}
+.dt-sub{font-size:11px;color:#64748b;margin-bottom:8px;}
+.dt-sec{font-size:11px;font-weight:800;color:#0f2040;border-bottom:2px solid #e2e8f0;padding-bottom:4px;margin:16px 0 8px;}
+.dt-row{display:flex;gap:10px;padding:4px 0;font-size:12px;}
+.dt-l{color:#94a3b8;width:100px;flex-shrink:0;font-weight:700;}
+.dt-v{color:#1e293b;font-weight:600;word-break:break-all;}
+.people-row{cursor:pointer;}
 </style>
 </head>
 <body>
@@ -99,6 +109,14 @@ tr:hover td{background:#fcfcfd;}
       onkeydown="if(event.key==='Enter')checkPass()">
     <button class="pass-btn" onclick="checkPass()">ログイン</button>
     <div class="pass-err" id="passErr"></div>
+  </div>
+</div>
+
+<!-- 人材詳細モーダル -->
+<div id="detailScreen" class="detail-overlay hide" onclick="if(event.target===this)closeDetail()">
+  <div class="detail-box">
+    <button class="detail-close" onclick="closeDetail()">✕</button>
+    <div id="detailBody"></div>
   </div>
 </div>
 
@@ -161,7 +179,7 @@ function _tokureiDate(c){
 }
 
 var companyId='', companyName='', companyDrive='', companyOfusaStaff='', currentToken='', _correctPass='';
-var allCases=[], coDocs={}, missingDocCount=0, currentTab='dashboard';
+var allCases=[], coDocs={}, personsByCase={}, missingDocCount=0, currentTab='dashboard';
 
 function checkPass(){
   var v=document.getElementById('passInput').value.trim();
@@ -226,6 +244,17 @@ async function loadData(){
       coDocs[name][prefix]=row.value;
     });
     computeMissing();
+    // 人材詳細用の個人情報（persons）を取得（自社案件のみ）
+    personsByCase={};
+    var pids=allCases.map(function(c){return c.id;});
+    var pfields='case_id,applicant_name_en,residence_card,passport,passport_expiry,birthdate,gender,nationality,jp_postal_code,jp_address,jp_detail_address,home_country_address,phone,cel_phone,tel_num,email,residence_status,expire,hire_date,contract_start,contract_end';
+    for(var pi=0;pi<pids.length;pi+=100){
+      var pchunk=pids.slice(pi,pi+100).map(function(id){return '"'+id+'"';}).join(',');
+      if(!pchunk) continue;
+      var rpr=await sbFetch('persons?case_id=in.('+pchunk+')&select='+pfields);
+      var prr=await rpr.json();
+      (prr||[]).forEach(function(p){ personsByCase[p.case_id]=p; });
+    }
     document.getElementById('tabs').style.display='flex';
     render();
   }catch(e){ document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+esc(e.message)+'</div>'; }
@@ -347,6 +376,7 @@ function renderDocs(){
 function renderPeople(){
   if(!allCases.length) return '<div class="empty">対象の人材がありません。</div>';
   var h='<div class="section-title">👥 御社の在籍人材（'+allCases.length+'名）</div>';
+  h+='<div class="note">行をタップすると、在留カード番号・パスポート・住所などの詳細が表示されます。</div>';
   h+='<div class="tbl-wrap"><table><thead><tr>'
     +'<th>氏名</th><th>国籍</th><th>在留資格</th><th>申請種別</th><th>分野・職種</th>'
     +'<th>進捗</th><th>受付番号</th><th>審査完了</th><th>在留期限</th><th>OFUSA担当</th>'
@@ -355,7 +385,7 @@ function renderPeople(){
     var nm=c.applicant||c.name||'—';
     var field=[c.applicant_field,c.job_category].filter(Boolean).join(' / ')||(c.industry||'—');
     var ei=expInfo(c.expire);
-    h+='<tr>';
+    h+='<tr class="people-row" onclick="openDetail(\''+esc(c.id)+'\')">';
     h+='<td><b>'+esc(nm)+'</b></td>';
     h+='<td>'+esc(c.nationality||'—')+'</td>';
     h+='<td>'+esc(c.residence_status||'—')+'</td>';
@@ -388,6 +418,52 @@ function renderFlow(){
     +'<li>許可・在留カード/認定証明書の交付</li>'
     +'</ol></div>'
     +'<div class="note">各人材の現在地は「人材一覧」タブの「進捗」列でご確認いただけます。</div>';
+}
+
+function openDetail(caseId){
+  var c=allCases.filter(function(x){return x.id===caseId;})[0]; if(!c) return;
+  var p=personsByCase[caseId]||{};
+  document.getElementById('detailBody').innerHTML=renderDetail(c,p);
+  document.getElementById('detailScreen').classList.remove('hide');
+}
+function closeDetail(){ document.getElementById('detailScreen').classList.add('hide'); }
+function _dv(v){ return (v==null||v==='')?'—':esc(v); }
+function renderDetail(c,p){
+  function row(l,v){ return '<div class="dt-row"><span class="dt-l">'+l+'</span><span class="dt-v">'+v+'</span></div>'; }
+  var nm=c.applicant||c.name||'—';
+  var addr=[p.jp_postal_code?('〒'+p.jp_postal_code):'', p.jp_address||'', p.jp_detail_address||''].filter(Boolean).join(' ');
+  var tel=p.phone||p.cel_phone||p.tel_num||'';
+  var ti=_tokureiTracked(c)?expInfo(_tokureiDate(c)):null;
+  var h='<div class="dt-name">'+esc(nm)+'</div>';
+  h+='<div class="dt-sub">'+_dv(p.applicant_name_en)+' / '+_dv(c.nationality||p.nationality)+'</div>';
+  h+='<div class="dt-sec">基本情報</div>';
+  h+=row('生年月日',_dv(p.birthdate));
+  h+=row('性別',_dv(p.gender));
+  h+=row('国籍',_dv(c.nationality||p.nationality));
+  h+='<div class="dt-sec">証明書番号</div>';
+  h+=row('在留カード番号',_dv(p.residence_card));
+  h+=row('パスポート番号',_dv(p.passport));
+  h+=row('パスポート有効期限',_dv(p.passport_expiry));
+  h+='<div class="dt-sec">連絡先</div>';
+  h+=row('住所',_dv(addr));
+  h+=row('母国住所',_dv(p.home_country_address));
+  h+=row('電話',_dv(tel));
+  h+=row('メール',_dv(p.email));
+  h+='<div class="dt-sec">在留・申請</div>';
+  h+=row('在留資格',_dv(c.residence_status));
+  h+=row('在留期限',_dv(c.expire));
+  if(ti) h+=row('特例期限',ti.txt);
+  h+=row('申請種別',_dv(c.app_type));
+  h+=row('進捗',_dv(c.status));
+  h+=row('受付番号',_dv(c.receipt_no));
+  h+=row('審査完了',_dv(c.shinsa_date));
+  h+='<div class="dt-sec">雇用</div>';
+  h+=row('入社日',_dv(p.hire_date));
+  h+=row('契約期間',_dv([c.contract_start||p.contract_start,c.contract_end||p.contract_end].filter(Boolean).join(' 〜 ')||''));
+  h+='<div class="dt-sec">OFUSA担当</div>';
+  h+=row('部署',_dv(c.team));
+  h+=row('担当',_dv(c.staff));
+  return h;
 }
 
 init();
