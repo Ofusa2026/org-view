@@ -361,7 +361,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.01</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.02</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -3191,9 +3191,10 @@ async function loadData(){
     }
     // ver.20260527.34: PostgRESTのdb-max-rows=1000を回避するため offset+limit でページング取得
     // ver.20260606.01: GPモードの場合、cases.org は本体('オープンケア協同組合')でフィルタし、後で gp_case_map にマッチするものだけ残す
+    // ver.20260606.02: orgExtra のスコープ問題修正 → 本体名はハードコード
     var _effectiveOrgName = orgName;
     if(isGpMode){
-      _effectiveOrgName = (orgExtra && orgExtra.parent_org_name) ? orgExtra.parent_org_name : 'オープンケア協同組合';
+      _effectiveOrgName = 'オープンケア協同組合';
     }
     var casesBase='cases?org=eq.'+encodeURIComponent(_effectiveOrgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,receipt_date,temp_return,applicant_field,madoguchi_date,madoguchi_receive_date,client_staff,delivery_method,updated_at,created_at&order=created_at.desc';
     var cases=[];
