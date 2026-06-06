@@ -361,7 +361,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.09</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.10</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -939,9 +939,11 @@ function groupCases(gid){
     var q=searchQuery.toLowerCase();
     base=base.filter(function(c){
       // ver.20260525.12: 受付番号は検索対象から除外（「東オン」「西オン」等の入管局頭文字で誤マッチを防ぐ）
+      // ver.20260606.10: GPモード時は受注ID(gpOrderId)も検索対象に追加
       return (c.name||'').toLowerCase().includes(q)||(c.applicant||'').toLowerCase().includes(q)||
              (c.company||'').toLowerCase().includes(q)||(c.status||'').toLowerCase().includes(q)||
-             (c.staff||'').toLowerCase().includes(q);
+             (c.staff||'').toLowerCase().includes(q)||
+             (isGpMode && (c.gpOrderId||'').toLowerCase().includes(q));
     });
   }
   // ver.20260525.08: ステータスフィルタは「外部ラベル」で比較（内部ステータスは登録支援機関には見せない）
@@ -1475,7 +1477,9 @@ function renderFilterBar(){
   var h='<div class="filter-bar-inner">';
   // テキスト検索
   // ver.20260519.29: Enterで実行 + 空にしたら即クリア反映
-  h+='<input type="text" placeholder="🔍 フリーワード検索...（Enterで実行）" value="'+esc(searchQuery)+'" id="ms-search-input" autocomplete="off" oninput="if(this.value===\'\' && searchQuery!==\'\'){searchQuery=\'\';renderSidebar();renderCurrent();}" onkeydown="if(event.key===\'Enter\' && !event.isComposing){event.preventDefault();searchQuery=this.value;renderSidebar();renderCurrent();}" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;font-family:inherit;min-width:200px;flex:1;">';
+  // ver.20260606.10: GPモード時はプレースホルダーに受注IDも検索可と表示
+  var _searchPh = isGpMode ? '🔍 検索...（受注ID / 案件名 / 企業名 / 申請者）' : '🔍 フリーワード検索...（Enterで実行）';
+  h+='<input type="text" placeholder="'+_searchPh+'" value="'+esc(searchQuery)+'" id="ms-search-input" autocomplete="off" oninput="if(this.value===\'\' && searchQuery!==\'\'){searchQuery=\'\';renderSidebar();renderCurrent();}" onkeydown="if(event.key===\'Enter\' && !event.isComposing){event.preventDefault();searchQuery=this.value;renderSidebar();renderCurrent();}" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;font-family:inherit;min-width:200px;flex:1;">';
   // ステータスフィルター
   h+='<select onchange="filterStatus=this.value;renderSidebar();renderCurrent()" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;background:white;cursor:pointer;">';
   h+='<option value="">ステータス（全て）</option>';
@@ -3420,16 +3424,21 @@ async function loadData(){
             coDocs[r.co_id][name][prefix]=r.value;
           });
         }
-        // 判定関数: 不要じゃない & 確認済みでない & (req:: or date:: に登録あり)
+        // 判定関数: 
+        //   skip::に値あり(日付/'true'/'1'等) → 不要扱い
+        //   staff::が日付or'true' → 確認済み
+        //   それ以外（staff::='false'/空/レコードなし、かつ skip::も無し）→ 不足
         var _calcMissing=function(docMap){
           var missing=[];
           if(!docMap) return missing;
           Object.keys(docMap).forEach(function(name){
             var d=docMap[name];
-            if(_hasVal(d.skip)) return;   // 不要扱い → スキップ
-            if(_hasVal(d.staff)) return;  // 確認済み → スキップ
-            // req::/date:: のどちらかに登録があれば「必要書類なのに未確認」=不足
-            if(_hasVal(d.req)||_hasVal(d.date)) missing.push(name);
+            // 1. 不要扱い (skipに値あり)
+            if(_hasVal(d.skip)) return;
+            // 2. 確認済 (staffが日付or'true'。'false'や空は確認済みではない)
+            if(_hasVal(d.staff)) return;
+            // 3. 上記以外で、docMapにエントリがあれば対象書類 = 不足
+            missing.push(name);
           });
           return missing;
         };
