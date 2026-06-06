@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.06: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
+<!-- ver.20260607.07: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -53,6 +53,12 @@ tr:hover td{background:#fcfcfd;}
 .note{font-size:11px;color:#64748b;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:10px 14px;margin-bottom:14px;line-height:1.6;}
 .upload-btn{display:inline-flex;align-items:center;gap:8px;background:#16a34a;color:#fff;text-decoration:none;font-size:12px;font-weight:800;padding:11px 18px;border-radius:10px;margin-bottom:14px;box-shadow:0 2px 6px rgba(22,163,74,.25);}
 .upload-btn:hover{background:#15803d;}
+.contact-card{display:inline-block;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;margin-bottom:18px;min-width:220px;}
+.ct-row{display:flex;align-items:baseline;gap:10px;padding:3px 0;}
+.ct-l{font-size:10px;color:#94a3b8;font-weight:700;width:34px;flex-shrink:0;}
+.ct-v{font-size:14px;font-weight:800;color:#0f2040;}
+.staff-cell{font-size:10px;line-height:1.6;}
+.staff-cell .sl{color:#94a3b8;margin-right:4px;}
 .empty{padding:40px 16px;text-align:center;color:#94a3b8;font-size:12px;}
 .loading{padding:48px 16px;text-align:center;color:#64748b;}
 .error-box{margin:40px auto;max-width:420px;background:#fff;border:1px solid #fecaca;border-radius:12px;padding:24px;text-align:center;color:#b91c1c;font-weight:700;}
@@ -135,7 +141,7 @@ function stStyle(s){
 /* 完了とみなすステータス（ダッシュボード集計用） */
 function isDone(s){ return /受取|交付|完了|許可済/.test(s||''); }
 
-var companyId='', companyName='', companyDrive='', currentToken='', _correctPass='';
+var companyId='', companyName='', companyDrive='', companyOfusaStaff='', currentToken='', _correctPass='';
 var allCases=[], coDocs={}, missingDocCount=0, currentTab='dashboard';
 
 function checkPass(){
@@ -159,10 +165,11 @@ async function init(){
     if(!sd||!sd.length){ document.getElementById('main').innerHTML='<div class="error-box">このURLは無効です。担当者にお問い合わせください。</div>'; return; }
     companyId=sd[0].value;
     // 会社名
-    var r2=await sbFetch('companies?id=eq.'+encodeURIComponent(companyId)+'&select=name,drive_url');
+    var r2=await sbFetch('companies?id=eq.'+encodeURIComponent(companyId)+'&select=name,drive_url,ofusa_staff');
     var cd=await r2.json();
     companyName=(cd&&cd.length)?cd[0].name:'';
     companyDrive=(cd&&cd.length&&cd[0].drive_url)?cd[0].drive_url:'';
+    companyOfusaStaff=(cd&&cd.length&&cd[0].ofusa_staff)?cd[0].ofusa_staff:'';
     // パスワード（任意）
     var rp=await sbFetch('settings?key=eq.'+encodeURIComponent('company_view_pass_'+token)+'&select=value');
     var pd=await rp.json();
@@ -183,7 +190,7 @@ async function init(){
 async function loadData(){
   try{
     // 自社の案件のみ（company_id で厳密スコープ。料金・社内担当・社内メモ等は取得しない）
-    var sel='id,name,applicant,nationality,residence_status,status,app_type,applicant_field,job_category,industry,receipt_no,receipt_date,shinsa_date,expire,application_deadline,contract_start,contract_end,milestone_step,created_at';
+    var sel='id,name,applicant,nationality,residence_status,status,app_type,applicant_field,job_category,industry,receipt_no,receipt_date,shinsa_date,expire,application_deadline,contract_start,contract_end,milestone_step,team,staff,created_at';
     var rc=await sbFetch('cases?company_id=eq.'+encodeURIComponent(companyId)+'&select='+sel+'&order=created_at.desc&limit=3000');
     allCases=await rc.json();
     if(!Array.isArray(allCases)) allCases=[];
@@ -260,7 +267,16 @@ function renderDashboard(){
   h+='<div class="card"><div class="lbl">手続き完了</div><div class="num">'+done+'<small> 件</small></div></div>';
   h+='<div class="card '+(missingDocCount>0?'warn':'')+'"><div class="lbl">未提出の書類</div><div class="num">'+missingDocCount+'<small> 件</small></div></div>';
   h+='</div>';
-  if(expired>0||soon>0){
+  // OFUSA担当窓口（部署=案件チーム最頻値 / 担当=ofusa_staff）
+  var teamCount={}; allCases.forEach(function(c){var t=(c.team||'').trim();if(t)teamCount[t]=(teamCount[t]||0)+1;});
+  var topTeam='',topN=0; Object.keys(teamCount).forEach(function(t){if(teamCount[t]>topN){topN=teamCount[t];topTeam=t;}});
+  if(companyOfusaStaff||topTeam){
+    h+='<div class="section-title">🤝 OFUSA担当窓口</div>';
+    h+='<div class="contact-card">';
+    h+='<div class="ct-row"><span class="ct-l">部署</span><span class="ct-v">'+esc(topTeam||'—')+'</span></div>';
+    h+='<div class="ct-row"><span class="ct-l">担当</span><span class="ct-v">'+esc(companyOfusaStaff||'—')+'</span></div>';
+    h+='</div>';
+  }
     h+='<div class="section-title">⏰ 在留期限アラート</div>';
     h+='<div class="cards">';
     h+='<div class="card warn"><div class="lbl">期限切れ</div><div class="num">'+expired+'<small> 名</small></div></div>';
@@ -308,7 +324,7 @@ function renderPeople(){
   var h='<div class="section-title">👥 御社の在籍人材（'+allCases.length+'名）</div>';
   h+='<div class="tbl-wrap"><table><thead><tr>'
     +'<th>氏名</th><th>国籍</th><th>在留資格</th><th>申請種別</th><th>分野・職種</th>'
-    +'<th>進捗</th><th>受付番号</th><th>審査完了</th><th>在留期限</th>'
+    +'<th>進捗</th><th>受付番号</th><th>審査完了</th><th>在留期限</th><th>OFUSA担当</th>'
     +'</tr></thead><tbody>';
   allCases.forEach(function(c){
     var nm=c.applicant||c.name||'—';
@@ -324,6 +340,7 @@ function renderPeople(){
     h+='<td>'+esc(c.receipt_no||'—')+'</td>';
     h+='<td>'+esc(c.shinsa_date||'—')+'</td>';
     h+='<td><span class="exp '+ei.cls+'">'+esc(ei.txt)+'</span></td>';
+    h+='<td><div class="staff-cell"><div><span class="sl">部署</span>'+esc(c.team||'—')+'</div><div><span class="sl">担当</span>'+esc(c.staff||'—')+'</div></div></td>';
     h+='</tr>';
   });
   h+='</tbody></table></div>';
