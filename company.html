@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.15: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
+<!-- ver.20260607.16: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -232,6 +232,48 @@ function getExternalStatus(s){return ST_EXTERNAL[s]||s||'未着手';}
 
 function stExtStyle(ext){ var s=ST_EXT_COL[ext]; if(!s) return 'background:#f1f5f9;color:#475569;border-color:#e2e8f0;'; return 'background:'+s.bg+';color:'+s.col+';border-color:'+s.bor+';'; }
 
+// 国交省（MLIT）ステータス変換（shareと同一）。company_view_cfg.show_mlit がtrueの建設案件で表示
+var MLIT_BY_STATUS={
+  '未着手':'国土交通省整備局申請準備',
+  '★ヒアリングフォーム送付':'国土交通省整備局申請準備',
+  'ヒアリングフォーム回答待ち(送付済)':'国土交通省整備局申請準備',
+  'ヒアリングフォーム回答待ち (送付済)':'国土交通省整備局申請準備',
+  '雇用条件待ち':'国土交通省整備局申請準備',
+  '1-6作成':'国土交通省整備局申請準備',
+  '★1-6企業送付':'国土交通省整備局申請準備',
+  '1-6企業確認待ち(送付済)':'国土交通省整備局申請準備',
+  '1-6企業確認待ち (送付済)':'国土交通省整備局申請準備',
+  '1-6修正':'国土交通省整備局申請準備',
+  '★1-6修正送付':'国土交通省整備局申請準備',
+  'サイン書類作成':'国土交通省整備局申請準備',
+  '★サイン書類送付':'国土交通省整備局申請準備',
+  'サイン書類返送待ち(送付済)':'国土交通省整備局申請準備',
+  '企業書類作成':'国土交通省整備局申請準備',
+  '★企業押印送付':'国土交通省整備局申請準備',
+  '企業押印返送待ち(送付済)':'国土交通省整備局申請準備',
+  '人材書類待ち':'国土交通省整備局申請準備',
+  '企業書類待ち':'国土交通省整備局申請準備',
+  'スキャン書類作成':'国土交通省整備局申請準備',
+  '★申請':'国土交通省整備局審査中',
+  '申請済(番号待)':'国土交通省整備局審査中',
+  '審査中':'国土交通省整備局審査中',
+  '特活審査中':'国土交通省整備局審査中',
+  '★要追完':'国土交通省補正通知・対応',
+  '要追完 企業不足書類待ち':'国土交通省補正通知・対応',
+  '要追完 人材不足書類待ち':'国土交通省補正通知・対応',
+  '許可済 受取方法調整中':'国土交通省整備局認定済み',
+  '入管受取ステータス変更中':'国土交通省整備局認定済み',
+  '郵送交付':'国土交通省整備局認定済み',
+  '★郵送交付':'国土交通省整備局認定済み',
+  '窓口受取':'国土交通省整備局認定済み',
+  '★窓口受取':'国土交通省整備局認定済み',
+  '完了':'国土交通省整備局認定済み',
+  '審査完了':'国土交通省整備局認定済み'
+};
+function isKensetsuField(field){return field&&String(field).indexOf('建設')>=0;}
+function getMlitStatus(c){ if(!isKensetsuField(c.applicant_field))return ''; return MLIT_BY_STATUS[c.status]||''; }
+
+
 
 /* 完了とみなすステータス（ダッシュボード集計用） */
 function isDone(s){ return /受取|交付|完了|許可済/.test(s||''); }
@@ -255,7 +297,7 @@ function _tokureiDate(c){
   return null;
 }
 
-var companyId='', companyName='', companyDrive='', companyOfusaStaff='', currentToken='', _correctPass='';
+var companyId='', companyName='', companyDrive='', companyOfusaStaff='', companyShowMlit=false, currentToken='', _correctPass='';
 var allCases=[], coDocs={}, personsByCase={}, missingDocCount=0, currentTab='dashboard';
 
 function checkPass(){
@@ -279,11 +321,13 @@ async function init(){
     if(!sd||!sd.length){ document.getElementById('main').innerHTML='<div class="error-box">このURLは無効です。担当者にお問い合わせください。</div>'; return; }
     companyId=sd[0].value;
     // 会社名
-    var r2=await sbFetch('companies?id=eq.'+encodeURIComponent(companyId)+'&select=name,drive_url,ofusa_staff');
+    var r2=await sbFetch('companies?id=eq.'+encodeURIComponent(companyId)+'&select=name,drive_url,ofusa_staff,extra');
     var cd=await r2.json();
     companyName=(cd&&cd.length)?cd[0].name:'';
     companyDrive=(cd&&cd.length&&cd[0].drive_url)?cd[0].drive_url:'';
     companyOfusaStaff=(cd&&cd.length&&cd[0].ofusa_staff)?cd[0].ofusa_staff:'';
+    var _ex=(cd&&cd.length&&cd[0].extra)?cd[0].extra:null;
+    companyShowMlit=!!(_ex && _ex.company_view_cfg && _ex.company_view_cfg.show_mlit);
     // パスワード（任意）
     var rp=await sbFetch('settings?key=eq.'+encodeURIComponent('company_view_pass_'+token)+'&select=value');
     var pd=await rp.json();
@@ -468,7 +512,10 @@ function renderPeople(){
     h+='<td>'+esc(c.residence_status||'—')+'</td>';
     h+='<td>'+esc(c.app_type||'—')+'</td>';
     h+='<td>'+esc(field)+'</td>';
-    var est=getExternalStatus(c.status); h+='<td><span class="badge-st" style="'+stExtStyle(est)+'">'+esc(est)+'</span></td>';
+    var est=getExternalStatus(c.status);
+    var stCell='<span class="badge-st" style="'+stExtStyle(est)+'">'+esc(est)+'</span>';
+    if(companyShowMlit){ var ml=getMlitStatus(c); if(ml) stCell+='<div style="font-size:9px;color:#1d4ed8;font-weight:700;margin-top:3px;">🏗 '+esc(ml)+'</div>'; }
+    h+='<td>'+stCell+'</td>';
     h+='<td>'+esc(c.receipt_no||'—')+'</td>';
     h+='<td>'+esc(c.shinsa_date||'—')+'</td>';
     if(_tokureiTracked(c)){
@@ -562,6 +609,7 @@ function renderDetail(c,p){
   if(ti) h+=row('特例期限',ti.txt);
   h+=row('申請種別',_dv(c.app_type));
   h+=row('進捗',esc(getExternalStatus(c.status)));
+  if(companyShowMlit){ var _ml=getMlitStatus(c); if(_ml) h+=row('国交省進捗',esc(_ml)); }
   h+=row('受付番号',_dv(c.receipt_no));
   h+=row('審査完了',_dv(c.shinsa_date));
   h+='<div class="dt-sec">OFUSA担当</div>';
