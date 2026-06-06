@@ -361,7 +361,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.08</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.09</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1221,9 +1221,9 @@ function buildRow(c){
   if(isGpMode){
     // 受注ID独立列
     var _orderTd = c.gpOrderId
-      ? '<span style="display:inline-block;font-size:10px;color:#0369a1;background:#e0f2fe;padding:3px 8px;border-radius:5px;font-weight:700;letter-spacing:.3px;white-space:nowrap;">'+esc(c.gpOrderId)+'</span>'
+      ? '<span style="display:inline-block;font-size:9px;color:#0369a1;background:#e0f2fe;padding:2px 5px;border-radius:3px;font-weight:700;letter-spacing:.2px;white-space:nowrap;">'+esc(c.gpOrderId)+'</span>'
       : '<span style="color:#cbd5e1;font-size:10px;">—</span>';
-    h+='<td data-col-key="gpOrderId" style="white-space:nowrap;text-align:center;min-width:100px;">'+_orderTd+'</td>';
+    h+='<td data-col-key="gpOrderId" style="white-space:nowrap;text-align:center;width:90px;min-width:90px;max-width:90px;">'+_orderTd+'</td>';
     // 氏名セル（受注IDタグ無し版）
     var _todayD2=new Date(); _todayD2.setHours(0,0,0,0);
     var _gpDates='';
