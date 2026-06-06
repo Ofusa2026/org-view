@@ -361,7 +361,7 @@ tr.row-notif:hover td{background:#fef3c7 !important;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.03</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.04</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -999,6 +999,41 @@ var REQUEST_16_FIX_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfPlaceholder
 // - drive_url 無し & pdf_done=true：黄色『準備中』バッジ（クリック不可）
 // - 何もない場合：グレー『未発行』バッジ（クリック不可）
 // 幅を統一して見やすく
+// ver.20260606.04: GPモード - 不足書類詳細表示（モーダル）
+function showGpMissing(caseId){
+  var c=allCases.find(function(x){return x.id===caseId;});
+  if(!c) return;
+  var pList=c.gpPersonMissing||[];
+  var cList=c.gpCoMissing||[];
+  var body='';
+  if(pList.length){
+    body+='<div style="font-weight:700;color:#dc2626;font-size:13px;margin-bottom:8px;border-bottom:1px solid #fecaca;padding-bottom:4px;">👤 人材書類（未確認 '+pList.length+'件）</div><ul style="margin:0 0 16px 0;padding:0 0 0 22px;font-size:12px;color:#374151;line-height:1.7;">';
+    pList.forEach(function(d){ body+='<li>'+esc(d)+'</li>'; });
+    body+='</ul>';
+  }
+  if(cList.length){
+    body+='<div style="font-weight:700;color:#dc2626;font-size:13px;margin-bottom:8px;border-bottom:1px solid #fecaca;padding-bottom:4px;">🏢 企業書類（未確認 '+cList.length+'件）</div><ul style="margin:0 0 16px 0;padding:0 0 0 22px;font-size:12px;color:#374151;line-height:1.7;">';
+    cList.forEach(function(d){ body+='<li>'+esc(d)+'</li>'; });
+    body+='</ul>';
+  }
+  if(!body) body='<div style="color:#10b981;font-size:13px;font-weight:700;">不足書類はありません ✓</div>';
+  // モーダル表示
+  var modal=document.createElement('div');
+  modal.setAttribute('data-gp-modal','1');
+  modal.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.55);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
+  var head=esc((c.gpOrderId?'['+c.gpOrderId+'] ':'')+(c.name||''));
+  var sub=esc((c.company||'')+' / '+(c.applicant||''));
+  modal.innerHTML='<div style="background:#fff;border-radius:10px;padding:24px;max-width:520px;width:100%;max-height:80vh;overflow:auto;box-shadow:0 12px 32px rgba(0,0,0,.25);">'
+    +'<div style="font-weight:700;font-size:14px;color:#0f2040;margin-bottom:4px;">'+head+'</div>'
+    +'<div style="font-size:11px;color:#64748b;margin-bottom:16px;">'+sub+'</div>'
+    +body
+    +'<div style="text-align:right;margin-top:8px;"><button type="button" style="padding:8px 20px;background:#0f2040;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;">閉じる</button></div>'
+    +'</div>';
+  modal.querySelector('button').onclick=function(){ modal.remove(); };
+  modal.onclick=function(e){ if(e.target===modal) modal.remove(); };
+  document.body.appendChild(modal);
+}
+
 function buildDownloadCell(c){
   var receipts=allReceipts.filter(function(r){return r.case_id===c.id;});
   var shinsa=allShinsa.filter(function(r){return r.case_id===c.id;});
@@ -1157,6 +1192,19 @@ function buildRow(c){
     dmStyle='background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;';
   }
   h+='<td data-col-key="deliveryMethod" style="font-size:10px;white-space:nowrap;"><span style="display:inline-block;font-size:10px;padding:2px 8px;border-radius:4px;font-weight:700;'+dmStyle+'">'+dmLabel+'</span></td>';
+  // ver.20260606.04: GPモード - 不足書類列（クリックで詳細表示）
+  if(isGpMode){
+    var _pMis=(c.gpPersonMissing||[]).length;
+    var _cMis=(c.gpCoMissing||[]).length;
+    var _missTotal=_pMis+_cMis;
+    var _missHtml;
+    if(_missTotal===0){
+      _missHtml='<span style="color:#10b981;font-size:13px;font-weight:700;">✓</span>';
+    } else {
+      _missHtml='<span onclick="showGpMissing(\''+c.id+'\')" style="cursor:pointer;display:inline-block;font-size:10px;color:#dc2626;background:#fee2e2;padding:3px 9px;border-radius:5px;font-weight:700;border:1px solid #fca5a5;line-height:1.3;" title="クリックで不足書類の詳細">人材'+_pMis+' / 企業'+_cMis+'</span>';
+    }
+    h+='<td data-col-key="gpMissingDocs" style="white-space:nowrap;text-align:center;">'+_missHtml+'</td>';
+  }
   // ver.20260518.16: PDFカラム（受付番号PDF + 審査完了PDF）
   h+='<td data-col-key="_downloads" style="font-size:10px;min-width:130px;">'+buildDownloadCell(c)+'</td>';
   // 大房コメント（index.htmlから入力・表示のみ）
@@ -1249,6 +1297,7 @@ var COLS=[
   {key:'receiptNo',label:'受付番号'},
   {key:'tempReturn',label:'帰国予定'},
   {key:'deliveryMethod',label:'受取方法'}, // ver.20260601.01: 受取方法列を追加
+  {key:'gpMissingDocs',label:'不足書類',noSort:true}, // ver.20260606.04: GPモード専用 不足書類列
   {key:'_downloads',label:'PDF',noSort:true}, // ver.20260518.16: 資料DL→PDFに変更
   {key:'_comment',label:'大房コメント',noSort:true},
   {key:'_own_comment',label:'登録支援機関様コメント',noSort:true}
@@ -3208,7 +3257,7 @@ async function loadData(){
     if(isGpMode){
       _effectiveOrgName = 'オープンケア協同組合';
     }
-    var casesBase='cases?org=eq.'+encodeURIComponent(_effectiveOrgName)+'&select=id,applicant,name,company,status,expire,tokurei_date,staff,team,app_type,receipt_no,receipt_date,temp_return,applicant_field,madoguchi_date,madoguchi_receive_date,client_staff,delivery_method,updated_at,created_at&order=created_at.desc';
+    var casesBase='cases?org=eq.'+encodeURIComponent(_effectiveOrgName)+'&select=id,applicant,name,company,company_id,status,expire,tokurei_date,staff,team,app_type,receipt_no,receipt_date,temp_return,applicant_field,madoguchi_date,madoguchi_receive_date,client_staff,delivery_method,updated_at,created_at&order=created_at.desc';
     var cases=[];
     var _off=0, _pageSize=1000, _safety=20;
     while(_safety-->0){
@@ -3220,7 +3269,7 @@ async function loadData(){
       _off+=_pageSize;
     }
     allCases=(cases||[]).map(function(c){
-      var base={id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',receiptDate:c.receipt_date||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',madoguchiDate:c.madoguchi_date||'',madoguchiReceiveDate:c.madoguchi_receive_date||'',clientStaff:c.client_staff||'',deliveryMethod:c.delivery_method||'mail',updated_at:c.updated_at||''};
+      var base={id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',companyId:c.company_id||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',receiptDate:c.receipt_date||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',madoguchiDate:c.madoguchi_date||'',madoguchiReceiveDate:c.madoguchi_receive_date||'',clientStaff:c.client_staff||'',deliveryMethod:c.delivery_method||'mail',updated_at:c.updated_at||''};
       // ver.20260606.01: GPモードならGP情報を付与
       if(isGpMode){
         var g=gpInfoByCaseId[c.id];
@@ -3233,6 +3282,68 @@ async function loadData(){
     // ver.20260606.01: GPモードでは gp_case_map にマッチしない案件を除外（466件のみ表示）
     if(isGpMode){
       allCases=allCases.filter(function(c){ return !!gpInfoByCaseId[c.id]; });
+      // ver.20260606.04: 不足書類取得（人材: doc_check / 企業: co_doc_check）
+      try{
+        // 人材書類: staff::xxx と autoskip::xxx を取得
+        var personMap={};
+        for(var pOff=0;pOff<allCases.length;pOff+=100){
+          var pChunk=allCases.slice(pOff,pOff+100);
+          var pIds=pChunk.map(function(c){return '"'+c.id+'"';}).join(',');
+          var rDc=await sbFetch('doc_check?case_id=in.('+pIds+')&or=(doc_key.like.staff::*,doc_key.like.autoskip::*)&select=case_id,doc_key,value&limit=10000');
+          var dcRows=await rDc.json();
+          (dcRows||[]).forEach(function(r){
+            if(!personMap[r.case_id]) personMap[r.case_id]={staff:{},skip:{}};
+            if(r.doc_key.indexOf('staff::')===0){
+              personMap[r.case_id].staff[r.doc_key.substring(7)]=r.value;
+            } else if(r.doc_key.indexOf('autoskip::')===0){
+              if(r.value==='1'||r.value==='true') personMap[r.case_id].skip[r.doc_key.substring(10)]=true;
+            }
+          });
+        }
+        // 企業書類: ai::xxx と skip::xxx
+        var coIds={}; allCases.forEach(function(c){if(c.companyId) coIds[c.companyId]=true;});
+        var coIdList=Object.keys(coIds);
+        var coMap={};
+        for(var cOff=0;cOff<coIdList.length;cOff+=100){
+          var cChunk=coIdList.slice(cOff,cOff+100);
+          var cIds=cChunk.map(function(id){return '"'+id+'"';}).join(',');
+          var rCo=await sbFetch('co_doc_check?co_id=in.('+cIds+')&or=(doc_key.like.ai::*,doc_key.like.skip::*)&select=co_id,doc_key,value&limit=20000');
+          var coRows=await rCo.json();
+          (coRows||[]).forEach(function(r){
+            if(!coMap[r.co_id]) coMap[r.co_id]={ai:{},skip:{}};
+            if(r.doc_key.indexOf('ai::')===0){
+              coMap[r.co_id].ai[r.doc_key.substring(4)]=r.value;
+            } else if(r.doc_key.indexOf('skip::')===0){
+              if(r.value==='true'||r.value==='1') coMap[r.co_id].skip[r.doc_key.substring(6)]=true;
+            }
+          });
+        }
+        // allCasesに不足リストを付与
+        allCases.forEach(function(c){
+          var pMis=[];
+          var pData=personMap[c.id];
+          if(pData){
+            Object.keys(pData.staff).forEach(function(k){
+              if(pData.skip[k]) return; // 不要扱い
+              if(pData.staff[k]==='true') return; // 確認済み
+              pMis.push(k);
+            });
+          }
+          c.gpPersonMissing=pMis;
+          var cMis=[];
+          if(c.companyId){
+            var cData=coMap[c.companyId];
+            if(cData){
+              Object.keys(cData.ai).forEach(function(k){
+                if(cData.skip[k]) return;
+                if(cData.ai[k]==='true') return;
+                cMis.push(k);
+              });
+            }
+          }
+          c.gpCoMissing=cMis;
+        });
+      }catch(eDc){ console.warn('[gp missing docs load]', eDc); }
     }
     // personsテーブルからtempReturn(一時帰国予定日)を取得して補完
     // ver.20260527.14: 申請中証明書PDF・預かり証PDFのURL履歴も取得
