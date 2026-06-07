@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.02: 申請人（人材本人）向け進捗・提出書類確認ページ -->
+<!-- ver.20260607.03: 申請人（人材本人）向け進捗・提出書類確認ページ -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -281,7 +281,7 @@ async function init(){
 async function loadData(){
   try{
     var caseId=window._caseId;
-    var sel='id,applicant,name,nationality,residence_status,status,app_type,applicant_field,job_category,industry,receipt_no,receipt_date,shinsa_date,expire,tokurei_date,drive_url,team,staff,other_agencies';
+    var sel='id,applicant,name,nationality,residence_status,current_status,status,app_type,applicant_field,job_category,industry,receipt_no,receipt_date,shinsa_date,expire,tokurei_date,drive_url,team,staff,other_agencies';
     var rc=await sbFetch('cases?id=eq.'+encodeURIComponent(caseId)+'&select='+sel);
     var cc=await rc.json();
     if(!cc||!cc.length){ document.getElementById('main').innerHTML='<div class="error-box">対象の申請が見つかりません。</div>'; return; }
@@ -354,7 +354,8 @@ function renderStatus(){
   h+='<div class="cards">'+cards+'</div>';
   // 申請情報
   h+='<div class="info-card">';
-  h+='<div class="dt-row"><span class="dt-l">在留資格</span><span class="dt-v">'+_dv(c.residence_status)+'</span></div>';
+  h+='<div class="dt-row"><span class="dt-l">現在の在留資格</span><span class="dt-v">'+_dv((thePerson&&thePerson.residence_status)||c.current_status)+'</span></div>';
+  h+='<div class="dt-row"><span class="dt-l">申請在留資格</span><span class="dt-v">'+_dv(c.residence_status)+'</span></div>';
   h+='<div class="dt-row"><span class="dt-l">申請種別</span><span class="dt-v">'+_dv(c.app_type)+'</span></div>';
   h+='<div class="dt-row"><span class="dt-l">分野・職種</span><span class="dt-v">'+_dv([c.applicant_field,c.job_category].filter(Boolean).join(' / ')||c.industry)+'</span></div>';
   h+='<div class="dt-row"><span class="dt-l">受付番号</span><span class="dt-v">'+_dv(c.receipt_no)+'</span></div>';
