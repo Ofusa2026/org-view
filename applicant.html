@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.01: 申請人（人材本人）向け進捗・提出書類確認ページ -->
+<!-- ver.20260607.02: 申請人（人材本人）向け進捗・提出書類確認ページ -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -246,7 +246,7 @@ function buildUploadUrl(){
 
 function _hasVal(v){ return v!=null && v!=='' && v!=='false'; }
 
-var theCase=null, thePerson={}, docs={}, missingDocCount=0, currentTab='status', currentToken='', _correctPass='';
+var theCase=null, thePerson={}, cacheDocs=[], doneSet={}, missingDocCount=0, currentTab='status', currentToken='', _correctPass='';
 
 function checkPass(){
   var v=document.getElementById('passInput').value.trim();
@@ -290,14 +290,19 @@ async function loadData(){
     var rpe=await sbFetch('persons?case_id=eq.'+encodeURIComponent(caseId)+'&select='+pf);
     var pe=await rpe.json();
     thePerson=(pe&&pe.length)?pe[0]:{};
-    docs={};
+    // 提出書類リスト＝アップロード画面と同じ正規リスト（upload_docs_cache）。提出済判定は doc_check ライブ
+    cacheDocs=[];
+    var rcd=await sbFetch('upload_docs_cache?case_id=eq.'+encodeURIComponent(caseId)+'&kind=eq.person&select=docs');
+    var cdd=await rcd.json();
+    if(cdd&&cdd.length&&Array.isArray(cdd[0].docs)) cacheDocs=cdd[0].docs;
+    doneSet={};
     var rd=await sbFetch('doc_check?case_id=eq.'+encodeURIComponent(caseId)+'&select=doc_key,value&limit=2000');
     var dr=await rd.json();
     (dr||[]).forEach(function(row){
       var idx=row.doc_key.indexOf('::'); if(idx<0) return;
       var prefix=row.doc_key.substring(0,idx); var name=row.doc_key.substring(idx+2);
-      if(!docs[name]) docs[name]={};
-      docs[name][prefix]=row.value;
+      var v=row.value; var truthy=(v!=null&&v!==''&&v!=='false');
+      if((prefix==='staff'||prefix==='skip')&&truthy) doneSet[name]=true;
     });
     computeMissing();
     var nm=theCase.applicant||theCase.name||'';
@@ -308,11 +313,11 @@ async function loadData(){
   }catch(e){ document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+esc(e.message)+'</div>'; }
 }
 
-function docInList(d){ return ('ai' in d) || _hasVal(d.staff) || _hasVal(d.date) || _hasVal(d.skip); }
-function docState(d){ if(_hasVal(d.ai)||_hasVal(d.staff)||_hasVal(d.date)||_hasVal(d.skip)) return 'done'; return 'todo'; }
+function docDisplayList(){ return cacheDocs.filter(function(d){ return d && d.l && d.l!=='その他'; }); }
+function isDocDone(d){ return !!doneSet[d.l] || !!d.done; }
 function computeMissing(){
   missingDocCount=0;
-  Object.keys(docs).forEach(function(name){ if(docInList(docs[name]) && docState(docs[name])==='todo') missingDocCount++; });
+  docDisplayList().forEach(function(d){ if(!isDocDone(d)) missingDocCount++; });
   var b=document.getElementById('tabDocBadge');
   if(missingDocCount>0){ b.textContent=missingDocCount; b.classList.remove('hide'); } else { b.classList.add('hide'); }
 }
@@ -370,21 +375,21 @@ function renderStatus(){
 }
 
 function renderDocs(){
-  var names=Object.keys(docs).filter(function(n){return docInList(docs[n]);});
   var h='<div class="section-title">📄 あなたの提出書類</div>';
   h+='<div class="note">OFUSAでチェックが入った書類は「提出済（または不要）」になります。「未提出」の書類はご提出をお願いいたします。ご不明点は担当者までご連絡ください。</div>';
   var upUrl=buildUploadUrl();
   if(upUrl){ h+='<div><a class="upload-btn" href="'+esc(upUrl)+'" target="_blank" rel="noopener">📤 書類をアップロード</a></div>'; }
-  if(!names.length){ h+='<div class="empty">提出書類リストはまだ登録されていません。</div>'; return h; }
-  var order={todo:0,done:1};
-  names.sort(function(a,b){ var sa=docState(docs[a]),sb=docState(docs[b]); if(order[sa]!==order[sb])return order[sa]-order[sb]; return a.localeCompare(b,'ja'); });
+  var list=docDisplayList();
+  if(!list.length){ h+='<div class="empty">提出書類リストはまだ準備中です。担当者にお問い合わせください。</div>'; return h; }
+  list=list.slice().sort(function(a,b){ var da=isDocDone(a)?1:0, db=isDocDone(b)?1:0; if(da!==db)return da-db; return String(a.l).localeCompare(String(b.l),'ja'); });
   h+='<div class="doc-co">';
-  names.forEach(function(name){
-    var st=docState(docs[name]);
-    var ico=st==='done'?'✅':'⬜';
-    var stTxt=st==='done'?'提出済（または不要）':'未提出';
-    var stCls=st==='done'?'s-done':'s-todo';
-    h+='<div class="doc-row"><span class="doc-ico">'+ico+'</span><div class="doc-name">'+esc(name)+'</div><span class="doc-state '+stCls+'">'+stTxt+'</span></div>';
+  list.forEach(function(d){
+    var done=isDocDone(d);
+    var ico=done?'✅':'⬜';
+    var stTxt=done?'提出済（または不要）':'未提出';
+    var stCls=done?'s-done':'s-todo';
+    var reqMark=(!done && d.r)?' <span style="color:#dc2626;font-size:10px;font-weight:800;">必須</span>':'';
+    h+='<div class="doc-row"><span class="doc-ico">'+ico+'</span><div class="doc-name">'+esc(d.l)+reqMark+'</div><span class="doc-state '+stCls+'">'+stTxt+'</span></div>';
   });
   h+='</div>';
   return h;
