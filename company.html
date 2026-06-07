@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.23: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
+<!-- ver.20260607.24: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -328,7 +328,7 @@ async function init(){
 async function loadData(){
   try{
     // 自社の案件のみ（company_id で厳密スコープ。料金・社内担当・社内メモ等は取得しない）
-    var sel='id,name,applicant,nationality,residence_status,status,app_type,applicant_field,job_category,industry,receipt_no,receipt_date,shinsa_date,expire,application_deadline,contract_start,contract_end,milestone_step,team,staff,other_agencies,created_at';
+    var sel='id,name,applicant,nationality,org,residence_status,status,app_type,applicant_field,job_category,industry,receipt_no,receipt_date,shinsa_date,expire,application_deadline,contract_start,contract_end,milestone_step,team,staff,other_agencies,created_at';
     var rc=await sbFetch('cases?company_id=eq.'+encodeURIComponent(companyId)+'&select='+sel+'&order=created_at.desc&limit=3000');
     allCases=await rc.json();
     if(!Array.isArray(allCases)) allCases=[];
@@ -382,14 +382,14 @@ function _pdfChip(label,url,color,icon){
 function _rowPdfIcons(c){
   var p=personsByCase[c.id]||{};
   var items=[];
-  var cert=_lastPdfUrl(p.application_cert_pdf_urls); if(cert) items.push(['🪪',cert,'申請中証明']);
-  var cust=_lastPdfUrl(p.custody_receipt_pdf_urls); if(cust) items.push(['📋',cust,'預かり証']);
-  var rcpt=receiptByCase[c.id]; if(rcpt) items.push(['📄',rcpt,'受付番号']);
-  var shin=shinsaByCase[c.id]; if(shin) items.push(['✅',shin,'審査完了']);
+  var cert=_lastPdfUrl(p.application_cert_pdf_urls); if(cert) items.push(['🪪','申請中証明',cert,'#2563eb']);
+  var cust=_lastPdfUrl(p.custody_receipt_pdf_urls); if(cust) items.push(['📋','預かり証',cust,'#7c3aed']);
+  var rcpt=receiptByCase[c.id]; if(rcpt) items.push(['📄','受付番号',rcpt,'#dc2626']);
+  var shin=shinsaByCase[c.id]; if(shin) items.push(['✅','審査完了',shin,'#16a34a']);
   if(!items.length) return '<span style="color:#cbd5e1;">—</span>';
-  return items.map(function(it){
-    return '<a href="'+esc(it[1])+'" target="_blank" rel="noopener" title="'+it[2]+'PDF" onclick="event.stopPropagation();" style="font-size:16px;text-decoration:none;margin:0 3px;">'+it[0]+'</a>';
-  }).join('');
+  return '<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start;">'+items.map(function(it){
+    return '<a href="'+esc(it[2])+'" target="_blank" rel="noopener" title="'+it[1]+'PDFを開く" onclick="event.stopPropagation();" style="display:inline-block;background:'+it[3]+';color:#fff;font-size:10px;font-weight:700;padding:4px 8px;border-radius:5px;text-decoration:none;white-space:nowrap;">'+it[0]+' '+it[1]+'</a>';
+  }).join('')+'</div>';
 }
 
 /* チェックリストに載せる書類か（aiエントリあり、または何らかの記入あり） */
@@ -508,7 +508,7 @@ function renderPeople(){
   var h='<div class="section-title">📋 御社の申請一覧（'+allCases.length+'件）</div>';
   h+='<div class="note">行をタップすると、在留カード番号・パスポート・住所などの詳細が表示されます。</div>';
   h+='<div class="tbl-wrap"><table><thead><tr>'
-    +'<th>氏名</th><th>国籍</th><th>申請在留資格</th><th>申請種別</th><th>分野・職種</th>'
+    +'<th>氏名</th><th>国籍</th><th>登録支援機関</th><th>申請在留資格</th><th>申請種別</th><th>分野・職種</th>'
     +'<th>進捗</th><th>受付番号</th><th>在留期限</th><th>OFUSA担当</th><th>PDF</th>'
     +'</tr></thead><tbody>';
   allCases.forEach(function(c){
@@ -518,6 +518,7 @@ function renderPeople(){
     h+='<tr class="people-row" onclick="openDetail(\''+esc(c.id)+'\')">';
     h+='<td><b>'+esc(nm)+'</b></td>';
     h+='<td>'+esc(c.nationality||'—')+'</td>';
+    h+='<td>'+esc(c.org||'—')+'</td>';
     h+='<td>'+esc(c.residence_status||'—')+'</td>';
     h+='<td>'+esc(c.app_type||'—')+'</td>';
     h+='<td>'+esc(field)+'</td>';
@@ -618,6 +619,7 @@ function renderDetail(c,p){
   h+=row('在留期限',_dv(c.expire));
   if(ti) h+=row('特例期限',ti.txt);
   h+=row('申請種別',_dv(c.app_type));
+  h+=row('登録支援機関',_dv(c.org));
   h+=row('進捗',esc(getExternalStatus(c.status)));
   if(companyShowMlit){ var _ml=getKokkoStatus(c); if(_ml) h+=row('国交省申請',esc(_ml)); }
   h+=row('受付番号',_dv(c.receipt_no));
