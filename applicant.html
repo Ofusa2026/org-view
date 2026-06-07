@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.04: 申請人（人材本人）向け進捗・提出書類確認ページ -->
+<!-- ver.20260607.05: 申請人（人材本人）向け進捗・提出書類確認ページ -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -48,6 +48,9 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .s-todo{background:#fff7ed;color:#ea580c;border:1px solid #fdba74;}
 .upload-btn{display:inline-flex;align-items:center;gap:8px;background:#16a34a;color:#fff;text-decoration:none;font-size:12px;font-weight:800;padding:11px 18px;border-radius:10px;margin-bottom:14px;box-shadow:0 2px 6px rgba(22,163,74,.25);}
 .upload-btn:hover{background:#15803d;}
+.pdf-list{display:flex;flex-direction:column;gap:10px;}
+.pdf-btn{display:flex;align-items:center;gap:10px;text-decoration:none;font-size:13px;font-weight:800;padding:14px 16px;border-radius:12px;color:#fff;}
+.pdf-none{background:#f1f5f9!important;color:#94a3b8!important;border:1px dashed #cbd5e1;font-weight:700;}
 .info-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:6px 16px;}
 .dt-sec{font-size:11px;font-weight:800;color:#0f2040;border-bottom:2px solid #e2e8f0;padding-bottom:4px;margin:14px 0 8px;}
 .dt-row{display:flex;gap:10px;padding:6px 0;font-size:12px;border-bottom:1px solid #f8fafc;}
@@ -78,6 +81,7 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 <div class="tabs" id="tabs" style="display:none;">
   <button class="tab active" data-tab="status" onclick="switchTab('status')">進捗</button>
   <button class="tab" data-tab="docs" onclick="switchTab('docs')">提出書類<span class="badge hide" id="tabDocBadge">0</span></button>
+  <button class="tab" data-tab="pdf" onclick="switchTab('pdf')">発行書類</button>
   <button class="tab" data-tab="info" onclick="switchTab('info')">本人情報</button>
   <button class="tab" data-tab="flow" onclick="switchTab('flow')">申請の流れ</button>
 </div>
@@ -246,7 +250,7 @@ function buildUploadUrl(){
 
 function _hasVal(v){ return v!=null && v!=='' && v!=='false'; }
 
-var theCase=null, thePerson={}, cacheDocs=[], doneSet={}, missingDocCount=0, currentTab='status', currentToken='', _correctPass='';
+var theCase=null, thePerson={}, cacheDocs=[], doneSet={}, missingDocCount=0, pdfCert='', pdfCustody='', pdfReceipt='', pdfShinsa='', currentTab='status', currentToken='', _correctPass='';
 
 function checkPass(){
   var v=document.getElementById('passInput').value.trim();
@@ -286,10 +290,18 @@ async function loadData(){
     var cc=await rc.json();
     if(!cc||!cc.length){ document.getElementById('main').innerHTML='<div class="error-box">対象の申請が見つかりません。</div>'; return; }
     theCase=cc[0];
-    var pf='applicant_name_en,residence_card,passport,passport_expiry,birthdate,gender,nationality,jp_postal_code,jp_address,jp_detail_address,home_country_address,phone,cel_phone,tel_num,email,residence_status';
+    var pf='applicant_name_en,residence_card,passport,passport_expiry,birthdate,gender,nationality,jp_postal_code,jp_address,jp_detail_address,home_country_address,phone,cel_phone,tel_num,email,residence_status,application_cert_pdf_urls,custody_receipt_pdf_urls';
     var rpe=await sbFetch('persons?case_id=eq.'+encodeURIComponent(caseId)+'&select='+pf);
     var pe=await rpe.json();
     thePerson=(pe&&pe.length)?pe[0]:{};
+    // 発行PDF（申請中証明・預かり証＝persons配列の最新 / 受付番号・審査完了＝archiveテーブルの最新）
+    pdfCert=''; pdfCustody=''; pdfReceipt=''; pdfShinsa='';
+    var _ac=thePerson.application_cert_pdf_urls; if(Array.isArray(_ac)&&_ac.length){ var _l1=_ac[_ac.length-1]; if(_l1&&_l1.url) pdfCert=_l1.url; }
+    var _cu=thePerson.custody_receipt_pdf_urls; if(Array.isArray(_cu)&&_cu.length){ var _l2=_cu[_cu.length-1]; if(_l2&&_l2.url) pdfCustody=_l2.url; }
+    var rr=await sbFetch('receipt_archive?case_id=eq.'+encodeURIComponent(caseId)+'&select=drive_url,date&order=date.desc.nullslast&limit=10');
+    var rrd=await rr.json(); (rrd||[]).some(function(x){ if(x&&x.drive_url){ pdfReceipt=x.drive_url; return true; } return false; });
+    var rsa=await sbFetch('shinsa_archive?case_id=eq.'+encodeURIComponent(caseId)+'&select=drive_url,date&order=date.desc.nullslast&limit=10');
+    var rsd=await rsa.json(); (rsd||[]).some(function(x){ if(x&&x.drive_url){ pdfShinsa=x.drive_url; return true; } return false; });
     // 提出書類リスト＝アップロード画面と同じ正規リスト（upload_docs_cache）。提出済判定は doc_check ライブ
     cacheDocs=[];
     var rcd=await sbFetch('upload_docs_cache?case_id=eq.'+encodeURIComponent(caseId)+'&kind=eq.person&select=docs');
@@ -328,6 +340,7 @@ function render(){
   var m=document.getElementById('main');
   if(currentTab==='status') m.innerHTML=renderStatus();
   else if(currentTab==='docs') m.innerHTML=renderDocs();
+  else if(currentTab==='pdf') m.innerHTML=renderPdf();
   else if(currentTab==='info') m.innerHTML=renderInfo();
   else if(currentTab==='flow') m.innerHTML=renderFlow();
 }
@@ -392,6 +405,22 @@ function renderDocs(){
     var reqMark=(!done && d.r)?' <span style="color:#dc2626;font-size:10px;font-weight:800;">必須</span>':'';
     h+='<div class="doc-row"><span class="doc-ico">'+ico+'</span><div class="doc-name">'+esc(d.l)+reqMark+'</div><span class="doc-state '+stCls+'">'+stTxt+'</span></div>';
   });
+  h+='</div>';
+  return h;
+}
+
+function _pdfBtn(label,url,color,icon){
+  if(url) return '<a class="pdf-btn" style="background:'+color+';" href="'+esc(url)+'" target="_blank" rel="noopener">'+icon+' '+label+'</a>';
+  return '<span class="pdf-btn pdf-none">'+icon+' '+label+'（未発行）</span>';
+}
+function renderPdf(){
+  var h='<div class="section-title">📑 発行書類</div>';
+  h+='<div class="note">OFUSAが発行した書類です。発行され次第ここに表示され、タップで開けます。</div>';
+  h+='<div class="pdf-list">';
+  h+=_pdfBtn('申請中証明',pdfCert,'#2563eb','🪪');
+  h+=_pdfBtn('預かり証',pdfCustody,'#7c3aed','📋');
+  h+=_pdfBtn('申請受付番号',pdfReceipt,'#dc2626','📄');
+  h+=_pdfBtn('審査完了通知',pdfShinsa,'#16a34a','✅');
   h+='</div>';
   return h;
 }
