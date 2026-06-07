@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.08: 申請人（人材本人）向け進捗・提出書類確認ページ -->
+<!-- ver.20260607.09: 申請人（人材本人）向け進捗・提出書類確認ページ -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -73,6 +73,7 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .pass-title{font-size:15px;font-weight:800;color:#0f2040;}
 .pass-org{font-size:12px;color:#64748b;margin:6px 0 18px;}
 .pass-input{width:100%;padding:11px 13px;border:1px solid #cbd5e1;border-radius:9px;font-size:14px;margin-bottom:12px;}
+.pin-input{letter-spacing:10px;text-align:center;font-size:22px;font-weight:800;}
 .pass-btn{width:100%;padding:11px;background:#0f2040;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:800;cursor:pointer;}
 .pass-err{color:#dc2626;font-size:11px;margin-top:10px;min-height:14px;}
 .hide{display:none!important;}
@@ -97,11 +98,11 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 
 <div id="passScreen" class="pass-screen hide">
   <div class="pass-box">
-    <div class="pass-title">パスワードを入力してください</div>
-    <div class="pass-org" id="passOrgName">読み込み中...</div>
-    <input class="pass-input" type="password" id="passInput" placeholder="パスワード"
-      onkeydown="if(event.key==='Enter')checkPass()">
-    <button class="pass-btn" onclick="checkPass()">ログイン</button>
+    <div class="pass-title" id="passTitle">パスワードを入力してください</div>
+    <div class="pass-org" id="passOrgName"></div>
+    <input class="pass-input pin-input" id="passInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'')" onkeydown="if(event.key==='Enter')passSubmit()">
+    <input class="pass-input pin-input hide" id="passInput2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="もう一度（確認）" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'')" onkeydown="if(event.key==='Enter')passSubmit()">
+    <button class="pass-btn" id="passBtn" onclick="passSubmit()">ログイン</button>
     <div class="pass-err" id="passErr"></div>
   </div>
 </div>
@@ -257,12 +258,31 @@ function buildUploadUrl(){
 
 function _hasVal(v){ return v!=null && v!=='' && v!=='false'; }
 
-var theCase=null, thePerson={}, cacheDocs=[], doneSet={}, missingDocCount=0, pdfCert='', pdfCustody='', pdfReceipt='', pdfShinsa='', hasHearingForm=false, currentTab='status', currentToken='', _correctPass='';
+var theCase=null, thePerson={}, cacheDocs=[], doneSet={}, missingDocCount=0, pdfCert='', pdfCustody='', pdfReceipt='', pdfShinsa='', hasHearingForm=false, _passMode='enter', currentTab='status', currentToken='', _correctPass='';
 
-function checkPass(){
-  var v=document.getElementById('passInput').value.trim();
-  if(v===_correctPass){ document.getElementById('passScreen').classList.add('hide'); loadData(); }
-  else { document.getElementById('passErr').textContent='パスワードが違います'; }
+function savePin(token,pin){
+  return fetch(SUPABASE_URL+'/rest/v1/settings',{method:'POST',
+    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+    body:JSON.stringify({key:'applicant_view_pass_'+token,value:pin})
+  }).then(function(r){return r.ok;}).catch(function(){return false;});
+}
+async function passSubmit(){
+  var v=(document.getElementById('passInput').value||'').replace(/\D/g,'');
+  var err=document.getElementById('passErr');
+  if(!/^\d{4}$/.test(v)){ err.textContent='4桁の数字を入力してください'; return; }
+  if(_passMode==='setup'){
+    var v2=(document.getElementById('passInput2').value||'').replace(/\D/g,'');
+    if(v!==v2){ err.textContent='確認用と一致しません'; return; }
+    err.textContent='設定中...';
+    var ok=await savePin(window._passToken,v);
+    if(!ok){ err.textContent='設定に失敗しました。通信環境をご確認ください'; return; }
+    _correctPass=v;
+    document.getElementById('passScreen').classList.add('hide');
+    await loadData();
+  } else {
+    if(v===String(_correctPass)){ document.getElementById('passScreen').classList.add('hide'); loadData(); }
+    else { err.textContent='パスワードが違います'; }
+  }
 }
 
 async function init(){
@@ -278,14 +298,22 @@ async function init(){
     var pd=await rp.json();
     var pass=(pd&&pd.length)?pd[0].value:'';
     window._caseId=caseId;
+    window._passToken=token;
     if(pass){
-      _correctPass=pass;
-      document.getElementById('passOrgName').textContent='';
-      document.getElementById('passScreen').classList.remove('hide');
-      setTimeout(function(){document.getElementById('passInput').focus();},100);
-      return;
+      _correctPass=pass; _passMode='enter';
+      document.getElementById('passTitle').textContent='パスワード（4桁）を入力してください';
+      document.getElementById('passBtn').textContent='ログイン';
+      document.getElementById('passInput2').classList.add('hide');
+    } else {
+      _passMode='setup';
+      document.getElementById('passTitle').textContent='パスワードを設定してください';
+      document.getElementById('passOrgName').textContent='初回のみ：4桁の数字を決めてください';
+      document.getElementById('passBtn').textContent='設定する';
+      document.getElementById('passInput2').classList.remove('hide');
     }
-    await loadData();
+    document.getElementById('passScreen').classList.remove('hide');
+    setTimeout(function(){document.getElementById('passInput').focus();},100);
+    return;
   }catch(e){ document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+esc(e.message)+'</div>'; }
 }
 
