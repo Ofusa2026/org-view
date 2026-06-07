@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | 大房行政書士法人</title>
-<!-- ver.20260607.28: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
+<!-- ver.20260607.29: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -483,9 +483,14 @@ function _dashHero(total,soon,expired){
     +'</div>';
 }
 var _NAT_NORM={'INDONESIA':'インドネシア','VIETNAM':'ベトナム','VIET NAM':'ベトナム','MYANMAR':'ミャンマー','BURMA':'ミャンマー','CAMBODIA':'カンボジア','PHILIPPINES':'フィリピン','NEPAL':'ネパール','CHINA':'中国','THAILAND':'タイ','SRI LANKA':'スリランカ','MONGOLIA':'モンゴル','BANGLADESH':'バングラデシュ','INDIA':'インド','LAOS':'ラオス'};
+function natVal(c){
+  var p=personsByCase[c.id];
+  var n=(p&&p.nationality&&String(p.nationality).trim())||'';
+  if(!n) n=(c.nationality&&String(c.nationality).trim())||'';
+  return n;
+}
 function _natOf(c){
-  var n=(c.nationality||'').trim();
-  if(!n){ var p=personsByCase[c.id]; if(p&&p.nationality) n=(p.nationality||'').trim(); }
+  var n=natVal(c);
   if(!n) return '未設定';
   return _NAT_NORM[n.toUpperCase()]||n;
 }
@@ -580,7 +585,7 @@ function exportCsv(){
   allCases.forEach(function(c){
     var field=[c.applicant_field,c.job_category].filter(Boolean).join(' / ')||(c.industry||'');
     var tok=_tokureiTracked(c)?(_tokureiDate(c)||''):'';
-    rows.push([c.applicant||c.name||'',c.nationality||'',c.org||'',c.residence_status||'',c.app_type||'',field,getExternalStatus(c.status),c.receipt_no||'',c.expire||'',tok,c.team||'',c.staff||'']);
+    rows.push([c.applicant||c.name||'',natVal(c),c.org||'',c.residence_status||'',c.app_type||'',field,getExternalStatus(c.status),c.receipt_no||'',c.expire||'',tok,c.team||'',c.staff||'']);
   });
   var csv='\uFEFF'+rows.map(function(r){return r.map(function(v){v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(',');}).join('\r\n');
   var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
@@ -606,7 +611,7 @@ function renderPeople(){
     var ei=expInfo(c.expire);
     h+='<tr class="people-row" onclick="openDetail(\''+esc(c.id)+'\')">';
     h+='<td><b>'+esc(nm)+'</b></td>';
-    h+='<td>'+esc(c.nationality||'—')+'</td>';
+    h+='<td>'+esc(natVal(c)||'—')+'</td>';
     h+='<td>'+esc(c.org||'—')+'</td>';
     h+='<td>'+esc(c.residence_status||'—')+'</td>';
     h+='<td>'+esc(c.app_type||'—')+'</td>';
@@ -701,11 +706,11 @@ function renderDetail(c,p){
   var tel=p.phone||p.cel_phone||p.tel_num||'';
   var ti=_tokureiTracked(c)?expInfo(_tokureiDate(c)):null;
   var h='<div class="dt-name">'+esc(nm)+'</div>';
-  h+='<div class="dt-sub">'+_dv(p.applicant_name_en)+' / '+_dv(c.nationality||p.nationality)+'</div>';
+  h+='<div class="dt-sub">'+_dv(p.applicant_name_en)+' / '+_dv(p.nationality||c.nationality)+'</div>';
   h+='<div class="dt-sec">基本情報</div>';
   h+=row('生年月日',_dv(p.birthdate));
   h+=row('性別',_dv(p.gender));
-  h+=row('国籍',_dv(c.nationality||p.nationality));
+  h+=row('国籍',_dv(p.nationality||c.nationality));
   h+='<div class="dt-sec">証明書番号</div>';
   h+=row('在留カード番号',_dv(p.residence_card));
   h+=row('パスポート番号',_dv(p.passport));

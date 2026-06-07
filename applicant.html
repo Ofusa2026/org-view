@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | 大房行政書士法人</title>
-<!-- ver.20260607.13: 申請人（人材本人）向け進捗・提出書類確認ページ -->
+<!-- ver.20260607.14: 申請人（人材本人）向け進捗・提出書類確認ページ -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -533,7 +533,7 @@ function renderInfo(){
   h+=row('氏名',_dv(c.applicant||c.name));
   h+=row('生年月日',_dv(p.birthdate));
   h+=row('性別',_dv(p.gender));
-  h+=row('国籍',_dv(c.nationality||p.nationality));
+  h+=row('国籍',_dv(p.nationality||c.nationality));
   h+='<div class="dt-sec">証明書番号</div>';
   h+=row('在留カード番号',_dv(p.residence_card));
   h+=row('パスポート番号',_dv(p.passport));
