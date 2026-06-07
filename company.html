@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.19: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
+<!-- ver.20260607.20: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -476,7 +476,7 @@ function renderPeople(){
   var h='<div class="section-title">📋 御社の申請一覧（'+allCases.length+'件）</div>';
   h+='<div class="note">行をタップすると、在留カード番号・パスポート・住所などの詳細が表示されます。</div>';
   h+='<div class="tbl-wrap"><table><thead><tr>'
-    +'<th>氏名</th><th>国籍</th><th>在留資格</th><th>申請種別</th><th>分野・職種</th>'
+    +'<th>氏名</th><th>国籍</th><th>申請在留資格</th><th>申請種別</th><th>分野・職種</th>'
     +'<th>進捗</th><th>受付番号</th><th>審査完了</th><th>在留期限</th><th>OFUSA担当</th>'
     +'</tr></thead><tbody>';
   allCases.forEach(function(c){
@@ -581,7 +581,8 @@ function renderDetail(c,p){
   h+=row('電話',_dv(tel));
   h+=row('メール',_dv(p.email));
   h+='<div class="dt-sec">在留・申請</div>';
-  h+=row('在留資格',_dv(c.residence_status));
+  h+=row('現在の在留資格',_dv(p.residence_status));
+  h+=row('申請在留資格',_dv(c.residence_status));
   h+=row('在留期限',_dv(c.expire));
   if(ti) h+=row('特例期限',ti.txt);
   h+=row('申請種別',_dv(c.app_type));
