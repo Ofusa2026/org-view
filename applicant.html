@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.06: 申請人（人材本人）向け進捗・提出書類確認ページ -->
+<!-- ver.20260607.07: 申請人（人材本人）向け進捗・提出書類確認ページ -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -51,6 +51,13 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .pdf-list{display:flex;flex-direction:column;gap:10px;}
 .pdf-btn{display:flex;align-items:center;gap:10px;text-decoration:none;font-size:13px;font-weight:800;padding:14px 16px;border-radius:12px;color:#fff;}
 .pdf-none{background:#f1f5f9!important;color:#94a3b8!important;border:1px dashed #cbd5e1;font-weight:700;}
+.todo-box{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:4px 0;margin-bottom:18px;box-shadow:0 1px 3px rgba(15,32,64,.06);}
+.todo-row{display:flex;align-items:center;gap:11px;padding:13px 16px;border-bottom:1px solid #f1f5f9;}
+.todo-row:last-child{border-bottom:none;}
+.todo-row.done{background:#f0fdf4;}
+.todo-check{font-size:19px;flex-shrink:0;}
+.todo-text{flex:1;font-size:13.5px;font-weight:700;color:#0f2040;}
+.todo-state{font-size:10px;font-weight:800;padding:3px 10px;border-radius:99px;flex-shrink:0;}
 .info-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:6px 16px;}
 .dt-sec{font-size:11px;font-weight:800;color:#0f2040;border-bottom:2px solid #e2e8f0;padding-bottom:4px;margin:14px 0 8px;}
 .dt-row{display:flex;gap:10px;padding:6px 0;font-size:12px;border-bottom:1px solid #f8fafc;}
@@ -345,10 +352,33 @@ function render(){
   else if(currentTab==='flow') m.innerHTML=renderFlow();
 }
 
+// 依頼事項（トップ）。ヒアリング=回答待ち以前なら未回答 / 必要書類=全件提出済みでチェック
+var PRE_HEARING=['','未着手','質問票作成','ヒアリングフォーム作成','★ヒアリングフォーム送付','ヒアリングフォーム回答待ち(送付済)'];
+function hearingAnswered(){ return PRE_HEARING.indexOf(theCase.status||'')<0; }
+function docsAllDone(){ return docDisplayList().length>0 && missingDocCount===0; }
+function _todoRow(label,done,stateTxt){
+  return '<div class="todo-row '+(done?'done':'todo')+'">'
+    +'<span class="todo-check">'+(done?'✅':'⬜')+'</span>'
+    +'<span class="todo-text">'+label+'</span>'
+    +'<span class="todo-state '+(done?'s-done':'s-todo')+'">'+esc(stateTxt)+'</span></div>';
+}
+function renderTodo(){
+  var hAns=hearingAnswered();
+  var dDone=docsAllDone();
+  var dState=docDisplayList().length? (dDone?'提出済み':'残り'+missingDocCount+'件') : '準備中';
+  var h='<div class="section-title">📌 依頼事項</div>';
+  h+='<div class="todo-box">';
+  h+=_todoRow('1. ヒアリングフォーム回答',hAns,hAns?'回答済み':'未回答');
+  h+=_todoRow('2. 必要書類提出',dDone,dState);
+  h+='</div>';
+  return h;
+}
+
 function renderStatus(){
   var c=theCase;
   var est=getExternalStatus(c.status);
-  var h='<div class="phase-card">';
+  var h=renderTodo();
+  h+='<div class="phase-card">';
   h+='<div class="phase-lbl">現在の進捗</div>';
   h+='<div class="phase-st" style="'+stExtStyle(est)+'">'+esc(est)+'</div>';
   var ml=getKokkoStatus(c);
