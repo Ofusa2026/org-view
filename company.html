@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.20: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
+<!-- ver.20260607.21: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -78,6 +78,9 @@ tr:hover td{background:#fcfcfd;}
 .dt-name{font-size:18px;font-weight:900;color:#0f2040;padding-right:34px;}
 .dt-sub{font-size:11px;color:#64748b;margin-bottom:8px;}
 .dt-sec{font-size:11px;font-weight:800;color:#0f2040;border-bottom:2px solid #e2e8f0;padding-bottom:4px;margin:16px 0 8px;}
+.pdf-row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 4px;}
+.pdf-chip{display:inline-flex;align-items:center;gap:5px;color:#fff;text-decoration:none;font-size:11px;font-weight:800;padding:8px 12px;border-radius:8px;}
+.pdf-chip-none{background:#f1f5f9!important;color:#94a3b8!important;border:1px dashed #cbd5e1;}
 .dt-row{display:flex;gap:10px;padding:4px 0;font-size:12px;}
 .dt-l{color:#94a3b8;width:100px;flex-shrink:0;font-weight:700;}
 .dt-v{color:#1e293b;font-weight:600;word-break:break-all;}
@@ -275,7 +278,7 @@ function _tokureiDate(c){
 }
 
 var companyId='', companyName='', companyDrive='', companyOfusaStaff='', companyShowMlit=false, currentToken='', _correctPass='';
-var allCases=[], coDocs={}, personsByCase={}, missingDocCount=0, currentTab='dashboard';
+var allCases=[], coDocs={}, personsByCase={}, receiptByCase={}, shinsaByCase={}, missingDocCount=0, currentTab='dashboard';
 
 function checkPass(){
   var v=document.getElementById('passInput').value.trim();
@@ -345,7 +348,7 @@ async function loadData(){
     // 人材詳細用の個人情報（persons）を取得（自社案件のみ）
     personsByCase={};
     var pids=allCases.map(function(c){return c.id;});
-    var pfields='case_id,applicant_name_en,residence_card,passport,passport_expiry,birthdate,gender,nationality,jp_postal_code,jp_address,jp_detail_address,home_country_address,phone,cel_phone,tel_num,email,residence_status,expire,hire_date,contract_start,contract_end';
+    var pfields='case_id,applicant_name_en,residence_card,passport,passport_expiry,birthdate,gender,nationality,jp_postal_code,jp_address,jp_detail_address,home_country_address,phone,cel_phone,tel_num,email,residence_status,expire,hire_date,contract_start,contract_end,application_cert_pdf_urls,custody_receipt_pdf_urls';
     for(var pi=0;pi<pids.length;pi+=100){
       var pchunk=pids.slice(pi,pi+100).map(function(id){return '"'+id+'"';}).join(',');
       if(!pchunk) continue;
@@ -353,12 +356,29 @@ async function loadData(){
       var prr=await rpr.json();
       (prr||[]).forEach(function(p){ personsByCase[p.case_id]=p; });
     }
+    // 発行書類PDF（受付番号・審査完了）を自社案件分まとめて取得（最新のdrive_urlを採用）
+    receiptByCase={}; shinsaByCase={};
+    for(var ri=0;ri<pids.length;ri+=100){
+      var rchunk=pids.slice(ri,ri+100).map(function(id){return '"'+id+'"';}).join(',');
+      if(!rchunk) continue;
+      var rrc=await sbFetch('receipt_archive?case_id=in.('+rchunk+')&select=case_id,drive_url,date&order=date.desc.nullslast');
+      var rrcd=await rrc.json();
+      (rrcd||[]).forEach(function(x){ if(x.case_id&&x.drive_url&&!receiptByCase[x.case_id]) receiptByCase[x.case_id]=x.drive_url; });
+      var rsc=await sbFetch('shinsa_archive?case_id=in.('+rchunk+')&select=case_id,drive_url,date&order=date.desc.nullslast');
+      var rscd=await rsc.json();
+      (rscd||[]).forEach(function(x){ if(x.case_id&&x.drive_url&&!shinsaByCase[x.case_id]) shinsaByCase[x.case_id]=x.drive_url; });
+    }
     document.getElementById('tabs').style.display='flex';
     render();
   }catch(e){ document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+esc(e.message)+'</div>'; }
 }
 
 function _hasVal(v){ return v!=null && v!=='' && v!=='false'; }
+function _lastPdfUrl(arr){ if(Array.isArray(arr)&&arr.length){ var l=arr[arr.length-1]; if(l&&l.url) return l.url; } return ''; }
+function _pdfChip(label,url,color,icon){
+  if(url) return '<a class="pdf-chip" style="background:'+color+';" href="'+esc(url)+'" target="_blank" rel="noopener">'+icon+' '+label+'</a>';
+  return '<span class="pdf-chip pdf-chip-none">'+icon+' '+label+'</span>';
+}
 
 /* チェックリストに載せる書類か（aiエントリあり、または何らかの記入あり） */
 function docInList(d){ return ('ai' in d) || _hasVal(d.staff) || _hasVal(d.date) || _hasVal(d.skip); }
@@ -590,6 +610,13 @@ function renderDetail(c,p){
   if(companyShowMlit){ var _ml=getKokkoStatus(c); if(_ml) h+=row('国交省申請',esc(_ml)); }
   h+=row('受付番号',_dv(c.receipt_no));
   h+=row('審査完了',_dv(c.shinsa_date));
+  h+='<div class="dt-sec">発行書類</div>';
+  h+='<div class="pdf-row">'
+    +_pdfChip('申請中証明',_lastPdfUrl(p.application_cert_pdf_urls),'#2563eb','🪪')
+    +_pdfChip('預かり証',_lastPdfUrl(p.custody_receipt_pdf_urls),'#7c3aed','📋')
+    +_pdfChip('受付番号',receiptByCase[c.id]||'','#dc2626','📄')
+    +_pdfChip('審査完了',shinsaByCase[c.id]||'','#16a34a','✅')
+    +'</div>';
   h+='<div class="dt-sec">OFUSA担当</div>';
   h+=row('部署',_dv(c.team));
   h+=row('担当',_dv(c.staff));
