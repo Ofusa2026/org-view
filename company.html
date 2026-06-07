@@ -7,8 +7,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.24: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
+<title>提出書類・進捗確認 | 大房行政書士法人</title>
+<!-- ver.20260607.25: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -95,7 +95,7 @@ tr:hover td{background:#fcfcfd;}
 </head>
 <body>
 <div class="header">
-  <span class="header-logo">OFUSA</span>
+  <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">提出書類・進捗確認</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
@@ -105,6 +105,7 @@ tr:hover td{background:#fcfcfd;}
   <button class="tab" data-tab="docs" onclick="switchTab('docs')">提出書類<span class="badge hide" id="tabDocBadge">0</span></button>
   <button class="tab" data-tab="people" onclick="switchTab('people')">申請一覧</button>
   <button class="tab" data-tab="flow" onclick="switchTab('flow')">申請の流れ</button>
+  <button class="tab" data-tab="office" onclick="switchTab('office')">事務所情報等</button>
 </div>
 
 <div class="wrap"><div id="main"><div class="loading">⏳ 読み込み中...</div></div></div>
@@ -431,6 +432,7 @@ function render(){
   else if(currentTab==='docs') m.innerHTML=renderDocs();
   else if(currentTab==='people') m.innerHTML=renderPeople();
   else if(currentTab==='flow') m.innerHTML=renderFlow();
+  else if(currentTab==='office') m.innerHTML=renderOffice();
 }
 
 function renderDashboard(){
@@ -445,11 +447,11 @@ function renderDashboard(){
   h+='<div class="card" onclick="openList(\'done\')"><div class="lbl">手続き完了</div><div class="num">'+done+'<small> 件</small></div></div>';
   h+='<div class="card '+(missingDocCount>0?'warn':'')+'" onclick="switchTab(\'docs\')"><div class="lbl">未提出の書類</div><div class="num">'+missingDocCount+'<small> 件</small></div></div>';
   h+='</div>';
-  // OFUSA担当窓口（部署=案件チーム最頻値 / 担当=ofusa_staff）
+  // 大房行政書士法人担当窓口（部署=案件チーム最頻値 / 担当=ofusa_staff）
   var teamCount={}; allCases.forEach(function(c){var t=(c.team||'').trim();if(t)teamCount[t]=(teamCount[t]||0)+1;});
   var topTeam='',topN=0; Object.keys(teamCount).forEach(function(t){if(teamCount[t]>topN){topN=teamCount[t];topTeam=t;}});
   if(companyOfusaStaff||topTeam){
-    h+='<div class="section-title">🤝 OFUSA担当窓口</div>';
+    h+='<div class="section-title">🤝 大房行政書士法人担当窓口</div>';
     h+='<div class="contact-card">';
     h+='<div class="ct-row"><span class="ct-l">部署</span><span class="ct-v">'+esc(topTeam||'—')+'</span></div>';
     h+='<div class="ct-row"><span class="ct-l">担当</span><span class="ct-v">'+esc(companyOfusaStaff||'—')+'</span></div>';
@@ -484,7 +486,7 @@ function renderDocs(){
     return a.localeCompare(b,'ja');
   });
   var h='<div class="section-title">📄 御社の提出書類チェックリスト</div>';
-  h+='<div class="note">OFUSAでチェックが入った書類は「提出済（または不要）」になります。「未提出」の書類はご提出をお願いいたします。ご不明点は担当者までご連絡ください。</div>';
+  h+='<div class="note">大房行政書士法人でチェックが入った書類は「提出済（または不要）」になります。「未提出」の書類はご提出をお願いいたします。ご不明点は担当者までご連絡ください。</div>';
   var upUrl=buildCompanyUploadUrl();
   if(upUrl){ h+='<div><a class="upload-btn" href="'+esc(upUrl)+'" target="_blank" rel="noopener">📤 書類をアップロード</a></div>'; }
   h+='<div class="doc-co">';
@@ -509,7 +511,7 @@ function renderPeople(){
   h+='<div class="note">行をタップすると、在留カード番号・パスポート・住所などの詳細が表示されます。</div>';
   h+='<div class="tbl-wrap"><table><thead><tr>'
     +'<th>氏名</th><th>国籍</th><th>登録支援機関</th><th>申請在留資格</th><th>申請種別</th><th>分野・職種</th>'
-    +'<th>進捗</th><th>受付番号</th><th>在留期限</th><th>OFUSA担当</th><th>PDF</th>'
+    +'<th>進捗</th><th>受付番号</th><th>在留期限</th><th>担当窓口</th><th>PDF</th>'
     +'</tr></thead><tbody>';
   allCases.forEach(function(c){
     var nm=c.applicant||c.name||'—';
@@ -541,12 +543,23 @@ function renderPeople(){
   return h;
 }
 
+function renderOffice(){
+  var h='<div class="section-title">🏢 事務所情報</div>';
+  h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:18px;line-height:1.9;font-size:13.5px;color:#1e293b;">'
+    +'<div style="font-size:16px;font-weight:900;color:#0f2040;margin-bottom:8px;">大房行政書士法人</div>'
+    +'〒144-0052<br>東京都大田区蒲田５丁目１１−１０ FUNDES蒲田8階'
+    +'<div style="margin-top:6px;">TEL：<a href="tel:0364248849" style="color:#2563eb;font-weight:700;text-decoration:none;">03-6424-8849</a></div>'
+    +'</div>';
+  h+='<div style="margin-top:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;font-size:12.5px;color:#b91c1c;font-weight:800;">📮 郵送物はここに送ってください</div>';
+  return h;
+}
+
 function renderFlow(){
   return '<div class="section-title">📌 申請の流れ</div>'
     +'<div class="doc-co flow" style="padding:16px 20px;"><ol>'
     +'<li>ヒアリング・必要書類のご案内</li>'
     +'<li>御社・人材からの書類ご提出（「提出書類」タブ参照）</li>'
-    +'<li>OFUSAにて申請書類作成・ご確認依頼</li>'
+    +'<li>大房行政書士法人にて申請書類作成・ご確認依頼</li>'
     +'<li>入管へ申請（受付番号の発行）</li>'
     +'<li>審査</li>'
     +'<li>許可・在留カード/認定証明書の交付</li>'
@@ -630,7 +643,7 @@ function renderDetail(c,p){
     +_pdfChip('受付番号',receiptByCase[c.id]||'','#dc2626','📄')
     +_pdfChip('審査完了',shinsaByCase[c.id]||'','#16a34a','✅')
     +'</div>';
-  h+='<div class="dt-sec">OFUSA担当</div>';
+  h+='<div class="dt-sec">大房行政書士法人担当</div>';
   h+=row('部署',_dv(c.team));
   h+=row('担当',_dv(c.staff));
   return h;
