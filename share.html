@@ -367,7 +367,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260607.02</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260607.06</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1237,16 +1237,44 @@ function buildRow(c){
   var h='<tr'+rowCls+'>';
   // ver.20260521.01: 各tdに data-col-key を付与（カスタマイズで列を隠せるように）
   // ver.20260606.11: GPモードの氏名セルから日付情報を分離して独立列に / 文字サイズアップ
+  // ver.20260607.06: 受注ID複合対応(縦並び) + 在留資格バッジ追加
   if(isGpMode){
-    // 受注ID独立列
-    var _orderTd = c.gpOrderId
-      ? '<span style="display:inline-block;font-size:11px;color:#0369a1;background:#e0f2fe;padding:3px 7px;border-radius:4px;font-weight:700;letter-spacing:.2px;white-space:nowrap;">'+esc(c.gpOrderId)+'</span>'
-      : '<span style="color:#cbd5e1;font-size:11px;">—</span>';
-    h+='<td data-col-key="gpOrderId" style="white-space:nowrap;text-align:center;width:100px;min-width:100px;max-width:100px;">'+_orderTd+'</td>';
+    // 受注ID独立列（複合ID "A1747G2541 / A2379G4099" は縦に並べる）
+    var _orderTd;
+    if(c.gpOrderId){
+      var _ids = c.gpOrderId.split(/[\/\n,]/).map(function(s){return s.trim();}).filter(Boolean);
+      if(_ids.length===1){
+        _orderTd = '<span style="display:inline-block;font-size:11px;color:#0369a1;background:#e0f2fe;padding:3px 7px;border-radius:4px;font-weight:700;letter-spacing:.2px;white-space:nowrap;">'+esc(_ids[0])+'</span>';
+      } else {
+        _orderTd = _ids.map(function(id){
+          return '<span style="display:inline-block;font-size:10px;color:#0369a1;background:#e0f2fe;padding:2px 6px;border-radius:3px;font-weight:700;letter-spacing:.2px;white-space:nowrap;margin-bottom:2px;">'+esc(id)+'</span>';
+        }).join('<br>');
+      }
+    } else {
+      _orderTd = '<span style="color:#cbd5e1;font-size:11px;">—</span>';
+    }
+    h+='<td data-col-key="gpOrderId" style="white-space:nowrap;text-align:center;width:110px;min-width:110px;max-width:110px;overflow:hidden;vertical-align:top;padding:8px 4px;">'+_orderTd+'</td>';
+    // 在留資格バッジ（1号/特活/2号/→1号/→2号/実習）
+    var _rs=c.residenceStatus||'';
+    var _rsBadge='';
+    if(_rs){
+      var _rsLabel='', _rsBg='#f1f5f9', _rsTx='#475569';
+      var _isTo2=/特定技能2号/.test(_rs);
+      var _isTo1=/特定技能/.test(_rs) && !_isTo2;
+      var _hasArrow=/⇒|=>|→/.test(_rs);
+      var _isKatsudo=/特定活動/.test(_rs);
+      var _isJisshu=/技能実習/.test(_rs);
+      if(_isTo2){ _rsLabel=_hasArrow?'→2号':'2号'; _rsBg='#ede9fe'; _rsTx='#7c3aed'; }
+      else if(_isTo1){ _rsLabel=_hasArrow?'→1号':'1号'; _rsBg='#dbeafe'; _rsTx='#2563eb'; }
+      else if(_isKatsudo){ _rsLabel='特活'; _rsBg='#fef3c7'; _rsTx='#d97706'; }
+      else if(_isJisshu){ _rsLabel='実習'; _rsBg='#f1f5f9'; _rsTx='#475569'; }
+      else { _rsLabel=_rs.length>4?_rs.substring(0,4):_rs; _rsBg='#f1f5f9'; _rsTx='#475569'; }
+      _rsBadge='<span style="display:inline-block;font-size:11px;color:'+_rsTx+';background:'+_rsBg+';padding:2px 8px;border-radius:4px;font-weight:700;margin-right:6px;vertical-align:middle;" title="'+esc(_rs)+'">'+esc(_rsLabel)+'</span>';
+    }
     // 氏名セル（案件名・企業名・人材名のみ、日付は別列に）
-    h+='<td data-col-key="name" style="min-width:260px;max-width:380px;">'
-      +'<div style="font-size:13px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.45;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div>'
-      +'<div style="font-size:12px;color:#475569;font-weight:600;white-space:normal;word-break:break-word;line-height:1.4;margin-top:2px;">'+esc(c.company||'—')+'</div>'
+    h+='<td data-col-key="name" style="min-width:260px;max-width:380px;padding:8px 6px;">'
+      +'<div style="line-height:1.45;">'+_rsBadge+'<span style="font-size:13px;font-weight:700;color:#0f2040;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</span></div>'
+      +'<div style="font-size:12px;color:#475569;font-weight:600;white-space:normal;word-break:break-word;line-height:1.4;margin-top:3px;">'+esc(c.company||'—')+'</div>'
       +'<div style="font-size:12px;color:#6b7280;line-height:1.4;">'+esc(c.applicant||'')+'</div>'
       +'</td>';
     // 組合受領日 独立列
