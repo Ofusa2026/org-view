@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.07: 申請人（人材本人）向け進捗・提出書類確認ページ -->
+<!-- ver.20260607.08: 申請人（人材本人）向け進捗・提出書類確認ページ -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -257,7 +257,7 @@ function buildUploadUrl(){
 
 function _hasVal(v){ return v!=null && v!=='' && v!=='false'; }
 
-var theCase=null, thePerson={}, cacheDocs=[], doneSet={}, missingDocCount=0, pdfCert='', pdfCustody='', pdfReceipt='', pdfShinsa='', currentTab='status', currentToken='', _correctPass='';
+var theCase=null, thePerson={}, cacheDocs=[], doneSet={}, missingDocCount=0, pdfCert='', pdfCustody='', pdfReceipt='', pdfShinsa='', hasHearingForm=false, currentTab='status', currentToken='', _correctPass='';
 
 function checkPass(){
   var v=document.getElementById('passInput').value.trim();
@@ -309,6 +309,12 @@ async function loadData(){
     var rrd=await rr.json(); (rrd||[]).some(function(x){ if(x&&x.drive_url){ pdfReceipt=x.drive_url; return true; } return false; });
     var rsa=await sbFetch('shinsa_archive?case_id=eq.'+encodeURIComponent(caseId)+'&select=drive_url,date&order=date.desc.nullslast&limit=10');
     var rsd=await rsa.json(); (rsd||[]).some(function(x){ if(x&&x.drive_url){ pdfShinsa=x.drive_url; return true; } return false; });
+    // ヒアリングフォーム回答の実マーカー（人材フォーム=company以外の form_responses 行が存在すれば回答済み）
+    hasHearingForm=false;
+    try{
+      var rhf=await sbFetch('form_responses?case_id=eq.'+encodeURIComponent(caseId)+'&form_type=neq.company&deleted_at=is.null&select=submitted_at&limit=1');
+      var hfd=await rhf.json(); hasHearingForm=Array.isArray(hfd)&&hfd.length>0;
+    }catch(e){}
     // 提出書類リスト＝アップロード画面と同じ正規リスト（upload_docs_cache）。提出済判定は doc_check ライブ
     cacheDocs=[];
     var rcd=await sbFetch('upload_docs_cache?case_id=eq.'+encodeURIComponent(caseId)+'&kind=eq.person&select=docs');
@@ -354,7 +360,7 @@ function render(){
 
 // 依頼事項（トップ）。ヒアリング=回答待ち以前なら未回答 / 必要書類=全件提出済みでチェック
 var PRE_HEARING=['','未着手','質問票作成','ヒアリングフォーム作成','★ヒアリングフォーム送付','ヒアリングフォーム回答待ち(送付済)'];
-function hearingAnswered(){ return PRE_HEARING.indexOf(theCase.status||'')<0; }
+function hearingAnswered(){ return hasHearingForm || PRE_HEARING.indexOf(theCase.status||'')<0; }
 function docsAllDone(){ return docDisplayList().length>0 && missingDocCount===0; }
 function _todoRow(label,done,stateTxt){
   return '<div class="todo-row '+(done?'done':'todo')+'">'
