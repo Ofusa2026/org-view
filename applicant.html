@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | 大房行政書士法人</title>
-<!-- ver.20260607.14: 申請人（人材本人）向け進捗・提出書類確認ページ -->
+<!-- ver.20260607.15: 申請人（人材本人）向け進捗・提出書類確認ページ -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -68,6 +68,17 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .cbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;font-size:13px;font-weight:800;padding:13px;border-radius:11px;color:#fff;}
 .cbtn.tel{background:#16a34a;}
 .cbtn.mail{background:#2563eb;}
+.help-q{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:#e0e7ff;color:#3730a3;font-size:11px;font-weight:900;border:none;cursor:pointer;margin-left:6px;vertical-align:middle;flex-shrink:0;}
+.help-q:active{background:#c7d2fe;}
+.dh-overlay{position:fixed;inset:0;background:rgba(15,32,64,.55);display:flex;align-items:flex-end;justify-content:center;z-index:400;}
+.dh-box{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:680px;max-height:80vh;overflow-y:auto;padding:18px 18px 26px;}
+.dh-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.dh-head span{font-size:15px;font-weight:900;color:#0f2040;}
+.dh-x{background:#f1f5f9;border:none;border-radius:50%;width:30px;height:30px;font-size:14px;cursor:pointer;color:#64748b;}
+.dh-row{margin-bottom:12px;}
+.dh-l{font-size:11px;font-weight:800;color:#2563eb;margin-bottom:3px;}
+.dh-v{font-size:13px;color:#1e293b;line-height:1.65;}
+.dh-foot{margin-top:6px;font-size:11px;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:10px;}
 .info-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:6px 16px;}
 .dt-sec{font-size:11px;font-weight:800;color:#0f2040;border-bottom:2px solid #e2e8f0;padding-bottom:4px;margin:14px 0 8px;}
 .dt-row{display:flex;gap:10px;padding:6px 0;font-size:12px;border-bottom:1px solid #f8fafc;}
@@ -485,6 +496,39 @@ function renderStatus(){
   return h;
 }
 
+var DOC_HELP={
+ 'パスポート':{how:'本国の旅券（パスポート）',note:'顔写真のあるページと、査証（ビザ）・出入国スタンプのある全ページ。有効期限内のもの。'},
+ '在留カード':{note:'表面・裏面の両方。有効期限内のもの。裏面の住所・記載事項も含めてください。'},
+ '顔写真':{how:'証明写真機・写真店など',years:'3か月以内に撮影',note:'縦4cm×横3cm／無帽・正面・無背景／影や赤目のないもの。'},
+ '健康診断票':{how:'病院・クリニックで受診',years:'おおむね3か月以内',note:'指定の様式がある場合は、その様式に沿って受診してください。'},
+ '合格証（技能）':{how:'技能試験の実施団体のマイページ等からダウンロード',note:'合格を証明する書類（成績通知ではなく「合格証明書」）。'},
+ '合格証（日本語）':{how:'日本語試験（JLPT・JFT-Basic等）のマイページ等から',note:'合格を証明する書類。'},
+ '専門級':{how:'技能検定の実施機関から',note:'専門級・3級などの合格を証明する書類。'},
+ '所得・課税証明書':{how:'お住まいの市区町村の役所（コンビニ交付ができる場合あり）',years:'直近年度分（必要に応じ複数年分）',note:'最新年度のもの。所得額・課税額が記載されたもの。'},
+ '納税証明書':{how:'市区町村役所／税務署',note:'未納がないことがわかるもの。住民税・国税など種類にご注意ください。'},
+ '源泉徴収票':{how:'勤務先が発行',years:'前年分',note:'紛失した場合は勤務先に再発行を依頼してください。'},
+ '住民票':{how:'お住まいの市区町村役所・コンビニ交付',note:'マイナンバーの記載は不要。本籍・続柄の要否は担当者の案内に従ってください。'},
+ '大使館推薦票':{how:'本国の在日大使館',note:'国・分野により要否が異なります。'}
+};
+function getDocHelp(name){
+  if(!name) return null;
+  if(DOC_HELP[name]) return DOC_HELP[name];
+  var base=String(name).replace(/[（(].*$/,'').trim();
+  return DOC_HELP[base]||null;
+}
+function openDocHelp(name){
+  var d=getDocHelp(name); if(!d) return;
+  document.getElementById('dhTitle').textContent='❓ '+name;
+  var b='';
+  if(d.how)    b+='<div class="dh-row"><div class="dh-l">取得方法</div><div class="dh-v">'+esc(d.how)+'</div></div>';
+  if(d.years)  b+='<div class="dh-row"><div class="dh-l">必要な年数・期間</div><div class="dh-v">'+esc(d.years)+'</div></div>';
+  if(d.note)   b+='<div class="dh-row"><div class="dh-l">注意点</div><div class="dh-v">'+esc(d.note)+'</div></div>';
+  if(d.sample) b+='<div class="dh-row"><div class="dh-l">サンプル</div><div class="dh-v"><a href="'+esc(d.sample)+'" target="_blank" rel="noopener" style="color:#2563eb;font-weight:700;">見本を見る</a></div></div>';
+  document.getElementById('dhBody').innerHTML=b;
+  document.getElementById('docHelpModal').classList.remove('hide');
+}
+function closeDocHelp(){ document.getElementById('docHelpModal').classList.add('hide'); }
+
 function renderDocs(){
   var h='<div class="section-title">📄 あなたの提出書類</div>';
   h+='<div class="note">大房行政書士法人でチェックが入った書類は「提出済（または不要）」になります。「未提出」の書類はご提出をお願いいたします。ご不明点は担当者までご連絡ください。</div>';
@@ -500,7 +544,8 @@ function renderDocs(){
     var stTxt=done?'提出済（または不要）':'未提出';
     var stCls=done?'s-done':'s-todo';
     var reqMark=(!done && d.r)?' <span style="color:#dc2626;font-size:10px;font-weight:800;">必須</span>':'';
-    h+='<div class="doc-row"><span class="doc-ico">'+ico+'</span><div class="doc-name">'+esc(d.l)+reqMark+'</div><span class="doc-state '+stCls+'">'+stTxt+'</span></div>';
+    var helpBtn=getDocHelp(d.l)?' <button class="help-q" data-n="'+esc(d.l)+'" onclick="openDocHelp(this.dataset.n)">？</button>':'';
+    h+='<div class="doc-row"><span class="doc-ico">'+ico+'</span><div class="doc-name">'+esc(d.l)+reqMark+helpBtn+'</div><span class="doc-state '+stCls+'">'+stTxt+'</span></div>';
   });
   h+='</div>';
   return h;
@@ -576,5 +621,12 @@ function renderFlow(){
 
 init();
 </script>
+<div id="docHelpModal" class="dh-overlay hide" onclick="if(event.target===this)closeDocHelp()">
+  <div class="dh-box">
+    <div class="dh-head"><span id="dhTitle"></span><button class="dh-x" onclick="closeDocHelp()">✕</button></div>
+    <div id="dhBody"></div>
+    <div class="dh-foot">※ 上記は一般的なご案内です。詳しくは担当者にお問い合わせください。</div>
+  </div>
+</div>
 </body>
 </html>
