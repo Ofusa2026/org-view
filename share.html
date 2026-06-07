@@ -367,7 +367,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260606.12</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260607.02</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -708,17 +708,17 @@ var ST_EXTERNAL={
   '要追完 企業不足書類待ち':'審査中',
   '要追完 人材不足書類待ち':'審査中',
   '要追完 人材と企業不足書類待ち':'審査中',
-  '許可済 受取方法調整中':'審査完了・新在留カード交付',
-  '入管受取ステータス変更中':'審査完了・新在留カード交付',
-  '郵送交付':'審査完了・新在留カード交付',
-  '★郵送交付':'審査完了・新在留カード交付',
-  '郵送交付中':'審査完了・新在留カード交付',
-  '窓口受取':'審査完了・新在留カード交付',
-  '★窓口受取':'審査完了・新在留カード交付',
-  '窓口受取（本人）':'審査完了・新在留カード交付',
-  '窓口受取 (本人)':'審査完了・新在留カード交付',
-  '完了':'新在留カード発行済み',
-  '審査完了':'新在留カード発行済み'
+  '許可済 受取方法調整中':'審査完了(受取対応中)',
+  '入管受取ステータス変更中':'審査完了(受取対応中)',
+  '郵送交付':'審査完了(受取対応中)',
+  '★郵送交付':'審査完了(受取対応中)',
+  '郵送交付中':'審査完了(受取対応中)',
+  '窓口受取':'審査完了(受取対応中)',
+  '★窓口受取':'審査完了(受取対応中)',
+  '窓口受取（本人）':'審査完了(受取対応中)',
+  '窓口受取 (本人)':'審査完了(受取対応中)',
+  '完了':'新在留カード(または認定証)発行済み',
+  '審査完了':'新在留カード(または認定証)発行済み'
 };
 // 外部ステータスごとの色（バッジ用）
 var ST_EXT_COL={
@@ -726,8 +726,8 @@ var ST_EXT_COL={
   '申請人サイン対応':{bg:'#fdf4ff',col:'#a21caf',bor:'#e9d5ff'},
   '企業押印ご対応・書類収集・申請準備':{bg:'#fff7ed',col:'#ea580c',bor:'#fed7aa'},
   '審査中':{bg:'#fef3c7',col:'#b45309',bor:'#fcd34d'},
-  '審査完了・新在留カード交付':{bg:'#dbeafe',col:'#1d4ed8',bor:'#93c5fd'},
-  '新在留カード発行済み':{bg:'#dcfce7',col:'#15803d',bor:'#86efac'}
+  '審査完了(受取対応中)':{bg:'#dbeafe',col:'#1d4ed8',bor:'#93c5fd'},
+  '新在留カード(または認定証)発行済み':{bg:'#dcfce7',col:'#15803d',bor:'#86efac'}
 };
 function getExternalStatus(s){return ST_EXTERNAL[s]||s||'未着手';}
 
@@ -887,8 +887,8 @@ var WHATS_NEW = [
 // ver.20260531.02: ヘッダーアラートバー用の短縮ラベル（バッジで使う）
 var NOTIF_SHORT_LABELS={'受付番号取込':'受付番号','申請済(番号待)':'番号待ち','審査完了':'審査完了','認定証発行':'認定証'};
 
-// ver.20260518.10: 登録支援機関向けの「完了」は「新在留カード発行済み」のみ
-// （許可済/郵送交付/窓口受取は「審査完了・新在留カード交付」フェーズで、進行中タブに残す）
+// ver.20260518.10: 登録支援機関向けの「完了」は「新在留カード(または認定証)発行済み」のみ
+// （許可済/郵送交付/窓口受取は「審査完了(受取対応中)」フェーズで、進行中タブに残す）
 var DONE_ST=['完了','審査完了'];
 // ver.20260518.13: ダッシュボードを追加、完了の表記をシンプル化
 var GROUPS=[{id:'dashboard',label:'ダッシュボード'},{id:'active',label:'進行中'},{id:'done',label:'発行済み・完了'},{id:'all',label:'すべて'}];
@@ -921,12 +921,12 @@ var STATUS_COLS=[
     '申請済(番号待)','申請済 (番号待)','審査中','特活審査中',
     '★要追完','要追完 企業不足書類待ち','要追完 人材不足書類待ち'
   ]},
-  {label:'審査完了・新在留カード交付',color:'#1d4ed8',statuses:[
+  {label:'審査完了(受取対応中)',color:'#1d4ed8',statuses:[
     '許可済 受取方法調整中','入管受取ステータス変更中',
     '郵送交付','★郵送交付','郵送交付中',
     '窓口受取','★窓口受取','窓口受取（本人）','窓口受取 (本人)'
   ]},
-  {label:'新在留カード発行済み',color:'#15803d',statuses:['完了','審査完了']}
+  {label:'新在留カード(または認定証)発行済み',color:'#15803d',statuses:['完了','審査完了']}
 ];
 
 // ver.20260519.17: 窓口申請/窓口受取（アイデム専用サイドバー用）
@@ -1211,7 +1211,7 @@ function buildRow(c){
   var stHtml;
   // ver.20260512: 外部用ステータスに変換して表示
   if(c.status==='審査完了'||c.status==='完了'){
-    stHtml='<span class="st-badge" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">✓ 新在留カード発行済み</span>';
+    stHtml='<span class="st-badge" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">✓ 新在留カード(または認定証)発行済み</span>';
   }else{
     var extLabel=getExternalStatus(c.status);
     var extCol=ST_EXT_COL[extLabel]||{bg:'#f8fafc',col:'#64748b',bor:'#e2e8f0'};
@@ -1870,8 +1870,8 @@ function _buildShinsaTable(rows, dimmed){
       var _shinsaStaff = r.clientStaff || '';
       h+='<td style="font-size:10px;color:#475569;white-space:nowrap;">'+(_shinsaStaff?esc(_shinsaStaff):'<span style="color:#cbd5e1;">—</span>')+'</td>';
     }
-    // === ステータス（審査完了は新在留カード発行済みバッジ） ===
-    var stBadge='<span class="st-badge" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">✓ 新在留カード発行済み</span>';
+    // === ステータス（審査完了は新在留カード(または認定証)発行済みバッジ） ===
+    var stBadge='<span class="st-badge" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">✓ 新在留カード(または認定証)発行済み</span>';
     h+='<td style="white-space:nowrap;">'+stBadge+'</td>';
     // === 在留期限 / 特例 ===
     var expHtml='—';
