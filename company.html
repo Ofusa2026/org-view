@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | 大房行政書士法人</title>
-<!-- ver.20260607.27: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
+<!-- ver.20260607.28: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -482,13 +482,20 @@ function _dashHero(total,soon,expired){
     +'<div class="hero-card '+(missingDocCount>0?'hot':'')+'" onclick="switchTab(\'docs\')"><div class="hl">未提出書類</div><div class="hn">'+missingDocCount+'<small>件</small></div></div>'
     +'</div>';
 }
+var _NAT_NORM={'INDONESIA':'インドネシア','VIETNAM':'ベトナム','VIET NAM':'ベトナム','MYANMAR':'ミャンマー','BURMA':'ミャンマー','CAMBODIA':'カンボジア','PHILIPPINES':'フィリピン','NEPAL':'ネパール','CHINA':'中国','THAILAND':'タイ','SRI LANKA':'スリランカ','MONGOLIA':'モンゴル','BANGLADESH':'バングラデシュ','INDIA':'インド','LAOS':'ラオス'};
+function _natOf(c){
+  var n=(c.nationality||'').trim();
+  if(!n){ var p=personsByCase[c.id]; if(p&&p.nationality) n=(p.nationality||'').trim(); }
+  if(!n) return '未設定';
+  return _NAT_NORM[n.toUpperCase()]||n;
+}
 function renderStats(){
   if(!allCases.length) return '';
   function tally(fn){ var m={}; allCases.forEach(function(c){ var k=((fn(c)||'').trim())||'未設定'; m[k]=(m[k]||0)+1; }); return Object.keys(m).map(function(k){return [k,m[k]];}).sort(function(a,b){return b[1]-a[1];}); }
   var max=allCases.length||1;
   function bars(arr){ var s='<div>'; arr.forEach(function(x){ var pct=Math.max(4,Math.round(x[1]/max*100)); s+='<div class="stat-row"><div class="stat-k">'+esc(x[0])+'</div><div class="stat-track"><div class="stat-fill" style="width:'+pct+'%;"></div></div><div class="stat-v">'+x[1]+'</div></div>'; }); return s+'</div>'; }
   var h='<div class="section-title">📊 受入状況</div>';
-  h+='<div class="stat-block"><div class="stat-title">国籍内訳</div>'+bars(tally(function(c){return c.nationality;}))+'</div>';
+  h+='<div class="stat-block"><div class="stat-title">国籍内訳</div>'+bars(tally(_natOf))+'</div>';
   h+='<div class="stat-block"><div class="stat-title">申請種別内訳</div>'+bars(tally(function(c){return c.app_type;}))+'</div>';
   return h;
 }
