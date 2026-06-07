@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.21: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
+<!-- ver.20260607.22: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -379,6 +379,18 @@ function _pdfChip(label,url,color,icon){
   if(url) return '<a class="pdf-chip" style="background:'+color+';" href="'+esc(url)+'" target="_blank" rel="noopener">'+icon+' '+label+'</a>';
   return '<span class="pdf-chip pdf-chip-none">'+icon+' '+label+'</span>';
 }
+function _rowPdfIcons(c){
+  var p=personsByCase[c.id]||{};
+  var items=[];
+  var cert=_lastPdfUrl(p.application_cert_pdf_urls); if(cert) items.push(['🪪',cert,'申請中証明']);
+  var cust=_lastPdfUrl(p.custody_receipt_pdf_urls); if(cust) items.push(['📋',cust,'預かり証']);
+  var rcpt=receiptByCase[c.id]; if(rcpt) items.push(['📄',rcpt,'受付番号']);
+  var shin=shinsaByCase[c.id]; if(shin) items.push(['✅',shin,'審査完了']);
+  if(!items.length) return '<span style="color:#cbd5e1;">—</span>';
+  return items.map(function(it){
+    return '<a href="'+esc(it[1])+'" target="_blank" rel="noopener" title="'+it[2]+'PDF" onclick="event.stopPropagation();" style="font-size:16px;text-decoration:none;margin:0 3px;">'+it[0]+'</a>';
+  }).join('');
+}
 
 /* チェックリストに載せる書類か（aiエントリあり、または何らかの記入あり） */
 function docInList(d){ return ('ai' in d) || _hasVal(d.staff) || _hasVal(d.date) || _hasVal(d.skip); }
@@ -497,7 +509,7 @@ function renderPeople(){
   h+='<div class="note">行をタップすると、在留カード番号・パスポート・住所などの詳細が表示されます。</div>';
   h+='<div class="tbl-wrap"><table><thead><tr>'
     +'<th>氏名</th><th>国籍</th><th>申請在留資格</th><th>申請種別</th><th>分野・職種</th>'
-    +'<th>進捗</th><th>受付番号</th><th>審査完了</th><th>在留期限</th><th>OFUSA担当</th>'
+    +'<th>進捗</th><th>受付番号</th><th>審査完了</th><th>在留期限</th><th>OFUSA担当</th><th>PDF</th>'
     +'</tr></thead><tbody>';
   allCases.forEach(function(c){
     var nm=c.applicant||c.name||'—';
@@ -522,6 +534,7 @@ function renderPeople(){
       h+='<td><span class="exp '+ei.cls+'">'+esc(ei.txt)+'</span></td>';
     }
     h+='<td><div class="staff-cell"><div><span class="sl">部署</span>'+esc(c.team||'—')+'</div><div><span class="sl">担当</span>'+esc(c.staff||'—')+'</div></div></td>';
+    h+='<td style="white-space:nowrap;">'+_rowPdfIcons(c)+'</td>';
     h+='</tr>';
   });
   h+='</tbody></table></div>';
