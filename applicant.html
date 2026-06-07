@@ -7,8 +7,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>提出書類・進捗確認 | OFUSA</title>
-<!-- ver.20260607.09: 申請人（人材本人）向け進捗・提出書類確認ページ -->
+<title>提出書類・進捗確認 | 大房行政書士法人</title>
+<!-- ver.20260607.10: 申請人（人材本人）向け進捗・提出書類確認ページ -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -64,6 +64,9 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .dt-l{color:#94a3b8;width:110px;flex-shrink:0;font-weight:700;}
 .dt-v{color:#1e293b;font-weight:600;word-break:break-all;}
 .note{font-size:11px;color:#64748b;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:10px 14px;margin-bottom:14px;line-height:1.6;}
+.mail-box{background:#f1f5f9;border:1px solid #cbd5e1;border-radius:10px;padding:12px 14px;margin:14px 0 4px;font-size:12.5px;line-height:1.75;color:#1e293b;}
+.mail-title{font-size:11px;font-weight:800;color:#0f2040;margin-bottom:6px;}
+.mail-note{margin-top:8px;font-size:11.5px;color:#dc2626;font-weight:800;}
 .empty{padding:40px 16px;text-align:center;color:#94a3b8;font-size:12px;}
 .loading{padding:48px 16px;text-align:center;color:#64748b;}
 .error-box{margin:40px auto;max-width:420px;background:#fff;border:1px solid #fecaca;border-radius:12px;padding:24px;text-align:center;color:#b91c1c;font-weight:700;}
@@ -81,7 +84,7 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 </head>
 <body>
 <div class="header">
-  <span class="header-logo">OFUSA</span>
+  <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">提出書類・進捗確認</span>
   <div class="header-org" id="headerName">読み込み中...</div>
 </div>
@@ -440,9 +443,9 @@ function renderStatus(){
   h+='<div class="dt-row"><span class="dt-l">受付番号</span><span class="dt-v">'+_dv(c.receipt_no)+'</span></div>';
   h+='<div class="dt-row"><span class="dt-l">審査完了</span><span class="dt-v">'+_dv(c.shinsa_date)+'</span></div>';
   h+='</div>';
-  // OFUSA担当
+  // 大房行政書士法人担当
   if(c.team||c.staff){
-    h+='<div class="section-title" style="margin-top:16px;">🤝 OFUSA担当窓口</div>';
+    h+='<div class="section-title" style="margin-top:16px;">🤝 大房行政書士法人担当窓口</div>';
     h+='<div class="contact-card">';
     h+='<div class="ct-row"><span class="ct-l">部署</span><span class="ct-v">'+_dv(c.team)+'</span></div>';
     h+='<div class="ct-row"><span class="ct-l">担当</span><span class="ct-v">'+_dv(c.staff)+'</span></div>';
@@ -456,7 +459,7 @@ function renderStatus(){
 
 function renderDocs(){
   var h='<div class="section-title">📄 あなたの提出書類</div>';
-  h+='<div class="note">OFUSAでチェックが入った書類は「提出済（または不要）」になります。「未提出」の書類はご提出をお願いいたします。ご不明点は担当者までご連絡ください。</div>';
+  h+='<div class="note">大房行政書士法人でチェックが入った書類は「提出済（または不要）」になります。「未提出」の書類はご提出をお願いいたします。ご不明点は担当者までご連絡ください。</div>';
   var upUrl=buildUploadUrl();
   if(upUrl){ h+='<div><a class="upload-btn" href="'+esc(upUrl)+'" target="_blank" rel="noopener">📤 書類をアップロード</a></div>'; }
   var list=docDisplayList();
@@ -481,7 +484,7 @@ function _pdfBtn(label,url,color,icon){
 }
 function renderPdf(){
   var h='<div class="section-title">📑 発行書類</div>';
-  h+='<div class="note">OFUSAが発行した書類です。発行され次第ここに表示され、タップで開けます。</div>';
+  h+='<div class="note">大房行政書士法人が発行した書類です。発行され次第ここに表示され、タップで開けます。</div>';
   h+='<div class="pdf-list">';
   h+=_pdfBtn('申請中証明',pdfCert,'#2563eb','🪪');
   h+=_pdfBtn('預かり証',pdfCustody,'#7c3aed','📋');
@@ -503,6 +506,9 @@ function renderInfo(){
   h+=row('生年月日',_dv(p.birthdate));
   h+=row('性別',_dv(p.gender));
   h+=row('国籍',_dv(c.nationality||p.nationality));
+  h+='<div class="mail-box"><div class="mail-title">📮 郵送物の送付先</div>'
+    +'〒144-0052<br>東京都大田区蒲田５丁目１１−１０ FUNDES蒲田8階<br><b>大房行政書士法人</b><br>TEL 03-6424-8849'
+    +'<div class="mail-note">郵送物はここに送ってください</div></div>';
   h+='<div class="dt-sec">証明書番号</div>';
   h+=row('在留カード番号',_dv(p.residence_card));
   h+=row('パスポート番号',_dv(p.passport));
@@ -522,7 +528,7 @@ function renderFlow(){
     +'<div class="info-card flow" style="padding:16px 20px;"><ol>'
     +'<li>ヒアリング・必要書類のご案内</li>'
     +'<li>書類のご提出（「提出書類」タブ参照）</li>'
-    +'<li>OFUSAにて申請書類作成・ご確認</li>'
+    +'<li>大房行政書士法人にて申請書類作成・ご確認</li>'
     +'<li>入管へ申請（受付番号の発行）</li>'
     +'<li>審査</li>'
     +'<li>許可・在留カード/認定証明書の交付</li>'
