@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | 大房行政書士法人</title>
-<!-- ver.20260607.26: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
+<!-- ver.20260607.27: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -81,6 +81,30 @@ tr:hover td{background:#fcfcfd;}
 .pdf-row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 4px;}
 .pdf-chip{display:inline-flex;align-items:center;gap:5px;color:#fff;text-decoration:none;font-size:11px;font-weight:800;padding:8px 12px;border-radius:8px;}
 .pdf-chip-none{background:#f1f5f9!important;color:#94a3b8!important;border:1px dashed #cbd5e1;}
+.hero-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.hero-card{background:#0f2040;color:#fff;border-radius:14px;padding:16px 12px;text-align:center;}
+.hero-card.hot{background:#b91c1c;}
+.hero-card .hl{font-size:10.5px;opacity:.85;font-weight:700;}
+.hero-card .hn{font-size:30px;font-weight:900;margin-top:4px;line-height:1;}
+.hero-card .hn small{font-size:12px;font-weight:700;margin-left:2px;}
+.alert-list{background:#fff;border:1px solid #fecaca;border-radius:12px;padding:4px 0;margin-bottom:16px;}
+.alert-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;border-bottom:1px solid #fef2f2;cursor:pointer;}
+.alert-row:last-child{border-bottom:none;}
+.alert-row:active{background:#fef2f2;}
+.al-name{font-size:13px;font-weight:800;color:#0f2040;}
+.al-meta{display:flex;align-items:center;gap:8px;}
+.al-tag{font-size:9px;font-weight:800;color:#64748b;background:#f1f5f9;padding:2px 7px;border-radius:99px;}
+.stat-block{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:12px;}
+.stat-title{font-size:11px;font-weight:800;color:#0f2040;margin-bottom:8px;}
+.stat-row{display:flex;align-items:center;gap:8px;margin:5px 0;}
+.stat-k{font-size:11.5px;color:#334155;width:120px;flex-shrink:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stat-track{flex:1;background:#f1f5f9;border-radius:99px;height:10px;overflow:hidden;}
+.stat-fill{height:100%;background:#2563eb;border-radius:99px;}
+.stat-v{font-size:11.5px;font-weight:800;color:#0f2040;width:28px;text-align:right;}
+.tbl-tools{display:flex;gap:8px;margin-bottom:10px;}
+.tbtn{background:#0f2040;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;padding:8px 14px;cursor:pointer;}
+.tbtn:active{opacity:.85;}
+@media print{.header,.tabs,.tbl-tools,.note,.pass-screen{display:none!important;}.wrap{max-width:none;padding:0;}.tbl-wrap{overflow:visible;}}
 .dt-row{display:flex;gap:10px;padding:4px 0;font-size:12px;}
 .dt-l{color:#94a3b8;width:100px;flex-shrink:0;font-weight:700;}
 .dt-v{color:#1e293b;font-weight:600;word-break:break-all;}
@@ -435,13 +459,50 @@ function render(){
   else if(currentTab==='office') m.innerHTML=renderOffice();
 }
 
+function _caseDeadline(c){
+  if(_tokureiTracked(c)){ var td=_tokureiDate(c); if(td) return {label:'特例', info:expInfo(td)}; }
+  if(_expireTracked(c)) return {label:'在留', info:expInfo(c.expire)};
+  return null;
+}
+function _dashAlertList(){
+  var urg=[];
+  allCases.forEach(function(c){ var d=_caseDeadline(c); if(d&&d.info.days!=null&&d.info.days<=90) urg.push({c:c,d:d}); });
+  if(!urg.length) return '';
+  urg.sort(function(a,b){ return a.d.info.days-b.d.info.days; });
+  var h='<div class="section-title">🚨 期限が近い人材（'+urg.length+'名）</div><div class="alert-list">';
+  urg.forEach(function(u){ var c=u.c,ci=u.d.info;
+    h+='<div class="alert-row" onclick="openDetail(\''+esc(c.id)+'\')"><div class="al-name">'+esc(c.applicant||c.name||'—')+'</div><div class="al-meta"><span class="al-tag">'+u.d.label+'</span><span class="exp '+ci.cls+'">'+esc(ci.txt)+'</span></div></div>';
+  });
+  return h+'</div>';
+}
+function _dashHero(total,soon,expired){
+  return '<div class="hero-cards">'
+    +'<div class="hero-card"><div class="hl">受入人数</div><div class="hn">'+total+'<small>名</small></div></div>'
+    +'<div class="hero-card '+((soon+expired)>0?'hot':'')+'" onclick="openList(\'soon\')"><div class="hl">在留期限90日以内</div><div class="hn">'+(soon+expired)+'<small>名</small></div></div>'
+    +'<div class="hero-card '+(missingDocCount>0?'hot':'')+'" onclick="switchTab(\'docs\')"><div class="hl">未提出書類</div><div class="hn">'+missingDocCount+'<small>件</small></div></div>'
+    +'</div>';
+}
+function renderStats(){
+  if(!allCases.length) return '';
+  function tally(fn){ var m={}; allCases.forEach(function(c){ var k=((fn(c)||'').trim())||'未設定'; m[k]=(m[k]||0)+1; }); return Object.keys(m).map(function(k){return [k,m[k]];}).sort(function(a,b){return b[1]-a[1];}); }
+  var max=allCases.length||1;
+  function bars(arr){ var s='<div>'; arr.forEach(function(x){ var pct=Math.max(4,Math.round(x[1]/max*100)); s+='<div class="stat-row"><div class="stat-k">'+esc(x[0])+'</div><div class="stat-track"><div class="stat-fill" style="width:'+pct+'%;"></div></div><div class="stat-v">'+x[1]+'</div></div>'; }); return s+'</div>'; }
+  var h='<div class="section-title">📊 受入状況</div>';
+  h+='<div class="stat-block"><div class="stat-title">国籍内訳</div>'+bars(tally(function(c){return c.nationality;}))+'</div>';
+  h+='<div class="stat-block"><div class="stat-title">申請種別内訳</div>'+bars(tally(function(c){return c.app_type;}))+'</div>';
+  return h;
+}
+
 function renderDashboard(){
   var total=allCases.length;
   var done=allCases.filter(function(c){return isDone(c.status);}).length;
   var active=total-done;
   var soon=allCases.filter(function(c){if(!_expireTracked(c))return false;var i=expInfo(c.expire);return i.days!=null&&i.days>=0&&i.days<=90;}).length;
   var expired=allCases.filter(function(c){if(!_expireTracked(c))return false;var i=expInfo(c.expire);return i.days!=null&&i.days<0;}).length;
-  var h='<div class="cards">';
+  var h='';
+  h+=_dashAlertList();
+  h+=_dashHero(total,soon,expired);
+  h+='<div class="cards">';
   h+='<div class="card" onclick="openList(\'all\')"><div class="lbl">全申請件数</div><div class="num">'+total+'<small> 件</small></div></div>';
   h+='<div class="card" onclick="openList(\'active\')"><div class="lbl">進行中の申請</div><div class="num">'+active+'<small> 件</small></div></div>';
   h+='<div class="card" onclick="openList(\'done\')"><div class="lbl">手続き完了</div><div class="num">'+done+'<small> 件</small></div></div>';
@@ -472,6 +533,7 @@ function renderDashboard(){
   if(missingDocCount>0){
     h+='<div class="note">⚠️ 未提出の書類が <b>'+missingDocCount+'件</b> あります。「提出書類」タブからご確認のうえ、ご提出をお願いいたします。</div>';
   }
+  h+=renderStats();
   return h;
 }
 
@@ -505,10 +567,28 @@ function renderDocs(){
   return h;
 }
 
+function exportCsv(){
+  var cols=['氏名','国籍','登録支援機関','申請在留資格','申請種別','分野・職種','進捗','受付番号','在留期限','特例期限','部署','担当'];
+  var rows=[cols];
+  allCases.forEach(function(c){
+    var field=[c.applicant_field,c.job_category].filter(Boolean).join(' / ')||(c.industry||'');
+    var tok=_tokureiTracked(c)?(_tokureiDate(c)||''):'';
+    rows.push([c.applicant||c.name||'',c.nationality||'',c.org||'',c.residence_status||'',c.app_type||'',field,getExternalStatus(c.status),c.receipt_no||'',c.expire||'',tok,c.team||'',c.staff||'']);
+  });
+  var csv='\uFEFF'+rows.map(function(r){return r.map(function(v){v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(',');}).join('\r\n');
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.href=url;
+  var d=new Date(),p=function(n){return n<10?'0'+n:n;};
+  a.download='申請一覧_'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
 function renderPeople(){
   if(!allCases.length) return '<div class="empty">対象の人材がありません。</div>';
   var h='<div class="section-title">📋 御社の申請一覧（'+allCases.length+'件）</div>';
   h+='<div class="note">行をタップすると、在留カード番号・パスポート・住所などの詳細が表示されます。</div>';
+  h+='<div class="tbl-tools"><button class="tbtn" onclick="exportCsv()">⬇ CSV出力</button><button class="tbtn" onclick="window.print()">🖨 印刷</button></div>';
   h+='<div class="tbl-wrap"><table><thead><tr>'
     +'<th>氏名</th><th>国籍</th><th>登録支援機関</th><th>申請在留資格</th><th>申請種別</th><th>分野・職種</th>'
     +'<th>進捗</th><th>受付番号</th><th>在留期限</th><th>担当窓口</th><th>PDF</th>'
