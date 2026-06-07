@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="mobile-web-app-capable" content="yes">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>提出書類・進捗確認 | OFUSA</title>
+<!-- ver.20260607.01: 申請人（人材本人）向け進捗・提出書類確認ページ -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
+.header{background:#0f2040;color:white;padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:200;}
+.header-logo{font-size:10px;opacity:.5;letter-spacing:.5px;}
+.header-title{font-size:15px;font-weight:800;}
+.header-org{font-size:11px;opacity:.75;margin-left:auto;max-width:200px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tabs{display:flex;gap:4px;background:#fff;border-bottom:1px solid #e2e8f0;padding:0 12px;position:sticky;top:45px;z-index:150;overflow-x:auto;}
+.tab{padding:11px 14px;font-size:12px;font-weight:700;color:#64748b;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;}
+.tab.active{color:#0f2040;border-bottom-color:#0f2040;}
+.tab .badge{display:inline-block;margin-left:5px;background:#dc2626;color:#fff;border-radius:99px;font-size:9px;font-weight:800;padding:1px 6px;}
+.wrap{max-width:680px;margin:0 auto;padding:16px;}
+.section-title{font-size:14px;font-weight:800;color:#0f2040;margin:6px 0 10px;display:flex;align-items:center;gap:8px;}
+.phase-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin-bottom:16px;text-align:center;}
+.phase-lbl{font-size:11px;color:#64748b;font-weight:700;}
+.phase-st{display:inline-block;margin-top:8px;padding:8px 18px;border-radius:99px;font-size:15px;font-weight:900;border:1px solid;}
+.phase-mlit{margin-top:10px;font-size:12px;font-weight:800;}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;}
+.card .lbl{font-size:11px;color:#64748b;font-weight:700;}
+.card .num{font-size:18px;font-weight:900;color:#0f2040;margin-top:4px;}
+.card.alert .num{color:#b45309;}
+.card.warn .num{color:#dc2626;}
+.exp{font-weight:800;}
+.exp.ok{color:#16a34a;}.exp.soon{color:#d97706;}.exp.danger{color:#dc2626;}.exp.none{color:#cbd5e1;font-weight:600;}
+.contact-card{display:inline-block;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;margin-bottom:16px;min-width:220px;}
+.ct-row{display:flex;align-items:baseline;gap:10px;padding:3px 0;}
+.ct-l{font-size:10px;color:#94a3b8;font-weight:700;width:34px;flex-shrink:0;}
+.ct-v{font-size:14px;font-weight:800;color:#0f2040;}
+.doc-co{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:6px 0;}
+.doc-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f1f5f9;}
+.doc-row:last-child{border-bottom:none;}
+.doc-ico{font-size:15px;width:20px;text-align:center;flex-shrink:0;}
+.doc-name{flex:1;font-size:12px;font-weight:600;}
+.doc-state{font-size:10px;font-weight:800;padding:2px 9px;border-radius:99px;flex-shrink:0;}
+.s-done{background:#f0fdf4;color:#15803d;border:1px solid #86efac;}
+.s-todo{background:#fff7ed;color:#ea580c;border:1px solid #fdba74;}
+.upload-btn{display:inline-flex;align-items:center;gap:8px;background:#16a34a;color:#fff;text-decoration:none;font-size:12px;font-weight:800;padding:11px 18px;border-radius:10px;margin-bottom:14px;box-shadow:0 2px 6px rgba(22,163,74,.25);}
+.upload-btn:hover{background:#15803d;}
+.info-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:6px 16px;}
+.dt-sec{font-size:11px;font-weight:800;color:#0f2040;border-bottom:2px solid #e2e8f0;padding-bottom:4px;margin:14px 0 8px;}
+.dt-row{display:flex;gap:10px;padding:6px 0;font-size:12px;border-bottom:1px solid #f8fafc;}
+.dt-l{color:#94a3b8;width:110px;flex-shrink:0;font-weight:700;}
+.dt-v{color:#1e293b;font-weight:600;word-break:break-all;}
+.note{font-size:11px;color:#64748b;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:10px 14px;margin-bottom:14px;line-height:1.6;}
+.empty{padding:40px 16px;text-align:center;color:#94a3b8;font-size:12px;}
+.loading{padding:48px 16px;text-align:center;color:#64748b;}
+.error-box{margin:40px auto;max-width:420px;background:#fff;border:1px solid #fecaca;border-radius:12px;padding:24px;text-align:center;color:#b91c1c;font-weight:700;}
+.flow ol{margin-left:18px;line-height:1.9;font-size:12px;color:#334155;}
+.pass-screen{position:fixed;inset:0;background:#0f2040;display:flex;align-items:center;justify-content:center;z-index:500;padding:20px;}
+.pass-box{background:#fff;border-radius:16px;padding:30px 26px;width:100%;max-width:340px;text-align:center;}
+.pass-title{font-size:15px;font-weight:800;color:#0f2040;}
+.pass-org{font-size:12px;color:#64748b;margin:6px 0 18px;}
+.pass-input{width:100%;padding:11px 13px;border:1px solid #cbd5e1;border-radius:9px;font-size:14px;margin-bottom:12px;}
+.pass-btn{width:100%;padding:11px;background:#0f2040;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:800;cursor:pointer;}
+.pass-err{color:#dc2626;font-size:11px;margin-top:10px;min-height:14px;}
+.hide{display:none!important;}
+</style>
+</head>
+<body>
+<div class="header">
+  <span class="header-logo">OFUSA</span>
+  <span class="header-title">提出書類・進捗確認</span>
+  <div class="header-org" id="headerName">読み込み中...</div>
+</div>
+
+<div class="tabs" id="tabs" style="display:none;">
+  <button class="tab active" data-tab="status" onclick="switchTab('status')">進捗</button>
+  <button class="tab" data-tab="docs" onclick="switchTab('docs')">提出書類<span class="badge hide" id="tabDocBadge">0</span></button>
+  <button class="tab" data-tab="info" onclick="switchTab('info')">本人情報</button>
+  <button class="tab" data-tab="flow" onclick="switchTab('flow')">申請の流れ</button>
+</div>
+
+<div class="wrap"><div id="main"><div class="loading">⏳ 読み込み中...</div></div></div>
+
+<div id="passScreen" class="pass-screen hide">
+  <div class="pass-box">
+    <div class="pass-title">パスワードを入力してください</div>
+    <div class="pass-org" id="passOrgName">読み込み中...</div>
+    <input class="pass-input" type="password" id="passInput" placeholder="パスワード"
+      onkeydown="if(event.key==='Enter')checkPass()">
+    <button class="pass-btn" onclick="checkPass()">ログイン</button>
+    <div class="pass-err" id="passErr"></div>
+  </div>
+</div>
+
+<script>
+/* ====== 接続（share.html / company.html と同一） ====== */
+var SUPABASE_URL='https://ehwlgbwpycglmopiqyty.supabase.co';
+var SUPABASE_KEY='sb_publishable_3ptyILIpGIcNA5sUBhFMbA_n0VxpY2u';
+function sbFetch(p,opts){return fetch(SUPABASE_URL+'/rest/v1/'+p,Object.assign({headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'}},opts||{}));}
+function getParam(k){return new URLSearchParams(location.search).get(k);}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function _dv(v){ return (v==null||v==='')?'—':esc(v); }
+
+/* 外部ステータス変換（share と同一・流し込み） */
+// ===== ver.20260512: 登録支援機関側に見せる外部ステータス変換マップ =====
+// 内部の細かいステータスを、登録支援機関にわかりやすい大きなフェーズ名に変換
+// ver.20260527.16: ラベル変更
+//   「特定技能生サインご対応」→「申請人サイン対応」
+//   「出入国在留管理局審査中」→「審査中」
+var ST_EXTERNAL={
+  '未着手':'雇用条件作成・企業確認',
+  '★ヒアリングフォーム送付':'雇用条件作成・企業確認',
+  'ヒアリングフォーム回答待ち(送付済)':'雇用条件作成・企業確認',
+  'ヒアリングフォーム回答待ち (送付済)':'雇用条件作成・企業確認',
+  '雇用条件待ち':'雇用条件作成・企業確認',
+  '1-6作成':'雇用条件作成・企業確認',
+  '★1-6企業送付':'雇用条件作成・企業確認',
+  '1-6企業確認待ち(送付済)':'雇用条件作成・企業確認',
+  '1-6企業確認待ち (送付済)':'雇用条件作成・企業確認',
+  '1-6修正':'雇用条件作成・企業確認',
+  '★1-6修正送付':'雇用条件作成・企業確認',
+  'サイン書類作成':'申請人サイン対応',
+  '★サイン書類送付':'申請人サイン対応',
+  'サイン書類返送待ち(送付済)':'申請人サイン対応',
+  'サイン書類返送待ち (送付済)':'申請人サイン対応',
+  '企業書類作成':'企業押印ご対応・書類収集・申請準備',
+  '★企業押印送付':'企業押印ご対応・書類収集・申請準備',
+  '企業押印返送待ち(送付済)':'企業押印ご対応・書類収集・申請準備',
+  '企業押印返送待ち (送付済)':'企業押印ご対応・書類収集・申請準備',
+  '人材書類待ち':'企業押印ご対応・書類収集・申請準備',
+  '企業書類待ち':'企業押印ご対応・書類収集・申請準備',
+  'スキャン書類作成':'企業押印ご対応・書類収集・申請準備',
+  '★申請':'企業押印ご対応・書類収集・申請準備',
+  // ver.20260603.10: 未マッピングだったステータスを追加（取引先側で内部用語のまま見えていた問題を解消）
+  '申請':'企業押印ご対応・書類収集・申請準備',
+  '★申請(不足あり)':'企業押印ご対応・書類収集・申請準備',
+  '★申請 (不足あり)':'企業押印ご対応・書類収集・申請準備',
+  '申請ステイ':'企業押印ご対応・書類収集・申請準備',
+  '申請ステイ(不足あり)':'企業押印ご対応・書類収集・申請準備',
+  '申請ステイ (不足あり)':'企業押印ご対応・書類収集・申請準備',
+  '他社申請中':'雇用条件作成・企業確認',
+  '申請済(番号待)':'審査中',
+  '申請済 (番号待)':'審査中',
+  '審査中':'審査中',
+  '特活審査中':'審査中',
+  '★要追完':'審査中',
+  '要追完 企業不足書類待ち':'審査中',
+  '要追完 人材不足書類待ち':'審査中',
+  '要追完 人材と企業不足書類待ち':'審査中',
+  '許可済 受取方法調整中':'審査完了(受取対応中)',
+  '入管受取ステータス変更中':'審査完了(受取対応中)',
+  '郵送交付':'審査完了(受取対応中)',
+  '★郵送交付':'審査完了(受取対応中)',
+  '郵送交付中':'審査完了(受取対応中)',
+  '窓口受取':'審査完了(受取対応中)',
+  '★窓口受取':'審査完了(受取対応中)',
+  '窓口受取（本人）':'審査完了(受取対応中)',
+  '窓口受取 (本人)':'審査完了(受取対応中)',
+  '完了':'新在留カード(または認定証)発行済み',
+  '審査完了':'新在留カード(または認定証)発行済み'
+};
+// 外部ステータスごとの色（バッジ用）
+var ST_EXT_COL={
+  '雇用条件作成・企業確認':{bg:'#eff6ff',col:'#2563eb',bor:'#93c5fd'},
+  '申請人サイン対応':{bg:'#fdf4ff',col:'#a21caf',bor:'#e9d5ff'},
+  '企業押印ご対応・書類収集・申請準備':{bg:'#fff7ed',col:'#ea580c',bor:'#fed7aa'},
+  '審査中':{bg:'#fef3c7',col:'#b45309',bor:'#fcd34d'},
+  '審査完了(受取対応中)':{bg:'#dbeafe',col:'#1d4ed8',bor:'#93c5fd'},
+  '新在留カード(または認定証)発行済み':{bg:'#dcfce7',col:'#15803d',bor:'#86efac'}
+};
+function getExternalStatus(s){return ST_EXTERNAL[s]||s||'未着手';}
+function stExtStyle(ext){ var s=ST_EXT_COL[ext]; if(!s) return 'background:#f1f5f9;color:#475569;border-color:#e2e8f0;'; return 'background:'+s.bg+';color:'+s.col+';border-color:'+s.bor+';'; }
+
+/* 国交省申請ステータス（実データ: cases.other_agencies.kokkoSho） */
+function getKokkoStatus(c){
+  var oa=c.other_agencies; if(!oa||typeof oa!=='object') return '';
+  if(!oa.kokkoSho || oa.kokkoSho_fuyo) return '';
+  return oa.kokkoSho_status || '未設定';
+}
+function agencyColor(status){
+  if(!status||status==='未設定') return '#64748b';
+  if(status==='完了'||status==='完了(許可済)'||status==='申請済み'||status==='補正完了') return '#16a34a';
+  if(status==='申請可能') return '#0891b2';
+  if(status.indexOf('補正')>=0) return '#ef4444';
+  if(status==='申請中') return '#2563eb';
+  if(status==='企業確認中') return '#f59e0b';
+  if(status.indexOf('大房')>=0) return '#f59e0b';
+  if(status.indexOf('企業')>=0) return '#ea580c';
+  return '#64748b';
+}
+
+/* 在留期限・特例期限（company.html と同一ロジック） */
+var EXPIRE_EXCLUDE=['申請済(番号待)','審査中','特活審査中','★要追完','要追完 企業不足書類待ち','要追完 人材不足書類待ち','要追完 人材と企業不足書類待ち','許可済 受取方法調整中','入管受取ステータス変更中','★郵送交付','郵送交付中','郵送交付','★窓口受取','窓口受取','窓口受取（本人）','完了','審査完了'];
+function _expireTracked(c){ return c && (c.app_type||'')!=='申請なし' && EXPIRE_EXCLUDE.indexOf(c.status||'')===-1; }
+var TOKUREI_INCLUDE=['審査中','特活審査中','申請済(番号待)','郵送交付','★郵送交付','窓口受取','★窓口受取','★要追完'];
+function _tokureiTracked(c){ return c && (c.app_type||'')!=='申請なし' && TOKUREI_INCLUDE.indexOf(c.status||'')!==-1; }
+function _tokureiDate(c){
+  if(!c) return null;
+  if(c.tokurei_date) return c.tokurei_date;
+  if(c.expire){
+    var m=String(c.expire).slice(0,10).match(/^(\d{4})-(\d{2})-(\d{2})$/); if(!m) return null;
+    var d=new Date(parseInt(m[1]),parseInt(m[2])-1,parseInt(m[3])); d.setMonth(d.getMonth()+2);
+    var y=d.getFullYear(),mo=d.getMonth()+1,dd=d.getDate();
+    return y+'-'+(mo<10?'0'+mo:mo)+'-'+(dd<10?'0'+dd:dd);
+  }
+  return null;
+}
+function expInfo(dateStr){
+  if(!dateStr) return {txt:'—',cls:'none',days:null};
+  var d=new Date(dateStr); if(isNaN(d)) return {txt:esc(dateStr),cls:'none',days:null};
+  var days=Math.ceil((d-new Date())/86400000);
+  var cls=days<0?'danger':(days<=90?'soon':'ok');
+  var txt=dateStr+'（'+(days<0?('期限切れ '+(-days)+'日'):('残'+days+'日'))+'）';
+  return {txt:txt,cls:cls,days:days};
+}
+
+/* アップロードURL（index の generateUploadUrl と同一形式: zinzai_dataup） */
+function extractDriveFolderId(url){
+  if(!url) return null; url=url.trim();
+  var m=url.match(/folders\/([a-zA-Z0-9_-]+)/); if(m) return m[1];
+  m=url.match(/[?&]id=([a-zA-Z0-9_-]+)/); if(m) return m[1];
+  m=url.match(/\/d\/([a-zA-Z0-9_-]+)/); if(m) return m[1];
+  if(/^[a-zA-Z0-9_-]{10,}$/.test(url)) return url;
+  return null;
+}
+function buildUploadUrl(){
+  if(!theCase) return '';
+  var fid=extractDriveFolderId(theCase.drive_url);
+  if(!fid) return '';
+  var at=(theCase.app_type||'');
+  var appNorm=at.indexOf('更新')>=0?'更新':at.indexOf('変更')>=0?'変更':at.indexOf('認定')>=0?'認定':'';
+  var nat=(thePerson&&thePerson.nationality)||theCase.nationality||'';
+  var res=(thePerson&&(thePerson.residence_status))||theCase.residence_status||'';
+  var ryugaku=String(res).indexOf('留学')>=0?'1':'';
+  return 'https://ofusa2026.github.io/upload/zinzai_dataup.html?folder='+fid
+    +'&case='+encodeURIComponent(theCase.id)
+    +(theCase.applicant?'&name='+encodeURIComponent(theCase.applicant):'')
+    +(appNorm?'&appType='+encodeURIComponent(appNorm):'')
+    +(nat?'&nationality='+encodeURIComponent(nat):'')
+    +(ryugaku?'&ryugaku=1':'')
+    +'&v=20260525.60';
+}
+
+function _hasVal(v){ return v!=null && v!=='' && v!=='false'; }
+
+var theCase=null, thePerson={}, docs={}, missingDocCount=0, currentTab='status', currentToken='', _correctPass='';
+
+function checkPass(){
+  var v=document.getElementById('passInput').value.trim();
+  if(v===_correctPass){ document.getElementById('passScreen').classList.add('hide'); loadData(); }
+  else { document.getElementById('passErr').textContent='パスワードが違います'; }
+}
+
+async function init(){
+  var token=getParam('token');
+  if(!token){ document.getElementById('main').innerHTML='<div class="error-box">URLが正しくありません。</div>'; return; }
+  currentToken=token;
+  try{
+    var r=await sbFetch('settings?key=eq.'+encodeURIComponent('applicant_view_token_'+token)+'&select=value');
+    var sd=await r.json();
+    if(!sd||!sd.length){ document.getElementById('main').innerHTML='<div class="error-box">このURLは無効です。担当者にお問い合わせください。</div>'; return; }
+    var caseId=sd[0].value;
+    var rp=await sbFetch('settings?key=eq.'+encodeURIComponent('applicant_view_pass_'+token)+'&select=value');
+    var pd=await rp.json();
+    var pass=(pd&&pd.length)?pd[0].value:'';
+    window._caseId=caseId;
+    if(pass){
+      _correctPass=pass;
+      document.getElementById('passOrgName').textContent='';
+      document.getElementById('passScreen').classList.remove('hide');
+      setTimeout(function(){document.getElementById('passInput').focus();},100);
+      return;
+    }
+    await loadData();
+  }catch(e){ document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+esc(e.message)+'</div>'; }
+}
+
+async function loadData(){
+  try{
+    var caseId=window._caseId;
+    var sel='id,applicant,name,nationality,residence_status,status,app_type,applicant_field,job_category,industry,receipt_no,receipt_date,shinsa_date,expire,tokurei_date,drive_url,team,staff,other_agencies';
+    var rc=await sbFetch('cases?id=eq.'+encodeURIComponent(caseId)+'&select='+sel);
+    var cc=await rc.json();
+    if(!cc||!cc.length){ document.getElementById('main').innerHTML='<div class="error-box">対象の申請が見つかりません。</div>'; return; }
+    theCase=cc[0];
+    var pf='applicant_name_en,residence_card,passport,passport_expiry,birthdate,gender,nationality,jp_postal_code,jp_address,jp_detail_address,home_country_address,phone,cel_phone,tel_num,email,residence_status';
+    var rpe=await sbFetch('persons?case_id=eq.'+encodeURIComponent(caseId)+'&select='+pf);
+    var pe=await rpe.json();
+    thePerson=(pe&&pe.length)?pe[0]:{};
+    docs={};
+    var rd=await sbFetch('doc_check?case_id=eq.'+encodeURIComponent(caseId)+'&select=doc_key,value&limit=2000');
+    var dr=await rd.json();
+    (dr||[]).forEach(function(row){
+      var idx=row.doc_key.indexOf('::'); if(idx<0) return;
+      var prefix=row.doc_key.substring(0,idx); var name=row.doc_key.substring(idx+2);
+      if(!docs[name]) docs[name]={};
+      docs[name][prefix]=row.value;
+    });
+    computeMissing();
+    var nm=theCase.applicant||theCase.name||'';
+    document.getElementById('headerName').textContent=nm+' 様';
+    document.title=nm+' 様 | 提出書類・進捗確認';
+    document.getElementById('tabs').style.display='flex';
+    render();
+  }catch(e){ document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+esc(e.message)+'</div>'; }
+}
+
+function docInList(d){ return ('ai' in d) || _hasVal(d.staff) || _hasVal(d.date) || _hasVal(d.skip); }
+function docState(d){ if(_hasVal(d.ai)||_hasVal(d.staff)||_hasVal(d.date)||_hasVal(d.skip)) return 'done'; return 'todo'; }
+function computeMissing(){
+  missingDocCount=0;
+  Object.keys(docs).forEach(function(name){ if(docInList(docs[name]) && docState(docs[name])==='todo') missingDocCount++; });
+  var b=document.getElementById('tabDocBadge');
+  if(missingDocCount>0){ b.textContent=missingDocCount; b.classList.remove('hide'); } else { b.classList.add('hide'); }
+}
+
+function switchTab(t){ currentTab=t; document.querySelectorAll('.tab').forEach(function(el){el.classList.toggle('active',el.dataset.tab===t);}); render(); }
+
+function render(){
+  var m=document.getElementById('main');
+  if(currentTab==='status') m.innerHTML=renderStatus();
+  else if(currentTab==='docs') m.innerHTML=renderDocs();
+  else if(currentTab==='info') m.innerHTML=renderInfo();
+  else if(currentTab==='flow') m.innerHTML=renderFlow();
+}
+
+function renderStatus(){
+  var c=theCase;
+  var est=getExternalStatus(c.status);
+  var h='<div class="phase-card">';
+  h+='<div class="phase-lbl">現在の進捗</div>';
+  h+='<div class="phase-st" style="'+stExtStyle(est)+'">'+esc(est)+'</div>';
+  var ml=getKokkoStatus(c);
+  if(ml) h+='<div class="phase-mlit" style="color:'+agencyColor(ml)+';">🏗 国交省 '+esc(ml)+'</div>';
+  h+='</div>';
+  // 期限
+  var cards='';
+  var ei=expInfo(c.expire);
+  if(_tokureiTracked(c)){
+    var ti=expInfo(_tokureiDate(c));
+    cards+='<div class="card '+(ti.cls==='danger'?'warn':(ti.cls==='soon'?'alert':''))+'"><div class="lbl">特例期限</div><div class="num"><span class="exp '+ti.cls+'">'+esc(ti.txt)+'</span></div></div>';
+    cards+='<div class="card"><div class="lbl">在留期限</div><div class="num" style="color:#94a3b8;">'+_dv(c.expire)+'</div></div>';
+  } else {
+    cards+='<div class="card '+(ei.cls==='danger'?'warn':(ei.cls==='soon'?'alert':''))+'"><div class="lbl">在留期限</div><div class="num"><span class="exp '+ei.cls+'">'+esc(ei.txt)+'</span></div></div>';
+  }
+  h+='<div class="cards">'+cards+'</div>';
+  // 申請情報
+  h+='<div class="info-card">';
+  h+='<div class="dt-row"><span class="dt-l">在留資格</span><span class="dt-v">'+_dv(c.residence_status)+'</span></div>';
+  h+='<div class="dt-row"><span class="dt-l">申請種別</span><span class="dt-v">'+_dv(c.app_type)+'</span></div>';
+  h+='<div class="dt-row"><span class="dt-l">分野・職種</span><span class="dt-v">'+_dv([c.applicant_field,c.job_category].filter(Boolean).join(' / ')||c.industry)+'</span></div>';
+  h+='<div class="dt-row"><span class="dt-l">受付番号</span><span class="dt-v">'+_dv(c.receipt_no)+'</span></div>';
+  h+='<div class="dt-row"><span class="dt-l">審査完了</span><span class="dt-v">'+_dv(c.shinsa_date)+'</span></div>';
+  h+='</div>';
+  // OFUSA担当
+  if(c.team||c.staff){
+    h+='<div class="section-title" style="margin-top:16px;">🤝 OFUSA担当窓口</div>';
+    h+='<div class="contact-card">';
+    h+='<div class="ct-row"><span class="ct-l">部署</span><span class="ct-v">'+_dv(c.team)+'</span></div>';
+    h+='<div class="ct-row"><span class="ct-l">担当</span><span class="ct-v">'+_dv(c.staff)+'</span></div>';
+    h+='</div>';
+  }
+  if(missingDocCount>0){
+    h+='<div class="note">⚠️ 未提出の書類が <b>'+missingDocCount+'件</b> あります。「提出書類」タブからご確認のうえ、ご提出をお願いいたします。</div>';
+  }
+  return h;
+}
+
+function renderDocs(){
+  var names=Object.keys(docs).filter(function(n){return docInList(docs[n]);});
+  var h='<div class="section-title">📄 あなたの提出書類</div>';
+  h+='<div class="note">OFUSAでチェックが入った書類は「提出済（または不要）」になります。「未提出」の書類はご提出をお願いいたします。ご不明点は担当者までご連絡ください。</div>';
+  var upUrl=buildUploadUrl();
+  if(upUrl){ h+='<div><a class="upload-btn" href="'+esc(upUrl)+'" target="_blank" rel="noopener">📤 書類をアップロード</a></div>'; }
+  if(!names.length){ h+='<div class="empty">提出書類リストはまだ登録されていません。</div>'; return h; }
+  var order={todo:0,done:1};
+  names.sort(function(a,b){ var sa=docState(docs[a]),sb=docState(docs[b]); if(order[sa]!==order[sb])return order[sa]-order[sb]; return a.localeCompare(b,'ja'); });
+  h+='<div class="doc-co">';
+  names.forEach(function(name){
+    var st=docState(docs[name]);
+    var ico=st==='done'?'✅':'⬜';
+    var stTxt=st==='done'?'提出済（または不要）':'未提出';
+    var stCls=st==='done'?'s-done':'s-todo';
+    h+='<div class="doc-row"><span class="doc-ico">'+ico+'</span><div class="doc-name">'+esc(name)+'</div><span class="doc-state '+stCls+'">'+stTxt+'</span></div>';
+  });
+  h+='</div>';
+  return h;
+}
+
+function renderInfo(){
+  var c=theCase, p=thePerson;
+  function row(l,v){ return '<div class="dt-row"><span class="dt-l">'+l+'</span><span class="dt-v">'+v+'</span></div>'; }
+  var addr=[p.jp_postal_code?('〒'+p.jp_postal_code):'',p.jp_address||'',p.jp_detail_address||''].filter(Boolean).join(' ');
+  var tel=p.phone||p.cel_phone||p.tel_num||'';
+  var h='<div class="section-title">🪪 本人情報</div>';
+  h+='<div class="info-card">';
+  h+='<div class="dt-sec">基本情報</div>';
+  h+=row('氏名',_dv(c.applicant||c.name));
+  h+=row('ローマ字',_dv(p.applicant_name_en));
+  h+=row('生年月日',_dv(p.birthdate));
+  h+=row('性別',_dv(p.gender));
+  h+=row('国籍',_dv(c.nationality||p.nationality));
+  h+='<div class="dt-sec">証明書番号</div>';
+  h+=row('在留カード番号',_dv(p.residence_card));
+  h+=row('パスポート番号',_dv(p.passport));
+  h+=row('パスポート有効期限',_dv(p.passport_expiry));
+  h+='<div class="dt-sec">連絡先</div>';
+  h+=row('住所',_dv(addr));
+  h+=row('母国住所',_dv(p.home_country_address));
+  h+=row('電話',_dv(tel));
+  h+=row('メール',_dv(p.email));
+  h+='</div>';
+  h+='<div class="note">内容に誤りがある場合は、担当者までご連絡ください。</div>';
+  return h;
+}
+
+function renderFlow(){
+  return '<div class="section-title">📌 申請の流れ</div>'
+    +'<div class="info-card flow" style="padding:16px 20px;"><ol>'
+    +'<li>ヒアリング・必要書類のご案内</li>'
+    +'<li>書類のご提出（「提出書類」タブ参照）</li>'
+    +'<li>OFUSAにて申請書類作成・ご確認</li>'
+    +'<li>入管へ申請（受付番号の発行）</li>'
+    +'<li>審査</li>'
+    +'<li>許可・在留カード/認定証明書の交付</li>'
+    +'</ol></div>'
+    +'<div class="note">現在の進捗は「進捗」タブでご確認いただけます。</div>';
+}
+
+init();
+</script>
+</body>
+</html>
