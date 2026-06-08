@@ -657,6 +657,9 @@ var SUPABASE_URL='https://ehwlgbwpycglmopiqyty.supabase.co';
 var SUPABASE_KEY='sb_publishable_3ptyILIpGIcNA5sUBhFMbA_n0VxpY2u';
 function sbFetch(p,opts){return fetch(SUPABASE_URL+'/rest/v1/'+p,Object.assign({headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'}},opts||{}));}
 function sbRpc(fn,body){return fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(body||{})}).then(function(r){return r.json();});}
+function saveOrgSetting(key,value){return sbRpc('set_org_setting',{p_token:currentToken,p_pass:(currentPass||null),p_key:key,p_value:value});}
+function confirmOrgNotifs(ids,confirmed){return sbRpc('confirm_org_notifications',{p_token:currentToken,p_pass:(currentPass||null),p_ids:ids,p_confirmed:!!confirmed});}
+function createOrgIntake(records){return sbRpc('create_org_intake',{p_token:currentToken,p_pass:(currentPass||null),p_records:records});}
 function getParam(k){return new URLSearchParams(location.search).get(k);}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
@@ -2803,7 +2806,7 @@ async function saveComment(caseId){
   var key='org_comment_'+currentToken+'_'+caseId;
   btn.textContent='保存中...';btn.disabled=true;
   try{
-    await sbFetch('settings',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:val})});
+    await saveOrgSetting(key,val);
     btn.textContent='✓保存済';btn.className='save-btn saved';
     setTimeout(function(){btn.textContent='保存';btn.className='save-btn';btn.disabled=false;},2000);
   }catch(e){btn.textContent='保存';btn.disabled=false;alert('保存失敗: '+e.message);}
@@ -2884,15 +2887,8 @@ async function _mirrorCheckToNotif(archiveId, checked){
   var idsParam = ids.map(function(id){return '"'+id+'"';}).join(',');
   var now = new Date().toISOString();
   try{
-    var body = checked
-      ? {confirmed_at:now, confirmed_by:orgName||''}
-      : {confirmed_at:null, confirmed_by:null};
-    var r = await sbFetch('share_notifications?id=in.('+idsParam+')',{
-      method:'PATCH',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-      body:JSON.stringify(body)
-    });
-    if(!r.ok){ console.warn('[_mirrorCheckToNotif] PATCH failed status='+r.status); return; }
+    var _res = await confirmOrgNotifs(ids, checked);
+    if(!_res || _res.error){ console.warn('[_mirrorCheckToNotif] RPC failed', _res); return; }
     needsUpdate.forEach(function(n){
       if(checked){ n.confirmed_at=now; n.confirmed_by=orgName||''; }
       else { n.confirmed_at=null; n.confirmed_by=null; }
@@ -2922,11 +2918,7 @@ async function _mirrorNotifToCheck(notifId, confirmed){
   if(!changed) return;
   var key = 'org_checks_'+currentToken;
   try{
-    await sbFetch('settings',{
-      method:'POST',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
-      body:JSON.stringify({key:key,value:JSON.stringify(orgChecks)})
-    });
+    await saveOrgSetting(key,JSON.stringify(orgChecks));
   }catch(e){ console.warn('[_mirrorNotifToCheck] settings save failed', e); }
 }
 
@@ -2948,7 +2940,7 @@ async function toggleOrgCheck(archiveId, checked){
   // DB保存（org_checks_<token> に JSON 丸ごと保存）
   var key='org_checks_'+currentToken;
   try{
-    await sbFetch('settings',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:JSON.stringify(orgChecks)})});
+    await saveOrgSetting(key,JSON.stringify(orgChecks));
     // ver.20260602.01: メイン→ベルのミラー同期（同 case_id+種別の通知をまとめて確認/未確認に）
     await _mirrorCheckToNotif(archiveId, checked);
     // ver.20260519.31: renderCurrent()に統一
@@ -2970,7 +2962,7 @@ async function saveOwnComment(caseId){
   var key='org_own_comment_'+currentToken+'_'+caseId;
   btn.textContent='保存中...';btn.disabled=true;
   try{
-    await sbFetch('settings',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:val})});
+    await saveOrgSetting(key,val);
     btn.textContent='✓保存済';btn.className='own-save-btn saved';
     setTimeout(function(){btn.textContent='保存';btn.className='own-save-btn';btn.disabled=false;},2000);
   }catch(e){btn.textContent='保存';btn.disabled=false;alert('保存失敗: '+e.message);}
@@ -2996,7 +2988,7 @@ async function changeWithdraw(caseId, withdrawType){
   orgWithdraws[caseId]=data;
   var key='org_withdraw_'+currentToken+'_'+caseId;
   try{
-    await sbFetch('settings',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:JSON.stringify(data)})});
+    await saveOrgSetting(key,JSON.stringify(data));
     // 確認モーダル表示
     if(withdrawType){
       alert('「' + withdrawType + '」として登録しました。\n大房側で確認の上、対応いたします。');
@@ -3011,11 +3003,7 @@ async function loadNotifications(){
   if(!orgName) return;
   try{
     // 最近60日以内の通知を取得
-    var cutoff=new Date(); cutoff.setDate(cutoff.getDate()-60);
-    var cutoffStr=cutoff.toISOString();
-    var r=await sbFetch('share_notifications?org=eq.'+encodeURIComponent(orgName)+'&notified_at=gte.'+encodeURIComponent(cutoffStr)+'&select=id,case_id,status,receipt_no,notified_at,confirmed_at,confirmed_by&order=notified_at.desc&limit=200');
-    if(!r.ok) return;
-    var data=await r.json();
+    var data=await sbRpc('get_org_notifications',{p_token:currentToken,p_pass:(currentPass||null)});
     if(!Array.isArray(data)) return;
     var prevUnconfirmed=notifications.filter(function(n){return !n.confirmed_at;}).length;
     notifications=data;
@@ -3097,14 +3085,9 @@ async function confirmAllNotifications(){
     var now=new Date().toISOString();
     var ids=unconfirmed.map(function(n){return n.id;});
     // PostgRESTのin演算子で一括PATCH
-    var idsParam=ids.map(function(id){return '"'+id+'"';}).join(',');
-    var r=await sbFetch('share_notifications?id=in.('+idsParam+')',{
-      method:'PATCH',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-      body:JSON.stringify({confirmed_at:now,confirmed_by:orgName||''})
-    });
-    if(!r.ok){
-      alert('一括確認に失敗しました（status='+r.status+'）');
+    var _res=await confirmOrgNotifs(ids, true);
+    if(!_res || _res.error){
+      alert('一括確認に失敗しました');
       btns.forEach(function(b){ b.disabled=false; b.textContent='✅ すべて確認'; });
       return;
     }
@@ -3122,11 +3105,7 @@ async function confirmAllNotifications(){
     if(changed){
       try{
         var ckKey='org_checks_'+currentToken;
-        await sbFetch('settings',{
-          method:'POST',
-          headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
-          body:JSON.stringify({key:ckKey,value:JSON.stringify(orgChecks)})
-        });
+        await saveOrgSetting(ckKey,JSON.stringify(orgChecks));
       }catch(e){ console.warn('[confirmAllNotifications] mirror save failed', e); }
     }
     updateNotifBadge();
@@ -3361,15 +3340,9 @@ async function confirmNotification(id){
   var n=notifications.find(function(x){return x.id===id;});
   if(!n||n.confirmed_at) return;
   try{
-    var r=await sbFetch('share_notifications?id=eq.'+encodeURIComponent(id),{
-      method:'PATCH',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
-      body:JSON.stringify({confirmed_at:new Date().toISOString(),confirmed_by:orgName||''})
-    });
-    if(!r.ok){ alert('確認済みへの更新に失敗しました'); return; }
-    var updated=await r.json();
-    if(Array.isArray(updated)&&updated.length){ Object.assign(n,updated[0]); }
-    else { n.confirmed_at=new Date().toISOString(); }
+    var _res=await confirmOrgNotifs([id], true);
+    if(!_res || _res.error){ alert('確認済みへの更新に失敗しました'); return; }
+    n.confirmed_at=new Date().toISOString(); n.confirmed_by=orgName||'';
     // ver.20260602.01: ベル→メインのミラー同期（同 case_id+種別のアーカイブをまとめてチェック済みに）
     await _mirrorNotifToCheck(id, true);
     updateNotifBadge();
@@ -3442,7 +3415,6 @@ async function init(){
   if(!token){document.getElementById('main').innerHTML='<div class="error-box">URLが正しくありません。</div>';return;}
   currentToken=token;
   try{
-    // ver.20260608.01: メタ情報のみRPCで取得（機関名・パスワード要否。データ本体は返さない）
     var meta=await sbRpc('get_org_meta',{p_token:token});
     if(!meta){document.getElementById('main').innerHTML='<div class="error-box">このURLは無効です。担当者にお問い合わせください。</div>';return;}
     orgName=meta.orgName||'';
@@ -3466,7 +3438,6 @@ async function loadData(){
   try{
     document.getElementById('headerOrg').textContent=orgName+' 様';
     document.title=orgName+' 様 | 案件進捗確認';
-    // アイデム：新規案件依頼ボタン＋企業候補リスト（※企業候補は別途RPC化予定。現状はテーブル参照のまま）
     if(orgName==='株式会社アイデム'){
       var ncBtn=document.getElementById('newCaseBtn');
       if(ncBtn) ncBtn.style.display='';
@@ -3485,7 +3456,6 @@ async function loadData(){
       }catch(e){ console.warn('[aidem companies load failed]', e); }
     }
 
-    // ===== ver.20260608.01: その機関の全データをサーバ側RPCで取得（旧テーブル直叩きを置換） =====
     var data=await sbRpc('get_org_share',{p_token:currentToken,p_pass:(currentPass||null)});
     if(!data){ document.getElementById('main').innerHTML='<div class="error-box">このURLは無効です。担当者にお問い合わせください。</div>'; return; }
     if(data.error==='invalid_pass'){
@@ -3496,19 +3466,16 @@ async function loadData(){
     }
     if(data.org){ currentOrgId=data.org.orgId||currentOrgId; }
 
-    // GP情報
     gpInfoByCaseId={};
     if(isGpMode && Array.isArray(data.gpMap)){
       data.gpMap.forEach(function(g){ if(!gpInfoByCaseId[g.case_id]) gpInfoByCaseId[g.case_id]=g; });
     }
 
-    // cases
     allCases=(data.cases||[]).map(function(c){
       var base={id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',companyId:c.company_id||'',residenceStatus:c.residence_status||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',receiptDate:c.receipt_date||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',madoguchiDate:c.madoguchi_date||'',madoguchiReceiveDate:c.madoguchi_receive_date||'',clientStaff:c.client_staff||'',deliveryMethod:c.delivery_method||'mail',otherAgencies:c.other_agencies||{},updated_at:c.updated_at||''};
       if(isGpMode){var g=gpInfoByCaseId[c.id];base.gpOrderId=g?(g.oc_order_id||''):'';base.gpKumiaiDate=g?(g.kumiai_receipt_date||''):'';base.gpIraiDate=g?(g.irai_date||''):'';}
       return base;
     });
-    // GPモード：不足書類計算（在留資格別ロジック）
     if(isGpMode){
       allCases=allCases.filter(function(c){ return !!gpInfoByCaseId[c.id]; });
       try{
@@ -3544,7 +3511,6 @@ async function loadData(){
       }catch(eDc){ console.warn('[gp missing docs]', eDc); }
     }
 
-    // persons：tempReturn補完＋PDF URL履歴（最新1件）
     (data.persons||[]).forEach(function(p){
       var c=allCases.find(function(x){return x.id===p.case_id;}); if(!c) return;
       if(p.temp_return && !c.tempReturn) c.tempReturn=p.temp_return;
@@ -3552,12 +3518,10 @@ async function loadData(){
       if(Array.isArray(p.custody_receipt_pdf_urls)&&p.custody_receipt_pdf_urls.length){var lastCust=p.custody_receipt_pdf_urls[p.custody_receipt_pdf_urls.length-1];if(lastCust&&lastCust.url)c.custodyReceiptPdfUrl=lastCust.url;}
     });
 
-    // case_notes（進捗コメント）
     caseNotes={};
     var _cn=data.caseNotes||{};
     Object.keys(_cn).forEach(function(cid){var note=_cn[cid];if(typeof note==='string'){try{note=JSON.parse(note);}catch(e){note={progressMemo:note};}}caseNotes[cid]=note||{};});
 
-    // settings由来（大房コメント・機関様コメント・辞退/振替・確認チェック）
     orgComments={};orgOwnComments={};orgWithdraws={};orgChecks={};
     var _cmtPrefix='org_comment_'+currentToken+'_';
     var _ownPrefix='org_own_comment_'+currentToken+'_';
@@ -3571,7 +3535,6 @@ async function loadData(){
       else if(k===_chkKey){ var cv=row.value;if(typeof cv==='string'){try{orgChecks=JSON.parse(cv)||{};}catch(e){orgChecks={};}}else if(cv&&typeof cv==='object'){orgChecks=cv;} }
     });
 
-    // 申請記録 / 審査完了 / 認定証（cases と突き合わせて表示用に整形）
     allReceipts=(data.receipts||[]).map(function(r){
       var lc=allCases.find(function(c){return c.id===r.case_id;})||null;
       return {id:r.id,case_id:r.case_id||'',name:r.name||'',date:r.date||'',caseNo:r.case_no||'',sub:r.sub||'',applicationDate:r.application_date||'',reported:r.reported||false,driveUrl:r.drive_url||'',pdfDone:r.pdf_done||false,company:lc?(lc.company||''):'',caseName:lc?(lc.name||''):'',status:lc?(lc.status||''):'',appType:lc?(lc.appType||''):'',expire:lc?(lc.expire||''):'',tokureiDate:lc?(lc.tokureiDate||''):'',tempReturn:lc?(lc.tempReturn||''):'',team:lc?(lc.team||''):'',staff:lc?(lc.staff||''):'',clientStaff:lc?(lc.clientStaff||''):'',applicant:lc?(lc.applicant||''):'',receiptNo:lc?(lc.receiptNo||''):'',deliveryMethod:lc?(lc.deliveryMethod||'mail'):'mail'};
@@ -4118,21 +4081,10 @@ async function executeSubmit(){
       };
     });
 
-    var res = await fetch(SUPABASE_URL + '/rest/v1/intake_requests', {
-      method: 'POST',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify(records)
-    });
-
-    if(!res.ok){
-      var errText = await res.text();
-      console.error('[intake_requests INSERT failed]', res.status, errText);
-      throw new Error('HTTP ' + res.status + ': ' + errText);
+    var _res = await createOrgIntake(records);
+    if(!_res || _res.error){
+      console.error('[create_org_intake failed]', _res);
+      throw new Error('登録に失敗しました: ' + (_res && _res.error ? _res.error : 'unknown'));
     }
 
     // 確認モーダルを閉じる
