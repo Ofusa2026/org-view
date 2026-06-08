@@ -367,7 +367,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260607.08</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260607.09</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1854,6 +1854,39 @@ function renderShinsa(){
   }else{
     h+=_buildShinsaTable(checked, true);
   }
+
+  // ver.20260607.09: 未確認の認定証セクション（電子在留資格認定証明書 COE）
+  if(allCerts && allCerts.length){
+    var certUnchk=[], certChk=[];
+    allCerts.forEach(function(r){
+      if(orgChecks[r.id]) certChk.push(r); else certUnchk.push(r);
+    });
+    certUnchk.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+    certChk.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+
+    // ▼ 未確認の認定証
+    h+='<div style="margin-top:32px;margin-bottom:12px;display:flex;align-items:center;gap:10px;border-top:1px solid #e2e8f0;padding-top:24px;">';
+    h+='<span style="font-size:14px;">🎫</span>';
+    h+='<span style="font-size:13px;font-weight:700;color:#0f2040;">未確認の認定証（在留資格認定証明書）</span>';
+    h+='<span style="font-size:11px;color:#fff;background:#0891b2;padding:1px 8px;border-radius:99px;font-weight:700;">'+certUnchk.length+'</span>';
+    h+='</div>';
+    if(!certUnchk.length){
+      h+='<div style="background:#ecfeff;border:1px solid #67e8f9;border-radius:8px;padding:12px;color:#0e7490;font-size:12px;font-weight:600;margin-bottom:20px;">✨ 未確認の認定証はありません</div>';
+    }else{
+      h+=_buildShinsaTable(certUnchk, false);
+    }
+    // ▼ 確認済みの認定証
+    h+='<div style="margin-top:24px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">';
+    h+='<span style="font-size:14px;">✔️</span>';
+    h+='<span style="font-size:13px;font-weight:700;color:#64748b;">確認済みの認定証</span>';
+    h+='<span style="font-size:11px;color:#64748b;background:#e2e8f0;padding:1px 8px;border-radius:99px;font-weight:700;">'+certChk.length+'</span>';
+    h+='</div>';
+    if(!certChk.length){
+      h+='<div style="color:#94a3b8;font-size:11px;padding:8px;">確認済みの記録はありません</div>';
+    }else{
+      h+=_buildShinsaTable(certChk, true);
+    }
+  }
   el.innerHTML=h;
 }
 
@@ -2319,6 +2352,12 @@ function buildTodayHighlights(scope){
     if(orgChecks[s.id]) return false;
     return true;
   });
+  // ver.20260607.09: ④ 認定証（cert_archiveで未確認）
+  var certs=(allCerts||[]).filter(function(r){
+    if(!r.id) return false;
+    if(orgChecks[r.id]) return false;
+    return true;
+  });
   // ver.20260519.27: フリーワード検索を3セクション全てに適用
   // ver.20260525.12: 受付番号は検索対象から除外
   if(searchQuery){
@@ -2338,6 +2377,11 @@ function buildTodayHighlights(scope){
              (s.company||'').toLowerCase().indexOf(qBT)>=0 ||
              (s.caseName||'').toLowerCase().indexOf(qBT)>=0;
     });
+    certs=certs.filter(function(r){
+      return (r.name||'').toLowerCase().indexOf(qBT)>=0 ||
+             (r.company||'').toLowerCase().indexOf(qBT)>=0 ||
+             (r.caseName||'').toLowerCase().indexOf(qBT)>=0;
+    });
   }
   // scopeに応じて表示判定
   // 'all': 3つ全部 (ダッシュボード・進行中タブ)
@@ -2350,15 +2394,18 @@ function buildTodayHighlights(scope){
   var showApplied = (scope==='all' || scope==='receipts_applied_only') && cfgApplied;
   var showReceipts = (scope==='all') && cfgPending;
   var showShinsas = (scope==='all') && cfgReview;
+  var showCerts = (scope==='all') && cfgReview; // ver.20260607.09: 認定証セクション（cert_archive、 reviewと同じ表示制御）
   // すべて0件なら何も出さない
   var totalCount=0;
   if(showApplied) totalCount+=applied.length;
   if(showReceipts) totalCount+=receipts.length;
   if(showShinsas) totalCount+=shinsas.length;
+  if(showCerts) totalCount+=certs.length;
   if(totalCount===0) return ''; // 全scopeで0件は非表示
   // 並び順: 受付日/完了日が新しい順
   receipts.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
   shinsas.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+  certs.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
 
   // ver.20260518.19: 下のテーブル（申請記録・審査完了）と列幅・列構成を完全に揃える
   // <table>形式に変えて、tdのmin-width/max-widthを下のテーブルと完全一致させる
@@ -2491,6 +2538,37 @@ function buildTodayHighlights(scope){
       rh+='<td style="font-size:11px;color:#2563eb;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(s.caseNo||'&mdash;')+'</td>';
       // PDF
       rh+='<td style="text-align:center;white-space:nowrap;">'+_buildPdfCell(s, '#16a34a')+'</td>';
+      rh+='</tr>';
+    });
+    rh+='</tbody></table></div>';
+    return rh;
+  });
+  }
+
+  // ver.20260607.09: ④ 認定証（cert_archive）
+  if(showCerts && certs.length){
+  h+=_buildTodaySection('🎫 未確認の認定証', certs.length, '#0891b2', function(){
+    var rh='<div class="tbl-wrap" style="background:white;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;"><table style="table-layout:fixed;">';
+    rh+='<colgroup>';
+    rh+='<col style="width:70px;">';   // 確認
+    rh+='<col style="width:90px;">';   // 交付日
+    rh+='<col style="width:280px;">';  // 案件名/申請者
+    rh+='<col style="width:160px;">';  // 所属機関
+    rh+='<col style="width:140px;">';  // 受付番号(認定番号)
+    rh+='<col style="width:80px;">';   // PDF
+    rh+='</colgroup>';
+    rh+='<tbody>';
+    certs.forEach(function(r,idx){
+      rh+='<tr'+(idx>0?' style="border-top:1px solid #f1f5f9;"':'')+'>';
+      rh+='<td style="text-align:center;white-space:nowrap;"><input type="checkbox" data-aid="'+esc(r.id)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)" style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;"></td>';
+      rh+='<td style="white-space:nowrap;font-size:11px;color:#6b7280;">'+(r.date?r.date.slice(0,10):'&mdash;')+'</td>';
+      rh+='<td style="min-width:200px;max-width:320px;">';
+      rh+='<div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(r.caseName||'')+'</div>';
+      rh+='<div style="font-size:10px;color:#6b7280;">'+esc(r.name||'')+'</div>';
+      rh+='</td>';
+      rh+='<td style="font-size:11px;color:#374151;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(r.company||'')+'</td>';
+      rh+='<td style="font-size:11px;color:#0891b2;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.caseNo||'&mdash;')+'</td>';
+      rh+='<td style="text-align:center;white-space:nowrap;">'+_buildPdfCell(r, '#0891b2')+'</td>';
       rh+='</tr>';
     });
     rh+='</tbody></table></div>';
