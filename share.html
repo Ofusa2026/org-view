@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
-<!-- ver.20260607.01: 他機関申請(国交省)ステータスを実データ(other_agencies.kokkoSho)に変更 -->
+<!-- ver.20260608.01: 他機関申請(国交省)ステータスを実データ(other_agencies.kokkoSho)に変更 -->
 <!-- ver.20260519.30: ブラウザキャッシュ無効化（常に最新版を読む） -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
@@ -367,7 +367,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260607.10</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260608.01</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -656,6 +656,10 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 var SUPABASE_URL='https://ehwlgbwpycglmopiqyty.supabase.co';
 var SUPABASE_KEY='sb_publishable_3ptyILIpGIcNA5sUBhFMbA_n0VxpY2u';
 function sbFetch(p,opts){return fetch(SUPABASE_URL+'/rest/v1/'+p,Object.assign({headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'}},opts||{}));}
+function sbRpc(fn,body){return fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(body||{})}).then(function(r){return r.json();});}
+function saveOrgSetting(key,value){return sbRpc('set_org_setting',{p_token:currentToken,p_pass:(currentPass||null),p_key:key,p_value:value});}
+function confirmOrgNotifs(ids,confirmed){return sbRpc('confirm_org_notifications',{p_token:currentToken,p_pass:(currentPass||null),p_ids:ids,p_confirmed:!!confirmed});}
+function createOrgIntake(records){return sbRpc('create_org_intake',{p_token:currentToken,p_pass:(currentPass||null),p_records:records});}
 function getParam(k){return new URLSearchParams(location.search).get(k);}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
@@ -800,6 +804,15 @@ var NOTIF_LABELS={'申請済(番号待)':'📤 申請済（番号待ち）','受
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20260608.01',
+    date: '2026-06-08',
+    audience: 'all',
+    notify: true,
+    items: [
+      '🔒 セキュリティと表示の安定性を内部的に改善しました。画面の見え方や操作方法に変更はありません。'
+    ]
+  },
   {
     version: 'ver.20260607.09',
     date: '2026-06-07',
@@ -2802,7 +2815,7 @@ async function saveComment(caseId){
   var key='org_comment_'+currentToken+'_'+caseId;
   btn.textContent='保存中...';btn.disabled=true;
   try{
-    await sbFetch('settings',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:val})});
+    await saveOrgSetting(key,val);
     btn.textContent='✓保存済';btn.className='save-btn saved';
     setTimeout(function(){btn.textContent='保存';btn.className='save-btn';btn.disabled=false;},2000);
   }catch(e){btn.textContent='保存';btn.disabled=false;alert('保存失敗: '+e.message);}
@@ -2883,15 +2896,8 @@ async function _mirrorCheckToNotif(archiveId, checked){
   var idsParam = ids.map(function(id){return '"'+id+'"';}).join(',');
   var now = new Date().toISOString();
   try{
-    var body = checked
-      ? {confirmed_at:now, confirmed_by:orgName||''}
-      : {confirmed_at:null, confirmed_by:null};
-    var r = await sbFetch('share_notifications?id=in.('+idsParam+')',{
-      method:'PATCH',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-      body:JSON.stringify(body)
-    });
-    if(!r.ok){ console.warn('[_mirrorCheckToNotif] PATCH failed status='+r.status); return; }
+    var _res = await confirmOrgNotifs(ids, checked);
+    if(!_res || _res.error){ console.warn('[_mirrorCheckToNotif] RPC failed', _res); return; }
     needsUpdate.forEach(function(n){
       if(checked){ n.confirmed_at=now; n.confirmed_by=orgName||''; }
       else { n.confirmed_at=null; n.confirmed_by=null; }
@@ -2921,11 +2927,7 @@ async function _mirrorNotifToCheck(notifId, confirmed){
   if(!changed) return;
   var key = 'org_checks_'+currentToken;
   try{
-    await sbFetch('settings',{
-      method:'POST',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
-      body:JSON.stringify({key:key,value:JSON.stringify(orgChecks)})
-    });
+    await saveOrgSetting(key,JSON.stringify(orgChecks));
   }catch(e){ console.warn('[_mirrorNotifToCheck] settings save failed', e); }
 }
 
@@ -2947,7 +2949,7 @@ async function toggleOrgCheck(archiveId, checked){
   // DB保存（org_checks_<token> に JSON 丸ごと保存）
   var key='org_checks_'+currentToken;
   try{
-    await sbFetch('settings',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:JSON.stringify(orgChecks)})});
+    await saveOrgSetting(key,JSON.stringify(orgChecks));
     // ver.20260602.01: メイン→ベルのミラー同期（同 case_id+種別の通知をまとめて確認/未確認に）
     await _mirrorCheckToNotif(archiveId, checked);
     // ver.20260519.31: renderCurrent()に統一
@@ -2969,7 +2971,7 @@ async function saveOwnComment(caseId){
   var key='org_own_comment_'+currentToken+'_'+caseId;
   btn.textContent='保存中...';btn.disabled=true;
   try{
-    await sbFetch('settings',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:val})});
+    await saveOrgSetting(key,val);
     btn.textContent='✓保存済';btn.className='own-save-btn saved';
     setTimeout(function(){btn.textContent='保存';btn.className='own-save-btn';btn.disabled=false;},2000);
   }catch(e){btn.textContent='保存';btn.disabled=false;alert('保存失敗: '+e.message);}
@@ -2995,7 +2997,7 @@ async function changeWithdraw(caseId, withdrawType){
   orgWithdraws[caseId]=data;
   var key='org_withdraw_'+currentToken+'_'+caseId;
   try{
-    await sbFetch('settings',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:JSON.stringify(data)})});
+    await saveOrgSetting(key,JSON.stringify(data));
     // 確認モーダル表示
     if(withdrawType){
       alert('「' + withdrawType + '」として登録しました。\n大房側で確認の上、対応いたします。');
@@ -3010,11 +3012,7 @@ async function loadNotifications(){
   if(!orgName) return;
   try{
     // 最近60日以内の通知を取得
-    var cutoff=new Date(); cutoff.setDate(cutoff.getDate()-60);
-    var cutoffStr=cutoff.toISOString();
-    var r=await sbFetch('share_notifications?org=eq.'+encodeURIComponent(orgName)+'&notified_at=gte.'+encodeURIComponent(cutoffStr)+'&select=id,case_id,status,receipt_no,notified_at,confirmed_at,confirmed_by&order=notified_at.desc&limit=200');
-    if(!r.ok) return;
-    var data=await r.json();
+    var data=await sbRpc('get_org_notifications',{p_token:currentToken,p_pass:(currentPass||null)});
     if(!Array.isArray(data)) return;
     var prevUnconfirmed=notifications.filter(function(n){return !n.confirmed_at;}).length;
     notifications=data;
@@ -3096,14 +3094,9 @@ async function confirmAllNotifications(){
     var now=new Date().toISOString();
     var ids=unconfirmed.map(function(n){return n.id;});
     // PostgRESTのin演算子で一括PATCH
-    var idsParam=ids.map(function(id){return '"'+id+'"';}).join(',');
-    var r=await sbFetch('share_notifications?id=in.('+idsParam+')',{
-      method:'PATCH',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-      body:JSON.stringify({confirmed_at:now,confirmed_by:orgName||''})
-    });
-    if(!r.ok){
-      alert('一括確認に失敗しました（status='+r.status+'）');
+    var _res=await confirmOrgNotifs(ids, true);
+    if(!_res || _res.error){
+      alert('一括確認に失敗しました');
       btns.forEach(function(b){ b.disabled=false; b.textContent='✅ すべて確認'; });
       return;
     }
@@ -3121,11 +3114,7 @@ async function confirmAllNotifications(){
     if(changed){
       try{
         var ckKey='org_checks_'+currentToken;
-        await sbFetch('settings',{
-          method:'POST',
-          headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
-          body:JSON.stringify({key:ckKey,value:JSON.stringify(orgChecks)})
-        });
+        await saveOrgSetting(ckKey,JSON.stringify(orgChecks));
       }catch(e){ console.warn('[confirmAllNotifications] mirror save failed', e); }
     }
     updateNotifBadge();
@@ -3360,15 +3349,9 @@ async function confirmNotification(id){
   var n=notifications.find(function(x){return x.id===id;});
   if(!n||n.confirmed_at) return;
   try{
-    var r=await sbFetch('share_notifications?id=eq.'+encodeURIComponent(id),{
-      method:'PATCH',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
-      body:JSON.stringify({confirmed_at:new Date().toISOString(),confirmed_by:orgName||''})
-    });
-    if(!r.ok){ alert('確認済みへの更新に失敗しました'); return; }
-    var updated=await r.json();
-    if(Array.isArray(updated)&&updated.length){ Object.assign(n,updated[0]); }
-    else { n.confirmed_at=new Date().toISOString(); }
+    var _res=await confirmOrgNotifs([id], true);
+    if(!_res || _res.error){ alert('確認済みへの更新に失敗しました'); return; }
+    n.confirmed_at=new Date().toISOString(); n.confirmed_by=orgName||'';
     // ver.20260602.01: ベル→メインのミラー同期（同 case_id+種別のアーカイブをまとめてチェック済みに）
     await _mirrorNotifToCheck(id, true);
     updateNotifBadge();
@@ -3426,17 +3409,14 @@ function startDataReloadTimer(){
   });
 }
 
-var _correctPass='';
+var _correctPass='',currentPass='';
 function checkPass(){
   var input=document.getElementById('passInput').value.trim();
-  if(input===_correctPass){
-    document.getElementById('passScreen').style.display='none';
-    loadData();
-  }else{
-    document.getElementById('passErr').textContent='パスワードが正しくありません';
-    document.getElementById('passInput').value='';
-    document.getElementById('passInput').focus();
-  }
+  currentPass=input;
+  document.getElementById('passScreen').style.display='none';
+  document.getElementById('headerOrg').textContent=orgName+' 様';
+  document.title=orgName+' 様 | 案件進捗確認';
+  loadData();
 }
 
 async function init(){
@@ -3444,44 +3424,19 @@ async function init(){
   if(!token){document.getElementById('main').innerHTML='<div class="error-box">URLが正しくありません。</div>';return;}
   currentToken=token;
   try{
-    var r=await sbFetch('settings?key=eq.'+encodeURIComponent('org_view_token_'+token)+'&select=value');
-    var sd=await r.json();
-    if(!sd||!sd.length){document.getElementById('main').innerHTML='<div class="error-box">このURLは無効です。担当者にお問い合わせください。</div>';return;}
-    var orgId=sd[0].value;
-    currentOrgId=orgId;
-    var r2=await sbFetch('support_orgs?id=eq.'+encodeURIComponent(orgId)+'&select=name,extra');
-    var od=await r2.json();
-    orgName=(od&&od.length)?od[0].name:'';
-    // ver.20260521.01: 進捗URLカスタマイズ設定読込（support_orgs.extra.progress_url_cols）
-    var orgExtra=(od&&od.length&&od[0].extra)?od[0].extra:null;
-    progressUrlCfg=(orgExtra && orgExtra.progress_url_cols) ? orgExtra.progress_url_cols : null;
-    // ver.20260606.01: GP代理店分モード判定（オープンケア協同組合 GP代理店分の絞込URL用）
-    isGpMode = !!(orgExtra && orgExtra.gp_filter === true);
-    // ver.20260606.11: GPモード時は body にクラスを付けて文字サイズアップCSSを適用
-    if(isGpMode){ document.body.classList.add('gp-mode'); }
-    else{ document.body.classList.remove('gp-mode'); }
-    // ver.20260606.12: GPモード時の初期ソートを「受注ID昇順」に（クリックで降順切替可能）
+    var meta=await sbRpc('get_org_meta',{p_token:token});
+    if(!meta){document.getElementById('main').innerHTML='<div class="error-box">このURLは無効です。担当者にお問い合わせください。</div>';return;}
+    orgName=meta.orgName||'';
+    isGpMode=!!meta.isGpMode;
+    progressUrlCfg=meta.progressUrlCfg||null;
+    if(isGpMode){ document.body.classList.add('gp-mode'); } else { document.body.classList.remove('gp-mode'); }
     if(isGpMode && !sortCol){ sortCol='gpOrderId'; sortDir='asc'; }
-    if(isGpMode){
-      try{
-        var rGp=await sbFetch('gp_case_map?case_id=not.is.null&select=case_id,oc_order_id,kumiai_receipt_date,irai_date&limit=2000');
-        var gpRows=await rGp.json();
-        gpInfoByCaseId={};
-        (gpRows||[]).forEach(function(g){ if(!gpInfoByCaseId[g.case_id]) gpInfoByCaseId[g.case_id]=g; });
-      }catch(eGp){ console.warn('[gp_case_map load failed]', eGp); }
-    }
-    // パスワードチェック
-    var rp=await sbFetch('settings?key=eq.'+encodeURIComponent('org_view_pass_'+token)+'&select=value');
-    var pd=await rp.json();
-    var pass=(pd&&pd.length)?pd[0].value:'';
-    if(pass){
-      _correctPass=pass;
+    if(meta.hasPass){
       document.getElementById('passOrgName').textContent=orgName+' 様';
       document.getElementById('passScreen').style.display='flex';
       setTimeout(function(){document.getElementById('passInput').focus();},100);
       return;
     }
-    // パスワードなしの場合はそのまま読込
     document.getElementById('headerOrg').textContent=orgName+' 様';
     document.title=orgName+' 様 | 案件進捗確認';
     await loadData();
@@ -3490,327 +3445,125 @@ async function init(){
 
 async function loadData(){
   try{
-    // 案件取得（受付番号・帰国予定も含む）
     document.getElementById('headerOrg').textContent=orgName+' 様';
     document.title=orgName+' 様 | 案件進捗確認';
-    // ver.20260519.07: アイデム判定 → 新規案件依頼ボタン表示 + 企業候補リスト取得
     if(orgName==='株式会社アイデム'){
       var ncBtn=document.getElementById('newCaseBtn');
       if(ncBtn) ncBtn.style.display='';
       var hOrg=document.getElementById('headerOrg');
       if(hOrg) hOrg.style.marginLeft='0';
-      // ver.20260525.09: アイデムはダッシュボードを表示しないので、初期タブを「進行中」に
       if(currentGroup==='dashboard') currentGroup='active';
       try{
-        // ver.20260521.03: folder_no も取得して番号順にソート、「[NN] 名前」表示
-        // ver.20260525.08: limit=2000 を明示（PostgRESTのmax-rowsに引っかからないように）
-        var rc=await sbFetch('companies?support_org_name=eq.'+encodeURIComponent('株式会社アイデム')+'&select=name,folder_no&limit=2000');
-        var coList=await rc.json();
+        var coList=await sbRpc('get_org_companies',{p_token:currentToken,p_pass:(currentPass||null)});
         var dl=document.getElementById('nc_companyList');
         if(dl && Array.isArray(coList)){
-          // 案シスと同じく parseInt(folderNo) で数値ソート、空は末尾
-          coList.sort(function(a,b){
-            var fa = a.folder_no ? (parseInt(a.folder_no,10) || 99999) : 99999;
-            var fb = b.folder_no ? (parseInt(b.folder_no,10) || 99999) : 99999;
-            if(fa !== fb) return fa - fb;
-            // 同じ番号なら名前順
-            return (a.name||'').localeCompare(b.name||'', 'ja');
-          });
-          var html='';
-          coList.forEach(function(co){
-            if(!co.name) return;
-            // 「[01] 株式会社オガワ総業」のような表示。但しvalueは名前のみ（DB保存は名前）
-            var label = (co.folder_no ? '['+co.folder_no+'] ' : '') + co.name;
-            html += '<option value="'+esc(co.name)+'" label="'+esc(label)+'">'+esc(label)+'</option>';
-          });
+          coList.sort(function(a,b){var fa=a.folder_no?(parseInt(a.folder_no,10)||99999):99999;var fb=b.folder_no?(parseInt(b.folder_no,10)||99999):99999;if(fa!==fb)return fa-fb;return (a.name||'').localeCompare(b.name||'','ja');});
+          var html='';coList.forEach(function(co){if(!co.name)return;var label=(co.folder_no?'['+co.folder_no+'] ':'')+co.name;html+='<option value="'+esc(co.name)+'" label="'+esc(label)+'">'+esc(label)+'</option>';});
           dl.innerHTML=html;
         }
       }catch(e){ console.warn('[aidem companies load failed]', e); }
     }
-    // ver.20260527.34: PostgRESTのdb-max-rows=1000を回避するため offset+limit でページング取得
-    // ver.20260606.01: GPモードの場合、cases.org は本体('オープンケア協同組合')でフィルタし、後で gp_case_map にマッチするものだけ残す
-    // ver.20260606.02: orgExtra のスコープ問題修正 → 本体名はハードコード
-    var _effectiveOrgName = orgName;
-    if(isGpMode){
-      _effectiveOrgName = 'オープンケア協同組合';
+
+    var data=await sbRpc('get_org_share',{p_token:currentToken,p_pass:(currentPass||null)});
+    if(!data){ document.getElementById('main').innerHTML='<div class="error-box">このURLは無効です。担当者にお問い合わせください。</div>'; return; }
+    if(data.error==='invalid_pass'){
+      document.getElementById('passScreen').style.display='flex';
+      var pe=document.getElementById('passErr'); if(pe) pe.textContent='パスワードが正しくありません';
+      var pin=document.getElementById('passInput'); if(pin){ pin.value=''; pin.focus(); }
+      return;
     }
-    var casesBase='cases?org=eq.'+encodeURIComponent(_effectiveOrgName)+'&select=id,applicant,name,company,company_id,residence_status,status,expire,tokurei_date,staff,team,app_type,receipt_no,receipt_date,temp_return,applicant_field,madoguchi_date,madoguchi_receive_date,client_staff,delivery_method,other_agencies,updated_at,created_at&order=created_at.desc';
-    var cases=[];
-    var _off=0, _pageSize=1000, _safety=20;
-    while(_safety-->0){
-      var _r=await sbFetch(casesBase+'&limit='+_pageSize+'&offset='+_off);
-      var _page=await _r.json();
-      if(!_page||!_page.length) break;
-      cases=cases.concat(_page);
-      if(_page.length<_pageSize) break;
-      _off+=_pageSize;
+    if(data.org){ currentOrgId=data.org.orgId||currentOrgId; }
+
+    gpInfoByCaseId={};
+    if(isGpMode && Array.isArray(data.gpMap)){
+      data.gpMap.forEach(function(g){ if(!gpInfoByCaseId[g.case_id]) gpInfoByCaseId[g.case_id]=g; });
     }
-    allCases=(cases||[]).map(function(c){
+
+    allCases=(data.cases||[]).map(function(c){
       var base={id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',companyId:c.company_id||'',residenceStatus:c.residence_status||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',receiptDate:c.receipt_date||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',madoguchiDate:c.madoguchi_date||'',madoguchiReceiveDate:c.madoguchi_receive_date||'',clientStaff:c.client_staff||'',deliveryMethod:c.delivery_method||'mail',otherAgencies:c.other_agencies||{},updated_at:c.updated_at||''};
-      // ver.20260606.01: GPモードならGP情報を付与
-      if(isGpMode){
-        var g=gpInfoByCaseId[c.id];
-        base.gpOrderId=g?(g.oc_order_id||''):'';
-        base.gpKumiaiDate=g?(g.kumiai_receipt_date||''):'';
-        base.gpIraiDate=g?(g.irai_date||''):'';
-      }
+      if(isGpMode){var g=gpInfoByCaseId[c.id];base.gpOrderId=g?(g.oc_order_id||''):'';base.gpKumiaiDate=g?(g.kumiai_receipt_date||''):'';base.gpIraiDate=g?(g.irai_date||''):'';}
       return base;
     });
-    // ver.20260606.01: GPモードでは gp_case_map にマッチしない案件を除外（466件のみ表示）
     if(isGpMode){
       allCases=allCases.filter(function(c){ return !!gpInfoByCaseId[c.id]; });
-      // ver.20260606.11: 不足書類取得（在留資格別ロジック）
-      // - 特定活動のみ (residence_status に「特定活動」含み「特定技能」含まない)  → 入管書類は不足に出さない
-      // - 特定技能希望 (residence_status に「特定技能」含む / 「特定活動⇒特定技能」も該当)
-      //   → 入管書類は req::に日付あるもののみ不足扱い（案内日が入っている書類のみ）
-      // - その他 → 入管書類は従来どおり (staff::無値/'false' で不足)
       try{
         var _hasVal=function(v){ return v!=null && v!=='' && v!=='false'; };
-        // 人材書類
         var personDocs={};
-        for(var pOff=0;pOff<allCases.length;pOff+=100){
-          var pChunk=allCases.slice(pOff,pOff+100);
-          var pIds=pChunk.map(function(c){return '"'+c.id+'"';}).join(',');
-          var rDc=await sbFetch('doc_check?case_id=in.('+pIds+')&select=case_id,doc_key,value&limit=20000');
-          var dcRows=await rDc.json();
-          (dcRows||[]).forEach(function(r){
-            var idx=r.doc_key.indexOf('::');
-            if(idx<0) return;
-            var prefix=r.doc_key.substring(0,idx);
-            var name=r.doc_key.substring(idx+2);
-            if(!personDocs[r.case_id]) personDocs[r.case_id]={};
-            if(!personDocs[r.case_id][name]) personDocs[r.case_id][name]={};
-            personDocs[r.case_id][name][prefix]=r.value;
-          });
-        }
-        // 企業書類
-        var coIds={}; allCases.forEach(function(c){if(c.companyId) coIds[c.companyId]=true;});
-        var coIdList=Object.keys(coIds);
+        (data.docCheck||[]).forEach(function(r){
+          var idx=r.doc_key.indexOf('::'); if(idx<0) return;
+          var prefix=r.doc_key.substring(0,idx); var name=r.doc_key.substring(idx+2);
+          if(!personDocs[r.case_id]) personDocs[r.case_id]={};
+          if(!personDocs[r.case_id][name]) personDocs[r.case_id][name]={};
+          personDocs[r.case_id][name][prefix]=r.value;
+        });
         var coDocs={};
-        for(var cOff=0;cOff<coIdList.length;cOff+=100){
-          var cChunk=coIdList.slice(cOff,cOff+100);
-          var cIds=cChunk.map(function(id){return '"'+id+'"';}).join(',');
-          var rCo=await sbFetch('co_doc_check?co_id=in.('+cIds+')&select=co_id,doc_key,value&limit=30000');
-          var coRows=await rCo.json();
-          (coRows||[]).forEach(function(r){
-            var idx=r.doc_key.indexOf('::');
-            if(idx<0) return;
-            var prefix=r.doc_key.substring(0,idx);
-            var name=r.doc_key.substring(idx+2);
-            if(!coDocs[r.co_id]) coDocs[r.co_id]={};
-            if(!coDocs[r.co_id][name]) coDocs[r.co_id][name]={};
-            coDocs[r.co_id][name][prefix]=r.value;
-          });
-        }
-        // 判定関数（mode別）
-        // mode='skip': 完全スキップ (特活のみ案件)
-        // mode='annaiOnly': req::に日付があるもののみ対象 (特定技能希望)
-        // mode='default': 従来どおり (staff::無値/'false' で不足)
+        (data.coDocCheck||[]).forEach(function(r){
+          var idx=r.doc_key.indexOf('::'); if(idx<0) return;
+          var prefix=r.doc_key.substring(0,idx); var name=r.doc_key.substring(idx+2);
+          if(!coDocs[r.co_id]) coDocs[r.co_id]={};
+          if(!coDocs[r.co_id][name]) coDocs[r.co_id][name]={};
+          coDocs[r.co_id][name][prefix]=r.value;
+        });
         var _calcMissing=function(docMap,mode){
-          var missing=[];
-          if(!docMap||mode==='skip') return missing;
-          Object.keys(docMap).forEach(function(name){
-            var d=docMap[name];
-            // 1. 不要扱い (skipに値あり)
-            if(_hasVal(d.skip)) return;
-            // 2. 確認済 (staffが日付or'true'。'false'や空は確認済みではない)
-            if(_hasVal(d.staff)) return;
-            // 3. 特定技能希望 (annaiOnly) は req::に日付(案内日)があるもののみ不足扱い
-            if(mode==='annaiOnly' && !_hasVal(d.req)) return;
-            // 4. それ以外で対象書類あり = 不足
-            missing.push(name);
-          });
+          var missing=[]; if(!docMap||mode==='skip') return missing;
+          Object.keys(docMap).forEach(function(name){var d=docMap[name];if(_hasVal(d.skip))return;if(_hasVal(d.staff))return;if(mode==='annaiOnly'&&!_hasVal(d.req))return;missing.push(name);});
           return missing;
         };
         allCases.forEach(function(c){
-          // 在留資格別モード判定
-          var rs=c.residenceStatus||'';
-          var hasTokutei=/特定技能/.test(rs);
-          var hasKatsudo=/特定活動/.test(rs);
-          var mode='default';
-          if(hasKatsudo && !hasTokutei) mode='skip';       // 特活のみ → 入管書類スキップ
-          else if(hasTokutei) mode='annaiOnly';            // 特定技能希望 → req::あるもののみ
+          var rs=c.residenceStatus||'';var hasTokutei=/特定技能/.test(rs);var hasKatsudo=/特定活動/.test(rs);
+          var mode='default'; if(hasKatsudo&&!hasTokutei)mode='skip'; else if(hasTokutei)mode='annaiOnly';
           c._immiMode=mode;
           c.gpPersonMissing=_calcMissing(personDocs[c.id],mode);
           c.gpCoMissing=c.companyId?_calcMissing(coDocs[c.companyId],mode):[];
         });
-      }catch(eDc){ console.warn('[gp missing docs load]', eDc); }
+      }catch(eDc){ console.warn('[gp missing docs]', eDc); }
     }
-    // personsテーブルからtempReturn(一時帰国予定日)を取得して補完
-    // ver.20260527.14: 申請中証明書PDF・預かり証PDFのURL履歴も取得
-    if(allCases.length){
-      var pids=allCases.map(function(c){return c.id;});
-      var PCHUNK=50;
-      for(var pi=0;pi<pids.length;pi+=PCHUNK){
-        var pchunk=pids.slice(pi,pi+PCHUNK);
-        var rp=await sbFetch('persons?case_id=in.('+pchunk.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=case_id,temp_return,application_cert_pdf_urls,custody_receipt_pdf_urls');
-        var persons=await rp.json();
-        if(Array.isArray(persons)){
-          persons.forEach(function(p){
-            var c=allCases.find(function(x){return x.id===p.case_id;});
-            if(!c) return;
-            if(p.temp_return && !c.tempReturn) c.tempReturn=p.temp_return;
-            // PDF URL履歴を最新1件だけ取り出して allCases に注入
-            if(Array.isArray(p.application_cert_pdf_urls) && p.application_cert_pdf_urls.length){
-              var lastCert = p.application_cert_pdf_urls[p.application_cert_pdf_urls.length-1];
-              if(lastCert && lastCert.url) c.applicationCertPdfUrl = lastCert.url;
-            }
-            if(Array.isArray(p.custody_receipt_pdf_urls) && p.custody_receipt_pdf_urls.length){
-              var lastCust = p.custody_receipt_pdf_urls[p.custody_receipt_pdf_urls.length-1];
-              if(lastCust && lastCust.url) c.custodyReceiptPdfUrl = lastCust.url;
-            }
-          });
-        }
-      }
-    }
-    // 進捗コメント
-    if(allCases.length){
-      var ids=allCases.map(function(c){return c.id;});
-      // 分割取得（URLが長くなりすぎないよう50件ずつ）
-      var CHUNK=50;
-      for(var ci=0;ci<ids.length;ci+=CHUNK){
-        var chunk=ids.slice(ci,ci+CHUNK);
-        var r5=await sbFetch('case_notes?case_id=in.('+chunk.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=case_id,note');
-        var notes=await r5.json();
-        (notes||[]).forEach(function(n){var note=n.note;if(typeof note==='string'){try{note=JSON.parse(note);}catch(e){note={progressMemo:note};}}caseNotes[n.case_id]=note||{};});
-      }
-      // 大房コメント取得（分割）
-      var cmtKeys=ids.map(function(id){return 'org_comment_'+currentToken+'_'+id;});
-      for(var ci2=0;ci2<cmtKeys.length;ci2+=CHUNK){
-        var cmtChunk=cmtKeys.slice(ci2,ci2+CHUNK);
-        var r6=await sbFetch('settings?key=in.('+cmtChunk.map(function(k){return '"'+k+'"';}).join(',')+')'+'&select=key,value');
-        var cmts=await r6.json();
-        if(Array.isArray(cmts)) (cmts||[]).forEach(function(row){var cid=row.key.replace('org_comment_'+currentToken+'_','');orgComments[cid]=row.value||'';});
-      }
-      // 登録支援機関様コメント取得（分割）
-      var ownCmtKeys=ids.map(function(id){return 'org_own_comment_'+currentToken+'_'+id;});
-      for(var ci3=0;ci3<ownCmtKeys.length;ci3+=CHUNK){
-        var ownChunk=ownCmtKeys.slice(ci3,ci3+CHUNK);
-        var r7=await sbFetch('settings?key=in.('+ownChunk.map(function(k){return '"'+k+'"';}).join(',')+')'+'&select=key,value');
-        var ownCmts=await r7.json();
-        if(Array.isArray(ownCmts)) (ownCmts||[]).forEach(function(row){var cid=row.key.replace('org_own_comment_'+currentToken+'_','');orgOwnComments[cid]=row.value||'';});
-      }
-      // ver.20260512: 辞退・振替申請取得（分割）
-      var wdKeys=ids.map(function(id){return 'org_withdraw_'+currentToken+'_'+id;});
-      for(var ci4=0;ci4<wdKeys.length;ci4+=CHUNK){
-        var wdChunk=wdKeys.slice(ci4,ci4+CHUNK);
-        var r8=await sbFetch('settings?key=in.('+wdChunk.map(function(k){return '"'+k+'"';}).join(',')+')'+'&select=key,value');
-        var wds=await r8.json();
-        if(Array.isArray(wds)) (wds||[]).forEach(function(row){
-          var cid=row.key.replace('org_withdraw_'+currentToken+'_','');
-          var val=row.value;
-          if(typeof val==='string'){try{val=JSON.parse(val);}catch(e){val={type:val};}}
-          orgWithdraws[cid]=val||{};
-        });
-      }
-      // ver.20260518.08: 登録支援機関側の「確認」チェック状態をsettings から JSON で取得
-      try{
-        var rChk=await sbFetch('settings?key=eq.'+encodeURIComponent('org_checks_'+currentToken)+'&select=value');
-        var chkRows=await rChk.json();
-        if(Array.isArray(chkRows)&&chkRows.length){
-          var chkVal=chkRows[0].value;
-          if(typeof chkVal==='string'){
-            try{orgChecks=JSON.parse(chkVal)||{};}catch(e){orgChecks={};}
-          }else if(chkVal&&typeof chkVal==='object'){
-            orgChecks=chkVal;
-          }
-        }
-      }catch(e){orgChecks={};}
-    }
-    // 申請記録取得（このorgに紐づく案件のcase_idで絞り込み）
-    if(allCases.length){
-      var caseIds=allCases.map(function(c){return c.id;});
-      var RCHUNK=50;
-      var _recTmp=[];
-      for(var ri=0;ri<caseIds.length;ri+=RCHUNK){
-        var rchunk=caseIds.slice(ri,ri+RCHUNK);
-        var rr=await sbFetch('receipt_archive?case_id=in.('+rchunk.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=id,name,date,case_no,sub,case_id,application_date,reported,drive_url,pdf_done&order=date.desc.nullslast');
-        var recs=await rr.json();
-        if(Array.isArray(recs)) _recTmp=_recTmp.concat(recs);
-      }
-      allReceipts=_recTmp.map(function(r){
-        var lc=allCases.find(function(c){return c.id===r.case_id;})||null;
-        return {id:r.id,case_id:r.case_id||'',name:r.name||'',date:r.date||'',caseNo:r.case_no||'',sub:r.sub||'',
-          applicationDate:r.application_date||'',reported:r.reported||false,
-          driveUrl:r.drive_url||'',
-          pdfDone:r.pdf_done||false, // ver.20260518.11: pdf_done取り込み（準備中表示用）
-          company:lc?(lc.company||''):'', // ver.20260518.07: 所属機関名を追加
-          caseName:lc?(lc.name||''):'', // ver.20260519.18: 案件名（cases.name）
-          status:lc?(lc.status||''):'',
-          // ver.20260525.04: メインテーブルと列を揃えるための追加情報
-          appType:lc?(lc.appType||''):'',
-          expire:lc?(lc.expire||''):'',
-          tokureiDate:lc?(lc.tokureiDate||''):'',
-          tempReturn:lc?(lc.tempReturn||''):'',
-          team:lc?(lc.team||''):'',
-          staff:lc?(lc.staff||''):'',
-          clientStaff:lc?(lc.clientStaff||''):'',
-          applicant:lc?(lc.applicant||''):'',
-          receiptNo:lc?(lc.receiptNo||''):'',
-          // ver.20260601.01: 受取方法
-          deliveryMethod:lc?(lc.deliveryMethod||'mail'):'mail'};
-      });
-      // 審査完了取得（同様にcase_idで絞り込み）
-      var _shTmp=[];
-      for(var si=0;si<caseIds.length;si+=RCHUNK){
-        var schunk=caseIds.slice(si,si+RCHUNK);
-        var sr=await sbFetch('shinsa_archive?case_id=in.('+schunk.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=id,name,date,case_no,sub,case_id,drive_url,pdf_done&order=date.desc.nullslast');
-        var shs=await sr.json();
-        if(Array.isArray(shs)) _shTmp=_shTmp.concat(shs);
-      }
-      allShinsa=_shTmp.map(function(r){
-        var lc=allCases.find(function(c){return c.id===r.case_id;})||null;
-        return {id:r.id,case_id:r.case_id||'',name:r.name||'',date:r.date||'',caseNo:r.case_no||'',sub:r.sub||'',
-          driveUrl:r.drive_url||'',
-          pdfDone:r.pdf_done||false, // ver.20260518.11: pdf_done取り込み（準備中表示用）
-          company:lc?(lc.company||''):'', // ver.20260518.07: 所属機関名を追加
-          caseName:lc?(lc.name||''):'', // ver.20260519.18: 案件名（cases.name）
-          status:lc?(lc.status||''):'',
-          // ver.20260525.04: メインテーブルと列を揃えるための追加情報
-          appType:lc?(lc.appType||''):'',
-          expire:lc?(lc.expire||''):'',
-          tokureiDate:lc?(lc.tokureiDate||''):'',
-          tempReturn:lc?(lc.tempReturn||''):'',
-          team:lc?(lc.team||''):'',
-          staff:lc?(lc.staff||''):'',
-          clientStaff:lc?(lc.clientStaff||''):'',
-          applicant:lc?(lc.applicant||''):'',
-          receiptNo:lc?(lc.receiptNo||''):'',
-          // ver.20260601.01: 受取方法
-          deliveryMethod:lc?(lc.deliveryMethod||'mail'):'mail'};
-      });
-      // ver.20260607.08: 認定証取得（電子在留資格認定証明書 COE）
-      var _ceTmp=[];
-      for(var ci=0;ci<caseIds.length;ci+=RCHUNK){
-        var cchunk=caseIds.slice(ci,ci+RCHUNK);
-        var cer=await sbFetch('cert_archive?case_id=in.('+cchunk.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=id,name,date,case_no,sub,case_id,drive_url,pdf_done,moved_at&order=date.desc.nullslast');
-        var ces=await cer.json();
-        if(Array.isArray(ces)) _ceTmp=_ceTmp.concat(ces);
-      }
-      allCerts=_ceTmp.map(function(r){
-        var lc=allCases.find(function(c){return c.id===r.case_id;})||null;
-        return {id:r.id,case_id:r.case_id||'',name:r.name||'',date:r.date||'',caseNo:r.case_no||'',sub:r.sub||'',
-          driveUrl:r.drive_url||'',
-          pdfDone:r.pdf_done||false,
-          movedAt:r.moved_at||'',
-          company:lc?(lc.company||''):'',
-          caseName:lc?(lc.name||''):'',
-          status:lc?(lc.status||''):'',
-          applicant:lc?(lc.applicant||''):''};
-      });
-    }
+
+    (data.persons||[]).forEach(function(p){
+      var c=allCases.find(function(x){return x.id===p.case_id;}); if(!c) return;
+      if(p.temp_return && !c.tempReturn) c.tempReturn=p.temp_return;
+      if(Array.isArray(p.application_cert_pdf_urls)&&p.application_cert_pdf_urls.length){var lastCert=p.application_cert_pdf_urls[p.application_cert_pdf_urls.length-1];if(lastCert&&lastCert.url)c.applicationCertPdfUrl=lastCert.url;}
+      if(Array.isArray(p.custody_receipt_pdf_urls)&&p.custody_receipt_pdf_urls.length){var lastCust=p.custody_receipt_pdf_urls[p.custody_receipt_pdf_urls.length-1];if(lastCust&&lastCust.url)c.custodyReceiptPdfUrl=lastCust.url;}
+    });
+
+    caseNotes={};
+    var _cn=data.caseNotes||{};
+    Object.keys(_cn).forEach(function(cid){var note=_cn[cid];if(typeof note==='string'){try{note=JSON.parse(note);}catch(e){note={progressMemo:note};}}caseNotes[cid]=note||{};});
+
+    orgComments={};orgOwnComments={};orgWithdraws={};orgChecks={};
+    var _cmtPrefix='org_comment_'+currentToken+'_';
+    var _ownPrefix='org_own_comment_'+currentToken+'_';
+    var _wdPrefix='org_withdraw_'+currentToken+'_';
+    var _chkKey='org_checks_'+currentToken;
+    (data.settings||[]).forEach(function(row){
+      var k=row.key||'';
+      if(k.indexOf(_ownPrefix)===0){ orgOwnComments[k.substring(_ownPrefix.length)]=row.value||''; }
+      else if(k.indexOf(_cmtPrefix)===0){ orgComments[k.substring(_cmtPrefix.length)]=row.value||''; }
+      else if(k.indexOf(_wdPrefix)===0){ var v=row.value;if(typeof v==='string'){try{v=JSON.parse(v);}catch(e){v={type:v};}}orgWithdraws[k.substring(_wdPrefix.length)]=v||{}; }
+      else if(k===_chkKey){ var cv=row.value;if(typeof cv==='string'){try{orgChecks=JSON.parse(cv)||{};}catch(e){orgChecks={};}}else if(cv&&typeof cv==='object'){orgChecks=cv;} }
+    });
+
+    allReceipts=(data.receipts||[]).map(function(r){
+      var lc=allCases.find(function(c){return c.id===r.case_id;})||null;
+      return {id:r.id,case_id:r.case_id||'',name:r.name||'',date:r.date||'',caseNo:r.case_no||'',sub:r.sub||'',applicationDate:r.application_date||'',reported:r.reported||false,driveUrl:r.drive_url||'',pdfDone:r.pdf_done||false,company:lc?(lc.company||''):'',caseName:lc?(lc.name||''):'',status:lc?(lc.status||''):'',appType:lc?(lc.appType||''):'',expire:lc?(lc.expire||''):'',tokureiDate:lc?(lc.tokureiDate||''):'',tempReturn:lc?(lc.tempReturn||''):'',team:lc?(lc.team||''):'',staff:lc?(lc.staff||''):'',clientStaff:lc?(lc.clientStaff||''):'',applicant:lc?(lc.applicant||''):'',receiptNo:lc?(lc.receiptNo||''):'',deliveryMethod:lc?(lc.deliveryMethod||'mail'):'mail'};
+    });
+    allShinsa=(data.shinsa||[]).map(function(r){
+      var lc=allCases.find(function(c){return c.id===r.case_id;})||null;
+      return {id:r.id,case_id:r.case_id||'',name:r.name||'',date:r.date||'',caseNo:r.case_no||'',sub:r.sub||'',driveUrl:r.drive_url||'',pdfDone:r.pdf_done||false,company:lc?(lc.company||''):'',caseName:lc?(lc.name||''):'',status:lc?(lc.status||''):'',appType:lc?(lc.appType||''):'',expire:lc?(lc.expire||''):'',tokureiDate:lc?(lc.tokureiDate||''):'',tempReturn:lc?(lc.tempReturn||''):'',team:lc?(lc.team||''):'',staff:lc?(lc.staff||''):'',clientStaff:lc?(lc.clientStaff||''):'',applicant:lc?(lc.applicant||''):'',receiptNo:lc?(lc.receiptNo||''):'',deliveryMethod:lc?(lc.deliveryMethod||'mail'):'mail'};
+    });
+    allCerts=(data.certs||[]).map(function(r){
+      var lc=allCases.find(function(c){return c.id===r.case_id;})||null;
+      return {id:r.id,case_id:r.case_id||'',name:r.name||'',date:r.date||'',caseNo:r.case_no||'',sub:r.sub||'',driveUrl:r.drive_url||'',pdfDone:r.pdf_done||false,movedAt:r.moved_at||'',company:lc?(lc.company||''):'',caseName:lc?(lc.name||''):'',status:lc?(lc.status||''):'',applicant:lc?(lc.applicant||''):''};
+    });
+
     renderSidebar();
-    // ver.20260519.30: 初期表示はcurrentGroupに応じて適切な画面を表示
     renderCurrent();
-    // ver.20260518.10: 初回のみポーリング＆リロードタイマー開始（多重起動防止）
     if(!_dataReloadTimer){
       startNotifPolling();
       startDataReloadTimer();
-      // ver.20260603.03: 初回ロード時に What's New を表示判定（リロードでは出さない）
       checkAndShowWhatsNew();
     }
   }catch(e){
-    // ver.20260518.10: バックグラウンドリロード中は画面を上書きしない
     if(!_isReloading){
       document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+e.message+'</div>';
     }else{
@@ -3818,6 +3571,7 @@ async function loadData(){
     }
   }
 }
+
 init();
 
 // ===== ver.20260519.01: 新規案件依頼（アイデム専用） =====
@@ -4335,21 +4089,10 @@ async function executeSubmit(){
       };
     });
 
-    var res = await fetch(SUPABASE_URL + '/rest/v1/intake_requests', {
-      method: 'POST',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify(records)
-    });
-
-    if(!res.ok){
-      var errText = await res.text();
-      console.error('[intake_requests INSERT failed]', res.status, errText);
-      throw new Error('HTTP ' + res.status + ': ' + errText);
+    var _res = await createOrgIntake(records);
+    if(!_res || _res.error){
+      console.error('[create_org_intake failed]', _res);
+      throw new Error('登録に失敗しました: ' + (_res && _res.error ? _res.error : 'unknown'));
     }
 
     // 確認モーダルを閉じる
