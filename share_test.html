@@ -367,7 +367,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260608.test01 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260608.test02 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -3445,8 +3445,7 @@ async function loadData(){
       if(hOrg) hOrg.style.marginLeft='0';
       if(currentGroup==='dashboard') currentGroup='active';
       try{
-        var rc=await sbFetch('companies?support_org_name=eq.'+encodeURIComponent('株式会社アイデム')+'&select=name,folder_no&limit=2000');
-        var coList=await rc.json();
+        var coList=await sbRpc('get_org_companies',{p_token:currentToken,p_pass:(currentPass||null)});
         var dl=document.getElementById('nc_companyList');
         if(dl && Array.isArray(coList)){
           coList.sort(function(a,b){var fa=a.folder_no?(parseInt(a.folder_no,10)||99999):99999;var fb=b.folder_no?(parseInt(b.folder_no,10)||99999):99999;if(fa!==fb)return fa-fb;return (a.name||'').localeCompare(b.name||'','ja');});
