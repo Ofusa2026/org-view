@@ -367,7 +367,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260607.07</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260607.08</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -892,7 +892,7 @@ var NOTIF_SHORT_LABELS={'受付番号取込':'受付番号','申請済(番号待
 var DONE_ST=['完了','審査完了'];
 // ver.20260518.13: ダッシュボードを追加、完了の表記をシンプル化
 var GROUPS=[{id:'dashboard',label:'ダッシュボード'},{id:'active',label:'進行中'},{id:'done',label:'発行済み・完了'},{id:'all',label:'すべて'}];
-var allCases=[],allReceipts=[],allShinsa=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus='',filterCompany='',filterClientStaff='',sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,isGpMode=false,gpInfoByCaseId={},_imeOn=false; // ver.20260521.01: progressUrlCfg追加 / ver.20260527.17: filterClientStaff追加 / ver.20260606.01: isGpMode追加（オープンケアGP代理店分の絞込モード）
+var allCases=[],allReceipts=[],allShinsa=[],allCerts=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus='',filterCompany='',filterClientStaff='',sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,isGpMode=false,gpInfoByCaseId={},_imeOn=false; // ver.20260606.13: allCerts追加（認定証PDF）
 // コメント入力中フラグ（再描画スキップ用）。値は編集中のtextareaのid（例:'owncmt_xxx'）
 var _editingCommentId=null;
 var _editingImeOn=false;
@@ -1183,6 +1183,20 @@ function buildDownloadCell(c){
     html+='<a href="'+esc(c.custodyReceiptPdfUrl)+'" target="_blank" rel="noopener" style="'+baseStyle+'background:#7c3aed;color:white;" title="預かり証PDFを開く">📋 預かり証</a>';
   }else{
     html+='<span style="'+baseStyle+'background:#f1f5f9;color:#94a3b8;" title="預かり証PDFはまだ作成されていません">— 預かり証</span>';
+  }
+  // === 認定証 (電子在留資格認定証明書 COE) ver.20260607.08 ===
+  // 対象案件 (cert_archive にレコードあり) のみ表示
+  var certs=allCerts.filter(function(r){return r.case_id===c.id;});
+  if(certs.length){
+    certs.forEach(function(r){
+      if(r.driveUrl){
+        html+='<a href="'+esc(r.driveUrl)+'" target="_blank" rel="noopener" style="'+baseStyle+'background:#0891b2;color:white;" title="認定証PDFを開く">🎫 認定証PDF</a>';
+      } else if(r.pdfDone){
+        html+='<span style="'+baseStyle+'background:#fef3c7;color:#a16207;" title="認定証PDFをアップロード中">⏳ 認定証PDF</span>';
+      } else {
+        html+='<span style="'+baseStyle+'background:#f1f5f9;color:#94a3b8;" title="認定証PDFはまだ発行されていません">— 認定証PDF</span>';
+      }
+    });
   }
   html+='</div>';
   return html;
@@ -3652,6 +3666,25 @@ async function loadData(){
           receiptNo:lc?(lc.receiptNo||''):'',
           // ver.20260601.01: 受取方法
           deliveryMethod:lc?(lc.deliveryMethod||'mail'):'mail'};
+      });
+      // ver.20260607.08: 認定証取得（電子在留資格認定証明書 COE）
+      var _ceTmp=[];
+      for(var ci=0;ci<caseIds.length;ci+=RCHUNK){
+        var cchunk=caseIds.slice(ci,ci+RCHUNK);
+        var cer=await sbFetch('cert_archive?case_id=in.('+cchunk.map(function(id){return '"'+id+'"';}).join(',')+')'+'&select=id,name,date,case_no,sub,case_id,drive_url,pdf_done,moved_at&order=date.desc.nullslast');
+        var ces=await cer.json();
+        if(Array.isArray(ces)) _ceTmp=_ceTmp.concat(ces);
+      }
+      allCerts=_ceTmp.map(function(r){
+        var lc=allCases.find(function(c){return c.id===r.case_id;})||null;
+        return {id:r.id,case_id:r.case_id||'',name:r.name||'',date:r.date||'',caseNo:r.case_no||'',sub:r.sub||'',
+          driveUrl:r.drive_url||'',
+          pdfDone:r.pdf_done||false,
+          movedAt:r.moved_at||'',
+          company:lc?(lc.company||''):'',
+          caseName:lc?(lc.name||''):'',
+          status:lc?(lc.status||''):'',
+          applicant:lc?(lc.applicant||''):''};
       });
     }
     renderSidebar();
