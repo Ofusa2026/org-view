@@ -367,7 +367,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260607.09</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260607.10</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1844,7 +1844,33 @@ function renderShinsa(){
   checked.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
 
   var h='';
-  // ▼ 上：未確認の審査完了
+  // ver.20260607.10: 表示順を「未確認」→「確認済」の縦並びに変更
+  //   旧: 未確認の審査完了 → 確認済みの審査完了 → 未確認の認定証 → 確認済みの認定証
+  //   新: 未確認の審査完了 → 未確認の認定証 → 確認済みの審査完了 → 確認済みの認定証
+  //   理由: 確認済みの審査完了の下に認定証があると見落とすため
+
+  // 認定証データを先に分離
+  var certUnchk=[], certChk=[];
+  if(allCerts && allCerts.length){
+    allCerts.forEach(function(r){
+      if(orgChecks[r.id]) certChk.push(r); else certUnchk.push(r);
+    });
+    // searchQuery 適用
+    if(searchQuery){
+      var qC=searchQuery.toLowerCase();
+      function _matchC(r){
+        return (r.name||'').toLowerCase().indexOf(qC)>=0 ||
+               (r.company||'').toLowerCase().indexOf(qC)>=0 ||
+               (r.caseName||'').toLowerCase().indexOf(qC)>=0;
+      }
+      certUnchk=certUnchk.filter(_matchC);
+      certChk=certChk.filter(_matchC);
+    }
+    certUnchk.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+    certChk.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+  }
+
+  // ① 未確認の審査完了
   h+='<div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;">';
   h+='<span style="font-size:14px;">✅</span>';
   h+='<span style="font-size:13px;font-weight:700;color:#0f2040;">未確認の審査完了</span>';
@@ -1856,8 +1882,22 @@ function renderShinsa(){
     h+=_buildShinsaTable(unchecked, false);
   }
 
-  // ▼ 下：確認済みの審査完了
-  h+='<div style="margin-top:24px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">';
+  // ② 未確認の認定証（審査完了の直下に配置）
+  if(allCerts && allCerts.length){
+    h+='<div style="margin-top:24px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">';
+    h+='<span style="font-size:14px;">🎫</span>';
+    h+='<span style="font-size:13px;font-weight:700;color:#0f2040;">未確認の認定証（在留資格認定証明書）</span>';
+    h+='<span style="font-size:11px;color:#fff;background:#0891b2;padding:1px 8px;border-radius:99px;font-weight:700;">'+certUnchk.length+'</span>';
+    h+='</div>';
+    if(!certUnchk.length){
+      h+='<div style="background:#ecfeff;border:1px solid #67e8f9;border-radius:8px;padding:12px;color:#0e7490;font-size:12px;font-weight:600;margin-bottom:20px;">✨ 未確認の認定証はありません</div>';
+    }else{
+      h+=_buildShinsaTable(certUnchk, false);
+    }
+  }
+
+  // ③ 確認済みの審査完了
+  h+='<div style="margin-top:32px;margin-bottom:12px;display:flex;align-items:center;gap:10px;border-top:1px solid #e2e8f0;padding-top:24px;">';
   h+='<span style="font-size:14px;">✔️</span>';
   h+='<span style="font-size:13px;font-weight:700;color:#64748b;">確認済みの審査完了</span>';
   h+='<span style="font-size:11px;color:#64748b;background:#e2e8f0;padding:1px 8px;border-radius:99px;font-weight:700;">'+checked.length+'</span>';
@@ -1868,27 +1908,8 @@ function renderShinsa(){
     h+=_buildShinsaTable(checked, true);
   }
 
-  // ver.20260607.09: 未確認の認定証セクション（電子在留資格認定証明書 COE）
+  // ④ 確認済みの認定証
   if(allCerts && allCerts.length){
-    var certUnchk=[], certChk=[];
-    allCerts.forEach(function(r){
-      if(orgChecks[r.id]) certChk.push(r); else certUnchk.push(r);
-    });
-    certUnchk.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
-    certChk.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
-
-    // ▼ 未確認の認定証
-    h+='<div style="margin-top:32px;margin-bottom:12px;display:flex;align-items:center;gap:10px;border-top:1px solid #e2e8f0;padding-top:24px;">';
-    h+='<span style="font-size:14px;">🎫</span>';
-    h+='<span style="font-size:13px;font-weight:700;color:#0f2040;">未確認の認定証（在留資格認定証明書）</span>';
-    h+='<span style="font-size:11px;color:#fff;background:#0891b2;padding:1px 8px;border-radius:99px;font-weight:700;">'+certUnchk.length+'</span>';
-    h+='</div>';
-    if(!certUnchk.length){
-      h+='<div style="background:#ecfeff;border:1px solid #67e8f9;border-radius:8px;padding:12px;color:#0e7490;font-size:12px;font-weight:600;margin-bottom:20px;">✨ 未確認の認定証はありません</div>';
-    }else{
-      h+=_buildShinsaTable(certUnchk, false);
-    }
-    // ▼ 確認済みの認定証
     h+='<div style="margin-top:24px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">';
     h+='<span style="font-size:14px;">✔️</span>';
     h+='<span style="font-size:13px;font-weight:700;color:#64748b;">確認済みの認定証</span>';
