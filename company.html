@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | 大房行政書士法人</title>
-<!-- ver.20260609.01: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
+<!-- ver.20260609.02: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -437,11 +437,22 @@ function _dashAlertList(){
   allCases.forEach(function(c){ var d=_caseDeadline(c); if(d&&d.info.days!=null&&d.info.days<=90) urg.push({c:c,d:d}); });
   if(!urg.length) return '';
   urg.sort(function(a,b){ return a.d.info.days-b.d.info.days; });
-  var h='<div class="section-title">🚨 期限が近い人材（'+urg.length+'名）</div><div class="alert-list">';
+  var open=true; try{ open=(localStorage.getItem('co_dashAlertOpen_'+currentToken)!=='0'); }catch(e){}
+  var head='<div class="section-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'
+    +'<span>\ud83d\udea8 \u671f\u9650\u304c\u8fd1\u3044\u4eba\u6750\uff08'+urg.length+'\u540d\uff09</span>'
+    +'<button type="button" onclick="toggleDashAlert()" style="border:none;background:#eef2f7;color:#475569;font-size:13px;font-weight:700;border-radius:6px;padding:4px 12px;cursor:pointer;white-space:nowrap;">'+(open?'\u00d7 \u9589\u3058\u308b':'\u25bc \u8868\u793a\u3059\u308b')+'</button>'
+    +'</div>';
+  if(!open) return head;
+  var h=head+'<div class="alert-list">';
   urg.forEach(function(u){ var c=u.c,ci=u.d.info;
-    h+='<div class="alert-row" onclick="openDetail(\''+esc(c.id)+'\')"><div class="al-name">'+esc(c.applicant||c.name||'—')+'</div><div class="al-meta"><span class="al-tag">'+u.d.label+'</span><span class="exp '+ci.cls+'">'+esc(ci.txt)+'</span></div></div>';
+    h+='<div class="alert-row" onclick="openDetail(\''+esc(c.id)+'\')"><div class="al-name">'+esc(c.applicant||c.name||'\u2014')+'</div><div class="al-meta"><span class="al-tag">'+u.d.label+'</span><span class="exp '+ci.cls+'">'+esc(ci.txt)+'</span></div></div>';
   });
   return h+'</div>';
+}
+function toggleDashAlert(){
+  var open=true; try{ open=(localStorage.getItem('co_dashAlertOpen_'+currentToken)!=='0'); }catch(e){}
+  try{ localStorage.setItem('co_dashAlertOpen_'+currentToken, open?'0':'1'); }catch(e){}
+  render();
 }
 function _dashHero(total,soon,expired){
   return '<div class="hero-cards">'
