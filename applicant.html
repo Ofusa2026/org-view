@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | 大房行政書士法人</title>
-<!-- ver.20260607.16: 申請人（人材本人）向け進捗・提出書類確認ページ -->
+<!-- ver.20260609.02: 申請人（人材本人）向け進捗・提出書類確認ページ -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -137,6 +137,7 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 var SUPABASE_URL='https://ehwlgbwpycglmopiqyty.supabase.co';
 var SUPABASE_KEY='sb_publishable_3ptyILIpGIcNA5sUBhFMbA_n0VxpY2u';
 function sbFetch(p,opts){return fetch(SUPABASE_URL+'/rest/v1/'+p,Object.assign({headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'}},opts||{}));}
+function callRpc(fn,args){return fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(args||{})}).then(function(r){return r.json();});}
 function getParam(k){return new URLSearchParams(location.search).get(k);}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function _dv(v){ return (v==null||v==='')?'—':esc(v); }
@@ -286,10 +287,7 @@ function _hasVal(v){ return v!=null && v!=='' && v!=='false'; }
 var theCase=null, thePerson={}, cacheDocs=[], doneSet={}, missingDocCount=0, pdfCert='', pdfCustody='', pdfReceipt='', pdfShinsa='', hasHearingForm=false, _passMode='enter', currentTab='status', currentToken='', _correctPass='';
 
 function savePin(token,pin){
-  return fetch(SUPABASE_URL+'/rest/v1/settings',{method:'POST',
-    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
-    body:JSON.stringify({key:'applicant_view_pass_'+token,value:pin})
-  }).then(function(r){return r.ok;}).catch(function(){return false;});
+  return callRpc('applicant_view_set_pin',{p_token:token,p_pin:pin}).then(function(r){return !!(r&&r.ok);}).catch(function(){return false;});
 }
 async function passSubmit(){
   var v=(document.getElementById('passInput').value||'').replace(/\D/g,'');
@@ -301,31 +299,25 @@ async function passSubmit(){
     err.textContent='設定中...';
     var ok=await savePin(window._passToken,v);
     if(!ok){ err.textContent='設定に失敗しました。通信環境をご確認ください'; return; }
-    _correctPass=v;
     document.getElementById('passScreen').classList.add('hide');
-    await loadData();
+    await loadData(v);
   } else {
-    if(v===String(_correctPass)){ document.getElementById('passScreen').classList.add('hide'); loadData(); }
-    else { err.textContent='パスワードが違います'; }
+    err.textContent='確認中...';
+    var lr=await loadData(v);
+    if(lr&&lr.passErr){ err.textContent='パスワードが違います'; return; }
+    document.getElementById('passScreen').classList.add('hide');
   }
 }
 
 async function init(){
   var token=getParam('token');
   if(!token){ document.getElementById('main').innerHTML='<div class="error-box">URLが正しくありません。</div>'; return; }
-  currentToken=token;
+  currentToken=token; window._passToken=token;
   try{
-    var r=await sbFetch('settings?key=eq.'+encodeURIComponent('applicant_view_token_'+token)+'&select=value');
-    var sd=await r.json();
-    if(!sd||!sd.length){ document.getElementById('main').innerHTML='<div class="error-box">このURLは無効です。担当者にお問い合わせください。</div>'; return; }
-    var caseId=sd[0].value;
-    var rp=await sbFetch('settings?key=eq.'+encodeURIComponent('applicant_view_pass_'+token)+'&select=value');
-    var pd=await rp.json();
-    var pass=(pd&&pd.length)?pd[0].value:'';
-    window._caseId=caseId;
-    window._passToken=token;
-    if(pass){
-      _correctPass=pass; _passMode='enter';
+    var meta=await callRpc('applicant_view_meta',{p_token:token});
+    if(!meta||!meta.ok){ document.getElementById('main').innerHTML='<div class="error-box">このURLは無効です。担当者にお問い合わせください。</div>'; return; }
+    if(meta.has_pin){
+      _passMode='enter';
       document.getElementById('passTitle').textContent='パスワード（4桁）を入力してください';
       document.getElementById('passBtn').textContent='ログイン';
       document.getElementById('passInput2').classList.add('hide');
@@ -338,45 +330,25 @@ async function init(){
     }
     document.getElementById('passScreen').classList.remove('hide');
     setTimeout(function(){document.getElementById('passInput').focus();},100);
-    return;
   }catch(e){ document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+esc(e.message)+'</div>'; }
 }
 
-async function loadData(){
+async function loadData(pass){
   try{
-    var caseId=window._caseId;
-    var sel='id,applicant,name,nationality,company,org,residence_status,current_status,status,app_type,applicant_field,job_category,industry,receipt_no,receipt_date,shinsa_date,expire,tokurei_date,drive_url,team,staff,other_agencies';
-    var rc=await sbFetch('cases?id=eq.'+encodeURIComponent(caseId)+'&select='+sel);
-    var cc=await rc.json();
-    if(!cc||!cc.length){ document.getElementById('main').innerHTML='<div class="error-box">対象の申請が見つかりません。</div>'; return; }
-    theCase=cc[0];
-    var pf='applicant_name_en,residence_card,passport,passport_expiry,birthdate,gender,nationality,jp_postal_code,jp_address,jp_detail_address,home_country_address,phone,cel_phone,tel_num,email,residence_status,application_cert_pdf_urls,custody_receipt_pdf_urls';
-    var rpe=await sbFetch('persons?case_id=eq.'+encodeURIComponent(caseId)+'&select='+pf);
-    var pe=await rpe.json();
-    thePerson=(pe&&pe.length)?pe[0]:{};
-    // 発行PDF（申請中証明・預かり証＝persons配列の最新 / 受付番号・審査完了＝archiveテーブルの最新）
-    pdfCert=''; pdfCustody=''; pdfReceipt=''; pdfShinsa='';
+    var res=await callRpc('applicant_view_get',{p_token:currentToken,p_pass:pass||''});
+    if(!res||!res.ok){
+      if(res&&res.error==='pass'){ return {passErr:true}; }
+      document.getElementById('main').innerHTML='<div class="error-box">対象の申請が見つかりません。</div>'; return {ok:false};
+    }
+    theCase=res.case||{};
+    thePerson=res.person||{};
+    pdfCert=''; pdfCustody=''; pdfReceipt=res.pdf_receipt||''; pdfShinsa=res.pdf_shinsa||'';
     var _ac=thePerson.application_cert_pdf_urls; if(Array.isArray(_ac)&&_ac.length){ var _l1=_ac[_ac.length-1]; if(_l1&&_l1.url) pdfCert=_l1.url; }
     var _cu=thePerson.custody_receipt_pdf_urls; if(Array.isArray(_cu)&&_cu.length){ var _l2=_cu[_cu.length-1]; if(_l2&&_l2.url) pdfCustody=_l2.url; }
-    var rr=await sbFetch('receipt_archive?case_id=eq.'+encodeURIComponent(caseId)+'&select=drive_url,date&order=date.desc.nullslast&limit=10');
-    var rrd=await rr.json(); (rrd||[]).some(function(x){ if(x&&x.drive_url){ pdfReceipt=x.drive_url; return true; } return false; });
-    var rsa=await sbFetch('shinsa_archive?case_id=eq.'+encodeURIComponent(caseId)+'&select=drive_url,date&order=date.desc.nullslast&limit=10');
-    var rsd=await rsa.json(); (rsd||[]).some(function(x){ if(x&&x.drive_url){ pdfShinsa=x.drive_url; return true; } return false; });
-    // ヒアリングフォーム回答の実マーカー（人材フォーム=company以外の form_responses 行が存在すれば回答済み）
-    hasHearingForm=false;
-    try{
-      var rhf=await sbFetch('form_responses?case_id=eq.'+encodeURIComponent(caseId)+'&form_type=neq.company&deleted_at=is.null&select=submitted_at&limit=1');
-      var hfd=await rhf.json(); hasHearingForm=Array.isArray(hfd)&&hfd.length>0;
-    }catch(e){}
-    // 提出書類リスト＝アップロード画面と同じ正規リスト（upload_docs_cache）。提出済判定は doc_check ライブ
-    cacheDocs=[];
-    var rcd=await sbFetch('upload_docs_cache?case_id=eq.'+encodeURIComponent(caseId)+'&kind=eq.person&select=docs');
-    var cdd=await rcd.json();
-    if(cdd&&cdd.length&&Array.isArray(cdd[0].docs)) cacheDocs=cdd[0].docs;
+    hasHearingForm=!!res.has_hearing_form;
+    cacheDocs=Array.isArray(res.cache_docs)?res.cache_docs:[];
     doneSet={};
-    var rd=await sbFetch('doc_check?case_id=eq.'+encodeURIComponent(caseId)+'&select=doc_key,value&limit=2000');
-    var dr=await rd.json();
-    (dr||[]).forEach(function(row){
+    (res.doc_check||[]).forEach(function(row){
       var idx=row.doc_key.indexOf('::'); if(idx<0) return;
       var prefix=row.doc_key.substring(0,idx); var name=row.doc_key.substring(idx+2);
       var v=row.value; var truthy=(v!=null&&v!==''&&v!=='false');
@@ -388,7 +360,8 @@ async function loadData(){
     document.title=nm+' 様 | 提出書類・進捗確認';
     document.getElementById('tabs').style.display='flex';
     render();
-  }catch(e){ document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+esc(e.message)+'</div>'; }
+    return {ok:true};
+  }catch(e){ document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+esc(e.message)+'</div>'; return {ok:false}; }
 }
 
 function docDisplayList(){ return cacheDocs.filter(function(d){ return d && d.l && d.l!=='その他'; }); }
@@ -801,23 +774,23 @@ var DOC_SAMPLES = {
       zh: '📒 您本人保管的蓝色手册。遗失时可在年金事务所免费补发'
     }
   },
-  embassy_rec: {
-    image: 'samples/embassy_rec_sample.png',
+  juminhyo: {
+    image: 'samples/juminhyo_sample.png',
     help: {
-      ja: '大使館発行の推薦状',
-      en: 'Recommendation letter from embassy',
-      vi: 'Thư giới thiệu từ đại sứ quán',
-      id: 'Surat rekomendasi dari kedutaan',
-      ko: '대사관 발급 추천장',
-      zh: '大使馆发放的推荐信'
+      ja: '世帯全員が記載された住民票（マイナンバーの記載は不要）',
+      en: 'Certificate of Residence listing all household members (without My Number)',
+      vi: 'Giấy chứng nhận cư trú ghi đầy đủ thành viên hộ gia đình (không có My Number)',
+      id: 'Surat Keterangan Domisili yang mencantumkan seluruh anggota keluarga (tanpa My Number)',
+      ko: '세대 전원이 기재된 주민표 (마이넘버 미기재)',
+      zh: '记载全体家庭成员的住民票（无需记载My Number）'
     },
     where: {
-      ja: '🏛️ 自国の駐日大使館で発行してもらいます。担当者に確認してから取得してください',
-      en: '🏛️ Issued by your country\'s embassy in Japan. Check with your contact before requesting',
-      vi: '🏛️ Cấp tại đại sứ quán nước bạn tại Nhật. Xác nhận với người phụ trách trước',
-      id: '🏛️ Diterbitkan oleh kedutaan negara Anda di Jepang. Konfirmasi dengan penanggung jawab dulu',
-      ko: '🏛️ 본국 주일 대사관에서 발급. 담당자에게 확인 후 신청',
-      zh: '🏛️ 由本国驻日大使馆发放。请先与负责人确认后再申请'
+      ja: '🏛️ 市区町村の役所、またはマイナンバーカードでコンビニで取得できます。発行から3か月以内のもの。',
+      en: '🏛️ Obtain at your city/ward office, or at a convenience store with a My Number card. Issued within the last 3 months.',
+      vi: '🏛️ Lấy tại văn phòng quận/thành phố, hoặc tại cửa hàng tiện lợi bằng thẻ My Number. Cấp trong vòng 3 tháng.',
+      id: '🏛️ Diperoleh di kantor kota/distrik, atau di minimarket dengan kartu My Number. Diterbitkan dalam 3 bulan terakhir.',
+      ko: '🏛️ 시구정촌 관공서, 또는 마이넘버 카드로 편의점에서 발급. 발행 후 3개월 이내.',
+      zh: '🏛️ 可在市区町村政府办公室，或持My Number卡在便利店获取。需为3个月内开具。'
     }
   }
 };
@@ -834,7 +807,7 @@ var DOC_NAME2KEY={
  '源泉徴収票':'withholding',
  '健康保険証':'health_ins',
  '国民健康保険料納付証明書':'health_ins_cert','国民健康保険料納付証明':'health_ins_cert',
- '卒業証明書':'graduation','成績証明書':'transcript','年金手帳':'nenkin','大使館推薦票':'embassy_rec'
+ '卒業証明書':'graduation','成績証明書':'transcript','年金手帳':'nenkin','住民票':'juminhyo'
 };
 function getDocHelp(name){
   if(!name) return null;
