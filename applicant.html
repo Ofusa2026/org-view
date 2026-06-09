@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | 大房行政書士法人</title>
-<!-- ver.20260609.03: 申請人（人材本人）向け進捗・提出書類確認ページ -->
+<!-- ver.20260609.04: 申請人（人材本人）向け進捗・提出書類確認ページ -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -101,6 +101,10 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .tl-phase{font-size:10px;font-weight:800;color:#2563eb;letter-spacing:.03em;margin-bottom:2px;}
 .tl-ttl{font-size:13.5px;font-weight:800;color:#0f2040;line-height:1.5;}
 .tl-sub{font-size:11.5px;color:#64748b;margin-top:3px;line-height:1.6;}
+.tl-grp{display:flex;align-items:center;gap:8px;margin:2px 0 12px;flex-wrap:wrap;}
+.tl-dur{display:inline-flex;align-items:center;gap:5px;background:#0f2040;color:#fff;font-size:11.5px;font-weight:800;padding:4px 11px;border-radius:999px;white-space:nowrap;}
+.tl-grp-l{font-size:11px;font-weight:700;color:#64748b;}
+.tl-grp+.tl{padding-top:2px;}
 .pass-screen{position:fixed;inset:0;background:#0f2040;display:flex;align-items:center;justify-content:center;z-index:500;padding:20px;}
 .pass-box{background:#fff;border-radius:16px;padding:30px 26px;width:100%;max-width:340px;text-align:center;}
 .pass-title{font-size:15px;font-weight:800;color:#0f2040;}
@@ -915,24 +919,35 @@ function renderOffice(){
 }
 
 function renderFlow(){
-  var steps=[
-    {ph:'STEP 1 ・ ヒアリング', t:'ヒアリング・必要書類のご案内', s:'担当者がヒアリングを行い、ご提出いただく書類をご案内します。'},
-    {ph:'STEP 2 ・ ご提出', t:'書類のご提出', s:'「提出書類」タブの一覧に沿って、書類をアップロード・ご提出ください。'},
-    {ph:'STEP 3 ・ 作成', t:'申請書類の作成・ご確認', s:'大房行政書士法人で申請書類を作成し、内容を確認します。'},
-    {ph:'STEP 4 ・ 申請', t:'入管へ申請（受付番号の発行）', s:'出入国在留管理庁へ申請します。受付番号が発行されます。'},
-    {ph:'STEP 5 ・ 審査', t:'入管による審査', s:'審査期間です。追加書類（追完）のご依頼が入ることがあります。'},
-    {ph:'STEP 6 ・ 交付', t:'許可・在留カード／認定証明書の交付', s:'許可後、在留カードまたは在留資格認定証明書が交付されます。'}
+  var groups=[
+    {dur:'約1ヶ月', range:'STEP 1〜4', label:'ご準備〜申請', steps:[
+      {ph:'STEP 1 ・ ヒアリング', t:'ヒアリング・必要書類のご案内', s:'担当者がヒアリングを行い、ご提出いただく書類をご案内します。'},
+      {ph:'STEP 2 ・ ご提出', t:'書類のご提出', s:'「提出書類」タブの一覧に沿って、書類をアップロード・ご提出ください。'},
+      {ph:'STEP 3 ・ 作成', t:'申請書類の作成・ご確認', s:'大房行政書士法人で申請書類を作成し、内容を確認します。'},
+      {ph:'STEP 4 ・ 申請', t:'入管へ申請（受付番号の発行）', s:'出入国在留管理庁へ申請します。受付番号が発行されます。'}
+    ]},
+    {dur:'約2〜4ヶ月', range:'STEP 5〜6', label:'審査〜交付', steps:[
+      {ph:'STEP 5 ・ 審査', t:'入管による審査', s:'審査期間です。追加書類（追完）のご依頼が入ることがあります。'},
+      {ph:'STEP 6 ・ 交付', t:'許可・在留カード／認定証明書の交付', s:'許可後、在留カードまたは在留資格認定証明書が交付されます。'}
+    ]}
   ];
   var h='<div class="section-title">📌 申請の流れ</div>';
-  h+='<div class="info-card" style="padding:18px 18px 12px;"><div class="tl">';
-  steps.forEach(function(st,i){
-    h+='<div class="tl-item"><div class="tl-dot">'+(i+1)+'</div>'
-      +'<div class="tl-phase">'+st.ph+'</div>'
-      +'<div class="tl-ttl">'+st.t+'</div>'
-      +'<div class="tl-sub">'+st.s+'</div></div>';
+  h+='<div class="info-card" style="padding:18px 18px 12px;">';
+  var n=0;
+  groups.forEach(function(g){
+    h+='<div class="tl-grp"><span class="tl-dur">⏱ 目安 '+g.dur+'</span><span class="tl-grp-l">'+g.label+'（'+g.range+'）</span></div>';
+    h+='<div class="tl">';
+    g.steps.forEach(function(st){
+      n++;
+      h+='<div class="tl-item"><div class="tl-dot">'+n+'</div>'
+        +'<div class="tl-phase">'+st.ph+'</div>'
+        +'<div class="tl-ttl">'+st.t+'</div>'
+        +'<div class="tl-sub">'+st.s+'</div></div>';
+    });
+    h+='</div>';
   });
-  h+='</div></div>';
-  h+='<div class="note">所要期間は申請種別や入管の混雑状況により変わります。現在の状況は担当者からのご連絡や各タブの表示でご確認ください。</div>';
+  h+='</div>';
+  h+='<div class="note">所要期間はあくまで目安で、申請種別や入管の混雑状況により前後します。現在の状況は担当者からのご連絡や各タブの表示でご確認ください。</div>';
   return h;
 }
 
