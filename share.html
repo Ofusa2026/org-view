@@ -367,7 +367,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260608.01</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260611.01</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -792,6 +792,24 @@ function getMlitStatus(c){
   var oa=c.otherAgencies; if(!oa||typeof oa!=='object') return '';
   if(!oa.kokkoSho || oa.kokkoSho_fuyo) return '';
   return oa.kokkoSho_status || '未設定';
+}
+
+// ver.20260611: 取引先向け表示用に国交省ステータスを丸める。
+//   申請側の細かい段階（ナンバリング未対応/済み・精査・申請可能）は外部に見せず、
+//   「準備中（企業ボール）／準備中（大房ボール）／申請済み」の粒度に変換する。
+//   補正系（補正未着手〜補正完了）・完了(許可済)・その他は変換せずそのまま表示。
+var MLIT_DISPLAY_MAP={
+  '準備中(企業ボール)':'準備中(企業ボール)',
+  '準備中(ナンバリング未対応)':'準備中(大房ボール)',
+  '準備中(ナンバリング済み)':'準備中(大房ボール)',
+  '精査 / 事前補正依頼中(企業ボール)':'準備中(企業ボール)',
+  '申請可能':'準備中(大房ボール)',
+  '申請済み':'申請済み'
+};
+function getMlitStatusDisplay(c){
+  var s=getMlitStatus(c);
+  if(!s) return s;
+  return MLIT_DISPLAY_MAP[s] || s;  // マップにない（補正系・完了など）はそのまま
 }
 
 // お知らせモーダル内のステータス表示ラベル
@@ -1258,7 +1276,8 @@ function buildRow(c){
     stHtml='<span class="st-badge" style="background:'+extCol.bg+';color:'+extCol.col+';border-color:'+extCol.bor+';" title="内部ステータス: '+esc(c.status||'')+'">'+esc(extLabel)+'</span>';
   }
   // 他機関申請（建設分野のみ表示）
-  var mlitLabel=getMlitStatus(c);
+  // ver.20260611: 取引先向けに丸めた表示ステータスを使用（実値は getMlitStatus）
+  var mlitLabel=getMlitStatusDisplay(c);
   var mlitHtml=mlitLabel?'<span class="st-badge" style="background:#f8fafc;color:'+agencyColor(mlitLabel)+';border-color:#e2e8f0;">🏗 国交省 '+esc(mlitLabel)+'</span>':'<span style="color:#d1d5db;font-size:10px;">—</span>';
   var tCls=c.appType==='認定'?'type-nintei':c.appType==='更新'?'type-koshin':c.appType==='変更'?'type-henkou':'type-other';
   var typeHtml=c.appType?'<span class="type-badge '+tCls+'">'+esc(c.appType)+'</span>':'—';
