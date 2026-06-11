@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | 大房行政書士法人</title>
-<!-- ver.20260609.02: 受入企業（所属機関）向け進捗・提出書類確認ページ たたき台 -->
+<!-- ver.20260611.01: 申請の流れをタイムライン型(applicant準拠)に変更／郵送物の案内を事務所情報の上に移動 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -63,6 +63,21 @@ tr:hover td{background:#fcfcfd;}
 .loading{padding:48px 16px;text-align:center;color:#64748b;}
 .error-box{margin:40px auto;max-width:420px;background:#fff;border:1px solid #fecaca;border-radius:12px;padding:24px;text-align:center;color:#b91c1c;font-weight:700;}
 .flow ol{margin-left:18px;line-height:1.9;font-size:12px;color:#334155;}
+.info-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:6px 16px;}
+.mail-note{margin-top:8px;font-size:11.5px;color:#dc2626;font-weight:800;}
+.tl{position:relative;}
+.tl-item{position:relative;padding:0 0 20px 46px;}
+.tl-item:last-child{padding-bottom:2px;}
+.tl-item::before{content:'';position:absolute;left:15px;top:30px;bottom:-2px;width:2px;background:#dbe3ef;}
+.tl-item:last-child::before{display:none;}
+.tl-dot{position:absolute;left:0;top:2px;width:32px;height:32px;border-radius:50%;background:#0f2040;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;box-shadow:0 2px 5px rgba(15,32,64,.25);}
+.tl-phase{font-size:10px;font-weight:800;color:#2563eb;letter-spacing:.03em;margin-bottom:2px;}
+.tl-ttl{font-size:13.5px;font-weight:800;color:#0f2040;line-height:1.5;}
+.tl-sub{font-size:11.5px;color:#64748b;margin-top:3px;line-height:1.6;}
+.tl-grp{display:flex;align-items:center;gap:8px;margin:2px 0 12px;flex-wrap:wrap;}
+.tl-dur{display:inline-flex;align-items:center;gap:5px;background:#0f2040;color:#fff;font-size:11.5px;font-weight:800;padding:4px 11px;border-radius:999px;white-space:nowrap;}
+.tl-grp-l{font-size:11px;font-weight:700;color:#64748b;}
+.tl-grp+.tl{padding-top:2px;}
 /* パスワード画面 */
 .pass-screen{position:fixed;inset:0;background:#0f2040;display:flex;align-items:center;justify-content:center;z-index:500;padding:20px;}
 .pass-box{background:#fff;border-radius:16px;padding:30px 26px;width:100%;max-width:340px;text-align:center;}
@@ -616,6 +631,7 @@ function renderPeople(){
 
 function renderOffice(){
   var h='<div class="section-title">🏢 事務所情報</div>';
+  h+='<div style="margin-bottom:10px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;font-size:12.5px;color:#b91c1c;font-weight:800;">📮 郵送物は下記の住所へお送りください</div>';
   h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:18px;line-height:1.9;font-size:13.5px;color:#1e293b;">'
     +'<div style="font-size:16px;font-weight:900;color:#0f2040;margin-bottom:8px;">大房行政書士法人</div>'
     +'〒144-0052<br>東京都大田区蒲田５丁目１１−１０ FUNDES蒲田8階'
@@ -623,21 +639,40 @@ function renderOffice(){
     +'<div style="margin-top:6px;">代表行政書士：大房 明良</div>'
     +'<div>メール：<a href="mailto:mail@gyosei-cambo.com" style="color:#2563eb;font-weight:700;text-decoration:none;">mail@gyosei-cambo.com</a></div>'
     +'</div>';
-  h+='<div style="margin-top:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;font-size:12.5px;color:#b91c1c;font-weight:800;">📮 郵送物はここに送ってください</div>';
   return h;
 }
 
 function renderFlow(){
-  return '<div class="section-title">📌 申請の流れ</div>'
-    +'<div class="doc-co flow" style="padding:16px 20px;"><ol>'
-    +'<li>ヒアリング・必要書類のご案内</li>'
-    +'<li>御社・人材からの書類ご提出（「提出書類」タブ参照）</li>'
-    +'<li>大房行政書士法人にて申請書類作成・ご確認依頼</li>'
-    +'<li>入管へ申請（受付番号の発行）</li>'
-    +'<li>審査</li>'
-    +'<li>許可・在留カード/認定証明書の交付</li>'
-    +'</ol></div>'
-    +'<div class="note">各申請の現在地は「申請一覧」タブの「進捗」列でご確認いただけます。</div>';
+  var groups=[
+    {dur:'約1ヶ月', range:'STEP 1〜4', label:'ご準備〜申請', steps:[
+      {ph:'STEP 1 ・ ヒアリング', t:'ヒアリング・必要書類のご案内', s:'担当者がヒアリングを行い、ご提出いただく書類をご案内します。'},
+      {ph:'STEP 2 ・ ご提出', t:'書類のご提出', s:'「提出書類」タブの一覧に沿って、御社・人材から書類をご提出ください。'},
+      {ph:'STEP 3 ・ 作成', t:'申請書類の作成・ご確認', s:'大房行政書士法人で申請書類を作成し、内容を確認します。'},
+      {ph:'STEP 4 ・ 申請', t:'入管へ申請（受付番号の発行）', s:'出入国在留管理庁へ申請します。受付番号が発行されます。'}
+    ]},
+    {dur:'約2〜4ヶ月', range:'STEP 5〜6', label:'審査〜交付', steps:[
+      {ph:'STEP 5 ・ 審査', t:'入管による審査', s:'審査期間です。追加書類（追完）のご依頼が入ることがあります。'},
+      {ph:'STEP 6 ・ 交付', t:'許可・在留カード／認定証明書の交付', s:'許可後、在留カードまたは在留資格認定証明書が交付されます。'}
+    ]}
+  ];
+  var h='<div class="section-title">📌 申請の流れ</div>';
+  h+='<div class="info-card" style="padding:18px 18px 12px;">';
+  var n=0;
+  groups.forEach(function(g){
+    h+='<div class="tl-grp"><span class="tl-dur">⏱ 目安 '+g.dur+'</span><span class="tl-grp-l">'+g.label+'（'+g.range+'）</span></div>';
+    h+='<div class="tl">';
+    g.steps.forEach(function(st){
+      n++;
+      h+='<div class="tl-item"><div class="tl-dot">'+n+'</div>'
+        +'<div class="tl-phase">'+st.ph+'</div>'
+        +'<div class="tl-ttl">'+st.t+'</div>'
+        +'<div class="tl-sub">'+st.s+'</div></div>';
+    });
+    h+='</div>';
+  });
+  h+='</div>';
+  h+='<div class="note">所要期間はあくまで目安で、申請種別や入管の混雑状況により前後します。各申請の現在地は「申請一覧」タブの「進捗」列でご確認いただけます。</div>';
+  return h;
 }
 
 function casesByKey(key){
