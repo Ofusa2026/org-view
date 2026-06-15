@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260615.test14: 書類チェックリストで「不要」にした書類を非表示に -->
 <!-- ver.20260615.test13: 人材詳細モーダルを追加（人材ボタン→persons全項目＋書類チェックリスト doc_check全状態）。get_org_share RPCも persons全項目/docCheck全org返却に改修 -->
 <!-- ver.20260615.test12: 新規案件依頼から「大房側担当(toritsugisha)」入力欄を撤去。取次は担当と別概念・田中デフォで支援機関側が入れるものではないため -->
 <!-- ver.20260615.test11: 新規案件依頼で機関側担当者欄を常時表示（一覧から選択可）。アイデムは拠点=東のときのみ必須 -->
@@ -384,7 +385,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test13 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test14 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1001,15 +1002,15 @@ function _docChecklistHtml(docMap){
   if(!docMap){ return '<div style="font-size:11px;color:#94a3b8;">書類データはありません。</div>'; }
   var names=Object.keys(docMap).sort(function(a,b){return a.localeCompare(b,'ja');});
   if(!names.length){ return '<div style="font-size:11px;color:#94a3b8;">書類データはありません。</div>'; }
-  var nDone=0,nSkip=0,nMiss=0;
+  var nDone=0,nMiss=0;
   var rows='';
   names.forEach(function(name){
     var d=docMap[name]||{};
     var skipped=_hasV(d.skip)||_hasV(d.autoskip);
+    if(skipped) return; // ver.20260615.test14: 不要にした書類は非表示
     var received=_hasV(d.staff);
     var label,bg,col,bor;
-    if(skipped){ label='不要'; bg='#f1f5f9'; col='#64748b'; bor='#e2e8f0'; nSkip++; }
-    else if(received){ label='受領済'; bg='#f0fdf4'; col='#16a34a'; bor='#86efac'; nDone++; }
+    if(received){ label='受領済'; bg='#f0fdf4'; col='#16a34a'; bor='#86efac'; nDone++; }
     else { label='未受領'; bg='#fff7ed'; col='#ea580c'; bor='#fed7aa'; nMiss++; }
     var sub='';
     if(received && d.staff) sub+='<span style="color:#16a34a;">受領 '+esc(d.staff)+'</span>';
@@ -1021,8 +1022,9 @@ function _docChecklistHtml(docMap){
       +'<div style="flex:1;min-width:0;"><div style="font-size:11.5px;color:#0f2040;font-weight:600;word-break:break-word;">'+esc(name)+'</div>'+(sub?'<div style="font-size:10px;margin-top:1px;">'+sub+'</div>':'')+sashi+'</div>'
       +'</div>';
   });
+  if(!rows){ return '<div style="font-size:11px;color:#94a3b8;">表示する書類はありません（不要分は非表示）。</div>'; }
   var summary='<div style="display:flex;gap:8px;margin-bottom:8px;font-size:10.5px;font-weight:700;">'
-    +'<span style="color:#16a34a;">受領済 '+nDone+'</span><span style="color:#ea580c;">未受領 '+nMiss+'</span><span style="color:#94a3b8;">不要 '+nSkip+'</span></div>';
+    +'<span style="color:#16a34a;">受領済 '+nDone+'</span><span style="color:#ea580c;">未受領 '+nMiss+'</span></div>';
   return summary+'<div>'+rows+'</div>';
 }
 function _personSectionTitle(t){ return '<div style="font-size:13px;font-weight:800;color:#0f2040;margin:16px 0 8px;padding-bottom:5px;border-bottom:2px solid #e2e8f0;">'+t+'</div>'; }
