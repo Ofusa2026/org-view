@@ -9,7 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | 大房行政書士法人</title>
 <!-- ver.20260609.04: 申請人（人材本人）向け進捗・提出書類確認ページ -->
-<!-- ver.20260615.test26: 在留期限・特例期限・一時帰国を同一カードセクションに統合＋特例期限の説明追加 -->
+<!-- ver.20260615.test27: 一時帰国の報告のお願いを大きめの警告ボックス表示に変更 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -72,6 +72,8 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .next-box.ok .next-l{color:#15803d;}
 .next-t{font-size:13.5px;font-weight:700;color:#0f2040;line-height:1.6;}
 .exp-note{font-size:11px;color:#64748b;margin:-4px 0 14px;padding:0 2px;line-height:1.6;}
+.tr-report{font-size:14.5px;font-weight:800;color:#92400e;background:#fffbeb;border:1.5px solid #fcd34d;border-radius:11px;padding:13px 15px;margin:8px 0 16px;line-height:1.85;}
+.tr-report rt{font-weight:600;}
 .contact-btns{display:flex;gap:10px;}
 .cbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;font-size:13px;font-weight:800;padding:13px;border-radius:11px;color:#fff;}
 .cbtn.tel{background:#16a34a;}
@@ -122,7 +124,7 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .pass-btn{width:100%;padding:11px;background:#0f2040;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:800;cursor:pointer;}
 .pass-err{color:#dc2626;font-size:11px;margin-top:10px;min-height:14px;}
 .hide{display:none!important;}
-/* ver.20260615.test26: ふりがな */
+/* ver.20260615.test27: ふりがな */
 ruby{ruby-align:center;}
 rt{font-size:.52em;color:#64748b;font-weight:400;letter-spacing:0;line-height:1;}
 body{line-height:1.45;}
@@ -189,7 +191,7 @@ function callRpc(fn,args){return fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'
 function getParam(k){return new URLSearchParams(location.search).get(k);}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-/* ===================== ver.20260615.test26: 多言語化(8言語)＋ふりがな ===================== */
+/* ===================== ver.20260615.test27: 多言語化(8言語)＋ふりがな ===================== */
 var curLang='ja';
 try{ var _sv=localStorage.getItem('applicantLang'); if(_sv&&['ja','en','vi','id','zh','km','my','th'].indexOf(_sv)>=0) curLang=_sv; }catch(e){}
 
@@ -770,7 +772,7 @@ function renderStatus(){
   h+='<div class="cards">'+cards+'</div>';
   if(_expireTracked(c)||trk) h+='<div class="exp-note">'+t('exp_note')+'</div>';
   h+='<div class="exp-note">'+t('tokurei_explain')+'</div>';
-  h+='<div class="exp-note" style="color:#b45309;">'+t('temp_return_report')+'</div>';
+  h+='<div class="tr-report">'+t('temp_return_report')+'</div>';
   // 申請情報
   h+='<div class="info-card">';
   h+='<div class="dt-row"><span class="dt-l">'+t('info_company')+'</span><span class="dt-v">'+_dv(c.company)+'</span></div>';
