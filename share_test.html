@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260615.test13: 人材詳細モーダルを追加（人材ボタン→persons全項目＋書類チェックリスト doc_check全状態）。get_org_share RPCも persons全項目/docCheck全org返却に改修 -->
 <!-- ver.20260615.test12: 新規案件依頼から「大房側担当(toritsugisha)」入力欄を撤去。取次は担当と別概念・田中デフォで支援機関側が入れるものではないため -->
 <!-- ver.20260615.test11: 新規案件依頼で機関側担当者欄を常時表示（一覧から選択可）。アイデムは拠点=東のときのみ必須 -->
 <!-- ver.20260615.test10: 「担当」一覧列を2段表示（上=登録支援機関側 client_staff / 下=大房側 staff）。全機関・全タブ（進行中/申請記録/審査完了/窓口）で表示 -->
@@ -383,7 +384,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test12 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test13 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -402,6 +403,19 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   </div>
 </div>
 <!-- ver.20260603.03: What's New モーダル -->
+<!-- ver.20260615.test13: 人材詳細モーダル -->
+<div id="personModalBg" class="nc-modal-bg" onclick="if(event.target===this)closePersonModal()">
+  <div class="nc-modal" style="max-width:min(960px,96vw);">
+    <div class="nc-modal-head">
+      <div class="nc-modal-title" id="personModalTitle">👤 人材詳細</div>
+      <button class="nc-modal-close" onclick="closePersonModal()">✕</button>
+    </div>
+    <div class="nc-modal-body" id="personModalBody"></div>
+    <div class="nc-modal-foot">
+      <button class="whats-new-ok" onclick="closePersonModal()">閉じる</button>
+    </div>
+  </div>
+</div>
 <div id="whatsNewModalBg" class="whats-new-bg" onclick="if(event.target===this)closeWhatsNew()">
   <div class="whats-new-modal">
     <div class="whats-new-head">
@@ -906,6 +920,8 @@ var DONE_ST=['完了','審査完了'];
 // ver.20260518.13: ダッシュボードを追加、完了の表記をシンプル化
 var GROUPS=[{id:'dashboard',label:'ダッシュボード'},{id:'active',label:'進行中'},{id:'done',label:'発行済み・完了'},{id:'all',label:'すべて'}];
 var allCases=[],allReceipts=[],allShinsa=[],allCerts=[],allIntakes=[],orgProfile=null,intakeStaff=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus='',filterCompany='',filterClientStaff='',sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,isGpMode=false,gpInfoByCaseId={},_imeOn=false; // ver.20260606.13: allCerts追加（認定証PDF）
+// ver.20260615.test13: 人材詳細モーダル用 — 人材レコード/書類チェックリスト
+var allPersons={}, personDocsAll={}, coDocsAll={};
 // コメント入力中フラグ（再描画スキップ用）。値は編集中のtextareaのid（例:'owncmt_xxx'）
 var _editingCommentId=null;
 var _editingImeOn=false;
@@ -965,6 +981,92 @@ function _getStaffByCaseId(caseId){
   }
   return '';
 }
+// ver.20260615.test13: 人材詳細モーダルを開くボタン
+function _personBtn(cid){
+  return '<button type="button" onclick="event.stopPropagation();openPersonModal(\''+cid+'\')" style="margin-top:3px;display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:700;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:2px 7px;cursor:pointer;line-height:1.4;" title="人材詳細・書類チェックリストを表示">👤 人材詳細</button>';
+}
+// ===== ver.20260615.test13: 人材詳細モーダル =====
+var PERSON_LABELS={applicant_name_en:'氏名(英)',nationality:'国籍',nationality_code:'国籍コード',gender:'性別',birthdate:'生年月日',age:'年齢',birth_place:'出生地',spouse:'配偶者',occupation:'職業',residence_card:'在留カード番号',passport:'旅券番号',passport_expiry:'旅券有効期限',residence_status:'在留資格',expire:'在留期限',stay_period:'在留期間',stay_period_other:'在留期間(その他)',hoped_stay_period:'希望する在留期間',entry_date:'入国年月日',first_entry:'初回入国',arrival_port:'上陸港',visa_place:'査証発給地',stay_years:'在留年数',stay_months:'在留月数',total_stay_year:'通算在留(年)',total_stay_month:'通算在留(月)',home_country_address:'本国住所',jp_postal_code:'郵便番号',address:'住所',jp_detail_address:'住所(詳細)',jp_address:'日本の住所',tel_num:'電話番号',phone:'電話',cel_phone:'携帯',email:'メール',notification_email:'通知用メール',contract_start:'契約開始',contract_end:'契約終了',hire_date:'雇用日',salary:'報酬',skill_eval_type:'技能評価方法',skill_exam_1:'技能試験1',skill_exam_loc_1:'技能試験実施地1',skill_exam_2:'技能試験2',skill_exam_loc_2:'技能試験実施地2',skill_exam_3:'技能試験3',skill_exam_loc_3:'技能試験実施地3',jp_eval_type:'日本語評価方法',jp_exam_1:'日本語試験1',jp_exam_loc_1:'日本語試験実施地1',jp_exam_2:'日本語試験2',jp_exam_loc_2:'日本語試験実施地2',jp_exam_3:'日本語試験3',jp_exam_loc_3:'日本語試験実施地3',gijutsu_type:'技人国 種別',gijutsu_work:'技人国 業務',gijutsu_proof:'技人国 立証',edu_country:'最終学歴(国)',education:'最終学歴',school_name:'学校名',completion_date:'卒業年月',major:'専攻',major_detail:'専攻詳細',experience:'実務経験',past_entry:'過去の入国',past_entry_count:'過去入国回数',past_entry_from:'過去入国(自)',past_entry_to:'過去入国(至)',past_coe:'過去の認定証',past_coe_count:'過去認定証回数',past_coe_denied:'過去不交付',deportation:'退去強制歴',deportation_count:'退去回数',deportation_date:'退去年月日',temp_return:'一時帰国(予定)',temp_return_in:'一時帰国(入国)',temp_return_flag:'一時帰国フラグ',temp_return_in_tbd:'一時帰国(未定)',ccus_worker_id:'CCUS技能者ID',kokko_jyuji_koujigyo:'国交 従事工事業',kokko_jisyo_salary:'国交 自社給与',line_group_id:'LINEグループID',case_id:'ケースID',updated_at:'更新日時'};
+var PERSON_FIELD_ORDER=['applicant_name_en','nationality','nationality_code','gender','birthdate','age','birth_place','spouse','occupation','residence_card','passport','passport_expiry','residence_status','expire','stay_period','stay_period_other','hoped_stay_period','entry_date','first_entry','arrival_port','visa_place','stay_years','stay_months','total_stay_year','total_stay_month','home_country_address','jp_postal_code','address','jp_detail_address','jp_address','tel_num','phone','cel_phone','email','notification_email','contract_start','contract_end','hire_date','salary','skill_eval_type','skill_exam_1','skill_exam_loc_1','skill_exam_2','skill_exam_loc_2','skill_exam_3','skill_exam_loc_3','jp_eval_type','jp_exam_1','jp_exam_loc_1','jp_exam_2','jp_exam_loc_2','jp_exam_3','jp_exam_loc_3','gijutsu_type','gijutsu_work','gijutsu_proof','edu_country','education','school_name','completion_date','major','major_detail','experience','past_entry','past_entry_count','past_entry_from','past_entry_to','past_coe','past_coe_count','past_coe_denied','deportation','deportation_count','deportation_date','temp_return','temp_return_in','temp_return_flag','temp_return_in_tbd','ccus_worker_id','kokko_jyuji_koujigyo','kokko_jisyo_salary','line_group_id','case_id','updated_at'];
+// PDF/構造化データは別セクションで扱うためグリッドから除外
+var PERSON_GRID_SKIP={application_cert_pdf_urls:1,custody_receipt_pdf_urls:1,kyoryoku_pdf_urls:1,drive_urls:1,kokko_drive_url:1,kokko_checklist:1,missing_docs:1,extra:1};
+function _hasV(v){ return v!=null && v!=='' && v!=='false'; }
+function _pdfLinks(arr,label,color){
+  if(!Array.isArray(arr)||!arr.length) return '';
+  var h='';
+  arr.forEach(function(x,i){ var u=(x&&x.url)?x.url:(typeof x==='string'?x:''); if(!u)return; h+='<a href="'+esc(u)+'" target="_blank" rel="noopener" style="display:inline-block;margin:2px 6px 2px 0;font-size:11px;color:'+color+';background:#fff;border:1px solid '+color+'44;border-radius:6px;padding:3px 9px;text-decoration:none;">📄 '+esc(label)+(arr.length>1?(' '+(i+1)):'')+'</a>'; });
+  return h;
+}
+function _docChecklistHtml(docMap){
+  if(!docMap){ return '<div style="font-size:11px;color:#94a3b8;">書類データはありません。</div>'; }
+  var names=Object.keys(docMap).sort(function(a,b){return a.localeCompare(b,'ja');});
+  if(!names.length){ return '<div style="font-size:11px;color:#94a3b8;">書類データはありません。</div>'; }
+  var nDone=0,nSkip=0,nMiss=0;
+  var rows='';
+  names.forEach(function(name){
+    var d=docMap[name]||{};
+    var skipped=_hasV(d.skip)||_hasV(d.autoskip);
+    var received=_hasV(d.staff);
+    var label,bg,col,bor;
+    if(skipped){ label='不要'; bg='#f1f5f9'; col='#64748b'; bor='#e2e8f0'; nSkip++; }
+    else if(received){ label='受領済'; bg='#f0fdf4'; col='#16a34a'; bor='#86efac'; nDone++; }
+    else { label='未受領'; bg='#fff7ed'; col='#ea580c'; bor='#fed7aa'; nMiss++; }
+    var sub='';
+    if(received && d.staff) sub+='<span style="color:#16a34a;">受領 '+esc(d.staff)+'</span>';
+    if(_hasV(d.req) && d.req!=='1' && d.req!=='true'){ sub+=(sub?'　':'')+'<span style="color:#94a3b8;">案内 '+esc(d.req)+'</span>'; }
+    var sashi='';
+    if(_hasV(d.sashimodoshi)){ try{ var sj=JSON.parse(d.sashimodoshi); if(sj&&sj.text){ sashi='<div style="margin-top:3px;font-size:10px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:5px;padding:3px 7px;">⚠ 差戻し: '+esc(sj.text)+(sj.by?'（'+esc(sj.by)+'）':'')+'</div>'; } }catch(e){ sashi='<div style="margin-top:3px;font-size:10px;color:#b45309;">⚠ 差戻し: '+esc(String(d.sashimodoshi))+'</div>'; } }
+    rows+='<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 4px;border-bottom:1px solid #f1f5f9;">'
+      +'<span style="flex-shrink:0;font-size:10px;font-weight:800;color:'+col+';background:'+bg+';border:1px solid '+bor+';border-radius:5px;padding:2px 8px;min-width:54px;text-align:center;">'+label+'</span>'
+      +'<div style="flex:1;min-width:0;"><div style="font-size:11.5px;color:#0f2040;font-weight:600;word-break:break-word;">'+esc(name)+'</div>'+(sub?'<div style="font-size:10px;margin-top:1px;">'+sub+'</div>':'')+sashi+'</div>'
+      +'</div>';
+  });
+  var summary='<div style="display:flex;gap:8px;margin-bottom:8px;font-size:10.5px;font-weight:700;">'
+    +'<span style="color:#16a34a;">受領済 '+nDone+'</span><span style="color:#ea580c;">未受領 '+nMiss+'</span><span style="color:#94a3b8;">不要 '+nSkip+'</span></div>';
+  return summary+'<div>'+rows+'</div>';
+}
+function _personSectionTitle(t){ return '<div style="font-size:13px;font-weight:800;color:#0f2040;margin:16px 0 8px;padding-bottom:5px;border-bottom:2px solid #e2e8f0;">'+t+'</div>'; }
+function openPersonModal(caseId){
+  var c=allCases.find(function(x){return x.id===caseId;})||{};
+  var p=allPersons[caseId]||{};
+  var disp=c.name||c.applicant||(p.applicant_name_en||'')||'（未設定）';
+  document.getElementById('personModalTitle').innerHTML='👤 '+esc(disp);
+  var h='';
+  // ヘッダ要約
+  h+='<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:6px;">';
+  h+='<div style="font-size:16px;font-weight:900;color:#0f2040;">'+esc(disp)+(p.applicant_name_en?'　<span style="font-size:12px;color:#64748b;font-weight:600;">'+esc(p.applicant_name_en)+'</span>':'')+'</div>';
+  h+='<div style="font-size:11.5px;color:#475569;margin-top:3px;">'+esc(c.company||'—')+(c.appType?'　/　'+esc(c.appType):'')+(c.residenceStatus?'　/　'+esc(c.residenceStatus):'')+'</div>';
+  var stExt=getExternalStatus(c.status);
+  if(stExt) h+='<div style="margin-top:6px;"><span class="st-badge" style="background:#eef2ff;color:#4338ca;border-color:#c7d2fe;">'+esc(stExt)+'</span></div>';
+  h+='</div>';
+  // 案件情報（大房側/機関側担当など、ケース固有）
+  var caseRows=[['担当(機関側)',c.clientStaff],['担当(大房側)',c.staff],['受付番号',c.receiptNo],['受取方法',c.deliveryMethod==='window'?'窓口受取':'郵送'],['在留期限',c.expire],['帰国予定',c.tempReturn]];
+  var caseGrid=''; caseRows.forEach(function(r){ if(_hasV(r[1])) caseGrid+='<div style="padding:4px 0;"><span style="display:inline-block;min-width:96px;font-size:10px;color:#94a3b8;font-weight:700;">'+esc(r[0])+'</span><span style="font-size:12px;color:#1e293b;">'+esc(String(r[1]))+'</span></div>'; });
+  if(caseGrid){ h+=_personSectionTitle('📌 案件情報'); h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 18px;">'+caseGrid+'</div>'; }
+  // 人材情報グリッド（全項目）
+  var ordered=PERSON_FIELD_ORDER.filter(function(k){return k in p;});
+  var rest=Object.keys(p).filter(function(k){return PERSON_FIELD_ORDER.indexOf(k)<0 && !PERSON_GRID_SKIP[k];});
+  var keys=ordered.concat(rest);
+  var grid='';
+  keys.forEach(function(k){ var v=p[k]; if(v==null||v===''||typeof v==='object') return; var lab=PERSON_LABELS[k]||k; grid+='<div style="padding:4px 0;"><span style="display:inline-block;min-width:96px;font-size:10px;color:#94a3b8;font-weight:700;vertical-align:top;">'+esc(lab)+'</span><span style="font-size:12px;color:#1e293b;word-break:break-word;">'+esc(String(v))+'</span></div>'; });
+  if(grid){ h+=_personSectionTitle('🧑 人材情報'); h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 18px;">'+grid+'</div>'; }
+  else { h+=_personSectionTitle('🧑 人材情報'); h+='<div style="font-size:11px;color:#94a3b8;">この人材の詳細情報は登録されていません。</div>'; }
+  // PDF・リンク
+  var pdfs=_pdfLinks(p.application_cert_pdf_urls,'認定証','#7c3aed')+_pdfLinks(p.custody_receipt_pdf_urls,'預かり証','#0369a1')+_pdfLinks(p.kyoryoku_pdf_urls,'協力PDF','#0891b2');
+  if(pdfs){ h+=_personSectionTitle('📄 書類PDF'); h+='<div>'+pdfs+'</div>'; }
+  // 書類チェックリスト（人材）
+  h+=_personSectionTitle('✅ 書類チェックリスト（人材）');
+  h+=_docChecklistHtml(personDocsAll[caseId]);
+  // 企業書類チェックリスト
+  if(c.companyId && coDocsAll[c.companyId]){
+    h+=_personSectionTitle('🏢 書類チェックリスト（企業）');
+    h+=_docChecklistHtml(coDocsAll[c.companyId]);
+  }
+  document.getElementById('personModalBody').innerHTML=h;
+  document.getElementById('personModalBg').classList.add('open');
+}
+function closePersonModal(){ var el=document.getElementById('personModalBg'); if(el) el.classList.remove('open'); }
+// ===== /人材詳細モーダル =====
 // ver.20260615.test09: 担当セルを2段表示（上=登録支援機関側 client_staff / 下=大房側 staff）
 function _tantoCell2(clientStaff, ofusaStaff){
   var cs=(clientStaff||'').trim(), os=(ofusaStaff||'').trim();
@@ -1318,6 +1420,7 @@ function buildRow(c){
       +'<div style="line-height:1.45;">'+_rsBadge+'<span style="font-size:13px;font-weight:700;color:#0f2040;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</span></div>'
       +'<div style="font-size:12px;color:#475569;font-weight:600;white-space:normal;word-break:break-word;line-height:1.4;margin-top:3px;">'+esc(c.company||'—')+'</div>'
       +'<div style="font-size:12px;color:#6b7280;line-height:1.4;">'+esc(c.applicant||'')+'</div>'
+      +'<div>'+_personBtn(cid)+'</div>'
       +'</td>';
     // 組合受領日 独立列
     h+='<td data-col-key="gpKumiaiDate" style="white-space:nowrap;text-align:center;font-size:12px;color:#475569;min-width:96px;">'
@@ -1341,7 +1444,7 @@ function buildRow(c){
     }
     h+='<td data-col-key="gpIraiDate" style="white-space:nowrap;text-align:center;min-width:100px;">'+_iraiHtml+'</td>';
   } else {
-    h+='<td data-col-key="name" style="min-width:110px;max-width:170px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;word-break:break-word;">'+esc(c.applicant||'')+'</div></td>'; // ver.20260612.test05: 幅を半分に＋折り返し
+    h+='<td data-col-key="name" style="min-width:110px;max-width:170px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;word-break:break-word;">'+esc(c.applicant||'')+'</div>'+_personBtn(cid)+'</td>'; // ver.20260612.test05: 幅を半分に＋折り返し
   }
   h+='<td data-col-key="company" style="min-width:110px;max-width:170px;"><div style="font-size:10px;font-weight:600;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(c.company||'—')+'</div></td>'; // ver.20260612.test05: 折り返して全文表示
   h+='<td data-col-key="appType" style="width:48px;">'+typeHtml+'</td>';
@@ -3732,6 +3835,22 @@ async function loadData(){
       if(isGpMode){var g=gpInfoByCaseId[c.id];base.gpOrderId=g?(g.oc_order_id||''):'';base.gpKumiaiDate=g?(g.kumiai_receipt_date||''):'';base.gpIraiDate=g?(g.irai_date||''):'';}
       return base;
     });
+    // ver.20260615.test13: 書類チェックリストを全モードで構築（人材詳細モーダル用）。doc_key は "prefix::書類名"
+    personDocsAll={}; coDocsAll={};
+    (data.docCheck||[]).forEach(function(r){
+      if(!r||!r.doc_key) return; var idx=r.doc_key.indexOf('::'); if(idx<0) return;
+      var prefix=r.doc_key.substring(0,idx); var name=r.doc_key.substring(idx+2);
+      if(!personDocsAll[r.case_id]) personDocsAll[r.case_id]={};
+      if(!personDocsAll[r.case_id][name]) personDocsAll[r.case_id][name]={};
+      personDocsAll[r.case_id][name][prefix]=r.value;
+    });
+    (data.coDocCheck||[]).forEach(function(r){
+      if(!r||!r.doc_key) return; var idx=r.doc_key.indexOf('::'); if(idx<0) return;
+      var prefix=r.doc_key.substring(0,idx); var name=r.doc_key.substring(idx+2);
+      if(!coDocsAll[r.co_id]) coDocsAll[r.co_id]={};
+      if(!coDocsAll[r.co_id][name]) coDocsAll[r.co_id][name]={};
+      coDocsAll[r.co_id][name][prefix]=r.value;
+    });
     if(isGpMode){
       allCases=allCases.filter(function(c){ return !!gpInfoByCaseId[c.id]; });
       try{
@@ -3767,7 +3886,9 @@ async function loadData(){
       }catch(eDc){ console.warn('[gp missing docs]', eDc); }
     }
 
+    allPersons={};
     (data.persons||[]).forEach(function(p){
+      if(p && p.case_id) allPersons[p.case_id]=p; // ver.20260615.test13: 人材詳細モーダル用に全項目保持
       var c=allCases.find(function(x){return x.id===p.case_id;}); if(!c) return;
       if(p.temp_return && !c.tempReturn) c.tempReturn=p.temp_return;
       if(Array.isArray(p.application_cert_pdf_urls)&&p.application_cert_pdf_urls.length){var lastCert=p.application_cert_pdf_urls[p.application_cert_pdf_urls.length-1];if(lastCert&&lastCert.url)c.applicationCertPdfUrl=lastCert.url;}
