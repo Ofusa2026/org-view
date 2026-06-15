@@ -9,7 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | 大房行政書士法人</title>
 <!-- ver.20260609.04: 申請人（人材本人）向け進捗・提出書類確認ページ -->
-<!-- ver.20260615.test23: 多言語化(8言語)＋ふりがな＋変更依頼フォーム＋提出書類の取り方をインライン常時表示(?クリック廃止) -->
+<!-- ver.20260615.test24: 多言語8言語＋ふりがな＋変更依頼＋取り方インライン＋専門級に注釈(技能実習者のみ) -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -44,6 +44,7 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .doc-item:last-child{border-bottom:none;}
 .doc-row{display:flex;align-items:center;gap:10px;padding:10px 16px;}
 .doc-help{padding:0 16px 12px 46px;}
+.doc-subnote{padding:0 16px 8px 46px;font-size:11px;color:#b45309;font-weight:700;line-height:1.5;}
 .doc-help-l{font-size:10.5px;font-weight:800;color:#2563eb;margin-bottom:4px;}
 .doc-help-v{font-size:12px;color:#1e3a5f;line-height:1.65;background:#eff6ff;border-left:3px solid #3b82f6;border-radius:8px;padding:9px 11px;white-space:pre-line;}
 .doc-help-img{margin-top:8px;text-align:left;}
@@ -121,7 +122,7 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .pass-btn{width:100%;padding:11px;background:#0f2040;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:800;cursor:pointer;}
 .pass-err{color:#dc2626;font-size:11px;margin-top:10px;min-height:14px;}
 .hide{display:none!important;}
-/* ver.20260615.test23: ふりがな */
+/* ver.20260615.test24: ふりがな */
 ruby{ruby-align:center;}
 rt{font-size:.52em;color:#64748b;font-weight:400;letter-spacing:0;line-height:1;}
 body{line-height:1.45;}
@@ -188,7 +189,7 @@ function callRpc(fn,args){return fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'
 function getParam(k){return new URLSearchParams(location.search).get(k);}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-/* ===================== ver.20260615.test23: 多言語化(8言語)＋ふりがな ===================== */
+/* ===================== ver.20260615.test24: 多言語化(8言語)＋ふりがな ===================== */
 var curLang='ja';
 try{ var _sv=localStorage.getItem('applicantLang'); if(_sv&&['ja','en','vi','id','zh','km','my','th'].indexOf(_sv)>=0) curLang=_sv; }catch(e){}
 
@@ -214,7 +215,7 @@ var FZ={
  '内容':'ないよう','誤り':'あやまり','訂正':'ていせい','変更':'へんこう','送信日時':'そうしんにちじ','送信':'そうしん','取り消す':'とりけす','取消':'とりけし','確認':'かくにん','設定':'せってい','入力':'にゅうりょく','数字':'すうじ','桁':'けた',
  '通信環境':'つうしんかんきょう','失敗':'しっぱい','無効':'むこう','対象':'たいしょう','読み込み':'よみこみ','流れ':'ながれ','目安':'めやす','混雑状況':'こんざつじょうきょう','状況':'じょうきょう','所要期間':'しょようきかん','期間':'きかん','前後':'ぜんご',
  '取得方法':'しゅとくほうほう','取得':'しゅとく','方法':'ほうほう','案内':'あんない','説明':'せつめい','発行':'はっこう','表示':'ひょうじ','預かり証':'あずかりしょう','預かり':'あずかり','許可':'きょか','交付':'こうふ','追完':'ついかん','一致':'いっち',
- '顔写真':'かおじゃしん','写真':'しゃしん','合格証':'ごうかくしょう','技能試験':'ぎのうしけん','技能':'ぎのう','試験':'しけん','日本語':'にほんご','専門級':'せんもんきゅう','専門':'せんもん',
+ '顔写真':'かおじゃしん','写真':'しゃしん','合格証':'ごうかくしょう','技能実習':'ぎのうじっしゅう','技能試験':'ぎのうしけん','技能':'ぎのう','試験':'しけん','日本語':'にほんご','専門級':'せんもんきゅう','専門':'せんもん','方':'かた',
  '所得':'しょとく','年金手帳':'ねんきんてちょう','年金':'ねんきん','手帳':'てちょう','住民票':'じゅうみんひょう','郵送物':'ゆうそうぶつ','郵送':'ゆうそう',
  '東京都':'とうきょうと','大田区':'おおたく','蒲田':'かまた','大房':'おおふさ','明良':'あきよし','様':'さま','上記':'じょうき','一般的':'いっぱんてき','画面':'がめん','日時':'にちじ',
  '月':'げつ','日':'にち','級':'きゅう','約':'やく','件':'けん','番号':'ばんごう'
@@ -311,6 +312,7 @@ var TR={
  doc_done_state:{ja:'提出済（または不要）',en:'Submitted (or N/A)',vi:'Đã nộp (hoặc không cần)',id:'Diserahkan (atau tidak perlu)',zh:'已提交（或不需要）',km:'បានដាក់ (ឬមិនចាំបាច់)',my:'တင်ပြီး (သို့မလို)',th:'ยื่นแล้ว (หรือไม่จำเป็น)'},
  doc_todo_state:{ja:'未提出',en:'Not submitted',vi:'Chưa nộp',id:'Belum diserahkan',zh:'未提交',km:'មិនទាន់ដាក់',my:'မတင်ရသေး',th:'ยังไม่ได้ยื่น'},
  doc_required:{ja:'必須',en:'Required',vi:'Bắt buộc',id:'Wajib',zh:'必须',km:'ចាំបាច់',my:'မဖြစ်မနေ',th:'จำเป็น'},
+ note_specialist:{ja:'※ 技能実習をしていた方のみ',en:'* Only for those who did Technical Intern Training (Ginou Jisshu)',vi:'* Chỉ dành cho người từng thực tập kỹ năng (Ginou Jisshu)',id:'* Hanya untuk yang pernah ikut Pemagangan Teknis (Ginou Jisshu)',zh:'※ 仅限曾参加技能实习（技能実習）者',km:'* សម្រាប់តែអ្នកធ្លាប់កម្មសិក្សាជំនាញ (Ginou Jisshu) ប៉ុណ្ណោះ',my:'* နည်းပညာအလုပ်သင် (Ginou Jisshu) လုပ်ခဲ့ဖူးသူများသာ',th:'* เฉพาะผู้ที่เคยฝึกงานทักษะ (Ginou Jisshu) เท่านั้น'},
  /* ヘルプモーダル */
  dh_method:{ja:'取得方法・説明',en:'How to obtain / Notes',vi:'Cách lấy / Ghi chú',id:'Cara memperoleh / Catatan',zh:'取得方法・说明',km:'របៀបទទួលបាន / កំណត់សម្គាល់',my:'ရယူနည်း / မှတ်ချက်',th:'วิธีขอรับ / หมายเหตุ'},
  dh_sample_prep:{ja:'📷 サンプル画像準備中',en:'📷 Sample image coming soon',vi:'📷 Ảnh mẫu sắp có',id:'📷 Gambar contoh segera',zh:'📷 样本图准备中',km:'📷 រូបភាពគំរូនឹងមានឆាប់ៗ',my:'📷 နမူနာပုံ မကြာမီရရှိမည်',th:'📷 รูปตัวอย่างเร็วๆ นี้'},
@@ -1163,6 +1165,7 @@ function renderDocs(){
     var hd=getDocHelp(d.l);
     h+='<div class="doc-item">';
     h+='<div class="doc-row"><span class="doc-ico">'+ico+'</span><div class="doc-name">'+nameHtml+reqMark+'</div><span class="doc-state '+stCls+'">'+stTxt+'</span></div>';
+    if(String(d.l).indexOf('専門級')>=0){ h+='<div class="doc-subnote">'+t('note_specialist')+'</div>'; }
     if(hd){ h+=docHelpInline(hd); }
     h+='</div>';
   });
