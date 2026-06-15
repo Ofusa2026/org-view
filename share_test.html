@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260615.test20: 人材情報グリッドからケースID・国交自社給与・通算在留(年/月)を非表示 -->
 <!-- ver.20260615.test19: 人材モーダルの「書類PDF」を一覧のPDF列(buildDownloadCell)と同一表示に統一（旧: 認定証/預かり証の全配列を誤ラベルで列挙していた） -->
 <!-- ver.20260615.test18: 担当者リストの「保存」ボタンの絵文字が U0001f4be と文字化けしていた不具合修正（💾に） -->
 <!-- ver.20260615.test17: 支援事業所・支援担当者が表示されない不具合修正（offices/supportStaffListはprofileと同階層で返るためorgProfileに統合）。アイデムの2事業所が表示される -->
@@ -389,7 +390,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test19 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test20 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -996,7 +997,8 @@ function _personBtn(cid){
 var PERSON_LABELS={applicant_name_en:'氏名(英)',nationality:'国籍',nationality_code:'国籍コード',gender:'性別',birthdate:'生年月日',age:'年齢',birth_place:'出生地',spouse:'配偶者',occupation:'職業',residence_card:'在留カード番号',passport:'旅券番号',passport_expiry:'旅券有効期限',residence_status:'在留資格',expire:'在留期限',stay_period:'在留期間',stay_period_other:'在留期間(その他)',hoped_stay_period:'希望する在留期間',entry_date:'入国年月日',first_entry:'初回入国',arrival_port:'上陸港',visa_place:'査証発給地',stay_years:'在留年数',stay_months:'在留月数',total_stay_year:'通算在留(年)',total_stay_month:'通算在留(月)',home_country_address:'本国住所',jp_postal_code:'郵便番号',address:'住所',jp_detail_address:'住所(詳細)',jp_address:'日本の住所',tel_num:'電話番号',phone:'電話',cel_phone:'携帯',email:'メール',notification_email:'通知用メール',contract_start:'契約開始',contract_end:'契約終了',hire_date:'雇用日',salary:'報酬',skill_eval_type:'技能評価方法',skill_exam_1:'技能試験1',skill_exam_loc_1:'技能試験実施地1',skill_exam_2:'技能試験2',skill_exam_loc_2:'技能試験実施地2',skill_exam_3:'技能試験3',skill_exam_loc_3:'技能試験実施地3',jp_eval_type:'日本語評価方法',jp_exam_1:'日本語試験1',jp_exam_loc_1:'日本語試験実施地1',jp_exam_2:'日本語試験2',jp_exam_loc_2:'日本語試験実施地2',jp_exam_3:'日本語試験3',jp_exam_loc_3:'日本語試験実施地3',gijutsu_type:'技人国 種別',gijutsu_work:'技人国 業務',gijutsu_proof:'技人国 立証',edu_country:'最終学歴(国)',education:'最終学歴',school_name:'学校名',completion_date:'卒業年月',major:'専攻',major_detail:'専攻詳細',experience:'実務経験',past_entry:'過去の入国',past_entry_count:'過去入国回数',past_entry_from:'過去入国(自)',past_entry_to:'過去入国(至)',past_coe:'過去の認定証',past_coe_count:'過去認定証回数',past_coe_denied:'過去不交付',deportation:'退去強制歴',deportation_count:'退去回数',deportation_date:'退去年月日',temp_return:'一時帰国(予定)',temp_return_in:'一時帰国(入国)',temp_return_flag:'一時帰国フラグ',temp_return_in_tbd:'一時帰国(未定)',ccus_worker_id:'CCUS技能者ID',kokko_jyuji_koujigyo:'国交 従事工事業',kokko_jisyo_salary:'国交 自社給与',line_group_id:'LINEグループID',case_id:'ケースID',updated_at:'更新日時'};
 var PERSON_FIELD_ORDER=['applicant_name_en','nationality','nationality_code','gender','birthdate','age','birth_place','spouse','occupation','residence_card','passport','passport_expiry','residence_status','expire','stay_period','stay_period_other','hoped_stay_period','entry_date','first_entry','arrival_port','visa_place','stay_years','stay_months','total_stay_year','total_stay_month','home_country_address','jp_postal_code','address','jp_detail_address','jp_address','tel_num','phone','cel_phone','email','notification_email','contract_start','contract_end','hire_date','salary','skill_eval_type','skill_exam_1','skill_exam_loc_1','skill_exam_2','skill_exam_loc_2','skill_exam_3','skill_exam_loc_3','jp_eval_type','jp_exam_1','jp_exam_loc_1','jp_exam_2','jp_exam_loc_2','jp_exam_3','jp_exam_loc_3','gijutsu_type','gijutsu_work','gijutsu_proof','edu_country','education','school_name','completion_date','major','major_detail','experience','past_entry','past_entry_count','past_entry_from','past_entry_to','past_coe','past_coe_count','past_coe_denied','deportation','deportation_count','deportation_date','temp_return','temp_return_in','temp_return_flag','temp_return_in_tbd','ccus_worker_id','kokko_jyuji_koujigyo','kokko_jisyo_salary','line_group_id','case_id','updated_at'];
 // PDF/構造化データは別セクションで扱うためグリッドから除外
-var PERSON_GRID_SKIP={application_cert_pdf_urls:1,custody_receipt_pdf_urls:1,kyoryoku_pdf_urls:1,drive_urls:1,kokko_drive_url:1,kokko_checklist:1,missing_docs:1,extra:1};
+var PERSON_GRID_SKIP={application_cert_pdf_urls:1,custody_receipt_pdf_urls:1,kyoryoku_pdf_urls:1,drive_urls:1,kokko_drive_url:1,kokko_checklist:1,missing_docs:1,extra:1,
+  case_id:1,kokko_jisyo_salary:1,total_stay_year:1,total_stay_month:1}; // ver.20260615.test20: ケースID/国交自社給与/通算在留(年・月)は非表示
 function _hasV(v){ return v!=null && v!=='' && v!=='false'; }
 function _docChecklistHtml(docMap){
   if(!docMap){ return '<div style="font-size:11px;color:#94a3b8;">書類データはありません。</div>'; }
@@ -1046,7 +1048,7 @@ function openPersonModal(caseId){
   var caseGrid=''; caseRows.forEach(function(r){ if(_hasV(r[1])) caseGrid+='<div style="padding:4px 0;"><span style="display:inline-block;min-width:96px;font-size:10px;color:#94a3b8;font-weight:700;">'+esc(r[0])+'</span><span style="font-size:12px;color:#1e293b;">'+esc(String(r[1]))+'</span></div>'; });
   if(caseGrid){ h+=_personSectionTitle('📌 案件情報'); h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 18px;">'+caseGrid+'</div>'; }
   // 人材情報グリッド（全項目）
-  var ordered=PERSON_FIELD_ORDER.filter(function(k){return k in p;});
+  var ordered=PERSON_FIELD_ORDER.filter(function(k){return (k in p) && !PERSON_GRID_SKIP[k];});
   var rest=Object.keys(p).filter(function(k){return PERSON_FIELD_ORDER.indexOf(k)<0 && !PERSON_GRID_SKIP[k];});
   var keys=ordered.concat(rest);
   var grid='';
