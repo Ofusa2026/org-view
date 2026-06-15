@@ -9,7 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | 大房行政書士法人</title>
 <!-- ver.20260609.04: 申請人（人材本人）向け進捗・提出書類確認ページ -->
-<!-- ver.20260615.test21: 多言語化(ja/en/vi/id/zh・🌐手動切替)＋ふりがな自動付与(ja時)＋本人情報タブに変更依頼フォーム -->
+<!-- ver.20260615.test23: 多言語化(8言語)＋ふりがな＋変更依頼フォーム＋提出書類の取り方をインライン常時表示(?クリック廃止) -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -40,8 +40,14 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .ct-l{font-size:10px;color:#94a3b8;font-weight:700;width:34px;flex-shrink:0;}
 .ct-v{font-size:14px;font-weight:800;color:#0f2040;}
 .doc-co{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:6px 0;}
-.doc-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f1f5f9;}
-.doc-row:last-child{border-bottom:none;}
+.doc-item{border-bottom:1px solid #f1f5f9;}
+.doc-item:last-child{border-bottom:none;}
+.doc-row{display:flex;align-items:center;gap:10px;padding:10px 16px;}
+.doc-help{padding:0 16px 12px 46px;}
+.doc-help-l{font-size:10.5px;font-weight:800;color:#2563eb;margin-bottom:4px;}
+.doc-help-v{font-size:12px;color:#1e3a5f;line-height:1.65;background:#eff6ff;border-left:3px solid #3b82f6;border-radius:8px;padding:9px 11px;white-space:pre-line;}
+.doc-help-img{margin-top:8px;text-align:left;}
+.doc-help-img img{max-width:100%;max-height:240px;border-radius:8px;border:1px solid #e2e8f0;}
 .doc-ico{font-size:15px;width:20px;text-align:center;flex-shrink:0;}
 .doc-name{flex:1;font-size:12px;font-weight:600;}
 .doc-state{font-size:10px;font-weight:800;padding:2px 9px;border-radius:99px;flex-shrink:0;}
@@ -115,7 +121,7 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .pass-btn{width:100%;padding:11px;background:#0f2040;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:800;cursor:pointer;}
 .pass-err{color:#dc2626;font-size:11px;margin-top:10px;min-height:14px;}
 .hide{display:none!important;}
-/* ver.20260615.test21: ふりがな */
+/* ver.20260615.test23: ふりがな */
 ruby{ruby-align:center;}
 rt{font-size:.52em;color:#64748b;font-weight:400;letter-spacing:0;line-height:1;}
 body{line-height:1.45;}
@@ -182,9 +188,9 @@ function callRpc(fn,args){return fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'
 function getParam(k){return new URLSearchParams(location.search).get(k);}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-/* ===================== ver.20260615.test21: 多言語化＋ふりがな ===================== */
+/* ===================== ver.20260615.test23: 多言語化(8言語)＋ふりがな ===================== */
 var curLang='ja';
-try{ var _sv=localStorage.getItem('applicantLang'); if(_sv&&['ja','en','vi','id','zh'].indexOf(_sv)>=0) curLang=_sv; }catch(e){}
+try{ var _sv=localStorage.getItem('applicantLang'); if(_sv&&['ja','en','vi','id','zh','km','my','th'].indexOf(_sv)>=0) curLang=_sv; }catch(e){}
 
 /* --- ふりがな辞書（語→読み）。fz()はja時のみ<ruby>付与、絵文字はコードポイント単位で保持 --- */
 var FZ={
@@ -235,148 +241,148 @@ function fz(text){
 
 /* --- 翻訳辞書 --- */
 var TR={
- header_title:{ja:'提出書類・進捗確認',en:'Documents & Status',vi:'Hồ sơ & Tiến độ',id:'Dokumen & Status',zh:'提交材料・进度确认'},
- sama:{ja:'様',en:'',vi:'',id:'',zh:'先生/女士'},
- tab_status:{ja:'進捗',en:'Status',vi:'Tiến độ',id:'Status',zh:'进度'},
- tab_docs:{ja:'提出書類',en:'Documents',vi:'Hồ sơ',id:'Dokumen',zh:'提交材料'},
- tab_pdf:{ja:'発行書類',en:'Issued',vi:'Đã cấp',id:'Diterbitkan',zh:'发行材料'},
- tab_info:{ja:'本人情報',en:'My Info',vi:'Thông tin',id:'Info Saya',zh:'本人信息'},
- tab_office:{ja:'事務所情報等',en:'Our Office',vi:'Văn phòng',id:'Kantor',zh:'事务所信息'},
- tab_flow:{ja:'申請の流れ',en:'Process',vi:'Quy trình',id:'Alur',zh:'申请流程'},
+ header_title:{ja:'提出書類・進捗確認',en:'Documents & Status',vi:'Hồ sơ & Tiến độ',id:'Dokumen & Status',zh:'提交材料・进度确认',km:'ឯកសារ & ស្ថានភាព',my:'စာရွက်စာတမ်း & အခြေအနေ',th:'เอกสาร & สถานะ'},
+ sama:{ja:'様',en:'',vi:'',id:'',zh:'先生/女士',km:'',my:'',th:''},
+ tab_status:{ja:'進捗',en:'Status',vi:'Tiến độ',id:'Status',zh:'进度',km:'ស្ថានភាព',my:'အခြေအနေ',th:'สถานะ'},
+ tab_docs:{ja:'提出書類',en:'Documents',vi:'Hồ sơ',id:'Dokumen',zh:'提交材料',km:'ឯកសារ',my:'စာရွက်စာတမ်း',th:'เอกสาร'},
+ tab_pdf:{ja:'発行書類',en:'Issued',vi:'Đã cấp',id:'Diterbitkan',zh:'发行材料',km:'បានចេញ',my:'ထုတ်ပြီး',th:'ออกแล้ว'},
+ tab_info:{ja:'本人情報',en:'My Info',vi:'Thông tin',id:'Info Saya',zh:'本人信息',km:'ព័ត៌មានរបស់ខ្ញុំ',my:'ကျွန်ုပ်အချက်အလက်',th:'ข้อมูลของฉัน'},
+ tab_office:{ja:'事務所情報等',en:'Our Office',vi:'Văn phòng',id:'Kantor',zh:'事务所信息',km:'ការិយាល័យ',my:'ရုံးခန်း',th:'สำนักงาน'},
+ tab_flow:{ja:'申請の流れ',en:'Process',vi:'Quy trình',id:'Alur',zh:'申请流程',km:'ដំណើរការ',my:'လုပ်ငန်းစဉ်',th:'ขั้นตอน'},
  /* パスワード */
- pass_title_enter:{ja:'パスワード（4桁）を入力してください',en:'Enter your 4-digit password',vi:'Nhập mật khẩu 4 chữ số',id:'Masukkan kata sandi 4 digit',zh:'请输入4位密码'},
- pass_title_setup:{ja:'パスワードを設定してください',en:'Set your password',vi:'Đặt mật khẩu',id:'Atur kata sandi',zh:'请设置密码'},
- pass_setup_note:{ja:'初回のみ：4桁の数字を決めてください',en:'First time only: choose a 4-digit number',vi:'Chỉ lần đầu: chọn số 4 chữ số',id:'Hanya pertama kali: pilih 4 digit angka',zh:'仅首次：请决定4位数字'},
- pass_input2_ph:{ja:'もう一度（確認）',en:'Repeat (confirm)',vi:'Nhập lại (xác nhận)',id:'Ulangi (konfirmasi)',zh:'再次输入（确认）'},
- pass_btn_login:{ja:'ログイン',en:'Log in',vi:'Đăng nhập',id:'Masuk',zh:'登录'},
- pass_btn_set:{ja:'設定する',en:'Set',vi:'Đặt',id:'Atur',zh:'设置'},
- pass_err_4digit:{ja:'4桁の数字を入力してください',en:'Please enter 4 digits',vi:'Vui lòng nhập 4 chữ số',id:'Masukkan 4 digit angka',zh:'请输入4位数字'},
- pass_err_mismatch:{ja:'確認用と一致しません',en:'Does not match confirmation',vi:'Không khớp với xác nhận',id:'Tidak cocok dengan konfirmasi',zh:'与确认输入不一致'},
- pass_setting:{ja:'設定中...',en:'Setting...',vi:'Đang đặt...',id:'Mengatur...',zh:'设置中...'},
- pass_set_fail:{ja:'設定に失敗しました。通信環境をご確認ください',en:'Setup failed. Please check your connection',vi:'Đặt thất bại. Vui lòng kiểm tra kết nối',id:'Pengaturan gagal. Periksa koneksi Anda',zh:'设置失败。请检查网络环境'},
- pass_checking:{ja:'確認中...',en:'Checking...',vi:'Đang kiểm tra...',id:'Memeriksa...',zh:'确认中...'},
- pass_wrong:{ja:'パスワードが違います',en:'Incorrect password',vi:'Mật khẩu không đúng',id:'Kata sandi salah',zh:'密码错误'},
+ pass_title_enter:{ja:'パスワード（4桁）を入力してください',en:'Enter your 4-digit password',vi:'Nhập mật khẩu 4 chữ số',id:'Masukkan kata sandi 4 digit',zh:'请输入4位密码',km:'សូមបញ្ចូលលេខសម្ងាត់ ៤ ខ្ទង់',my:'၄ လုံးပါ စကားဝှက်ထည့်ပါ',th:'กรุณากรอกรหัสผ่าน 4 หลัก'},
+ pass_title_setup:{ja:'パスワードを設定してください',en:'Set your password',vi:'Đặt mật khẩu',id:'Atur kata sandi',zh:'请设置密码',km:'សូមកំណត់លេខសម្ងាត់',my:'စကားဝှက်သတ်မှတ်ပါ',th:'ตั้งรหัสผ่านของคุณ'},
+ pass_setup_note:{ja:'初回のみ：4桁の数字を決めてください',en:'First time only: choose a 4-digit number',vi:'Chỉ lần đầu: chọn số 4 chữ số',id:'Hanya pertama kali: pilih 4 digit angka',zh:'仅首次：请决定4位数字',km:'លើកដំបូងតែប៉ុណ្ណោះ៖ ជ្រើសរើសលេខ ៤ ខ្ទង់',my:'ပထမဆုံးအကြိမ်သာ၊ ၄ လုံးဂဏန်းရွေးပါ',th:'ครั้งแรกเท่านั้น: เลือกตัวเลข 4 หลัก'},
+ pass_input2_ph:{ja:'もう一度（確認）',en:'Repeat (confirm)',vi:'Nhập lại (xác nhận)',id:'Ulangi (konfirmasi)',zh:'再次输入（确认）',km:'បញ្ចូលម្ដងទៀត (បញ្ជាក់)',my:'ထပ်ထည့်ပါ (အတည်ပြု)',th:'กรอกอีกครั้ง (ยืนยัน)'},
+ pass_btn_login:{ja:'ログイン',en:'Log in',vi:'Đăng nhập',id:'Masuk',zh:'登录',km:'ចូល',my:'ဝင်ရန်',th:'เข้าสู่ระบบ'},
+ pass_btn_set:{ja:'設定する',en:'Set',vi:'Đặt',id:'Atur',zh:'设置',km:'កំណត់',my:'သတ်မှတ်',th:'ตั้งค่า'},
+ pass_err_4digit:{ja:'4桁の数字を入力してください',en:'Please enter 4 digits',vi:'Vui lòng nhập 4 chữ số',id:'Masukkan 4 digit angka',zh:'请输入4位数字',km:'សូមបញ្ចូលលេខ ៤ ខ្ទង់',my:'၄ လုံးဂဏန်းထည့်ပါ',th:'กรุณากรอกตัวเลข 4 หลัก'},
+ pass_err_mismatch:{ja:'確認用と一致しません',en:'Does not match confirmation',vi:'Không khớp với xác nhận',id:'Tidak cocok dengan konfirmasi',zh:'与确认输入不一致',km:'មិនត្រូវគ្នានឹងការបញ្ជាក់ទេ',my:'အတည်ပြုချက်နှင့်မကိုက်ညီပါ',th:'ไม่ตรงกับการยืนยัน'},
+ pass_setting:{ja:'設定中...',en:'Setting...',vi:'Đang đặt...',id:'Mengatur...',zh:'设置中...',km:'កំពុងកំណត់...',my:'သတ်မှတ်နေသည်...',th:'กำลังตั้งค่า...'},
+ pass_set_fail:{ja:'設定に失敗しました。通信環境をご確認ください',en:'Setup failed. Please check your connection',vi:'Đặt thất bại. Vui lòng kiểm tra kết nối',id:'Pengaturan gagal. Periksa koneksi Anda',zh:'设置失败。请检查网络环境',km:'ការកំណត់បរាជ័យ។ សូមពិនិត្យការតភ្ជាប់',my:'သတ်မှတ်မှုမအောင်မြင်ပါ။ ချိတ်ဆက်မှုစစ်ဆေးပါ',th:'ตั้งค่าล้มเหลว กรุณาตรวจสอบการเชื่อมต่อ'},
+ pass_checking:{ja:'確認中...',en:'Checking...',vi:'Đang kiểm tra...',id:'Memeriksa...',zh:'确认中...',km:'កំពុងពិនិត្យ...',my:'စစ်ဆေးနေသည်...',th:'กำลังตรวจสอบ...'},
+ pass_wrong:{ja:'パスワードが違います',en:'Incorrect password',vi:'Mật khẩu không đúng',id:'Kata sandi salah',zh:'密码错误',km:'លេខសម្ងាត់មិនត្រឹមត្រូវ',my:'စကားဝှက်မှားနေသည်',th:'รหัสผ่านไม่ถูกต้อง'},
  /* エラー */
- err_badurl:{ja:'URLが正しくありません。',en:'The URL is invalid.',vi:'URL không hợp lệ.',id:'URL tidak valid.',zh:'URL不正确。'},
- err_invalid:{ja:'このURLは無効です。担当者にお問い合わせください。',en:'This URL is invalid. Please contact your representative.',vi:'URL này không hợp lệ. Vui lòng liên hệ người phụ trách.',id:'URL ini tidak valid. Hubungi penanggung jawab Anda.',zh:'此URL无效。请联系负责人。'},
- err_load:{ja:'読み込みエラー: {n}',en:'Loading error: {n}',vi:'Lỗi tải: {n}',id:'Kesalahan memuat: {n}',zh:'加载错误: {n}'},
- err_notfound:{ja:'対象の申請が見つかりません。',en:'No matching application was found.',vi:'Không tìm thấy hồ sơ phù hợp.',id:'Permohonan yang cocok tidak ditemukan.',zh:'未找到对应的申请。'},
+ err_badurl:{ja:'URLが正しくありません。',en:'The URL is invalid.',vi:'URL không hợp lệ.',id:'URL tidak valid.',zh:'URL不正确。',km:'URL មិនត្រឹមត្រូវ។',my:'URL မမှန်ကန်ပါ။',th:'URL ไม่ถูกต้อง'},
+ err_invalid:{ja:'このURLは無効です。担当者にお問い合わせください。',en:'This URL is invalid. Please contact your representative.',vi:'URL này không hợp lệ. Vui lòng liên hệ người phụ trách.',id:'URL ini tidak valid. Hubungi penanggung jawab Anda.',zh:'此URL无效。请联系负责人。',km:'URL នេះមិនត្រឹមត្រូវ។ សូមទាក់ទងអ្នកទទួលបន្ទុក។',my:'ဤ URL မမှန်ပါ။ တာဝန်ခံကိုဆက်သွယ်ပါ။',th:'URL นี้ใช้ไม่ได้ กรุณาติดต่อผู้รับผิดชอบ'},
+ err_load:{ja:'読み込みエラー: {n}',en:'Loading error: {n}',vi:'Lỗi tải: {n}',id:'Kesalahan memuat: {n}',zh:'加载错误: {n}',km:'កំហុសក្នុងការផ្ទុក៖ {n}',my:'ဖွင့်ရာတွင်အမှား: {n}',th:'โหลดผิดพลาด: {n}'},
+ err_notfound:{ja:'対象の申請が見つかりません。',en:'No matching application was found.',vi:'Không tìm thấy hồ sơ phù hợp.',id:'Permohonan yang cocok tidak ditemukan.',zh:'未找到对应的申请。',km:'រកមិនឃើញពាក្យសុំដែលត្រូវគ្នាទេ។',my:'ကိုက်ညီသောလျှောက်လွှာ မတွေ့ပါ။',th:'ไม่พบคำขอที่ตรงกัน'},
  /* 依頼事項 / お願い */
- todo_title:{ja:'📌 依頼事項',en:'📌 To-do',vi:'📌 Việc cần làm',id:'📌 Tugas',zh:'📌 待办事项'},
- todo_hearing:{ja:'1. ヒアリングフォーム回答',en:'1. Answer the hearing form',vi:'1. Trả lời phiếu phỏng vấn',id:'1. Isi formulir wawancara',zh:'1. 回答问询表'},
- todo_docs:{ja:'2. 必要書類提出',en:'2. Submit required documents',vi:'2. Nộp hồ sơ cần thiết',id:'2. Serahkan dokumen yang diperlukan',zh:'2. 提交必要材料'},
- st_answered:{ja:'回答済み',en:'Answered',vi:'Đã trả lời',id:'Sudah dijawab',zh:'已回答'},
- st_unanswered:{ja:'未回答',en:'Not answered',vi:'Chưa trả lời',id:'Belum dijawab',zh:'未回答'},
- doc_submitted:{ja:'提出済み',en:'Submitted',vi:'Đã nộp',id:'Sudah diserahkan',zh:'已提交'},
- doc_remaining:{ja:'残り{n}件',en:'{n} left',vi:'Còn {n}',id:'Sisa {n}',zh:'剩余{n}件'},
- doc_preparing:{ja:'準備中',en:'Preparing',vi:'Đang chuẩn bị',id:'Sedang disiapkan',zh:'准备中'},
- next_ask_title:{ja:'👉 あなたへのお願い',en:'👉 Action needed',vi:'👉 Việc bạn cần làm',id:'👉 Yang perlu Anda lakukan',zh:'👉 请您配合'},
- next_hearing:{ja:'ヒアリングフォームにご回答ください',en:'Please answer the hearing form',vi:'Vui lòng trả lời phiếu phỏng vấn',id:'Mohon isi formulir wawancara',zh:'请回答问询表'},
- next_docs:{ja:'必要書類をご提出ください（残{n}件）',en:'Please submit the required documents ({n} left)',vi:'Vui lòng nộp hồ sơ cần thiết (còn {n})',id:'Mohon serahkan dokumen yang diperlukan (sisa {n})',zh:'请提交必要材料（剩余{n}件）'},
- next_ok_title:{ja:'✅ ご対応ありがとうございます',en:'✅ Thank you',vi:'✅ Cảm ơn bạn',id:'✅ Terima kasih',zh:'✅ 感谢您的配合'},
- next_ok_body:{ja:'現在、大房行政書士法人で手続きを進めています。進捗はこの画面でご確認いただけます。',en:'Ofusa is now processing your application. You can check the progress on this screen.',vi:'Văn phòng Ofusa đang xử lý hồ sơ của bạn. Bạn có thể xem tiến độ tại màn hình này.',id:'Ofusa sedang memproses permohonan Anda. Anda dapat memeriksa progres di layar ini.',zh:'目前大房行政书士法人正在为您办理手续。可在此画面确认进度。'},
- cur_progress:{ja:'現在の進捗',en:'Current status',vi:'Tiến độ hiện tại',id:'Status saat ini',zh:'当前进度'},
- kokko_prefix:{ja:'🏗 国交省 ',en:'🏗 MLIT ',vi:'🏗 Bộ MLIT ',id:'🏗 MLIT ',zh:'🏗 国交省 '},
- exp_tokurei:{ja:'特例期限',en:'Special deadline',vi:'Hạn đặc biệt',id:'Batas khusus',zh:'特例期限'},
- exp_zairyu:{ja:'在留期限',en:'Residence expiry',vi:'Hạn cư trú',id:'Batas izin tinggal',zh:'在留期限'},
- exp_expired:{ja:'期限切れ {n}日',en:'expired {n}d',vi:'quá hạn {n} ngày',id:'lewat {n} hari',zh:'已过期{n}天'},
- exp_remain:{ja:'残{n}日',en:'{n}d left',vi:'còn {n} ngày',id:'sisa {n} hari',zh:'剩{n}天'},
- exp_note:{ja:'※ 在留期間の更新手続きは、在留期限のおおむね3か月前から可能です。お早めにご準備ください。',en:'* Renewal can be filed from about 3 months before the expiry date. Please prepare early.',vi:'* Có thể nộp gia hạn từ khoảng 3 tháng trước ngày hết hạn. Vui lòng chuẩn bị sớm.',id:'* Perpanjangan dapat diajukan sekitar 3 bulan sebelum tanggal kedaluwarsa. Mohon siapkan lebih awal.',zh:'※ 在留期间的更新手续，大约可从在留期限的3个月前开始办理。请尽早准备。'},
- info_company:{ja:'所属機関',en:'Employer',vi:'Cơ quan tiếp nhận',id:'Instansi',zh:'所属机构'},
- info_org:{ja:'登録支援機関',en:'Support org.',vi:'Tổ chức hỗ trợ',id:'Lembaga pendukung',zh:'登录支援机构'},
- info_cur_status:{ja:'現在の在留資格',en:'Current status',vi:'Tư cách hiện tại',id:'Status saat ini',zh:'现在的在留资格'},
- info_app_status:{ja:'申請在留資格',en:'Applied status',vi:'Tư cách xin',id:'Status diajukan',zh:'申请的在留资格'},
- info_app_type:{ja:'申請種別',en:'Application type',vi:'Loại hồ sơ',id:'Jenis permohonan',zh:'申请种类'},
- info_field:{ja:'分野・職種',en:'Field / Job',vi:'Lĩnh vực / Nghề',id:'Bidang / Pekerjaan',zh:'领域・职种'},
- info_receipt:{ja:'受付番号',en:'Receipt no.',vi:'Số tiếp nhận',id:'No. tanda terima',zh:'受理番号'},
- info_shinsa:{ja:'審査完了',en:'Review done',vi:'Thẩm tra xong',id:'Tinjauan selesai',zh:'审查完成'},
- contact_title:{ja:'🤝 大房行政書士法人担当窓口',en:'🤝 Your contact at Ofusa',vi:'🤝 Người phụ trách tại Ofusa',id:'🤝 Kontak Anda di Ofusa',zh:'🤝 大房行政书士法人负责窗口'},
- contact_dept:{ja:'部署',en:'Team',vi:'Bộ phận',id:'Tim',zh:'部门'},
- contact_staff:{ja:'担当',en:'Staff',vi:'Phụ trách',id:'Staf',zh:'负责人'},
- inquiry_title:{ja:'💬 お問い合わせ',en:'💬 Contact us',vi:'💬 Liên hệ',id:'💬 Hubungi kami',zh:'💬 咨询'},
- btn_tel:{ja:'📞 電話する',en:'📞 Call',vi:'📞 Gọi điện',id:'📞 Telepon',zh:'📞 拨打电话'},
- btn_mail:{ja:'✉️ メール',en:'✉️ Email',vi:'✉️ Email',id:'✉️ Email',zh:'✉️ 邮件'},
- doc_missing_note:{ja:'⚠️ 未提出の書類が {n}件 あります。「提出書類」タブからご確認のうえ、ご提出をお願いいたします。',en:'⚠️ You have {n} document(s) not yet submitted. Please check the "Documents" tab and submit them.',vi:'⚠️ Bạn còn {n} hồ sơ chưa nộp. Vui lòng kiểm tra tab "Hồ sơ" và nộp.',id:'⚠️ Ada {n} dokumen yang belum diserahkan. Periksa tab "Dokumen" lalu serahkan.',zh:'⚠️ 有{n}件材料尚未提交。请在「提交材料」标签确认后提交。'},
+ todo_title:{ja:'📌 依頼事項',en:'📌 To-do',vi:'📌 Việc cần làm',id:'📌 Tugas',zh:'📌 待办事项',km:'📌 ការងារត្រូវធ្វើ',my:'📌 လုပ်ရန်စာရင်း',th:'📌 สิ่งที่ต้องทำ'},
+ todo_hearing:{ja:'1. ヒアリングフォーム回答',en:'1. Answer the hearing form',vi:'1. Trả lời phiếu phỏng vấn',id:'1. Isi formulir wawancara',zh:'1. 回答问询表',km:'1. ឆ្លើយសំណួរសម្ភាសន៍',my:'1. အင်တာဗျူးပုံစံကိုဖြေပါ',th:'1. ตอบแบบฟอร์มสัมภาษณ์'},
+ todo_docs:{ja:'2. 必要書類提出',en:'2. Submit required documents',vi:'2. Nộp hồ sơ cần thiết',id:'2. Serahkan dokumen yang diperlukan',zh:'2. 提交必要材料',km:'2. ដាក់ឯកសារដែលត្រូវការ',my:'2. လိုအပ်သောစာရွက်စာတမ်းတင်ပါ',th:'2. ยื่นเอกสารที่จำเป็น'},
+ st_answered:{ja:'回答済み',en:'Answered',vi:'Đã trả lời',id:'Sudah dijawab',zh:'已回答',km:'បានឆ្លើយ',my:'ဖြေပြီး',th:'ตอบแล้ว'},
+ st_unanswered:{ja:'未回答',en:'Not answered',vi:'Chưa trả lời',id:'Belum dijawab',zh:'未回答',km:'មិនទាន់ឆ្លើយ',my:'မဖြေရသေး',th:'ยังไม่ตอบ'},
+ doc_submitted:{ja:'提出済み',en:'Submitted',vi:'Đã nộp',id:'Sudah diserahkan',zh:'已提交',km:'បានដាក់',my:'တင်ပြီး',th:'ยื่นแล้ว'},
+ doc_remaining:{ja:'残り{n}件',en:'{n} left',vi:'Còn {n}',id:'Sisa {n}',zh:'剩余{n}件',km:'នៅសល់ {n}',my:'{n} ကျန်',th:'เหลือ {n}'},
+ doc_preparing:{ja:'準備中',en:'Preparing',vi:'Đang chuẩn bị',id:'Sedang disiapkan',zh:'准备中',km:'កំពុងរៀបចំ',my:'ပြင်ဆင်နေသည်',th:'กำลังเตรียม'},
+ next_ask_title:{ja:'👉 あなたへのお願い',en:'👉 Action needed',vi:'👉 Việc bạn cần làm',id:'👉 Yang perlu Anda lakukan',zh:'👉 请您配合',km:'👉 សកម្មភាពដែលត្រូវធ្វើ',my:'👉 လုပ်ဆောင်ရန်လိုသည်',th:'👉 สิ่งที่ต้องดำเนินการ'},
+ next_hearing:{ja:'ヒアリングフォームにご回答ください',en:'Please answer the hearing form',vi:'Vui lòng trả lời phiếu phỏng vấn',id:'Mohon isi formulir wawancara',zh:'请回答问询表',km:'សូមឆ្លើយសំណួរសម្ភាសន៍',my:'အင်တာဗျူးပုံစံကိုဖြេပါ',th:'กรุณาตอบแบบฟอร์มสัมภาษณ์'},
+ next_docs:{ja:'必要書類をご提出ください（残{n}件）',en:'Please submit the required documents ({n} left)',vi:'Vui lòng nộp hồ sơ cần thiết (còn {n})',id:'Mohon serahkan dokumen yang diperlukan (sisa {n})',zh:'请提交必要材料（剩余{n}件）',km:'សូមដាក់ឯកសារដែលត្រូវការ (នៅសល់ {n})',my:'လိုအပ်သောစာရွက်စာတမ်းတင်ပါ ({n} ကျန်)',th:'กรุณายื่นเอกสารที่จำเป็น (เหลือ {n})'},
+ next_ok_title:{ja:'✅ ご対応ありがとうございます',en:'✅ Thank you',vi:'✅ Cảm ơn bạn',id:'✅ Terima kasih',zh:'✅ 感谢您的配合',km:'✅ សូមអរគុណ',my:'✅ ကျေးဇူးတင်ပါသည်',th:'✅ ขอบคุณ'},
+ next_ok_body:{ja:'現在、大房行政書士法人で手続きを進めています。進捗はこの画面でご確認いただけます。',en:'Ofusa is now processing your application. You can check the progress on this screen.',vi:'Văn phòng Ofusa đang xử lý hồ sơ của bạn. Bạn có thể xem tiến độ tại màn hình này.',id:'Ofusa sedang memproses permohonan Anda. Anda dapat memeriksa progres di layar ini.',zh:'目前大房行政书士法人正在为您办理手续。可在此画面确认进度。',km:'ឥឡូវនេះ Ofusa កំពុងដំណើរការពាក្យសុំរបស់អ្នក។ អ្នកអាចពិនិត្យវឌ្ឍនភាពនៅលើអេក្រង់នេះ។',my:'Ofusa သည် သင့်လျှောက်လွှာကို ဆောင်ရွက်နေပါသည်။ ဤစခရင်တွင် တိုးတက်မှုကို စစ်ဆေးနိုင်ပါသည်။',th:'ขณะนี้ Ofusa กำลังดำเนินการคำขอของคุณ คุณสามารถตรวจสอบความคืบหน้าได้ที่หน้าจอนี้'},
+ cur_progress:{ja:'現在の進捗',en:'Current status',vi:'Tiến độ hiện tại',id:'Status saat ini',zh:'当前进度',km:'ស្ថានភាពបច្ចុប្បន្ន',my:'လက်ရှိအခြေအနေ',th:'สถานะปัจจุบัน'},
+ kokko_prefix:{ja:'🏗 国交省 ',en:'🏗 MLIT ',vi:'🏗 Bộ MLIT ',id:'🏗 MLIT ',zh:'🏗 国交省 ',km:'🏗 MLIT ',my:'🏗 MLIT ',th:'🏗 MLIT '},
+ exp_tokurei:{ja:'特例期限',en:'Special deadline',vi:'Hạn đặc biệt',id:'Batas khusus',zh:'特例期限',km:'ថ្ងៃកំណត់ពិសេស',my:'အထူးသတ်မှတ်ရက်',th:'กำหนดพิเศษ'},
+ exp_zairyu:{ja:'在留期限',en:'Residence expiry',vi:'Hạn cư trú',id:'Batas izin tinggal',zh:'在留期限',km:'ថ្ងៃផុតកំណត់ស្នាក់នៅ',my:'နေထိုင်ခွင့်ကုန်ဆုံးရက်',th:'วันหมดอายุการพำนัก'},
+ exp_expired:{ja:'期限切れ {n}日',en:'expired {n}d',vi:'quá hạn {n} ngày',id:'lewat {n} hari',zh:'已过期{n}天',km:'ផុតកំណត់ {n} ថ្ងៃ',my:'{n} ရက်ကျော်',th:'หมดอายุ {n} วัน'},
+ exp_remain:{ja:'残{n}日',en:'{n}d left',vi:'còn {n} ngày',id:'sisa {n} hari',zh:'剩{n}天',km:'នៅសល់ {n} ថ្ងៃ',my:'{n} ရက်ကျန်',th:'เหลือ {n} วัน'},
+ exp_note:{ja:'※ 在留期間の更新手続きは、在留期限のおおむね3か月前から可能です。お早めにご準備ください。',en:'* Renewal can be filed from about 3 months before the expiry date. Please prepare early.',vi:'* Có thể nộp gia hạn từ khoảng 3 tháng trước ngày hết hạn. Vui lòng chuẩn bị sớm.',id:'* Perpanjangan dapat diajukan sekitar 3 bulan sebelum tanggal kedaluwarsa. Mohon siapkan lebih awal.',zh:'※ 在留期间的更新手续，大约可从在留期限的3个月前开始办理。请尽早准备。',km:'* ការបន្តអាចដាក់ពាក្យបានចាប់ពីប្រហែល ៣ ខែ មុនថ្ងៃផុតកំណត់។ សូមរៀបចំទុកជាមុន។',my:'* သက်တမ်းတိုးခြင်းကို ကုန်ဆုံးရက်မတိုင်မီ ၃ လ ခန့်ကတည်းက လျှောက်နိုင်သည်။ စောစီးစွာ ပြင်ဆင်ပါ။',th:'* สามารถยื่นต่ออายุได้ตั้งแต่ประมาณ 3 เดือนก่อนวันหมดอายุ กรุณาเตรียมแต่เนิ่นๆ'},
+ info_company:{ja:'所属機関',en:'Employer',vi:'Cơ quan tiếp nhận',id:'Instansi',zh:'所属机构',km:'ស្ថាប័នទទួល',my:'ခန့်အပ်သည့်အဖွဲ့အစည်း',th:'หน่วยงานที่สังกัด'},
+ info_org:{ja:'登録支援機関',en:'Support org.',vi:'Tổ chức hỗ trợ',id:'Lembaga pendukung',zh:'登录支援机构',km:'អង្គភាពគាំទ្រ',my:'ပံ့ပိုးရေးအဖွဲ့',th:'องค์กรสนับสนุน'},
+ info_cur_status:{ja:'現在の在留資格',en:'Current status',vi:'Tư cách hiện tại',id:'Status saat ini',zh:'现在的在留资格',km:'ស្ថានភាពស្នាក់នៅបច្ចុប្បន្ន',my:'လက်ရှိနေထိုင်ခွင့်',th:'สถานะการพำนักปัจจุบัน'},
+ info_app_status:{ja:'申請在留資格',en:'Applied status',vi:'Tư cách xin',id:'Status diajukan',zh:'申请的在留资格',km:'ស្ថានភាពស្នាក់នៅដែលបានស្នើ',my:'လျှောက်ထားသည့်နေထိုင်ခွင့်',th:'สถานะการพำนักที่ยื่น'},
+ info_app_type:{ja:'申請種別',en:'Application type',vi:'Loại hồ sơ',id:'Jenis permohonan',zh:'申请种类',km:'ប្រភេទពាក្យសុំ',my:'လျှောက်လွှာအမျိုးအစား',th:'ประเภทคำขอ'},
+ info_field:{ja:'分野・職種',en:'Field / Job',vi:'Lĩnh vực / Nghề',id:'Bidang / Pekerjaan',zh:'领域・职种',km:'វិស័យ / មុខរបរ',my:'နယ်ပယ် / အလုပ်',th:'สาขา / อาชีพ'},
+ info_receipt:{ja:'受付番号',en:'Receipt no.',vi:'Số tiếp nhận',id:'No. tanda terima',zh:'受理番号',km:'លេខទទួល',my:'လက်ခံအမှတ်',th:'เลขที่รับเรื่อง'},
+ info_shinsa:{ja:'審査完了',en:'Review done',vi:'Thẩm tra xong',id:'Tinjauan selesai',zh:'审查完成',km:'ការត្រួតពិនិត្យបានបញ្ចប់',my:'စိစစ်ပြီး',th:'ตรวจสอบเสร็จ'},
+ contact_title:{ja:'🤝 大房行政書士法人担当窓口',en:'🤝 Your contact at Ofusa',vi:'🤝 Người phụ trách tại Ofusa',id:'🤝 Kontak Anda di Ofusa',zh:'🤝 大房行政书士法人负责窗口',km:'🤝 អ្នកទំនាក់ទំនងនៅ Ofusa',my:'🤝 Ofusa ရှိ ဆက်သွယ်ရန်တာဝန်ခံ',th:'🤝 ผู้ติดต่อของคุณที่ Ofusa'},
+ contact_dept:{ja:'部署',en:'Team',vi:'Bộ phận',id:'Tim',zh:'部门',km:'ផ្នែក',my:'အဖွဲ့',th:'ทีม'},
+ contact_staff:{ja:'担当',en:'Staff',vi:'Phụ trách',id:'Staf',zh:'负责人',km:'អ្នកទទួលបន្ទុក',my:'တာဝန်ခံ',th:'ผู้รับผิดชอบ'},
+ inquiry_title:{ja:'💬 お問い合わせ',en:'💬 Contact us',vi:'💬 Liên hệ',id:'💬 Hubungi kami',zh:'💬 咨询',km:'💬 ទាក់ទងមកយើង',my:'💬 ဆက်သွယ်ရန်',th:'💬 ติดต่อเรา'},
+ btn_tel:{ja:'📞 電話する',en:'📞 Call',vi:'📞 Gọi điện',id:'📞 Telepon',zh:'📞 拨打电话',km:'📞 ហៅទូរស័ព្ទ',my:'📞 ဖုန်းခေါ်ရန်',th:'📞 โทร'},
+ btn_mail:{ja:'✉️ メール',en:'✉️ Email',vi:'✉️ Email',id:'✉️ Email',zh:'✉️ 邮件',km:'✉️ អ៊ីមែល',my:'✉️ အီးမေးလ်',th:'✉️ อีเมล'},
+ doc_missing_note:{ja:'⚠️ 未提出の書類が {n}件 あります。「提出書類」タブからご確認のうえ、ご提出をお願いいたします。',en:'⚠️ You have {n} document(s) not yet submitted. Please check the "Documents" tab and submit them.',vi:'⚠️ Bạn còn {n} hồ sơ chưa nộp. Vui lòng kiểm tra tab "Hồ sơ" và nộp.',id:'⚠️ Ada {n} dokumen yang belum diserahkan. Periksa tab "Dokumen" lalu serahkan.',zh:'⚠️ 有{n}件材料尚未提交。请在「提交材料」标签确认后提交。',km:'⚠️ អ្នកមានឯកសារ {n} ដែលមិនទាន់ដាក់។ សូមពិនិត្យផ្ទាំង «ឯកសារ» រួចដាក់ឯកសារ។',my:'⚠️ မတင်ရသေးသော စာရွက်စာတမ်း {n} ခု ရှိသည်။ «စာရွက်စာတမ်း» tab တွင်စစ်ဆေးပြီးတင်ပါ။',th:'⚠️ คุณมีเอกสาร {n} รายการที่ยังไม่ได้ยื่น กรุณาตรวจที่แท็บ "เอกสาร" แล้วยื่น'},
  /* 提出書類 */
- docs_title:{ja:'📄 あなたの提出書類',en:'📄 Your documents',vi:'📄 Hồ sơ của bạn',id:'📄 Dokumen Anda',zh:'📄 您的提交材料'},
- docs_note:{ja:'大房行政書士法人でチェックが入った書類は「提出済（または不要）」になります。「未提出」の書類はご提出をお願いいたします。ご不明点は担当者までご連絡ください。',en:'Documents checked by Ofusa show as "Submitted (or not needed)". Please submit any "Not submitted" documents. For questions, contact your representative.',vi:'Hồ sơ đã được Ofusa kiểm tra sẽ hiển thị "Đã nộp (hoặc không cần)". Vui lòng nộp các hồ sơ "Chưa nộp". Có thắc mắc, liên hệ người phụ trách.',id:'Dokumen yang sudah dicek Ofusa tampil sebagai "Sudah diserahkan (atau tidak perlu)". Mohon serahkan dokumen "Belum diserahkan". Ada pertanyaan, hubungi penanggung jawab.',zh:'经大房行政书士法人核对的材料会显示为「已提交（或不需要）」。请提交「未提交」的材料。如有疑问请联系负责人。'},
- btn_upload:{ja:'📤 書類をアップロード',en:'📤 Upload documents',vi:'📤 Tải hồ sơ lên',id:'📤 Unggah dokumen',zh:'📤 上传材料'},
- docs_empty:{ja:'提出書類リストはまだ準備中です。担当者にお問い合わせください。',en:'The document list is being prepared. Please contact your representative.',vi:'Danh sách hồ sơ đang được chuẩn bị. Vui lòng liên hệ người phụ trách.',id:'Daftar dokumen sedang disiapkan. Hubungi penanggung jawab Anda.',zh:'提交材料清单正在准备中。请联系负责人。'},
- doc_done_state:{ja:'提出済（または不要）',en:'Submitted (or N/A)',vi:'Đã nộp (hoặc không cần)',id:'Diserahkan (atau tidak perlu)',zh:'已提交（或不需要）'},
- doc_todo_state:{ja:'未提出',en:'Not submitted',vi:'Chưa nộp',id:'Belum diserahkan',zh:'未提交'},
- doc_required:{ja:'必須',en:'Required',vi:'Bắt buộc',id:'Wajib',zh:'必须'},
+ docs_title:{ja:'📄 あなたの提出書類',en:'📄 Your documents',vi:'📄 Hồ sơ của bạn',id:'📄 Dokumen Anda',zh:'📄 您的提交材料',km:'📄 ឯកសាររបស់អ្នក',my:'📄 သင့်စာရွက်စာတမ်းများ',th:'📄 เอกสารของคุณ'},
+ docs_note:{ja:'大房行政書士法人でチェックが入った書類は「提出済（または不要）」になります。「未提出」の書類はご提出をお願いいたします。ご不明点は担当者までご連絡ください。',en:'Documents checked by Ofusa show as "Submitted (or not needed)". Please submit any "Not submitted" documents. For questions, contact your representative.',vi:'Hồ sơ đã được Ofusa kiểm tra sẽ hiển thị "Đã nộp (hoặc không cần)". Vui lòng nộp các hồ sơ "Chưa nộp". Có thắc mắc, liên hệ người phụ trách.',id:'Dokumen yang sudah dicek Ofusa tampil sebagai "Sudah diserahkan (atau tidak perlu)". Mohon serahkan dokumen "Belum diserahkan". Ada pertanyaan, hubungi penanggung jawab.',zh:'经大房行政书士法人核对的材料会显示为「已提交（或不需要）」。请提交「未提交」的材料。如有疑问请联系负责人。',km:'ឯកសារដែល Ofusa បានពិនិត្យនឹងបង្ហាញថា «បានដាក់ (ឬមិនចាំបាច់)»។ សូមដាក់ឯកសារ «មិនទាន់ដាក់»។ មានសំណួរ សូមទាក់ទងអ្នកទទួលបន្ទុក។',my:'Ofusa စစ်ဆေးပြီးသော စာရွက်စာတမ်းများသည် «တင်ပြီး (သို့) မလို» ဟုပြသည်။ «မတင်ရသေး» စာရွက်များကို တင်ပါ။ မေးခွန်းရှိပါက တာဝန်ခံကိုဆက်သွယ်ပါ။',th:'เอกสารที่ Ofusa ตรวจแล้วจะแสดงเป็น "ยื่นแล้ว (หรือไม่จำเป็น)" กรุณายื่นเอกสารที่ "ยังไม่ได้ยื่น" หากมีข้อสงสัยกรุณาติดต่อผู้รับผิดชอบ'},
+ btn_upload:{ja:'📤 書類をアップロード',en:'📤 Upload documents',vi:'📤 Tải hồ sơ lên',id:'📤 Unggah dokumen',zh:'📤 上传材料',km:'📤 ផ្ទុកឯកសារឡើង',my:'📤 စာရွက်စာတမ်းတင်ရန်',th:'📤 อัปโหลดเอกสาร'},
+ docs_empty:{ja:'提出書類リストはまだ準備中です。担当者にお問い合わせください。',en:'The document list is being prepared. Please contact your representative.',vi:'Danh sách hồ sơ đang được chuẩn bị. Vui lòng liên hệ người phụ trách.',id:'Daftar dokumen sedang disiapkan. Hubungi penanggung jawab Anda.',zh:'提交材料清单正在准备中。请联系负责人。',km:'បញ្ជីឯកសារកំពុងរៀបចំ។ សូមទាក់ទងអ្នកទទួលបន្ទុក។',my:'စာရွက်စာတမ်းစာရင်း ပြင်ဆင်နေဆဲ။ တာဝန်ခံကိုဆက်သွယ်ပါ။',th:'รายการเอกสารกำลังเตรียมอยู่ กรุณาติดต่อผู้รับผิดชอบ'},
+ doc_done_state:{ja:'提出済（または不要）',en:'Submitted (or N/A)',vi:'Đã nộp (hoặc không cần)',id:'Diserahkan (atau tidak perlu)',zh:'已提交（或不需要）',km:'បានដាក់ (ឬមិនចាំបាច់)',my:'တင်ပြီး (သို့မလို)',th:'ยื่นแล้ว (หรือไม่จำเป็น)'},
+ doc_todo_state:{ja:'未提出',en:'Not submitted',vi:'Chưa nộp',id:'Belum diserahkan',zh:'未提交',km:'មិនទាន់ដាក់',my:'မတင်ရသေး',th:'ยังไม่ได้ยื่น'},
+ doc_required:{ja:'必須',en:'Required',vi:'Bắt buộc',id:'Wajib',zh:'必须',km:'ចាំបាច់',my:'မဖြစ်မနေ',th:'จำเป็น'},
  /* ヘルプモーダル */
- dh_method:{ja:'取得方法・説明',en:'How to obtain / Notes',vi:'Cách lấy / Ghi chú',id:'Cara memperoleh / Catatan',zh:'取得方法・说明'},
- dh_sample_prep:{ja:'📷 サンプル画像準備中',en:'📷 Sample image coming soon',vi:'📷 Ảnh mẫu sắp có',id:'📷 Gambar contoh segera',zh:'📷 样本图准备中'},
- dh_foot:{ja:'※ 上記は一般的なご案内です。詳しくは担当者にお問い合わせください。',en:'* The above is general guidance. For details, please contact your representative.',vi:'* Trên đây là hướng dẫn chung. Chi tiết vui lòng liên hệ người phụ trách.',id:'* Di atas adalah panduan umum. Untuk detail, hubungi penanggung jawab.',zh:'※ 以上为一般性说明。详情请联系负责人。'},
+ dh_method:{ja:'取得方法・説明',en:'How to obtain / Notes',vi:'Cách lấy / Ghi chú',id:'Cara memperoleh / Catatan',zh:'取得方法・说明',km:'របៀបទទួលបាន / កំណត់សម្គាល់',my:'ရယူနည်း / မှတ်ချက်',th:'วิธีขอรับ / หมายเหตุ'},
+ dh_sample_prep:{ja:'📷 サンプル画像準備中',en:'📷 Sample image coming soon',vi:'📷 Ảnh mẫu sắp có',id:'📷 Gambar contoh segera',zh:'📷 样本图准备中',km:'📷 រូបភាពគំរូនឹងមានឆាប់ៗ',my:'📷 နမူနာပုံ မကြာမီရရှိမည်',th:'📷 รูปตัวอย่างเร็วๆ นี้'},
+ dh_foot:{ja:'※ 上記は一般的なご案内です。詳しくは担当者にお問い合わせください。',en:'* The above is general guidance. For details, please contact your representative.',vi:'* Trên đây là hướng dẫn chung. Chi tiết vui lòng liên hệ người phụ trách.',id:'* Di atas adalah panduan umum. Untuk detail, hubungi penanggung jawab.',zh:'※ 以上为一般性说明。详情请联系负责人。',km:'* ខាងលើនេះជាការណែនាំទូទៅ។ សម្រាប់ព័ត៌មានលម្អិត សូមទាក់ទងអ្នកទទួលបន្ទុក។',my:'* အထက်ပါသည် ယေဘုယျလမ်းညွှန်ဖြစ်သည်။ အသေးစိတ်အတွက် တာဝန်ခံကိုဆက်သွယ်ပါ။',th:'* ข้างต้นเป็นคำแนะนำทั่วไป สำหรับรายละเอียดกรุณาติดต่อผู้รับผิดชอบ'},
  /* 発行書類 */
- pdf_title:{ja:'📑 発行書類',en:'📑 Issued documents',vi:'📑 Hồ sơ đã cấp',id:'📑 Dokumen terbit',zh:'📑 发行材料'},
- pdf_note:{ja:'大房行政書士法人が発行した書類です。発行され次第ここに表示され、タップで開けます。',en:'Documents issued by Ofusa. They appear here once issued; tap to open.',vi:'Hồ sơ do Ofusa cấp. Sẽ hiển thị tại đây khi được cấp; chạm để mở.',id:'Dokumen yang diterbitkan Ofusa. Muncul di sini setelah terbit; ketuk untuk membuka.',zh:'由大房行政书士法人发行的材料。发行后将显示于此，点击可打开。'},
- pdf_cert:{ja:'申請中証明',en:'Proof of pending application',vi:'Giấy xác nhận đang xin',id:'Bukti permohonan berjalan',zh:'申请中证明'},
- pdf_custody:{ja:'預かり証',en:'Custody receipt',vi:'Giấy biên nhận giữ hồ sơ',id:'Tanda terima penitipan',zh:'保管证'},
- pdf_receipt:{ja:'申請受付番号',en:'Application receipt no.',vi:'Số tiếp nhận hồ sơ',id:'No. tanda terima permohonan',zh:'申请受理号'},
- pdf_shinsa:{ja:'審査完了通知',en:'Review completion notice',vi:'Thông báo hoàn tất thẩm tra',id:'Pemberitahuan tinjauan selesai',zh:'审查完成通知'},
- pdf_unissued:{ja:'（未発行）',en:'(not issued)',vi:'(chưa cấp)',id:'(belum terbit)',zh:'（未发行）'},
+ pdf_title:{ja:'📑 発行書類',en:'📑 Issued documents',vi:'📑 Hồ sơ đã cấp',id:'📑 Dokumen terbit',zh:'📑 发行材料',km:'📑 ឯកសារដែលបានចេញ',my:'📑 ထုတ်ပေးပြီးစာရွက်စာတမ်း',th:'📑 เอกสารที่ออกแล้ว'},
+ pdf_note:{ja:'大房行政書士法人が発行した書類です。発行され次第ここに表示され、タップで開けます。',en:'Documents issued by Ofusa. They appear here once issued; tap to open.',vi:'Hồ sơ do Ofusa cấp. Sẽ hiển thị tại đây khi được cấp; chạm để mở.',id:'Dokumen yang diterbitkan Ofusa. Muncul di sini setelah terbit; ketuk untuk membuka.',zh:'由大房行政书士法人发行的材料。发行后将显示于此，点击可打开。',km:'ឯកសារដែលចេញដោយ Ofusa។ វានឹងបង្ហាញនៅទីនេះពេលចេញ ចុចដើម្បីបើក។',my:'Ofusa ထုတ်ပေးသော စာရွက်စာတမ်းများ။ ထုတ်ပြီးပါက ဤနေရာတွင်ပေါ်မည် နှိပ်၍ဖွင့်ပါ။',th:'เอกสารที่ออกโดย Ofusa จะแสดงที่นี่เมื่อออกแล้ว แตะเพื่อเปิด'},
+ pdf_cert:{ja:'申請中証明',en:'Proof of pending application',vi:'Giấy xác nhận đang xin',id:'Bukti permohonan berjalan',zh:'申请中证明',km:'ភស្តុតាងនៃពាក្យសុំកំពុងដំណើរការ',my:'လျှောက်ထားဆဲဖြစ်ကြောင်းသက်သေ',th:'หลักฐานคำขอที่อยู่ระหว่างดำเนินการ'},
+ pdf_custody:{ja:'預かり証',en:'Custody receipt',vi:'Giấy biên nhận giữ hồ sơ',id:'Tanda terima penitipan',zh:'保管证',km:'បង្កាន់ដៃរក្សាទុក',my:'အပ်နှံလက်ခံဖြတ်ပိုင်း',th:'ใบรับฝากเอกสาร'},
+ pdf_receipt:{ja:'申請受付番号',en:'Application receipt no.',vi:'Số tiếp nhận hồ sơ',id:'No. tanda terima permohonan',zh:'申请受理号',km:'លេខទទួលពាក្យសុំ',my:'လျှောက်လွှာလက်ခံအမှတ်',th:'เลขที่รับคำขอ'},
+ pdf_shinsa:{ja:'審査完了通知',en:'Review completion notice',vi:'Thông báo hoàn tất thẩm tra',id:'Pemberitahuan tinjauan selesai',zh:'审查完成通知',km:'សេចក្តីជូនដំណឹងបញ្ចប់ការត្រួតពិនិត្យ',my:'စိစစ်မှုပြီးစီးကြောင်းအကြောင်းကြားစာ',th:'หนังสือแจ้งตรวจสอบเสร็จสิ้น'},
+ pdf_unissued:{ja:'（未発行）',en:'(not issued)',vi:'(chưa cấp)',id:'(belum terbit)',zh:'（未发行）',km:'(មិនទាន់ចេញ)',my:'(မထုတ်ရသေး)',th:'(ยังไม่ออก)'},
  /* 本人情報 */
- info_title:{ja:'🪪 本人情報',en:'🪪 My information',vi:'🪪 Thông tin của tôi',id:'🪪 Informasi saya',zh:'🪪 本人信息'},
- info_sec_basic:{ja:'基本情報',en:'Basic info',vi:'Thông tin cơ bản',id:'Info dasar',zh:'基本信息'},
- info_name:{ja:'氏名',en:'Name',vi:'Họ tên',id:'Nama',zh:'姓名'},
- info_birth:{ja:'生年月日',en:'Date of birth',vi:'Ngày sinh',id:'Tanggal lahir',zh:'出生年月日'},
- info_gender:{ja:'性別',en:'Gender',vi:'Giới tính',id:'Jenis kelamin',zh:'性别'},
- info_nationality:{ja:'国籍',en:'Nationality',vi:'Quốc tịch',id:'Kewarganegaraan',zh:'国籍'},
- info_sec_cert:{ja:'証明書番号',en:'ID numbers',vi:'Số giấy tờ',id:'Nomor identitas',zh:'证件号码'},
- info_card_no:{ja:'在留カード番号',en:'Residence card no.',vi:'Số thẻ cư trú',id:'No. kartu izin tinggal',zh:'在留卡号'},
- info_passport_no:{ja:'パスポート番号',en:'Passport no.',vi:'Số hộ chiếu',id:'No. paspor',zh:'护照号'},
- info_passport_exp:{ja:'パスポート有効期限',en:'Passport expiry',vi:'Hạn hộ chiếu',id:'Masa berlaku paspor',zh:'护照有效期'},
- info_sec_contact:{ja:'連絡先',en:'Contact',vi:'Liên hệ',id:'Kontak',zh:'联系方式'},
- info_address:{ja:'住所',en:'Address',vi:'Địa chỉ',id:'Alamat',zh:'地址'},
- info_home_address:{ja:'母国住所',en:'Home country address',vi:'Địa chỉ ở quê',id:'Alamat negara asal',zh:'母国地址'},
- info_phone:{ja:'電話',en:'Phone',vi:'Điện thoại',id:'Telepon',zh:'电话'},
- info_email:{ja:'メール',en:'Email',vi:'Email',id:'Email',zh:'邮箱'},
+ info_title:{ja:'🪪 本人情報',en:'🪪 My information',vi:'🪪 Thông tin của tôi',id:'🪪 Informasi saya',zh:'🪪 本人信息',km:'🪪 ព័ត៌មានរបស់ខ្ញុំ',my:'🪪 ကျွန်ုပ်၏အချက်အလက်',th:'🪪 ข้อมูลของฉัน'},
+ info_sec_basic:{ja:'基本情報',en:'Basic info',vi:'Thông tin cơ bản',id:'Info dasar',zh:'基本信息',km:'ព័ត៌មានមូលដ្ឋាន',my:'အခြေခံအချက်အလက်',th:'ข้อมูลพื้นฐาน'},
+ info_name:{ja:'氏名',en:'Name',vi:'Họ tên',id:'Nama',zh:'姓名',km:'ឈ្មោះ',my:'အမည်',th:'ชื่อ'},
+ info_birth:{ja:'生年月日',en:'Date of birth',vi:'Ngày sinh',id:'Tanggal lahir',zh:'出生年月日',km:'ថ្ងៃខែឆ្នាំកំណើត',my:'မွေးသက္ကရာဇ်',th:'วันเดือนปีเกิด'},
+ info_gender:{ja:'性別',en:'Gender',vi:'Giới tính',id:'Jenis kelamin',zh:'性别',km:'ភេទ',my:'ကျား/မ',th:'เพศ'},
+ info_nationality:{ja:'国籍',en:'Nationality',vi:'Quốc tịch',id:'Kewarganegaraan',zh:'国籍',km:'សញ្ជាតិ',my:'နိုင်ငံသား',th:'สัญชาติ'},
+ info_sec_cert:{ja:'証明書番号',en:'ID numbers',vi:'Số giấy tờ',id:'Nomor identitas',zh:'证件号码',km:'លេខអត្តសញ្ញាណប័ណ្ណ',my:'အထောက်အထားနံပါတ်',th:'หมายเลขเอกสาร'},
+ info_card_no:{ja:'在留カード番号',en:'Residence card no.',vi:'Số thẻ cư trú',id:'No. kartu izin tinggal',zh:'在留卡号',km:'លេខប័ណ្ណស្នាក់នៅ',my:'နေထိုင်ခွင့်ကတ်နံပါတ်',th:'เลขบัตรพำนัก'},
+ info_passport_no:{ja:'パスポート番号',en:'Passport no.',vi:'Số hộ chiếu',id:'No. paspor',zh:'护照号',km:'លេខលិខិតឆ្លងដែន',my:'ပတ်စ်ပို့နံပါတ်',th:'เลขหนังสือเดินทาง'},
+ info_passport_exp:{ja:'パスポート有効期限',en:'Passport expiry',vi:'Hạn hộ chiếu',id:'Masa berlaku paspor',zh:'护照有效期',km:'ថ្ងៃផុតកំណត់លិខិតឆ្លងដែន',my:'ပတ်စ်ပို့သက်တမ်းကုန်ရက်',th:'วันหมดอายุหนังสือเดินทาง'},
+ info_sec_contact:{ja:'連絡先',en:'Contact',vi:'Liên hệ',id:'Kontak',zh:'联系方式',km:'ទំនាក់ទំនង',my:'ဆက်သွယ်ရန်',th:'ติดต่อ'},
+ info_address:{ja:'住所',en:'Address',vi:'Địa chỉ',id:'Alamat',zh:'地址',km:'អាសយដ្ឋាន',my:'လိပ်စာ',th:'ที่อยู่'},
+ info_home_address:{ja:'母国住所',en:'Home country address',vi:'Địa chỉ ở quê',id:'Alamat negara asal',zh:'母国地址',km:'អាសយដ្ឋាននៅប្រទេសកំណើត',my:'မိခင်နိုင်ငံလိပ်စာ',th:'ที่อยู่ในประเทศบ้านเกิด'},
+ info_phone:{ja:'電話',en:'Phone',vi:'Điện thoại',id:'Telepon',zh:'电话',km:'ទូរស័ព្ទ',my:'ဖုန်း',th:'โทรศัพท์'},
+ info_email:{ja:'メール',en:'Email',vi:'Email',id:'Email',zh:'邮箱',km:'អ៊ីមែល',my:'အီးမေးလ်',th:'อีเมล'},
  /* 変更依頼フォーム */
- cr_title:{ja:'✏️ 変更・訂正のご依頼',en:'✏️ Request a change / correction',vi:'✏️ Yêu cầu thay đổi / sửa',id:'✏️ Minta perubahan / koreksi',zh:'✏️ 变更・订正申请'},
- cr_desc:{ja:'上記の本人情報に誤りや変更がある場合は、内容をご記入のうえ送信してください。担当者が確認します。',en:'If any of the information above is wrong or has changed, write the details and send. Your representative will review it.',vi:'Nếu thông tin trên có sai sót hoặc thay đổi, hãy ghi nội dung rồi gửi. Người phụ trách sẽ kiểm tra.',id:'Jika ada informasi di atas yang salah atau berubah, tulis detailnya lalu kirim. Penanggung jawab akan memeriksanya.',zh:'若以上本人信息有误或有变更，请填写内容后发送。负责人将进行确认。'},
- cr_placeholder:{ja:'例：電話番号が変わりました 090-XXXX-XXXX / 住所が変わりました …',en:'e.g. My phone number changed to 090-XXXX-XXXX / My address changed …',vi:'VD: Số điện thoại đổi thành 090-XXXX-XXXX / Địa chỉ đã đổi …',id:'cth: Nomor telepon berubah 090-XXXX-XXXX / Alamat berubah …',zh:'例：电话号码已变更 090-XXXX-XXXX / 地址已变更 …'},
- cr_send:{ja:'送信する',en:'Send',vi:'Gửi',id:'Kirim',zh:'发送'},
- cr_update:{ja:'内容を更新する',en:'Update',vi:'Cập nhật',id:'Perbarui',zh:'更新内容'},
- cr_cancel:{ja:'依頼を取り消す',en:'Cancel request',vi:'Hủy yêu cầu',id:'Batalkan',zh:'取消申请'},
- cr_submitted_badge:{ja:'送信済み',en:'Submitted',vi:'Đã gửi',id:'Terkirim',zh:'已发送'},
- cr_submitted_at:{ja:'送信日時：{n}',en:'Sent at: {n}',vi:'Gửi lúc: {n}',id:'Dikirim: {n}',zh:'发送时间：{n}'},
- cr_sending:{ja:'送信中...',en:'Sending...',vi:'Đang gửi...',id:'Mengirim...',zh:'发送中...'},
- cr_send_fail:{ja:'送信に失敗しました。通信環境をご確認ください。',en:'Failed to send. Please check your connection.',vi:'Gửi thất bại. Vui lòng kiểm tra kết nối.',id:'Gagal mengirim. Periksa koneksi Anda.',zh:'发送失败。请检查网络环境。'},
- cr_empty:{ja:'内容を入力してください。',en:'Please enter the details.',vi:'Vui lòng nhập nội dung.',id:'Mohon isi detailnya.',zh:'请输入内容。'},
- cr_cancel_confirm:{ja:'この変更依頼を取り消しますか？',en:'Cancel this change request?',vi:'Hủy yêu cầu thay đổi này?',id:'Batalkan permintaan perubahan ini?',zh:'要取消此变更申请吗？'},
- cr_pending_note:{ja:'この依頼は担当者が確認中です。',en:'This request is under review by your representative.',vi:'Yêu cầu này đang được người phụ trách xem xét.',id:'Permintaan ini sedang ditinjau penanggung jawab.',zh:'此申请正由负责人确认中。'},
+ cr_title:{ja:'✏️ 変更・訂正のご依頼',en:'✏️ Request a change / correction',vi:'✏️ Yêu cầu thay đổi / sửa',id:'✏️ Minta perubahan / koreksi',zh:'✏️ 变更・订正申请',km:'✏️ ស្នើសុំការផ្លាស់ប្ដូរ / កែតម្រូវ',my:'✏️ ပြောင်းလဲ / ပြင်ဆင်ရန်တောင်းဆိုခြင်း',th:'✏️ ขอแก้ไข / เปลี่ยนแปลง'},
+ cr_desc:{ja:'上記の本人情報に誤りや変更がある場合は、内容をご記入のうえ送信してください。担当者が確認します。',en:'If any of the information above is wrong or has changed, write the details and send. Your representative will review it.',vi:'Nếu thông tin trên có sai sót hoặc thay đổi, hãy ghi nội dung rồi gửi. Người phụ trách sẽ kiểm tra.',id:'Jika ada informasi di atas yang salah atau berubah, tulis detailnya lalu kirim. Penanggung jawab akan memeriksanya.',zh:'若以上本人信息有误或有变更，请填写内容后发送。负责人将进行确认。',km:'ប្រសិនបើព័ត៌មានខាងលើមានកំហុស ឬមានការផ្លាស់ប្ដូរ សូមសរសេរលម្អិតរួចផ្ញើ។ អ្នកទទួលបន្ទុកនឹងពិនិត្យ។',my:'အထက်ပါအချက်အလက်တွင် မှားယွင်းမှု သို့မဟုတ် ပြောင်းလဲမှုရှိပါက အသေးစိတ်ရေးပြီးပို့ပါ။ တာဝန်ခံကစစ်ဆေးပါမည်။',th:'หากข้อมูลข้างต้นผิดหรือมีการเปลี่ยนแปลง กรุณาเขียนรายละเอียดแล้วส่ง ผู้รับผิดชอบจะตรวจสอบ'},
+ cr_placeholder:{ja:'例：電話番号が変わりました 090-XXXX-XXXX / 住所が変わりました …',en:'e.g. My phone number changed to 090-XXXX-XXXX / My address changed …',vi:'VD: Số điện thoại đổi thành 090-XXXX-XXXX / Địa chỉ đã đổi …',id:'cth: Nomor telepon berubah 090-XXXX-XXXX / Alamat berubah …',zh:'例：电话号码已变更 090-XXXX-XXXX / 地址已变更 …',km:'ឧ. លេខទូរស័ព្ទប្ដូរទៅ 090-XXXX-XXXX / អាសយដ្ឋានប្ដូរ …',my:'ဥပမာ ဖုန်းနံပါတ်ပြောင်းသွားသည် 090-XXXX-XXXX / လိပ်စာပြောင်းသွားသည် …',th:'เช่น เบอร์โทรเปลี่ยนเป็น 090-XXXX-XXXX / ที่อยู่เปลี่ยน …'},
+ cr_send:{ja:'送信する',en:'Send',vi:'Gửi',id:'Kirim',zh:'发送',km:'ផ្ញើ',my:'ပို့ရန်',th:'ส่ง'},
+ cr_update:{ja:'内容を更新する',en:'Update',vi:'Cập nhật',id:'Perbarui',zh:'更新内容',km:'ធ្វើបច្ចុប្បន្នភាព',my:'အပ်ဒိတ်လုပ်ရန်',th:'อัปเดต'},
+ cr_cancel:{ja:'依頼を取り消す',en:'Cancel request',vi:'Hủy yêu cầu',id:'Batalkan',zh:'取消申请',km:'បោះបង់ការស្នើសុំ',my:'တောင်းဆိုမှုပယ်ဖျက်',th:'ยกเลิกคำขอ'},
+ cr_submitted_badge:{ja:'送信済み',en:'Submitted',vi:'Đã gửi',id:'Terkirim',zh:'已发送',km:'បានផ្ញើ',my:'ပို့ပြီး',th:'ส่งแล้ว'},
+ cr_submitted_at:{ja:'送信日時：{n}',en:'Sent at: {n}',vi:'Gửi lúc: {n}',id:'Dikirim: {n}',zh:'发送时间：{n}',km:'ផ្ញើនៅ៖ {n}',my:'ပို့သည့်အချိန်: {n}',th:'ส่งเมื่อ: {n}'},
+ cr_sending:{ja:'送信中...',en:'Sending...',vi:'Đang gửi...',id:'Mengirim...',zh:'发送中...',km:'កំពុងផ្ញើ...',my:'ပို့နေသည်...',th:'กำลังส่ง...'},
+ cr_send_fail:{ja:'送信に失敗しました。通信環境をご確認ください。',en:'Failed to send. Please check your connection.',vi:'Gửi thất bại. Vui lòng kiểm tra kết nối.',id:'Gagal mengirim. Periksa koneksi Anda.',zh:'发送失败。请检查网络环境。',km:'ផ្ញើបរាជ័យ។ សូមពិនិត្យការតភ្ជាប់។',my:'ပို့မရပါ။ ချိတ်ဆက်မှုစစ်ဆေးပါ။',th:'ส่งไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อ'},
+ cr_empty:{ja:'内容を入力してください。',en:'Please enter the details.',vi:'Vui lòng nhập nội dung.',id:'Mohon isi detailnya.',zh:'请输入内容。',km:'សូមបញ្ចូលលម្អិត។',my:'အသေးစိတ်ထည့်ပါ။',th:'กรุณากรอกรายละเอียด'},
+ cr_cancel_confirm:{ja:'この変更依頼を取り消しますか？',en:'Cancel this change request?',vi:'Hủy yêu cầu thay đổi này?',id:'Batalkan permintaan perubahan ini?',zh:'要取消此变更申请吗？',km:'បោះបង់ការស្នើសុំផ្លាស់ប្ដូរនេះ?',my:'ဤပြောင်းလဲမှုတောင်းဆိုချက်ကိုပယ်ဖျက်မလား?',th:'ยกเลิกคำขอเปลี่ยนแปลงนี้หรือไม่?'},
+ cr_pending_note:{ja:'この依頼は担当者が確認中です。',en:'This request is under review by your representative.',vi:'Yêu cầu này đang được người phụ trách xem xét.',id:'Permintaan ini sedang ditinjau penanggung jawab.',zh:'此申请正由负责人确认中。',km:'ការស្នើសុំនេះកំពុងត្រូវបានពិនិត្យដោយអ្នកទទួលបន្ទុក។',my:'ဤတောင်းဆိုချက်ကို တာဝန်ခံကစစ်ဆေးနေပါသည်။',th:'คำขอนี้อยู่ระหว่างการตรวจสอบโดยผู้รับผิดชอบ'},
  /* 事務所 */
- office_title:{ja:'🏢 事務所情報',en:'🏢 Our office',vi:'🏢 Văn phòng',id:'🏢 Kantor kami',zh:'🏢 事务所信息'},
- office_rep:{ja:'代表行政書士：大房 明良',en:'Representative: Akiyoshi Ofusa',vi:'Đại diện: Akiyoshi Ofusa',id:'Perwakilan: Akiyoshi Ofusa',zh:'代表行政书士：大房 明良'},
- office_mail_note:{ja:'📮 郵送物はここに送ってください',en:'📮 Please send postal mail here',vi:'📮 Vui lòng gửi bưu phẩm đến đây',id:'📮 Kirim surat ke alamat ini',zh:'📮 邮寄物请寄到此处'},
+ office_title:{ja:'🏢 事務所情報',en:'🏢 Our office',vi:'🏢 Văn phòng',id:'🏢 Kantor kami',zh:'🏢 事务所信息',km:'🏢 ការិយាល័យ',my:'🏢 ရုံးခန်း',th:'🏢 สำนักงาน'},
+ office_rep:{ja:'代表行政書士：大房 明良',en:'Representative: Akiyoshi Ofusa',vi:'Đại diện: Akiyoshi Ofusa',id:'Perwakilan: Akiyoshi Ofusa',zh:'代表行政书士：大房 明良',km:'អ្នកតំណាង៖ Akiyoshi Ofusa',my:'ကိုယ်စားလှယ်: Akiyoshi Ofusa',th:'ผู้แทน: Akiyoshi Ofusa'},
+ office_mail_note:{ja:'📮 郵送物はここに送ってください',en:'📮 Please send postal mail here',vi:'📮 Vui lòng gửi bưu phẩm đến đây',id:'📮 Kirim surat ke alamat ini',zh:'📮 邮寄物请寄到此处',km:'📮 សូមផ្ញើសំបុត្រមកទីនេះ',my:'📮 စာပို့ရန် ဤနေရာသို့ပို့ပါ',th:'📮 กรุณาส่งไปรษณีย์มาที่นี่'},
  /* 申請の流れ */
- flow_title:{ja:'📌 申請の流れ',en:'📌 Application process',vi:'📌 Quy trình hồ sơ',id:'📌 Alur permohonan',zh:'📌 申请流程'},
- flow_dur_prefix:{ja:'⏱ 目安 ',en:'⏱ approx. ',vi:'⏱ khoảng ',id:'⏱ kira-kira ',zh:'⏱ 约 '},
- flow_g1_dur:{ja:'約1ヶ月',en:'about 1 month',vi:'khoảng 1 tháng',id:'sekitar 1 bulan',zh:'约1个月'},
- flow_g1_label:{ja:'ご準備〜申請',en:'Preparation → Filing',vi:'Chuẩn bị → Nộp',id:'Persiapan → Pengajuan',zh:'准备〜申请'},
- flow_g2_dur:{ja:'約2〜4ヶ月',en:'about 2-4 months',vi:'khoảng 2-4 tháng',id:'sekitar 2-4 bulan',zh:'约2〜4个月'},
- flow_g2_label:{ja:'審査〜交付',en:'Review → Issuance',vi:'Thẩm tra → Cấp',id:'Tinjauan → Penerbitan',zh:'审查〜交付'},
- step1_ph:{ja:'STEP 1 ・ ヒアリング',en:'STEP 1 · Hearing',vi:'BƯỚC 1 · Phỏng vấn',id:'LANGKAH 1 · Wawancara',zh:'STEP 1 · 问询'},
- step1_t:{ja:'ヒアリング・必要書類のご案内',en:'Hearing & guidance on required documents',vi:'Phỏng vấn & hướng dẫn hồ sơ cần thiết',id:'Wawancara & panduan dokumen',zh:'问询・必要材料说明'},
- step1_s:{ja:'担当者がヒアリングを行い、ご提出いただく書類をご案内します。',en:'Your representative conducts a hearing and explains which documents to submit.',vi:'Người phụ trách phỏng vấn và hướng dẫn hồ sơ bạn cần nộp.',id:'Penanggung jawab mewawancarai dan menjelaskan dokumen yang harus diserahkan.',zh:'负责人进行问询，并说明需要提交的材料。'},
- step2_ph:{ja:'STEP 2 ・ ご提出',en:'STEP 2 · Submission',vi:'BƯỚC 2 · Nộp',id:'LANGKAH 2 · Penyerahan',zh:'STEP 2 · 提交'},
- step2_t:{ja:'書類のご提出',en:'Submit your documents',vi:'Nộp hồ sơ',id:'Serahkan dokumen',zh:'提交材料'},
- step2_s:{ja:'「提出書類」タブの一覧に沿って、書類をアップロード・ご提出ください。',en:'Upload and submit documents following the list in the "Documents" tab.',vi:'Tải lên và nộp hồ sơ theo danh sách ở tab "Hồ sơ".',id:'Unggah dan serahkan dokumen sesuai daftar di tab "Dokumen".',zh:'请按「提交材料」标签的清单上传并提交材料。'},
- step3_ph:{ja:'STEP 3 ・ 作成',en:'STEP 3 · Drafting',vi:'BƯỚC 3 · Soạn',id:'LANGKAH 3 · Penyusunan',zh:'STEP 3 · 制作'},
- step3_t:{ja:'申請書類の作成・ご確認',en:'Drafting & checking the application',vi:'Soạn & kiểm tra hồ sơ xin',id:'Penyusunan & pemeriksaan berkas',zh:'申请材料的制作・确认'},
- step3_s:{ja:'大房行政書士法人で申請書類を作成し、内容を確認します。',en:'Ofusa drafts the application documents and checks the content.',vi:'Ofusa soạn hồ sơ xin và kiểm tra nội dung.',id:'Ofusa menyusun berkas permohonan dan memeriksa isinya.',zh:'由大房行政书士法人制作申请材料并确认内容。'},
- step4_ph:{ja:'STEP 4 ・ 申請',en:'STEP 4 · Filing',vi:'BƯỚC 4 · Nộp đơn',id:'LANGKAH 4 · Pengajuan',zh:'STEP 4 · 申请'},
- step4_t:{ja:'入管へ申請（受付番号の発行）',en:'File with Immigration (receipt no. issued)',vi:'Nộp cho Cục XNC (cấp số tiếp nhận)',id:'Ajukan ke Imigrasi (no. tanda terima terbit)',zh:'向入管申请（发行受理号）'},
- step4_s:{ja:'出入国在留管理庁へ申請します。受付番号が発行されます。',en:'We file with the Immigration Services Agency. A receipt number is issued.',vi:'Chúng tôi nộp cho Cục Quản lý XNC. Một số tiếp nhận được cấp.',id:'Kami mengajukan ke Badan Imigrasi. Nomor tanda terima diterbitkan.',zh:'向出入国在留管理厅提交申请。会发行受理号。'},
- step5_ph:{ja:'STEP 5 ・ 審査',en:'STEP 5 · Review',vi:'BƯỚC 5 · Thẩm tra',id:'LANGKAH 5 · Tinjauan',zh:'STEP 5 · 审查'},
- step5_t:{ja:'入管による審査',en:'Review by Immigration',vi:'Cục XNC thẩm tra',id:'Tinjauan oleh Imigrasi',zh:'入管审查'},
- step5_s:{ja:'審査期間です。追加書類（追完）のご依頼が入ることがあります。',en:'The review period. Additional documents may be requested.',vi:'Giai đoạn thẩm tra. Có thể được yêu cầu bổ sung hồ sơ.',id:'Masa peninjauan. Dokumen tambahan mungkin diminta.',zh:'审查期间。有时会被要求补充材料（追完）。'},
- step6_ph:{ja:'STEP 6 ・ 交付',en:'STEP 6 · Issuance',vi:'BƯỚC 6 · Cấp',id:'LANGKAH 6 · Penerbitan',zh:'STEP 6 · 交付'},
- step6_t:{ja:'許可・在留カード／認定証明書の交付',en:'Approval; Residence Card / Certificate issued',vi:'Chấp thuận; cấp Thẻ cư trú / Giấy chứng nhận',id:'Persetujuan; Kartu Izin Tinggal / Sertifikat terbit',zh:'许可・交付在留卡／认定证明书'},
- step6_s:{ja:'許可後、在留カードまたは在留資格認定証明書が交付されます。',en:'After approval, a Residence Card or Certificate of Eligibility is issued.',vi:'Sau khi chấp thuận, Thẻ cư trú hoặc Giấy chứng nhận tư cách được cấp.',id:'Setelah disetujui, Kartu Izin Tinggal atau Sertifikat Kelayakan diterbitkan.',zh:'许可后，将交付在留卡或在留资格认定证明书。'},
- flow_note:{ja:'所要期間はあくまで目安で、申請種別や入管の混雑状況により前後します。現在の状況は担当者からのご連絡や各タブの表示でご確認ください。',en:'The durations are rough estimates and vary by application type and Immigration workload. Check the current status via your representative or the tabs.',vi:'Thời gian chỉ là ước tính và thay đổi theo loại hồ sơ và mức độ bận của Cục XNC. Kiểm tra tình trạng qua người phụ trách hoặc các tab.',id:'Durasi hanya perkiraan dan bervariasi menurut jenis permohonan dan kesibukan Imigrasi. Cek status terkini lewat penanggung jawab atau tab.',zh:'所需期间仅为大致估算，会因申请种类及入管繁忙程度而前后变动。请通过负责人的联络或各标签确认当前状况。'}
+ flow_title:{ja:'📌 申請の流れ',en:'📌 Application process',vi:'📌 Quy trình hồ sơ',id:'📌 Alur permohonan',zh:'📌 申请流程',km:'📌 ដំណើរការពាក្យសុំ',my:'📌 လျှောက်ထားမှုလုပ်ငန်းစဉ်',th:'📌 ขั้นตอนการยื่นคำขอ'},
+ flow_dur_prefix:{ja:'⏱ 目安 ',en:'⏱ approx. ',vi:'⏱ khoảng ',id:'⏱ kira-kira ',zh:'⏱ 约 ',km:'⏱ ប្រហែល ',my:'⏱ ခန့် ',th:'⏱ ประมาณ '},
+ flow_g1_dur:{ja:'約1ヶ月',en:'about 1 month',vi:'khoảng 1 tháng',id:'sekitar 1 bulan',zh:'约1个月',km:'ប្រហែល ១ ខែ',my:'၁ လ ခန့်',th:'ประมาณ 1 เดือน'},
+ flow_g1_label:{ja:'ご準備〜申請',en:'Preparation → Filing',vi:'Chuẩn bị → Nộp',id:'Persiapan → Pengajuan',zh:'准备〜申请',km:'រៀបចំ → ដាក់ពាក្យ',my:'ပြင်ဆင် → လျှောက်ထား',th:'เตรียม → ยื่น'},
+ flow_g2_dur:{ja:'約2〜4ヶ月',en:'about 2-4 months',vi:'khoảng 2-4 tháng',id:'sekitar 2-4 bulan',zh:'约2〜4个月',km:'ប្រហែល ២-៤ ខែ',my:'၂-၄ လ ခန့်',th:'ประมาณ 2-4 เดือน'},
+ flow_g2_label:{ja:'審査〜交付',en:'Review → Issuance',vi:'Thẩm tra → Cấp',id:'Tinjauan → Penerbitan',zh:'审查〜交付',km:'ត្រួតពិនិត្យ → ចេញ',my:'စိစစ် → ထုတ်ပေး',th:'ตรวจสอบ → ออกเอกสาร'},
+ step1_ph:{ja:'STEP 1 ・ ヒアリング',en:'STEP 1 · Hearing',vi:'BƯỚC 1 · Phỏng vấn',id:'LANGKAH 1 · Wawancara',zh:'STEP 1 · 问询',km:'ជំហាន ១ · សម្ភាសន៍',my:'အဆင့် ၁ · အင်တာဗျူး',th:'ขั้นที่ 1 · สัมภาษณ์'},
+ step1_t:{ja:'ヒアリング・必要書類のご案内',en:'Hearing & guidance on required documents',vi:'Phỏng vấn & hướng dẫn hồ sơ cần thiết',id:'Wawancara & panduan dokumen',zh:'问询・必要材料说明',km:'សម្ភាសន៍ និងការណែនាំអំពីឯកសារដែលត្រូវការ',my:'အင်တာဗျူး နှင့် လိုအပ်သောစာရွက်စာတမ်းလမ်းညွှန်',th:'สัมภาษณ์และแนะนำเอกสารที่จำเป็น'},
+ step1_s:{ja:'担当者がヒアリングを行い、ご提出いただく書類をご案内します。',en:'Your representative conducts a hearing and explains which documents to submit.',vi:'Người phụ trách phỏng vấn và hướng dẫn hồ sơ bạn cần nộp.',id:'Penanggung jawab mewawancarai dan menjelaskan dokumen yang harus diserahkan.',zh:'负责人进行问询，并说明需要提交的材料。',km:'អ្នកទទួលបន្ទុកធ្វើការសម្ភាសន៍ និងពន្យល់ពីឯកសារដែលត្រូវដាក់។',my:'တာဝန်ခံက အင်တာဗျူးပြုလုပ်ပြီး တင်ရမည့်စာရွက်စာတမ်းကို ရှင်းပြသည်။',th:'ผู้รับผิดชอบจะสัมภาษณ์และอธิบายว่าต้องยื่นเอกสารใดบ้าง'},
+ step2_ph:{ja:'STEP 2 ・ ご提出',en:'STEP 2 · Submission',vi:'BƯỚC 2 · Nộp',id:'LANGKAH 2 · Penyerahan',zh:'STEP 2 · 提交',km:'ជំហាន ២ · ការដាក់',my:'အဆင့် ၂ · တင်သွင်း',th:'ขั้นที่ 2 · ยื่น'},
+ step2_t:{ja:'書類のご提出',en:'Submit your documents',vi:'Nộp hồ sơ',id:'Serahkan dokumen',zh:'提交材料',km:'ដាក់ឯកសាររបស់អ្នក',my:'သင့်စာရွက်စာတမ်းတင်ပါ',th:'ยื่นเอกสารของคุณ'},
+ step2_s:{ja:'「提出書類」タブの一覧に沿って、書類をアップロード・ご提出ください。',en:'Upload and submit documents following the list in the "Documents" tab.',vi:'Tải lên và nộp hồ sơ theo danh sách ở tab "Hồ sơ".',id:'Unggah dan serahkan dokumen sesuai daftar di tab "Dokumen".',zh:'请按「提交材料」标签的清单上传并提交材料。',km:'ផ្ទុកឡើង និងដាក់ឯកសារតាមបញ្ជីក្នុងផ្ទាំង «ឯកសារ»។',my:'«စာရွက်စာတမ်း» tab ရှိစာရင်းအတိုင်း တင်ပြီးတင်သွင်းပါ။',th:'อัปโหลดและยื่นเอกสารตามรายการในแท็บ "เอกสาร"'},
+ step3_ph:{ja:'STEP 3 ・ 作成',en:'STEP 3 · Drafting',vi:'BƯỚC 3 · Soạn',id:'LANGKAH 3 · Penyusunan',zh:'STEP 3 · 制作',km:'ជំហាន ៣ · ការរៀបចំ',my:'အဆင့် ၃ · ရေးဆွဲ',th:'ขั้นที่ 3 · จัดทำ'},
+ step3_t:{ja:'申請書類の作成・ご確認',en:'Drafting & checking the application',vi:'Soạn & kiểm tra hồ sơ xin',id:'Penyusunan & pemeriksaan berkas',zh:'申请材料的制作・确认',km:'ការរៀបចំ និងពិនិត្យពាក្យសុំ',my:'လျှောက်လွှာရေးဆွဲ နှင့် စစ်ဆေး',th:'จัดทำและตรวจสอบคำขอ'},
+ step3_s:{ja:'大房行政書士法人で申請書類を作成し、内容を確認します。',en:'Ofusa drafts the application documents and checks the content.',vi:'Ofusa soạn hồ sơ xin và kiểm tra nội dung.',id:'Ofusa menyusun berkas permohonan dan memeriksa isinya.',zh:'由大房行政书士法人制作申请材料并确认内容。',km:'Ofusa រៀបចំឯកសារពាក្យសុំ និងពិនិត្យមាតិកា។',my:'Ofusa က လျှောက်လွှာစာရွက်စာတမ်းရေးဆွဲပြီး အကြောင်းအရာစစ်ဆေးသည်။',th:'Ofusa จัดทำเอกสารคำขอและตรวจสอบเนื้อหา'},
+ step4_ph:{ja:'STEP 4 ・ 申請',en:'STEP 4 · Filing',vi:'BƯỚC 4 · Nộp đơn',id:'LANGKAH 4 · Pengajuan',zh:'STEP 4 · 申请',km:'ជំហាន ៤ · ដាក់ពាក្យ',my:'အဆင့် ၄ · လျှောက်ထား',th:'ขั้นที่ 4 · ยื่นคำขอ'},
+ step4_t:{ja:'入管へ申請（受付番号の発行）',en:'File with Immigration (receipt no. issued)',vi:'Nộp cho Cục XNC (cấp số tiếp nhận)',id:'Ajukan ke Imigrasi (no. tanda terima terbit)',zh:'向入管申请（发行受理号）',km:'ដាក់ពាក្យទៅអន្តោប្រវេសន៍ (ចេញលេខទទួល)',my:'လူဝင်မှုကြီးကြပ်ရေးသို့လျှောက်ထား (လက်ခံအမှတ်ထုတ်)',th:'ยื่นต่อสำนักงานตรวจคนเข้าเมือง (ออกเลขรับเรื่อง)'},
+ step4_s:{ja:'出入国在留管理庁へ申請します。受付番号が発行されます。',en:'We file with the Immigration Services Agency. A receipt number is issued.',vi:'Chúng tôi nộp cho Cục Quản lý XNC. Một số tiếp nhận được cấp.',id:'Kami mengajukan ke Badan Imigrasi. Nomor tanda terima diterbitkan.',zh:'向出入国在留管理厅提交申请。会发行受理号。',km:'យើងដាក់ពាក្យទៅទីភ្នាក់ងារសេវាអន្តោប្រវេសន៍។ លេខទទួលត្រូវបានចេញ។',my:'လူဝင်မှုကြီးကြပ်ရေးအေဂျင်စီသို့ လျှောက်ထားသည်။ လက်ခံအမှတ်ထုတ်ပေးသည်။',th:'เรายื่นต่อสำนักงานตรวจคนเข้าเมือง และจะได้รับเลขที่รับเรื่อง'},
+ step5_ph:{ja:'STEP 5 ・ 審査',en:'STEP 5 · Review',vi:'BƯỚC 5 · Thẩm tra',id:'LANGKAH 5 · Tinjauan',zh:'STEP 5 · 审查',km:'ជំហាន ៥ · ត្រួតពិនិត្យ',my:'အဆင့် ၅ · စိစစ်',th:'ขั้นที่ 5 · ตรวจสอบ'},
+ step5_t:{ja:'入管による審査',en:'Review by Immigration',vi:'Cục XNC thẩm tra',id:'Tinjauan oleh Imigrasi',zh:'入管审查',km:'ការត្រួតពិនិត្យដោយអន្តោប្រវេសន៍',my:'လူဝင်မှုကြီးကြပ်ရေး၏စိစစ်မှု',th:'การตรวจสอบโดยตรวจคนเข้าเมือง'},
+ step5_s:{ja:'審査期間です。追加書類（追完）のご依頼が入ることがあります。',en:'The review period. Additional documents may be requested.',vi:'Giai đoạn thẩm tra. Có thể được yêu cầu bổ sung hồ sơ.',id:'Masa peninjauan. Dokumen tambahan mungkin diminta.',zh:'审查期间。有时会被要求补充材料（追完）。',km:'រយៈពេលត្រួតពិនិត្យ។ អាចមានការស្នើសុំឯកសារបន្ថែម។',my:'စိစစ်ချိန်ဖြစ်သည်။ နောက်ထပ်စာရွက်စာတမ်းတောင်းခံနိုင်သည်။',th:'ช่วงตรวจสอบ อาจมีการขอเอกสารเพิ่มเติม'},
+ step6_ph:{ja:'STEP 6 ・ 交付',en:'STEP 6 · Issuance',vi:'BƯỚC 6 · Cấp',id:'LANGKAH 6 · Penerbitan',zh:'STEP 6 · 交付',km:'ជំហាន ៦ · ការចេញ',my:'အဆင့် ၆ · ထုတ်ပေး',th:'ขั้นที่ 6 · ออกเอกสาร'},
+ step6_t:{ja:'許可・在留カード／認定証明書の交付',en:'Approval; Residence Card / Certificate issued',vi:'Chấp thuận; cấp Thẻ cư trú / Giấy chứng nhận',id:'Persetujuan; Kartu Izin Tinggal / Sertifikat terbit',zh:'许可・交付在留卡／认定证明书',km:'អនុម័ត; ចេញប័ណ្ណស្នាក់នៅ / វិញ្ញាបនបត្រ',my:'ခွင့်ပြု၊ နေထိုင်ခွင့်ကတ် / လက်မှတ် ထုတ်ပေး',th:'อนุมัติ; ออกบัตรพำนัก / ใบรับรอง'},
+ step6_s:{ja:'許可後、在留カードまたは在留資格認定証明書が交付されます。',en:'After approval, a Residence Card or Certificate of Eligibility is issued.',vi:'Sau khi chấp thuận, Thẻ cư trú hoặc Giấy chứng nhận tư cách được cấp.',id:'Setelah disetujui, Kartu Izin Tinggal atau Sertifikat Kelayakan diterbitkan.',zh:'许可后，将交付在留卡或在留资格认定证明书。',km:'បន្ទាប់ពីការអនុម័ត ប័ណ្ណស្នាក់នៅ ឬវិញ្ញាបនបត្រសិទ្ធិស្នាក់នៅត្រូវបានចេញ។',my:'ခွင့်ပြုပြီးနောက် နေထိုင်ခွင့်ကတ် သို့မဟုတ် အရည်အချင်းပြည့်မီကြောင်းလက်မှတ်ထုတ်ပေးသည်။',th:'หลังอนุมัติ จะออกบัตรพำนักหรือใบรับรองสถานภาพการพำนัก'},
+ flow_note:{ja:'所要期間はあくまで目安で、申請種別や入管の混雑状況により前後します。現在の状況は担当者からのご連絡や各タブの表示でご確認ください。',en:'The durations are rough estimates and vary by application type and Immigration workload. Check the current status via your representative or the tabs.',vi:'Thời gian chỉ là ước tính và thay đổi theo loại hồ sơ và mức độ bận của Cục XNC. Kiểm tra tình trạng qua người phụ trách hoặc các tab.',id:'Durasi hanya perkiraan dan bervariasi menurut jenis permohonan dan kesibukan Imigrasi. Cek status terkini lewat penanggung jawab atau tab.',zh:'所需期间仅为大致估算，会因申请种类及入管繁忙程度而前后变动。请通过负责人的联络或各标签确认当前状况。',km:'រយៈពេលគ្រាន់តែជាការប៉ាន់ស្មាន ហើយប្រែប្រួលតាមប្រភេទពាក្យសុំ និងភាពមមាញឹករបស់អន្តោប្រវេសន៍។ សូមពិនិត្យស្ថានភាពបច្ចុប្បន្នតាមរយៈអ្នកទទួលបន្ទុក ឬផ្ទាំងនីមួយៗ។',my:'ကြာချိန်များသည် ခန့်မှန်းချက်သာဖြစ်ပြီး လျှောက်လွှာအမျိုးအစားနှင့် လူဝင်မှုကြီးကြပ်ရေးအလုပ်များမှုပေါ်မူတည်၍ ပြောင်းလဲနိုင်သည်။ လက်ရှိအခြေအနေကို တာဝန်ခံ သို့မဟုတ် tab များမှ စစ်ဆေးပါ။',th:'ระยะเวลาเป็นเพียงการประมาณและแตกต่างกันตามประเภทคำขอและปริมาณงานของตรวจคนเข้าเมือง กรุณาตรวจสอบสถานะปัจจุบันผ่านผู้รับผิดชอบหรือแท็บต่างๆ'}
 };
 function _tr(k){ var o=TR[k]; if(!o) return k; return (o[curLang]!=null?o[curLang]:(o.ja||o.en||k)); }
 function _vrep(s,vars){ if(vars){ for(var kk in vars){ s=s.split('{'+kk+'}').join(String(vars[kk])); } } return s; }
@@ -385,13 +391,13 @@ function tp(k,vars){ return _vrep(_tr(k),vars); }
 
 /* 外部ステータス（進捗カード）の翻訳 */
 var ST_EXT_TR={
- '雇用条件作成・企業確認':{en:'Drafting employment terms / Company review',vi:'Soạn điều kiện tuyển dụng / Công ty xác nhận',id:'Penyusunan syarat kerja / Konfirmasi perusahaan',zh:'制作雇用条件・企业确认'},
- '申請人サイン対応':{en:'Applicant signature',vi:'Người nộp đơn ký tên',id:'Tanda tangan pemohon',zh:'申请人签名对应'},
- '企業押印ご対応・書類収集・申請準備':{en:'Company seal / Collecting documents / Preparing filing',vi:'Đóng dấu công ty / Thu thập hồ sơ / Chuẩn bị nộp',id:'Stempel perusahaan / Pengumpulan dokumen / Persiapan',zh:'企业盖章对应・收集材料・申请准备'},
- '審査中':{en:'Under review',vi:'Đang thẩm tra',id:'Sedang ditinjau',zh:'审查中'},
- '審査完了(受取対応中)':{en:'Review complete (arranging receipt)',vi:'Thẩm tra xong (đang nhận kết quả)',id:'Tinjauan selesai (proses penerimaan)',zh:'审查完成(领取办理中)'},
- '新在留カード(または認定証)発行済み':{en:'New Residence Card / Certificate issued',vi:'Đã cấp Thẻ cư trú mới / Giấy chứng nhận',id:'Kartu Izin Tinggal baru / Sertifikat terbit',zh:'新在留卡(或认定证)已发行'},
- '未着手':{en:'Not started',vi:'Chưa bắt đầu',id:'Belum dimulai',zh:'未开始'}
+ '雇用条件作成・企業確認':{en:'Drafting employment terms / Company review',vi:'Soạn điều kiện tuyển dụng / Công ty xác nhận',id:'Penyusunan syarat kerja / Konfirmasi perusahaan',zh:'制作雇用条件・企业确认',km:'រៀបចំលក្ខខណ្ឌការងារ / ការត្រួតពិនិត្យក្រុមហ៊ុន',my:'အလုပ်ခန့်အပ်ရေးစည်းကမ်းရေးဆွဲ / ကုမ္ပဏီစစ်ဆေး',th:'จัดทำเงื่อนไขจ้างงาน / บริษัทตรวจสอบ'},
+ '申請人サイン対応':{en:'Applicant signature',vi:'Người nộp đơn ký tên',id:'Tanda tangan pemohon',zh:'申请人签名对应',km:'ហត្ថលេខាអ្នកស្នើសុំ',my:'လျှောက်ထားသူလက်မှတ်',th:'ลายเซ็นผู้ยื่นคำขอ'},
+ '企業押印ご対応・書類収集・申請準備':{en:'Company seal / Collecting documents / Preparing filing',vi:'Đóng dấu công ty / Thu thập hồ sơ / Chuẩn bị nộp',id:'Stempel perusahaan / Pengumpulan dokumen / Persiapan',zh:'企业盖章对应・收集材料・申请准备',km:'បោះត្រាក្រុមហ៊ុន / ប្រមូលឯកសារ / រៀបចំដាក់ពាក្យ',my:'ကုမ္ပဏီတံဆိပ်ထု / စာရွက်စာတမ်းစုဆောင်း / လျှောက်ထားရန်ပြင်ဆင်',th:'ประทับตราบริษัท / รวบรวมเอกสาร / เตรียมยื่น'},
+ '審査中':{en:'Under review',vi:'Đang thẩm tra',id:'Sedang ditinjau',zh:'审查中',km:'កំពុងត្រួតពិនិត្យ',my:'စိစစ်နေဆဲ',th:'อยู่ระหว่างตรวจสอบ'},
+ '審査完了(受取対応中)':{en:'Review complete (arranging receipt)',vi:'Thẩm tra xong (đang nhận kết quả)',id:'Tinjauan selesai (proses penerimaan)',zh:'审查完成(领取办理中)',km:'ត្រួតពិនិត្យរួច (កំពុងរៀបចំទទួល)',my:'စိစစ်ပြီး (လက်ခံရန်စီစဉ်နေ)',th:'ตรวจสอบเสร็จ (กำลังจัดการรับเอกสาร)'},
+ '新在留カード(または認定証)発行済み':{en:'New Residence Card / Certificate issued',vi:'Đã cấp Thẻ cư trú mới / Giấy chứng nhận',id:'Kartu Izin Tinggal baru / Sertifikat terbit',zh:'新在留卡(或认定证)已发行',km:'ប័ណ្ណស្នាក់នៅថ្មី / វិញ្ញាបនបត្របានចេញ',my:'နေထိုင်ခွင့်ကတ်အသစ် / လက်မှတ်ထုတ်ပြီး',th:'ออกบัตรพำนักใหม่ / ใบรับรองแล้ว'},
+ '未着手':{en:'Not started',vi:'Chưa bắt đầu',id:'Belum dimulai',zh:'未开始',km:'មិនទាន់ចាប់ផ្ដើម',my:'မစတင်ရသေး',th:'ยังไม่เริ่ม'}
 };
 function extStatusHtml(c){
   var ja=getExternalStatus(c.status);
@@ -402,12 +408,12 @@ function extStatusHtml(c){
 /* 言語切替UI */
 function renderLangSwitch(){
   var el=document.getElementById('langSwitch'); if(!el) return;
-  var langs=[['ja','日本語'],['en','English'],['vi','Tiếng Việt'],['id','Indonesia'],['zh','中文']];
+  var langs=[['ja','日本語'],['en','English'],['vi','Tiếng Việt'],['id','Indonesia'],['zh','中文'],['km','ភាសាខ្មែរ'],['my','မြန်မာ'],['th','ไทย']];
   var opts=langs.map(function(l){return '<option value="'+l[0]+'"'+(l[0]===curLang?' selected':'')+'>'+l[1]+'</option>';}).join('');
   el.innerHTML='🌐 <select id="langSel" class="lang-sel" onchange="setLang(this.value)">'+opts+'</select>';
 }
 function setLang(l){
-  if(['ja','en','vi','id','zh'].indexOf(l)<0) return;
+  if(['ja','en','vi','id','zh','km','my','th'].indexOf(l)<0) return;
   curLang=l; try{localStorage.setItem('applicantLang',l);}catch(e){}
   document.documentElement.lang=l;
   applyStaticI18n();
@@ -1116,7 +1122,7 @@ function openDocHelp(name){
   var d=getDocHelp(name); if(!d) return;
   document.getElementById('dhTitle').innerHTML='❓ '+((curLang==='ja')?fz(name):esc(name));
   var img=d.image?(d.image.indexOf('http')===0?d.image:'https://ofusa2026.github.io/upload/'+d.image):'';
-  var txt=(d.where&&(d.where[curLang]||d.where.ja))||(d.help&&(d.help[curLang]||d.help.ja))||'';
+  var txt=(d.where&&(d.where[curLang]||d.where.en||d.where.ja))||(d.help&&(d.help[curLang]||d.help.en||d.help.ja))||'';
   var prep=tp('dh_sample_prep');
   var b='';
   if(img) b+='<div style="background:#f8fafc;border-radius:10px;padding:8px;margin-bottom:12px;text-align:center;"><img src="'+esc(img)+'" alt="sample" style="max-width:100%;max-height:46vh;border-radius:6px;" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div style=&quot;padding:30px;color:#94a3b8;font-size:13px;&quot;>📷 '+esc(prep)+'</div>\';"></div>';
@@ -1125,6 +1131,18 @@ function openDocHelp(name){
   document.getElementById('docHelpModal').classList.remove('hide');
 }
 function closeDocHelp(){ document.getElementById('docHelpModal').classList.add('hide'); }
+
+function docHelpInline(d){
+  var img=d.image?(d.image.indexOf('http')===0?d.image:'https://ofusa2026.github.io/upload/'+d.image):'';
+  var txt=(d.where&&(d.where[curLang]||d.where.en||d.where.ja))||(d.help&&(d.help[curLang]||d.help.en||d.help.ja))||'';
+  if(!txt && !img) return '';
+  var b='<div class="doc-help">';
+  b+='<div class="doc-help-l">'+t('dh_method')+'</div>';
+  if(txt){ var th=(curLang==='ja')?fz(txt):esc(txt); b+='<div class="doc-help-v">'+th+'</div>'; }
+  if(img){ b+='<div class="doc-help-img"><img src="'+esc(img)+'" alt="sample" loading="lazy" onerror="this.parentElement.style.display=\'none\';"></div>'; }
+  b+='</div>';
+  return b;
+}
 
 function renderDocs(){
   var h='<div class="section-title">📄 '+t('docs_title')+'</div>';
@@ -1141,9 +1159,12 @@ function renderDocs(){
     var stTxt=done?t('doc_done_state'):t('doc_todo_state');
     var stCls=done?'s-done':'s-todo';
     var reqMark=(!done && d.r)?' <span style="color:#dc2626;font-size:10px;font-weight:800;">'+t('doc_required')+'</span>':'';
-    var helpBtn=getDocHelp(d.l)?' <button class="help-q" data-n="'+esc(d.l)+'" onclick="openDocHelp(this.dataset.n)">？</button>':'';
     var nameHtml=(curLang==='ja')?fz(d.l):esc(d.l);
-    h+='<div class="doc-row"><span class="doc-ico">'+ico+'</span><div class="doc-name">'+nameHtml+reqMark+helpBtn+'</div><span class="doc-state '+stCls+'">'+stTxt+'</span></div>';
+    var hd=getDocHelp(d.l);
+    h+='<div class="doc-item">';
+    h+='<div class="doc-row"><span class="doc-ico">'+ico+'</span><div class="doc-name">'+nameHtml+reqMark+'</div><span class="doc-state '+stCls+'">'+stTxt+'</span></div>';
+    if(hd){ h+=docHelpInline(hd); }
+    h+='</div>';
   });
   h+='</div>';
   return h;
