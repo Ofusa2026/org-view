@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260615.test18: 担当者リストの「保存」ボタンの絵文字が U0001f4be と文字化けしていた不具合修正（💾に） -->
 <!-- ver.20260615.test17: 支援事業所・支援担当者が表示されない不具合修正（offices/supportStaffListはprofileと同階層で返るためorgProfileに統合）。アイデムの2事業所が表示される -->
 <!-- ver.20260615.test16: 登録支援機関情報に「登録情報の変更を依頼」を追加（org→大房、org_change_req_<token>_orginfo として保存） -->
 <!-- ver.20260615.test14: 書類チェックリストで「不要」にした書類を非表示に -->
@@ -387,7 +388,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test17 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test18 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -3124,7 +3125,7 @@ function renderOrgProfile(){
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">';
   h+='<input type="text" id="orgStaffInput" placeholder="担当者名を入力" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ncStaffAdd();}" style="flex:1;min-width:180px;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;">';
   h+='<button onclick="ncStaffAdd()" style="padding:8px 16px;background:#0f2040;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">\uff0b 追加</button>';
-  h+='<button onclick="ncStaffSave()" id="orgStaffSaveBtn" style="padding:8px 16px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">\U0001f4be 保存</button>';
+  h+='<button onclick="ncStaffSave()" id="orgStaffSaveBtn" style="padding:8px 16px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">💾 保存</button>';
   h+='</div><div id="orgStaffMsg" style="font-size:11.5px;margin-top:8px;"></div>';
   h+='</div>';
 
