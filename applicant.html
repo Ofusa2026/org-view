@@ -9,6 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | 大房行政書士法人</title>
 <!-- ver.20260609.04: 申請人（人材本人）向け進捗・提出書類確認ページ -->
+<!-- ver.20260615.test21: 多言語化(ja/en/vi/id/zh・🌐手動切替)＋ふりがな自動付与(ja時)＋本人情報タブに変更依頼フォーム -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -114,22 +115,49 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .pass-btn{width:100%;padding:11px;background:#0f2040;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:800;cursor:pointer;}
 .pass-err{color:#dc2626;font-size:11px;margin-top:10px;min-height:14px;}
 .hide{display:none!important;}
+/* ver.20260615.test21: ふりがな */
+ruby{ruby-align:center;}
+rt{font-size:.52em;color:#64748b;font-weight:400;letter-spacing:0;line-height:1;}
+body{line-height:1.45;}
+/* 言語切替 */
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px;min-width:0;}
+.header-right .header-org{margin-left:0;}
+.lang-switch{display:flex;align-items:center;gap:4px;font-size:12px;color:#fff;flex-shrink:0;}
+.lang-sel{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;font-size:11px;font-weight:700;padding:4px 6px;cursor:pointer;}
+.lang-sel option{color:#1e293b;}
+/* 変更依頼フォーム */
+.cr-box{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-top:14px;}
+.cr-title{font-size:13px;font-weight:800;color:#0f2040;margin-bottom:4px;}
+.cr-desc{font-size:11.5px;color:#64748b;line-height:1.6;margin-bottom:10px;}
+.cr-ta{width:100%;min-height:84px;border:1px solid #cbd5e1;border-radius:9px;padding:10px 12px;font-size:13px;font-family:inherit;line-height:1.6;resize:vertical;}
+.cr-btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.cr-btn{border:none;border-radius:9px;font-size:12.5px;font-weight:800;padding:11px 16px;cursor:pointer;}
+.cr-btn.send{background:#2563eb;color:#fff;}
+.cr-btn.send:active{background:#1d4ed8;}
+.cr-btn.cancel{background:#f1f5f9;color:#dc2626;border:1px solid #fecaca;}
+.cr-sent-badge{display:inline-block;background:#f0fdf4;color:#15803d;border:1px solid #86efac;border-radius:99px;font-size:10px;font-weight:800;padding:2px 10px;margin-bottom:6px;}
+.cr-sent-at{font-size:11px;color:#94a3b8;margin-bottom:8px;}
+.cr-pending{font-size:11px;color:#b45309;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:7px 10px;margin-top:10px;}
+.cr-msg{font-size:11.5px;font-weight:700;margin-top:8px;min-height:14px;}
 </style>
 </head>
 <body>
 <div class="header">
   <span class="header-logo">大房行政書士法人</span>
-  <span class="header-title">提出書類・進捗確認</span>
-  <div class="header-org" id="headerName">読み込み中...</div>
+  <span class="header-title" id="hdrTitle">提出書類・進捗確認</span>
+  <div class="header-right">
+    <div id="langSwitch" class="lang-switch"></div>
+    <div class="header-org" id="headerName">読み込み中...</div>
+  </div>
 </div>
 
 <div class="tabs" id="tabs" style="display:none;">
-  <button class="tab active" data-tab="status" onclick="switchTab('status')">進捗</button>
-  <button class="tab" data-tab="docs" onclick="switchTab('docs')">提出書類<span class="badge hide" id="tabDocBadge">0</span></button>
-  <button class="tab" data-tab="pdf" onclick="switchTab('pdf')">発行書類</button>
-  <button class="tab" data-tab="info" onclick="switchTab('info')">本人情報</button>
-  <button class="tab" data-tab="office" onclick="switchTab('office')">事務所情報等</button>
-  <button class="tab" data-tab="flow" onclick="switchTab('flow')">申請の流れ</button>
+  <button class="tab active" data-tab="status" onclick="switchTab('status')"><span class="tab-l">進捗</span></button>
+  <button class="tab" data-tab="docs" onclick="switchTab('docs')"><span class="tab-l">提出書類</span><span class="badge hide" id="tabDocBadge">0</span></button>
+  <button class="tab" data-tab="pdf" onclick="switchTab('pdf')"><span class="tab-l">発行書類</span></button>
+  <button class="tab" data-tab="info" onclick="switchTab('info')"><span class="tab-l">本人情報</span></button>
+  <button class="tab" data-tab="office" onclick="switchTab('office')"><span class="tab-l">事務所情報等</span></button>
+  <button class="tab" data-tab="flow" onclick="switchTab('flow')"><span class="tab-l">申請の流れ</span></button>
 </div>
 
 <div class="wrap"><div id="main"><div class="loading">⏳ 読み込み中...</div></div></div>
@@ -153,7 +181,258 @@ function sbFetch(p,opts){return fetch(SUPABASE_URL+'/rest/v1/'+p,Object.assign({
 function callRpc(fn,args){return fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(args||{})}).then(function(r){return r.json();});}
 function getParam(k){return new URLSearchParams(location.search).get(k);}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function _dv(v){ return (v==null||v==='')?'—':esc(v); }
+
+/* ===================== ver.20260615.test21: 多言語化＋ふりがな ===================== */
+var curLang='ja';
+try{ var _sv=localStorage.getItem('applicantLang'); if(_sv&&['ja','en','vi','id','zh'].indexOf(_sv)>=0) curLang=_sv; }catch(e){}
+
+/* --- ふりがな辞書（語→読み）。fz()はja時のみ<ruby>付与、絵文字はコードポイント単位で保持 --- */
+var FZ={
+ '大房行政書士法人':'おおふさぎょうせいしょしほうじん','行政書士法人':'ぎょうせいしょしほうじん','代表行政書士':'だいひょうぎょうせいしょし','行政書士':'ぎょうせいしょし',
+ '出入国在留管理庁':'しゅつにゅうこくざいりゅうかんりちょう','在留資格認定証明書':'ざいりゅうしかくにんていしょうめいしょ',
+ '国民健康保険料納付証明書':'こくみんけんこうほけんりょうのうふしょうめいしょ','国民健康保険':'こくみんけんこうほけん','健康保険証':'けんこうほけんしょう','健康保険':'けんこうほけん',
+ '健康診断票':'けんこうしんだんひょう','健康診断証':'けんこうしんだんしょう','健康診断書':'けんこうしんだんしょ','健康診断':'けんこうしんだん',
+ '課税証明書':'かぜいしょうめいしょ','納税証明書':'のうぜいしょうめいしょ','源泉徴収票':'げんせんちょうしゅうひょう','卒業証明書':'そつぎょうしょうめいしょ','成績証明書':'せいせきしょうめいしょ',
+ '証明書番号':'しょうめいしょばんごう','証明書':'しょうめいしょ','申請受付番号':'しんせいうけつけばんごう','受付番号':'うけつけばんごう',
+ '申請在留資格':'しんせいざいりゅうしかく','在留資格':'ざいりゅうしかく','在留期限':'ざいりゅうきげん','在留期間':'ざいりゅうきかん','在留':'ざいりゅう',
+ '申請種別':'しんせいしゅべつ','申請人':'しんせいにん','申請中証明':'しんせいちゅうしょうめい','申請準備':'しんせいじゅんび','申請書類':'しんせいしょるい','申請':'しんせい',
+ '所属機関':'しょぞくきかん','登録支援機関':'とうろくしえんきかん','支援機関':'しえんきかん','機関':'きかん',
+ '審査完了通知':'しんさかんりょうつうち','審査完了':'しんさかんりょう','審査中':'しんさちゅう','審査':'しんさ',
+ '雇用条件':'こようじょうけん','企業確認':'きぎょうかくにん','企業押印':'きぎょうおういん','企業':'きぎょう','書類収集':'しょるいしゅうしゅう',
+ '提出書類':'ていしゅつしょるい','必要書類':'ひつようしょるい','追加書類':'ついかしょるい','発行書類':'はっこうしょるい','書類':'しょるい',
+ '進捗確認':'しんちょくかくにん','進捗':'しんちょく','本人情報':'ほんにんじょうほう','基本情報':'きほんじょうほう','事務所情報':'じむしょじょうほう','事務所':'じむしょ','情報':'じょうほう',
+ '依頼事項':'いらいじこう','依頼':'いらい','必須':'ひっす','回答':'かいとう','提出済':'ていしゅつずみ','提出':'ていしゅつ','未提出':'みていしゅつ','未回答':'みかいとう','未着手':'みちゃくしゅ','未発行':'みはっこう','不要':'ふよう',
+ '準備中':'じゅんびちゅう','準備':'じゅんび','残り':'のこり','現在':'げんざい','国交省':'こっこうしょう','特例期限':'とくれいきげん','期限切れ':'きげんぎれ','期限':'きげん',
+ '更新手続き':'こうしんてつづき','手続き':'てつづき','更新':'こうしん','分野':'ぶんや','職種':'しょくしゅ','部署':'ぶしょ','担当者':'たんとうしゃ','担当':'たんとう','窓口':'まどぐち','電話':'でんわ','問い合わせ':'といあわせ',
+ '氏名':'しめい','生年月日':'せいねんがっぴ','性別':'せいべつ','国籍':'こくせき','母国住所':'ぼこくじゅうしょ','住所':'じゅうしょ','母国':'ぼこく','有効期限':'ゆうこうきげん','連絡先':'れんらくさき','連絡':'れんらく',
+ '内容':'ないよう','誤り':'あやまり','訂正':'ていせい','変更':'へんこう','送信日時':'そうしんにちじ','送信':'そうしん','取り消す':'とりけす','取消':'とりけし','確認':'かくにん','設定':'せってい','入力':'にゅうりょく','数字':'すうじ','桁':'けた',
+ '通信環境':'つうしんかんきょう','失敗':'しっぱい','無効':'むこう','対象':'たいしょう','読み込み':'よみこみ','流れ':'ながれ','目安':'めやす','混雑状況':'こんざつじょうきょう','状況':'じょうきょう','所要期間':'しょようきかん','期間':'きかん','前後':'ぜんご',
+ '取得方法':'しゅとくほうほう','取得':'しゅとく','方法':'ほうほう','案内':'あんない','説明':'せつめい','発行':'はっこう','表示':'ひょうじ','預かり証':'あずかりしょう','預かり':'あずかり','許可':'きょか','交付':'こうふ','追完':'ついかん','一致':'いっち',
+ '顔写真':'かおじゃしん','写真':'しゃしん','合格証':'ごうかくしょう','技能試験':'ぎのうしけん','技能':'ぎのう','試験':'しけん','日本語':'にほんご','専門級':'せんもんきゅう','専門':'せんもん',
+ '所得':'しょとく','年金手帳':'ねんきんてちょう','年金':'ねんきん','手帳':'てちょう','住民票':'じゅうみんひょう','郵送物':'ゆうそうぶつ','郵送':'ゆうそう',
+ '東京都':'とうきょうと','大田区':'おおたく','蒲田':'かまた','大房':'おおふさ','明良':'あきよし','様':'さま','上記':'じょうき','一般的':'いっぱんてき','画面':'がめん','日時':'にちじ',
+ '月':'げつ','日':'にち','級':'きゅう','約':'やく','件':'けん','番号':'ばんごう'
+};
+var FZ_KEYS=Object.keys(FZ).sort(function(a,b){return Array.from(b).length-Array.from(a).length;});
+function _escCh(ch){ return ch==='&'?'&amp;':ch==='<'?'&lt;':ch==='>'?'&gt;':ch; }
+function fz(text){
+  if(text==null) return '';
+  text=String(text);
+  if(curLang!=='ja') return esc(text);
+  var chars=Array.from(text), out='', i=0, n=chars.length;
+  while(i<n){
+    var matched=false;
+    for(var k=0;k<FZ_KEYS.length;k++){
+      var key=FZ_KEYS[k], kc=Array.from(key), kl=kc.length;
+      if(i+kl<=n && chars.slice(i,i+kl).join('')===key){
+        out+='<ruby>'+esc(key)+'<rt>'+esc(FZ[key])+'</rt></ruby>'; i+=kl; matched=true; break;
+      }
+    }
+    if(!matched){ out+=_escCh(chars[i]); i++; }
+  }
+  return out;
+}
+
+/* --- 翻訳辞書 --- */
+var TR={
+ header_title:{ja:'提出書類・進捗確認',en:'Documents & Status',vi:'Hồ sơ & Tiến độ',id:'Dokumen & Status',zh:'提交材料・进度确认'},
+ sama:{ja:'様',en:'',vi:'',id:'',zh:'先生/女士'},
+ tab_status:{ja:'進捗',en:'Status',vi:'Tiến độ',id:'Status',zh:'进度'},
+ tab_docs:{ja:'提出書類',en:'Documents',vi:'Hồ sơ',id:'Dokumen',zh:'提交材料'},
+ tab_pdf:{ja:'発行書類',en:'Issued',vi:'Đã cấp',id:'Diterbitkan',zh:'发行材料'},
+ tab_info:{ja:'本人情報',en:'My Info',vi:'Thông tin',id:'Info Saya',zh:'本人信息'},
+ tab_office:{ja:'事務所情報等',en:'Our Office',vi:'Văn phòng',id:'Kantor',zh:'事务所信息'},
+ tab_flow:{ja:'申請の流れ',en:'Process',vi:'Quy trình',id:'Alur',zh:'申请流程'},
+ /* パスワード */
+ pass_title_enter:{ja:'パスワード（4桁）を入力してください',en:'Enter your 4-digit password',vi:'Nhập mật khẩu 4 chữ số',id:'Masukkan kata sandi 4 digit',zh:'请输入4位密码'},
+ pass_title_setup:{ja:'パスワードを設定してください',en:'Set your password',vi:'Đặt mật khẩu',id:'Atur kata sandi',zh:'请设置密码'},
+ pass_setup_note:{ja:'初回のみ：4桁の数字を決めてください',en:'First time only: choose a 4-digit number',vi:'Chỉ lần đầu: chọn số 4 chữ số',id:'Hanya pertama kali: pilih 4 digit angka',zh:'仅首次：请决定4位数字'},
+ pass_input2_ph:{ja:'もう一度（確認）',en:'Repeat (confirm)',vi:'Nhập lại (xác nhận)',id:'Ulangi (konfirmasi)',zh:'再次输入（确认）'},
+ pass_btn_login:{ja:'ログイン',en:'Log in',vi:'Đăng nhập',id:'Masuk',zh:'登录'},
+ pass_btn_set:{ja:'設定する',en:'Set',vi:'Đặt',id:'Atur',zh:'设置'},
+ pass_err_4digit:{ja:'4桁の数字を入力してください',en:'Please enter 4 digits',vi:'Vui lòng nhập 4 chữ số',id:'Masukkan 4 digit angka',zh:'请输入4位数字'},
+ pass_err_mismatch:{ja:'確認用と一致しません',en:'Does not match confirmation',vi:'Không khớp với xác nhận',id:'Tidak cocok dengan konfirmasi',zh:'与确认输入不一致'},
+ pass_setting:{ja:'設定中...',en:'Setting...',vi:'Đang đặt...',id:'Mengatur...',zh:'设置中...'},
+ pass_set_fail:{ja:'設定に失敗しました。通信環境をご確認ください',en:'Setup failed. Please check your connection',vi:'Đặt thất bại. Vui lòng kiểm tra kết nối',id:'Pengaturan gagal. Periksa koneksi Anda',zh:'设置失败。请检查网络环境'},
+ pass_checking:{ja:'確認中...',en:'Checking...',vi:'Đang kiểm tra...',id:'Memeriksa...',zh:'确认中...'},
+ pass_wrong:{ja:'パスワードが違います',en:'Incorrect password',vi:'Mật khẩu không đúng',id:'Kata sandi salah',zh:'密码错误'},
+ /* エラー */
+ err_badurl:{ja:'URLが正しくありません。',en:'The URL is invalid.',vi:'URL không hợp lệ.',id:'URL tidak valid.',zh:'URL不正确。'},
+ err_invalid:{ja:'このURLは無効です。担当者にお問い合わせください。',en:'This URL is invalid. Please contact your representative.',vi:'URL này không hợp lệ. Vui lòng liên hệ người phụ trách.',id:'URL ini tidak valid. Hubungi penanggung jawab Anda.',zh:'此URL无效。请联系负责人。'},
+ err_load:{ja:'読み込みエラー: {n}',en:'Loading error: {n}',vi:'Lỗi tải: {n}',id:'Kesalahan memuat: {n}',zh:'加载错误: {n}'},
+ err_notfound:{ja:'対象の申請が見つかりません。',en:'No matching application was found.',vi:'Không tìm thấy hồ sơ phù hợp.',id:'Permohonan yang cocok tidak ditemukan.',zh:'未找到对应的申请。'},
+ /* 依頼事項 / お願い */
+ todo_title:{ja:'📌 依頼事項',en:'📌 To-do',vi:'📌 Việc cần làm',id:'📌 Tugas',zh:'📌 待办事项'},
+ todo_hearing:{ja:'1. ヒアリングフォーム回答',en:'1. Answer the hearing form',vi:'1. Trả lời phiếu phỏng vấn',id:'1. Isi formulir wawancara',zh:'1. 回答问询表'},
+ todo_docs:{ja:'2. 必要書類提出',en:'2. Submit required documents',vi:'2. Nộp hồ sơ cần thiết',id:'2. Serahkan dokumen yang diperlukan',zh:'2. 提交必要材料'},
+ st_answered:{ja:'回答済み',en:'Answered',vi:'Đã trả lời',id:'Sudah dijawab',zh:'已回答'},
+ st_unanswered:{ja:'未回答',en:'Not answered',vi:'Chưa trả lời',id:'Belum dijawab',zh:'未回答'},
+ doc_submitted:{ja:'提出済み',en:'Submitted',vi:'Đã nộp',id:'Sudah diserahkan',zh:'已提交'},
+ doc_remaining:{ja:'残り{n}件',en:'{n} left',vi:'Còn {n}',id:'Sisa {n}',zh:'剩余{n}件'},
+ doc_preparing:{ja:'準備中',en:'Preparing',vi:'Đang chuẩn bị',id:'Sedang disiapkan',zh:'准备中'},
+ next_ask_title:{ja:'👉 あなたへのお願い',en:'👉 Action needed',vi:'👉 Việc bạn cần làm',id:'👉 Yang perlu Anda lakukan',zh:'👉 请您配合'},
+ next_hearing:{ja:'ヒアリングフォームにご回答ください',en:'Please answer the hearing form',vi:'Vui lòng trả lời phiếu phỏng vấn',id:'Mohon isi formulir wawancara',zh:'请回答问询表'},
+ next_docs:{ja:'必要書類をご提出ください（残{n}件）',en:'Please submit the required documents ({n} left)',vi:'Vui lòng nộp hồ sơ cần thiết (còn {n})',id:'Mohon serahkan dokumen yang diperlukan (sisa {n})',zh:'请提交必要材料（剩余{n}件）'},
+ next_ok_title:{ja:'✅ ご対応ありがとうございます',en:'✅ Thank you',vi:'✅ Cảm ơn bạn',id:'✅ Terima kasih',zh:'✅ 感谢您的配合'},
+ next_ok_body:{ja:'現在、大房行政書士法人で手続きを進めています。進捗はこの画面でご確認いただけます。',en:'Ofusa is now processing your application. You can check the progress on this screen.',vi:'Văn phòng Ofusa đang xử lý hồ sơ của bạn. Bạn có thể xem tiến độ tại màn hình này.',id:'Ofusa sedang memproses permohonan Anda. Anda dapat memeriksa progres di layar ini.',zh:'目前大房行政书士法人正在为您办理手续。可在此画面确认进度。'},
+ cur_progress:{ja:'現在の進捗',en:'Current status',vi:'Tiến độ hiện tại',id:'Status saat ini',zh:'当前进度'},
+ kokko_prefix:{ja:'🏗 国交省 ',en:'🏗 MLIT ',vi:'🏗 Bộ MLIT ',id:'🏗 MLIT ',zh:'🏗 国交省 '},
+ exp_tokurei:{ja:'特例期限',en:'Special deadline',vi:'Hạn đặc biệt',id:'Batas khusus',zh:'特例期限'},
+ exp_zairyu:{ja:'在留期限',en:'Residence expiry',vi:'Hạn cư trú',id:'Batas izin tinggal',zh:'在留期限'},
+ exp_expired:{ja:'期限切れ {n}日',en:'expired {n}d',vi:'quá hạn {n} ngày',id:'lewat {n} hari',zh:'已过期{n}天'},
+ exp_remain:{ja:'残{n}日',en:'{n}d left',vi:'còn {n} ngày',id:'sisa {n} hari',zh:'剩{n}天'},
+ exp_note:{ja:'※ 在留期間の更新手続きは、在留期限のおおむね3か月前から可能です。お早めにご準備ください。',en:'* Renewal can be filed from about 3 months before the expiry date. Please prepare early.',vi:'* Có thể nộp gia hạn từ khoảng 3 tháng trước ngày hết hạn. Vui lòng chuẩn bị sớm.',id:'* Perpanjangan dapat diajukan sekitar 3 bulan sebelum tanggal kedaluwarsa. Mohon siapkan lebih awal.',zh:'※ 在留期间的更新手续，大约可从在留期限的3个月前开始办理。请尽早准备。'},
+ info_company:{ja:'所属機関',en:'Employer',vi:'Cơ quan tiếp nhận',id:'Instansi',zh:'所属机构'},
+ info_org:{ja:'登録支援機関',en:'Support org.',vi:'Tổ chức hỗ trợ',id:'Lembaga pendukung',zh:'登录支援机构'},
+ info_cur_status:{ja:'現在の在留資格',en:'Current status',vi:'Tư cách hiện tại',id:'Status saat ini',zh:'现在的在留资格'},
+ info_app_status:{ja:'申請在留資格',en:'Applied status',vi:'Tư cách xin',id:'Status diajukan',zh:'申请的在留资格'},
+ info_app_type:{ja:'申請種別',en:'Application type',vi:'Loại hồ sơ',id:'Jenis permohonan',zh:'申请种类'},
+ info_field:{ja:'分野・職種',en:'Field / Job',vi:'Lĩnh vực / Nghề',id:'Bidang / Pekerjaan',zh:'领域・职种'},
+ info_receipt:{ja:'受付番号',en:'Receipt no.',vi:'Số tiếp nhận',id:'No. tanda terima',zh:'受理番号'},
+ info_shinsa:{ja:'審査完了',en:'Review done',vi:'Thẩm tra xong',id:'Tinjauan selesai',zh:'审查完成'},
+ contact_title:{ja:'🤝 大房行政書士法人担当窓口',en:'🤝 Your contact at Ofusa',vi:'🤝 Người phụ trách tại Ofusa',id:'🤝 Kontak Anda di Ofusa',zh:'🤝 大房行政书士法人负责窗口'},
+ contact_dept:{ja:'部署',en:'Team',vi:'Bộ phận',id:'Tim',zh:'部门'},
+ contact_staff:{ja:'担当',en:'Staff',vi:'Phụ trách',id:'Staf',zh:'负责人'},
+ inquiry_title:{ja:'💬 お問い合わせ',en:'💬 Contact us',vi:'💬 Liên hệ',id:'💬 Hubungi kami',zh:'💬 咨询'},
+ btn_tel:{ja:'📞 電話する',en:'📞 Call',vi:'📞 Gọi điện',id:'📞 Telepon',zh:'📞 拨打电话'},
+ btn_mail:{ja:'✉️ メール',en:'✉️ Email',vi:'✉️ Email',id:'✉️ Email',zh:'✉️ 邮件'},
+ doc_missing_note:{ja:'⚠️ 未提出の書類が {n}件 あります。「提出書類」タブからご確認のうえ、ご提出をお願いいたします。',en:'⚠️ You have {n} document(s) not yet submitted. Please check the "Documents" tab and submit them.',vi:'⚠️ Bạn còn {n} hồ sơ chưa nộp. Vui lòng kiểm tra tab "Hồ sơ" và nộp.',id:'⚠️ Ada {n} dokumen yang belum diserahkan. Periksa tab "Dokumen" lalu serahkan.',zh:'⚠️ 有{n}件材料尚未提交。请在「提交材料」标签确认后提交。'},
+ /* 提出書類 */
+ docs_title:{ja:'📄 あなたの提出書類',en:'📄 Your documents',vi:'📄 Hồ sơ của bạn',id:'📄 Dokumen Anda',zh:'📄 您的提交材料'},
+ docs_note:{ja:'大房行政書士法人でチェックが入った書類は「提出済（または不要）」になります。「未提出」の書類はご提出をお願いいたします。ご不明点は担当者までご連絡ください。',en:'Documents checked by Ofusa show as "Submitted (or not needed)". Please submit any "Not submitted" documents. For questions, contact your representative.',vi:'Hồ sơ đã được Ofusa kiểm tra sẽ hiển thị "Đã nộp (hoặc không cần)". Vui lòng nộp các hồ sơ "Chưa nộp". Có thắc mắc, liên hệ người phụ trách.',id:'Dokumen yang sudah dicek Ofusa tampil sebagai "Sudah diserahkan (atau tidak perlu)". Mohon serahkan dokumen "Belum diserahkan". Ada pertanyaan, hubungi penanggung jawab.',zh:'经大房行政书士法人核对的材料会显示为「已提交（或不需要）」。请提交「未提交」的材料。如有疑问请联系负责人。'},
+ btn_upload:{ja:'📤 書類をアップロード',en:'📤 Upload documents',vi:'📤 Tải hồ sơ lên',id:'📤 Unggah dokumen',zh:'📤 上传材料'},
+ docs_empty:{ja:'提出書類リストはまだ準備中です。担当者にお問い合わせください。',en:'The document list is being prepared. Please contact your representative.',vi:'Danh sách hồ sơ đang được chuẩn bị. Vui lòng liên hệ người phụ trách.',id:'Daftar dokumen sedang disiapkan. Hubungi penanggung jawab Anda.',zh:'提交材料清单正在准备中。请联系负责人。'},
+ doc_done_state:{ja:'提出済（または不要）',en:'Submitted (or N/A)',vi:'Đã nộp (hoặc không cần)',id:'Diserahkan (atau tidak perlu)',zh:'已提交（或不需要）'},
+ doc_todo_state:{ja:'未提出',en:'Not submitted',vi:'Chưa nộp',id:'Belum diserahkan',zh:'未提交'},
+ doc_required:{ja:'必須',en:'Required',vi:'Bắt buộc',id:'Wajib',zh:'必须'},
+ /* ヘルプモーダル */
+ dh_method:{ja:'取得方法・説明',en:'How to obtain / Notes',vi:'Cách lấy / Ghi chú',id:'Cara memperoleh / Catatan',zh:'取得方法・说明'},
+ dh_sample_prep:{ja:'📷 サンプル画像準備中',en:'📷 Sample image coming soon',vi:'📷 Ảnh mẫu sắp có',id:'📷 Gambar contoh segera',zh:'📷 样本图准备中'},
+ dh_foot:{ja:'※ 上記は一般的なご案内です。詳しくは担当者にお問い合わせください。',en:'* The above is general guidance. For details, please contact your representative.',vi:'* Trên đây là hướng dẫn chung. Chi tiết vui lòng liên hệ người phụ trách.',id:'* Di atas adalah panduan umum. Untuk detail, hubungi penanggung jawab.',zh:'※ 以上为一般性说明。详情请联系负责人。'},
+ /* 発行書類 */
+ pdf_title:{ja:'📑 発行書類',en:'📑 Issued documents',vi:'📑 Hồ sơ đã cấp',id:'📑 Dokumen terbit',zh:'📑 发行材料'},
+ pdf_note:{ja:'大房行政書士法人が発行した書類です。発行され次第ここに表示され、タップで開けます。',en:'Documents issued by Ofusa. They appear here once issued; tap to open.',vi:'Hồ sơ do Ofusa cấp. Sẽ hiển thị tại đây khi được cấp; chạm để mở.',id:'Dokumen yang diterbitkan Ofusa. Muncul di sini setelah terbit; ketuk untuk membuka.',zh:'由大房行政书士法人发行的材料。发行后将显示于此，点击可打开。'},
+ pdf_cert:{ja:'申請中証明',en:'Proof of pending application',vi:'Giấy xác nhận đang xin',id:'Bukti permohonan berjalan',zh:'申请中证明'},
+ pdf_custody:{ja:'預かり証',en:'Custody receipt',vi:'Giấy biên nhận giữ hồ sơ',id:'Tanda terima penitipan',zh:'保管证'},
+ pdf_receipt:{ja:'申請受付番号',en:'Application receipt no.',vi:'Số tiếp nhận hồ sơ',id:'No. tanda terima permohonan',zh:'申请受理号'},
+ pdf_shinsa:{ja:'審査完了通知',en:'Review completion notice',vi:'Thông báo hoàn tất thẩm tra',id:'Pemberitahuan tinjauan selesai',zh:'审查完成通知'},
+ pdf_unissued:{ja:'（未発行）',en:'(not issued)',vi:'(chưa cấp)',id:'(belum terbit)',zh:'（未发行）'},
+ /* 本人情報 */
+ info_title:{ja:'🪪 本人情報',en:'🪪 My information',vi:'🪪 Thông tin của tôi',id:'🪪 Informasi saya',zh:'🪪 本人信息'},
+ info_sec_basic:{ja:'基本情報',en:'Basic info',vi:'Thông tin cơ bản',id:'Info dasar',zh:'基本信息'},
+ info_name:{ja:'氏名',en:'Name',vi:'Họ tên',id:'Nama',zh:'姓名'},
+ info_birth:{ja:'生年月日',en:'Date of birth',vi:'Ngày sinh',id:'Tanggal lahir',zh:'出生年月日'},
+ info_gender:{ja:'性別',en:'Gender',vi:'Giới tính',id:'Jenis kelamin',zh:'性别'},
+ info_nationality:{ja:'国籍',en:'Nationality',vi:'Quốc tịch',id:'Kewarganegaraan',zh:'国籍'},
+ info_sec_cert:{ja:'証明書番号',en:'ID numbers',vi:'Số giấy tờ',id:'Nomor identitas',zh:'证件号码'},
+ info_card_no:{ja:'在留カード番号',en:'Residence card no.',vi:'Số thẻ cư trú',id:'No. kartu izin tinggal',zh:'在留卡号'},
+ info_passport_no:{ja:'パスポート番号',en:'Passport no.',vi:'Số hộ chiếu',id:'No. paspor',zh:'护照号'},
+ info_passport_exp:{ja:'パスポート有効期限',en:'Passport expiry',vi:'Hạn hộ chiếu',id:'Masa berlaku paspor',zh:'护照有效期'},
+ info_sec_contact:{ja:'連絡先',en:'Contact',vi:'Liên hệ',id:'Kontak',zh:'联系方式'},
+ info_address:{ja:'住所',en:'Address',vi:'Địa chỉ',id:'Alamat',zh:'地址'},
+ info_home_address:{ja:'母国住所',en:'Home country address',vi:'Địa chỉ ở quê',id:'Alamat negara asal',zh:'母国地址'},
+ info_phone:{ja:'電話',en:'Phone',vi:'Điện thoại',id:'Telepon',zh:'电话'},
+ info_email:{ja:'メール',en:'Email',vi:'Email',id:'Email',zh:'邮箱'},
+ /* 変更依頼フォーム */
+ cr_title:{ja:'✏️ 変更・訂正のご依頼',en:'✏️ Request a change / correction',vi:'✏️ Yêu cầu thay đổi / sửa',id:'✏️ Minta perubahan / koreksi',zh:'✏️ 变更・订正申请'},
+ cr_desc:{ja:'上記の本人情報に誤りや変更がある場合は、内容をご記入のうえ送信してください。担当者が確認します。',en:'If any of the information above is wrong or has changed, write the details and send. Your representative will review it.',vi:'Nếu thông tin trên có sai sót hoặc thay đổi, hãy ghi nội dung rồi gửi. Người phụ trách sẽ kiểm tra.',id:'Jika ada informasi di atas yang salah atau berubah, tulis detailnya lalu kirim. Penanggung jawab akan memeriksanya.',zh:'若以上本人信息有误或有变更，请填写内容后发送。负责人将进行确认。'},
+ cr_placeholder:{ja:'例：電話番号が変わりました 090-XXXX-XXXX / 住所が変わりました …',en:'e.g. My phone number changed to 090-XXXX-XXXX / My address changed …',vi:'VD: Số điện thoại đổi thành 090-XXXX-XXXX / Địa chỉ đã đổi …',id:'cth: Nomor telepon berubah 090-XXXX-XXXX / Alamat berubah …',zh:'例：电话号码已变更 090-XXXX-XXXX / 地址已变更 …'},
+ cr_send:{ja:'送信する',en:'Send',vi:'Gửi',id:'Kirim',zh:'发送'},
+ cr_update:{ja:'内容を更新する',en:'Update',vi:'Cập nhật',id:'Perbarui',zh:'更新内容'},
+ cr_cancel:{ja:'依頼を取り消す',en:'Cancel request',vi:'Hủy yêu cầu',id:'Batalkan',zh:'取消申请'},
+ cr_submitted_badge:{ja:'送信済み',en:'Submitted',vi:'Đã gửi',id:'Terkirim',zh:'已发送'},
+ cr_submitted_at:{ja:'送信日時：{n}',en:'Sent at: {n}',vi:'Gửi lúc: {n}',id:'Dikirim: {n}',zh:'发送时间：{n}'},
+ cr_sending:{ja:'送信中...',en:'Sending...',vi:'Đang gửi...',id:'Mengirim...',zh:'发送中...'},
+ cr_send_fail:{ja:'送信に失敗しました。通信環境をご確認ください。',en:'Failed to send. Please check your connection.',vi:'Gửi thất bại. Vui lòng kiểm tra kết nối.',id:'Gagal mengirim. Periksa koneksi Anda.',zh:'发送失败。请检查网络环境。'},
+ cr_empty:{ja:'内容を入力してください。',en:'Please enter the details.',vi:'Vui lòng nhập nội dung.',id:'Mohon isi detailnya.',zh:'请输入内容。'},
+ cr_cancel_confirm:{ja:'この変更依頼を取り消しますか？',en:'Cancel this change request?',vi:'Hủy yêu cầu thay đổi này?',id:'Batalkan permintaan perubahan ini?',zh:'要取消此变更申请吗？'},
+ cr_pending_note:{ja:'この依頼は担当者が確認中です。',en:'This request is under review by your representative.',vi:'Yêu cầu này đang được người phụ trách xem xét.',id:'Permintaan ini sedang ditinjau penanggung jawab.',zh:'此申请正由负责人确认中。'},
+ /* 事務所 */
+ office_title:{ja:'🏢 事務所情報',en:'🏢 Our office',vi:'🏢 Văn phòng',id:'🏢 Kantor kami',zh:'🏢 事务所信息'},
+ office_rep:{ja:'代表行政書士：大房 明良',en:'Representative: Akiyoshi Ofusa',vi:'Đại diện: Akiyoshi Ofusa',id:'Perwakilan: Akiyoshi Ofusa',zh:'代表行政书士：大房 明良'},
+ office_mail_note:{ja:'📮 郵送物はここに送ってください',en:'📮 Please send postal mail here',vi:'📮 Vui lòng gửi bưu phẩm đến đây',id:'📮 Kirim surat ke alamat ini',zh:'📮 邮寄物请寄到此处'},
+ /* 申請の流れ */
+ flow_title:{ja:'📌 申請の流れ',en:'📌 Application process',vi:'📌 Quy trình hồ sơ',id:'📌 Alur permohonan',zh:'📌 申请流程'},
+ flow_dur_prefix:{ja:'⏱ 目安 ',en:'⏱ approx. ',vi:'⏱ khoảng ',id:'⏱ kira-kira ',zh:'⏱ 约 '},
+ flow_g1_dur:{ja:'約1ヶ月',en:'about 1 month',vi:'khoảng 1 tháng',id:'sekitar 1 bulan',zh:'约1个月'},
+ flow_g1_label:{ja:'ご準備〜申請',en:'Preparation → Filing',vi:'Chuẩn bị → Nộp',id:'Persiapan → Pengajuan',zh:'准备〜申请'},
+ flow_g2_dur:{ja:'約2〜4ヶ月',en:'about 2-4 months',vi:'khoảng 2-4 tháng',id:'sekitar 2-4 bulan',zh:'约2〜4个月'},
+ flow_g2_label:{ja:'審査〜交付',en:'Review → Issuance',vi:'Thẩm tra → Cấp',id:'Tinjauan → Penerbitan',zh:'审查〜交付'},
+ step1_ph:{ja:'STEP 1 ・ ヒアリング',en:'STEP 1 · Hearing',vi:'BƯỚC 1 · Phỏng vấn',id:'LANGKAH 1 · Wawancara',zh:'STEP 1 · 问询'},
+ step1_t:{ja:'ヒアリング・必要書類のご案内',en:'Hearing & guidance on required documents',vi:'Phỏng vấn & hướng dẫn hồ sơ cần thiết',id:'Wawancara & panduan dokumen',zh:'问询・必要材料说明'},
+ step1_s:{ja:'担当者がヒアリングを行い、ご提出いただく書類をご案内します。',en:'Your representative conducts a hearing and explains which documents to submit.',vi:'Người phụ trách phỏng vấn và hướng dẫn hồ sơ bạn cần nộp.',id:'Penanggung jawab mewawancarai dan menjelaskan dokumen yang harus diserahkan.',zh:'负责人进行问询，并说明需要提交的材料。'},
+ step2_ph:{ja:'STEP 2 ・ ご提出',en:'STEP 2 · Submission',vi:'BƯỚC 2 · Nộp',id:'LANGKAH 2 · Penyerahan',zh:'STEP 2 · 提交'},
+ step2_t:{ja:'書類のご提出',en:'Submit your documents',vi:'Nộp hồ sơ',id:'Serahkan dokumen',zh:'提交材料'},
+ step2_s:{ja:'「提出書類」タブの一覧に沿って、書類をアップロード・ご提出ください。',en:'Upload and submit documents following the list in the "Documents" tab.',vi:'Tải lên và nộp hồ sơ theo danh sách ở tab "Hồ sơ".',id:'Unggah dan serahkan dokumen sesuai daftar di tab "Dokumen".',zh:'请按「提交材料」标签的清单上传并提交材料。'},
+ step3_ph:{ja:'STEP 3 ・ 作成',en:'STEP 3 · Drafting',vi:'BƯỚC 3 · Soạn',id:'LANGKAH 3 · Penyusunan',zh:'STEP 3 · 制作'},
+ step3_t:{ja:'申請書類の作成・ご確認',en:'Drafting & checking the application',vi:'Soạn & kiểm tra hồ sơ xin',id:'Penyusunan & pemeriksaan berkas',zh:'申请材料的制作・确认'},
+ step3_s:{ja:'大房行政書士法人で申請書類を作成し、内容を確認します。',en:'Ofusa drafts the application documents and checks the content.',vi:'Ofusa soạn hồ sơ xin và kiểm tra nội dung.',id:'Ofusa menyusun berkas permohonan dan memeriksa isinya.',zh:'由大房行政书士法人制作申请材料并确认内容。'},
+ step4_ph:{ja:'STEP 4 ・ 申請',en:'STEP 4 · Filing',vi:'BƯỚC 4 · Nộp đơn',id:'LANGKAH 4 · Pengajuan',zh:'STEP 4 · 申请'},
+ step4_t:{ja:'入管へ申請（受付番号の発行）',en:'File with Immigration (receipt no. issued)',vi:'Nộp cho Cục XNC (cấp số tiếp nhận)',id:'Ajukan ke Imigrasi (no. tanda terima terbit)',zh:'向入管申请（发行受理号）'},
+ step4_s:{ja:'出入国在留管理庁へ申請します。受付番号が発行されます。',en:'We file with the Immigration Services Agency. A receipt number is issued.',vi:'Chúng tôi nộp cho Cục Quản lý XNC. Một số tiếp nhận được cấp.',id:'Kami mengajukan ke Badan Imigrasi. Nomor tanda terima diterbitkan.',zh:'向出入国在留管理厅提交申请。会发行受理号。'},
+ step5_ph:{ja:'STEP 5 ・ 審査',en:'STEP 5 · Review',vi:'BƯỚC 5 · Thẩm tra',id:'LANGKAH 5 · Tinjauan',zh:'STEP 5 · 审查'},
+ step5_t:{ja:'入管による審査',en:'Review by Immigration',vi:'Cục XNC thẩm tra',id:'Tinjauan oleh Imigrasi',zh:'入管审查'},
+ step5_s:{ja:'審査期間です。追加書類（追完）のご依頼が入ることがあります。',en:'The review period. Additional documents may be requested.',vi:'Giai đoạn thẩm tra. Có thể được yêu cầu bổ sung hồ sơ.',id:'Masa peninjauan. Dokumen tambahan mungkin diminta.',zh:'审查期间。有时会被要求补充材料（追完）。'},
+ step6_ph:{ja:'STEP 6 ・ 交付',en:'STEP 6 · Issuance',vi:'BƯỚC 6 · Cấp',id:'LANGKAH 6 · Penerbitan',zh:'STEP 6 · 交付'},
+ step6_t:{ja:'許可・在留カード／認定証明書の交付',en:'Approval; Residence Card / Certificate issued',vi:'Chấp thuận; cấp Thẻ cư trú / Giấy chứng nhận',id:'Persetujuan; Kartu Izin Tinggal / Sertifikat terbit',zh:'许可・交付在留卡／认定证明书'},
+ step6_s:{ja:'許可後、在留カードまたは在留資格認定証明書が交付されます。',en:'After approval, a Residence Card or Certificate of Eligibility is issued.',vi:'Sau khi chấp thuận, Thẻ cư trú hoặc Giấy chứng nhận tư cách được cấp.',id:'Setelah disetujui, Kartu Izin Tinggal atau Sertifikat Kelayakan diterbitkan.',zh:'许可后，将交付在留卡或在留资格认定证明书。'},
+ flow_note:{ja:'所要期間はあくまで目安で、申請種別や入管の混雑状況により前後します。現在の状況は担当者からのご連絡や各タブの表示でご確認ください。',en:'The durations are rough estimates and vary by application type and Immigration workload. Check the current status via your representative or the tabs.',vi:'Thời gian chỉ là ước tính và thay đổi theo loại hồ sơ và mức độ bận của Cục XNC. Kiểm tra tình trạng qua người phụ trách hoặc các tab.',id:'Durasi hanya perkiraan dan bervariasi menurut jenis permohonan dan kesibukan Imigrasi. Cek status terkini lewat penanggung jawab atau tab.',zh:'所需期间仅为大致估算，会因申请种类及入管繁忙程度而前后变动。请通过负责人的联络或各标签确认当前状况。'}
+};
+function _tr(k){ var o=TR[k]; if(!o) return k; return (o[curLang]!=null?o[curLang]:(o.ja||o.en||k)); }
+function _vrep(s,vars){ if(vars){ for(var kk in vars){ s=s.split('{'+kk+'}').join(String(vars[kk])); } } return s; }
+function t(k,vars){ var s=_vrep(_tr(k),vars); return (curLang==='ja')?fz(s):esc(s); }
+function tp(k,vars){ return _vrep(_tr(k),vars); }
+
+/* 外部ステータス（進捗カード）の翻訳 */
+var ST_EXT_TR={
+ '雇用条件作成・企業確認':{en:'Drafting employment terms / Company review',vi:'Soạn điều kiện tuyển dụng / Công ty xác nhận',id:'Penyusunan syarat kerja / Konfirmasi perusahaan',zh:'制作雇用条件・企业确认'},
+ '申請人サイン対応':{en:'Applicant signature',vi:'Người nộp đơn ký tên',id:'Tanda tangan pemohon',zh:'申请人签名对应'},
+ '企業押印ご対応・書類収集・申請準備':{en:'Company seal / Collecting documents / Preparing filing',vi:'Đóng dấu công ty / Thu thập hồ sơ / Chuẩn bị nộp',id:'Stempel perusahaan / Pengumpulan dokumen / Persiapan',zh:'企业盖章对应・收集材料・申请准备'},
+ '審査中':{en:'Under review',vi:'Đang thẩm tra',id:'Sedang ditinjau',zh:'审查中'},
+ '審査完了(受取対応中)':{en:'Review complete (arranging receipt)',vi:'Thẩm tra xong (đang nhận kết quả)',id:'Tinjauan selesai (proses penerimaan)',zh:'审查完成(领取办理中)'},
+ '新在留カード(または認定証)発行済み':{en:'New Residence Card / Certificate issued',vi:'Đã cấp Thẻ cư trú mới / Giấy chứng nhận',id:'Kartu Izin Tinggal baru / Sertifikat terbit',zh:'新在留卡(或认定证)已发行'},
+ '未着手':{en:'Not started',vi:'Chưa bắt đầu',id:'Belum dimulai',zh:'未开始'}
+};
+function extStatusHtml(c){
+  var ja=getExternalStatus(c.status);
+  if(curLang==='ja') return fz(ja);
+  var tr=ST_EXT_TR[ja]; return esc((tr&&tr[curLang])||ja);
+}
+
+/* 言語切替UI */
+function renderLangSwitch(){
+  var el=document.getElementById('langSwitch'); if(!el) return;
+  var langs=[['ja','日本語'],['en','English'],['vi','Tiếng Việt'],['id','Indonesia'],['zh','中文']];
+  var opts=langs.map(function(l){return '<option value="'+l[0]+'"'+(l[0]===curLang?' selected':'')+'>'+l[1]+'</option>';}).join('');
+  el.innerHTML='🌐 <select id="langSel" class="lang-sel" onchange="setLang(this.value)">'+opts+'</select>';
+}
+function setLang(l){
+  if(['ja','en','vi','id','zh'].indexOf(l)<0) return;
+  curLang=l; try{localStorage.setItem('applicantLang',l);}catch(e){}
+  document.documentElement.lang=l;
+  applyStaticI18n();
+  if(theCase) render();
+}
+function applyStaticI18n(){
+  document.documentElement.lang=curLang;
+  var ht=document.getElementById('hdrTitle'); if(ht) ht.innerHTML=t('header_title');
+  var logo=document.querySelector('.header-logo'); if(logo) logo.innerHTML=(curLang==='ja')?fz('大房行政書士法人'):'大房行政書士法人';
+  var map={status:'tab_status',docs:'tab_docs',pdf:'tab_pdf',info:'tab_info',office:'tab_office',flow:'tab_flow'};
+  document.querySelectorAll('.tab').forEach(function(btn){
+    var key=map[btn.dataset.tab]; if(!key) return;
+    var l=btn.querySelector('.tab-l'); if(l) l.innerHTML=t(key);
+  });
+  var foot=document.querySelector('.dh-foot'); if(foot) foot.innerHTML=t('dh_foot');
+  // パスワード画面
+  var pm=(typeof _passMode!=='undefined')?_passMode:'enter';
+  var pt=document.getElementById('passTitle'), po=document.getElementById('passOrgName'), pb=document.getElementById('passBtn'), pi2=document.getElementById('passInput2');
+  if(pt) pt.textContent=(pm==='setup')?tp('pass_title_setup'):tp('pass_title_enter');
+  if(pb) pb.textContent=(pm==='setup')?tp('pass_btn_set'):tp('pass_btn_login');
+  if(po&&pm==='setup') po.textContent=tp('pass_setup_note');
+  if(pi2) pi2.placeholder=tp('pass_input2_ph');
+}
+/* ふりがな対応：動的値の表示（ja=ruby付与 / 他=エスケープ） */
+function _dv(v){ if(v==null||v==='') return '—'; return (curLang==='ja')?fz(String(v)):esc(String(v)); }
 
 /* 外部ステータス変換（share と同一・流し込み） */
 // ===== ver.20260512: 登録支援機関側に見せる外部ステータス変換マップ =====
@@ -261,10 +540,11 @@ function _tokureiDate(c){
 }
 function expInfo(dateStr){
   if(!dateStr) return {txt:'—',cls:'none',days:null};
-  var d=new Date(dateStr); if(isNaN(d)) return {txt:esc(dateStr),cls:'none',days:null};
+  var d=new Date(dateStr); if(isNaN(d)) return {txt:(curLang==='ja'?fz(dateStr):esc(dateStr)),cls:'none',days:null};
   var days=Math.ceil((d-new Date())/86400000);
   var cls=days<0?'danger':(days<=90?'soon':'ok');
-  var txt=dateStr+'（'+(days<0?('期限切れ '+(-days)+'日'):('残'+days+'日'))+'）';
+  var tail=days<0? t('exp_expired',{n:-days}) : t('exp_remain',{n:days});
+  var txt=esc(dateStr)+'（'+tail+'）';
   return {txt:txt,cls:cls,days:days};
 }
 
@@ -297,7 +577,7 @@ function buildUploadUrl(){
 
 function _hasVal(v){ return v!=null && v!=='' && v!=='false'; }
 
-var theCase=null, thePerson={}, cacheDocs=[], doneSet={}, missingDocCount=0, pdfCert='', pdfCustody='', pdfReceipt='', pdfShinsa='', hasHearingForm=false, _passMode='enter', currentTab='status', currentToken='', _correctPass='';
+var theCase=null, thePerson={}, cacheDocs=[], doneSet={}, missingDocCount=0, pdfCert='', pdfCustody='', pdfReceipt='', pdfShinsa='', hasHearingForm=false, _passMode='enter', currentTab='status', currentToken='', _correctPass='', applicantChangeReq=null;
 
 function savePin(token,pin){
   return callRpc('applicant_view_set_pin',{p_token:token,p_pin:pin}).then(function(r){return !!(r&&r.ok);}).catch(function(){return false;});
@@ -305,45 +585,43 @@ function savePin(token,pin){
 async function passSubmit(){
   var v=(document.getElementById('passInput').value||'').replace(/\D/g,'');
   var err=document.getElementById('passErr');
-  if(!/^\d{4}$/.test(v)){ err.textContent='4桁の数字を入力してください'; return; }
+  if(!/^\d{4}$/.test(v)){ err.textContent=tp('pass_err_4digit'); return; }
   if(_passMode==='setup'){
     var v2=(document.getElementById('passInput2').value||'').replace(/\D/g,'');
-    if(v!==v2){ err.textContent='確認用と一致しません'; return; }
-    err.textContent='設定中...';
+    if(v!==v2){ err.textContent=tp('pass_err_mismatch'); return; }
+    err.textContent=tp('pass_setting');
     var ok=await savePin(window._passToken,v);
-    if(!ok){ err.textContent='設定に失敗しました。通信環境をご確認ください'; return; }
+    if(!ok){ err.textContent=tp('pass_set_fail'); return; }
     document.getElementById('passScreen').classList.add('hide');
     await loadData(v);
   } else {
-    err.textContent='確認中...';
+    err.textContent=tp('pass_checking');
     var lr=await loadData(v);
-    if(lr&&lr.passErr){ err.textContent='パスワードが違います'; return; }
+    if(lr&&lr.passErr){ err.textContent=tp('pass_wrong'); return; }
     document.getElementById('passScreen').classList.add('hide');
   }
 }
 
 async function init(){
+  renderLangSwitch();
+  document.documentElement.lang=curLang;
   var token=getParam('token');
-  if(!token){ document.getElementById('main').innerHTML='<div class="error-box">URLが正しくありません。</div>'; return; }
+  if(!token){ document.getElementById('main').innerHTML='<div class="error-box">'+t('err_badurl')+'</div>'; return; }
   currentToken=token; window._passToken=token;
   try{
     var meta=await callRpc('applicant_view_meta',{p_token:token});
-    if(!meta||!meta.ok){ document.getElementById('main').innerHTML='<div class="error-box">このURLは無効です。担当者にお問い合わせください。</div>'; return; }
+    if(!meta||!meta.ok){ document.getElementById('main').innerHTML='<div class="error-box">'+t('err_invalid')+'</div>'; return; }
     if(meta.has_pin){
       _passMode='enter';
-      document.getElementById('passTitle').textContent='パスワード（4桁）を入力してください';
-      document.getElementById('passBtn').textContent='ログイン';
       document.getElementById('passInput2').classList.add('hide');
     } else {
       _passMode='setup';
-      document.getElementById('passTitle').textContent='パスワードを設定してください';
-      document.getElementById('passOrgName').textContent='初回のみ：4桁の数字を決めてください';
-      document.getElementById('passBtn').textContent='設定する';
       document.getElementById('passInput2').classList.remove('hide');
     }
+    applyStaticI18n();
     document.getElementById('passScreen').classList.remove('hide');
     setTimeout(function(){document.getElementById('passInput').focus();},100);
-  }catch(e){ document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+esc(e.message)+'</div>'; }
+  }catch(e){ document.getElementById('main').innerHTML='<div class="error-box">'+t('err_load',{n:e.message})+'</div>'; }
 }
 
 async function loadData(pass){
@@ -351,10 +629,15 @@ async function loadData(pass){
     var res=await callRpc('applicant_view_get',{p_token:currentToken,p_pass:pass||''});
     if(!res||!res.ok){
       if(res&&res.error==='pass'){ return {passErr:true}; }
-      document.getElementById('main').innerHTML='<div class="error-box">対象の申請が見つかりません。</div>'; return {ok:false};
+      document.getElementById('main').innerHTML='<div class="error-box">'+t('err_notfound')+'</div>'; return {ok:false};
     }
+    _correctPass=pass||'';
     theCase=res.case||{};
     thePerson=res.person||{};
+    applicantChangeReq=null;
+    if(res.change_req!=null && res.change_req!==''){
+      try{ applicantChangeReq=(typeof res.change_req==='string')?JSON.parse(res.change_req):res.change_req; }catch(e){ applicantChangeReq=null; }
+    }
     pdfCert=''; pdfCustody=''; pdfReceipt=res.pdf_receipt||''; pdfShinsa=res.pdf_shinsa||'';
     var _ac=thePerson.application_cert_pdf_urls; if(Array.isArray(_ac)&&_ac.length){ var _l1=_ac[_ac.length-1]; if(_l1&&_l1.url) pdfCert=_l1.url; }
     var _cu=thePerson.custody_receipt_pdf_urls; if(Array.isArray(_cu)&&_cu.length){ var _l2=_cu[_cu.length-1]; if(_l2&&_l2.url) pdfCustody=_l2.url; }
@@ -369,12 +652,14 @@ async function loadData(pass){
     });
     computeMissing();
     var nm=theCase.applicant||theCase.name||'';
-    document.getElementById('headerName').textContent=nm+' 様';
-    document.title=nm+' 様 | 提出書類・進捗確認';
+    var samaSp=tp('sama'); samaSp=samaSp?(' '+samaSp):'';
+    document.getElementById('headerName').textContent=nm+samaSp;
+    document.title=nm+samaSp+' | '+tp('header_title');
     document.getElementById('tabs').style.display='flex';
+    applyStaticI18n();
     render();
     return {ok:true};
-  }catch(e){ document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+esc(e.message)+'</div>'; return {ok:false}; }
+  }catch(e){ document.getElementById('main').innerHTML='<div class="error-box">'+t('err_load',{n:e.message})+'</div>'; return {ok:false}; }
 }
 
 function docDisplayList(){ return cacheDocs.filter(function(d){ return d && d.l && d.l!=='その他'; }); }
@@ -406,16 +691,16 @@ function _todoRow(label,done,stateTxt){
   return '<div class="todo-row '+(done?'done':'todo')+'">'
     +'<span class="todo-check">'+(done?'✅':'⬜')+'</span>'
     +'<span class="todo-text">'+label+'</span>'
-    +'<span class="todo-state '+(done?'s-done':'s-todo')+'">'+esc(stateTxt)+'</span></div>';
+    +'<span class="todo-state '+(done?'s-done':'s-todo')+'">'+stateTxt+'</span></div>';
 }
 function renderTodo(){
   var hAns=hearingAnswered();
   var dDone=docsAllDone();
-  var dState=docDisplayList().length? (dDone?'提出済み':'残り'+missingDocCount+'件') : '準備中';
-  var h='<div class="section-title">📌 依頼事項</div>';
+  var dState=docDisplayList().length? (dDone?t('doc_submitted'):t('doc_remaining',{n:missingDocCount})) : t('doc_preparing');
+  var h='<div class="section-title">'+t('todo_title')+'</div>';
   h+='<div class="todo-box">';
-  h+=_todoRow('1. ヒアリングフォーム回答',hAns,hAns?'回答済み':'未回答');
-  h+=_todoRow('2. 必要書類提出',dDone,dState);
+  h+=_todoRow(t('todo_hearing'),hAns,hAns?t('st_answered'):t('st_unanswered'));
+  h+=_todoRow(t('todo_docs'),dDone,dState);
   h+='</div>';
   return h;
 }
@@ -425,59 +710,58 @@ function renderNextAction(){
   var dHas=docDisplayList().length>0;
   var dDone=docsAllDone();
   var msgs=[];
-  if(!hAns) msgs.push('ヒアリングフォームにご回答ください');
-  if(dHas&&!dDone) msgs.push('必要書類をご提出ください（残'+missingDocCount+'件）');
+  if(!hAns) msgs.push(t('next_hearing'));
+  if(dHas&&!dDone) msgs.push(t('next_docs',{n:missingDocCount}));
   if(msgs.length){
-    return '<div class="next-box"><div class="next-l">👉 あなたへのお願い</div><div class="next-t">'+msgs.map(esc).join('<br>')+'</div></div>';
+    return '<div class="next-box"><div class="next-l">'+t('next_ask_title')+'</div><div class="next-t">'+msgs.join('<br>')+'</div></div>';
   }
-  return '<div class="next-box ok"><div class="next-l">✅ ご対応ありがとうございます</div><div class="next-t">現在、大房行政書士法人で手続きを進めています。進捗はこの画面でご確認いただけます。</div></div>';
+  return '<div class="next-box ok"><div class="next-l">'+t('next_ok_title')+'</div><div class="next-t">'+t('next_ok_body')+'</div></div>';
 }
 
 function renderStatus(){
   var c=theCase;
-  var est=getExternalStatus(c.status);
   var h=renderNextAction()+renderTodo();
   h+='<div class="phase-card">';
-  h+='<div class="phase-lbl">現在の進捗</div>';
-  h+='<div class="phase-st" style="'+stExtStyle(est)+'">'+esc(est)+'</div>';
+  h+='<div class="phase-lbl">'+t('cur_progress')+'</div>';
+  h+='<div class="phase-st" style="'+stExtStyle(getExternalStatus(c.status))+'">'+extStatusHtml(c)+'</div>';
   var ml=getKokkoStatus(c);
-  if(ml) h+='<div class="phase-mlit" style="color:'+agencyColor(ml)+';">🏗 国交省 '+esc(ml)+'</div>';
+  if(ml) h+='<div class="phase-mlit" style="color:'+agencyColor(ml)+';">'+t('kokko_prefix')+(curLang==='ja'?fz(ml):esc(ml))+'</div>';
   h+='</div>';
   // 期限
   var cards='';
   var ei=expInfo(c.expire);
   if(_tokureiTracked(c)){
     var ti=expInfo(_tokureiDate(c));
-    cards+='<div class="card '+(ti.cls==='danger'?'warn':(ti.cls==='soon'?'alert':''))+'"><div class="lbl">特例期限</div><div class="num"><span class="exp '+ti.cls+'">'+esc(ti.txt)+'</span></div></div>';
-    cards+='<div class="card"><div class="lbl">在留期限</div><div class="num" style="color:#94a3b8;">'+_dv(c.expire)+'</div></div>';
+    cards+='<div class="card '+(ti.cls==='danger'?'warn':(ti.cls==='soon'?'alert':''))+'"><div class="lbl">'+t('exp_tokurei')+'</div><div class="num"><span class="exp '+ti.cls+'">'+ti.txt+'</span></div></div>';
+    cards+='<div class="card"><div class="lbl">'+t('exp_zairyu')+'</div><div class="num" style="color:#94a3b8;">'+_dv(c.expire)+'</div></div>';
   } else {
-    cards+='<div class="card '+(ei.cls==='danger'?'warn':(ei.cls==='soon'?'alert':''))+'"><div class="lbl">在留期限</div><div class="num"><span class="exp '+ei.cls+'">'+esc(ei.txt)+'</span></div></div>';
+    cards+='<div class="card '+(ei.cls==='danger'?'warn':(ei.cls==='soon'?'alert':''))+'"><div class="lbl">'+t('exp_zairyu')+'</div><div class="num"><span class="exp '+ei.cls+'">'+ei.txt+'</span></div></div>';
   }
   h+='<div class="cards">'+cards+'</div>';
-  if(_expireTracked(c)||_tokureiTracked(c)) h+='<div class="exp-note">※ 在留期間の更新手続きは、在留期限のおおむね3か月前から可能です。お早めにご準備ください。</div>';
+  if(_expireTracked(c)||_tokureiTracked(c)) h+='<div class="exp-note">'+t('exp_note')+'</div>';
   // 申請情報
   h+='<div class="info-card">';
-  h+='<div class="dt-row"><span class="dt-l">所属機関</span><span class="dt-v">'+_dv(c.company)+'</span></div>';
-  h+='<div class="dt-row"><span class="dt-l">登録支援機関</span><span class="dt-v">'+_dv(c.org)+'</span></div>';
-  h+='<div class="dt-row"><span class="dt-l">現在の在留資格</span><span class="dt-v">'+_dv((thePerson&&thePerson.residence_status)||c.current_status)+'</span></div>';
-  h+='<div class="dt-row"><span class="dt-l">申請在留資格</span><span class="dt-v">'+_dv(c.residence_status)+'</span></div>';
-  h+='<div class="dt-row"><span class="dt-l">申請種別</span><span class="dt-v">'+_dv(c.app_type)+'</span></div>';
-  h+='<div class="dt-row"><span class="dt-l">分野・職種</span><span class="dt-v">'+_dv([c.applicant_field,c.job_category].filter(Boolean).join(' / ')||c.industry)+'</span></div>';
-  h+='<div class="dt-row"><span class="dt-l">受付番号</span><span class="dt-v">'+_dv(c.receipt_no)+'</span></div>';
-  h+='<div class="dt-row"><span class="dt-l">審査完了</span><span class="dt-v">'+_dv(c.shinsa_date)+'</span></div>';
+  h+='<div class="dt-row"><span class="dt-l">'+t('info_company')+'</span><span class="dt-v">'+_dv(c.company)+'</span></div>';
+  h+='<div class="dt-row"><span class="dt-l">'+t('info_org')+'</span><span class="dt-v">'+_dv(c.org)+'</span></div>';
+  h+='<div class="dt-row"><span class="dt-l">'+t('info_cur_status')+'</span><span class="dt-v">'+_dv((thePerson&&thePerson.residence_status)||c.current_status)+'</span></div>';
+  h+='<div class="dt-row"><span class="dt-l">'+t('info_app_status')+'</span><span class="dt-v">'+_dv(c.residence_status)+'</span></div>';
+  h+='<div class="dt-row"><span class="dt-l">'+t('info_app_type')+'</span><span class="dt-v">'+_dv(c.app_type)+'</span></div>';
+  h+='<div class="dt-row"><span class="dt-l">'+t('info_field')+'</span><span class="dt-v">'+_dv([c.applicant_field,c.job_category].filter(Boolean).join(' / ')||c.industry)+'</span></div>';
+  h+='<div class="dt-row"><span class="dt-l">'+t('info_receipt')+'</span><span class="dt-v">'+_dv(c.receipt_no)+'</span></div>';
+  h+='<div class="dt-row"><span class="dt-l">'+t('info_shinsa')+'</span><span class="dt-v">'+_dv(c.shinsa_date)+'</span></div>';
   h+='</div>';
   // 大房行政書士法人担当
   if(c.team||c.staff){
-    h+='<div class="section-title" style="margin-top:16px;">🤝 大房行政書士法人担当窓口</div>';
+    h+='<div class="section-title" style="margin-top:16px;">'+t('contact_title')+'</div>';
     h+='<div class="contact-card">';
-    h+='<div class="ct-row"><span class="ct-l">部署</span><span class="ct-v">'+_dv(c.team)+'</span></div>';
-    h+='<div class="ct-row"><span class="ct-l">担当</span><span class="ct-v">'+_dv(c.staff)+'</span></div>';
+    h+='<div class="ct-row"><span class="ct-l">'+t('contact_dept')+'</span><span class="ct-v">'+_dv(c.team)+'</span></div>';
+    h+='<div class="ct-row"><span class="ct-l">'+t('contact_staff')+'</span><span class="ct-v">'+_dv(c.staff)+'</span></div>';
     h+='</div>';
   }
-  h+='<div class="section-title" style="margin-top:16px;">💬 お問い合わせ</div>';
-  h+='<div class="contact-btns"><a class="cbtn tel" href="tel:0364248849">📞 電話する</a><a class="cbtn mail" href="mailto:mail@gyosei-cambo.com">✉️ メール</a></div>';
+  h+='<div class="section-title" style="margin-top:16px;">'+t('inquiry_title')+'</div>';
+  h+='<div class="contact-btns"><a class="cbtn tel" href="tel:0364248849">'+t('btn_tel')+'</a><a class="cbtn mail" href="mailto:mail@gyosei-cambo.com">'+t('btn_mail')+'</a></div>';
   if(missingDocCount>0){
-    h+='<div class="note">⚠️ 未提出の書類が <b>'+missingDocCount+'件</b> あります。「提出書類」タブからご確認のうえ、ご提出をお願いいたします。</div>';
+    h+='<div class="note">'+t('doc_missing_note',{n:missingDocCount})+'</div>';
   }
   return h;
 }
@@ -830,34 +1114,36 @@ function getDocHelp(name){
 }
 function openDocHelp(name){
   var d=getDocHelp(name); if(!d) return;
-  document.getElementById('dhTitle').textContent='❓ '+name;
+  document.getElementById('dhTitle').innerHTML='❓ '+((curLang==='ja')?fz(name):esc(name));
   var img=d.image?(d.image.indexOf('http')===0?d.image:'https://ofusa2026.github.io/upload/'+d.image):'';
-  var txt=(d.where&&(d.where.ja||d.where.en))||(d.help&&(d.help.ja||d.help.en))||'';
+  var txt=(d.where&&(d.where[curLang]||d.where.ja))||(d.help&&(d.help[curLang]||d.help.ja))||'';
+  var prep=tp('dh_sample_prep');
   var b='';
-  if(img) b+='<div style="background:#f8fafc;border-radius:10px;padding:8px;margin-bottom:12px;text-align:center;"><img src="'+esc(img)+'" alt="sample" style="max-width:100%;max-height:46vh;border-radius:6px;" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div style=&quot;padding:30px;color:#94a3b8;font-size:13px;&quot;>📷 サンプル画像準備中</div>\';"></div>';
-  if(txt) b+='<div class="dh-row"><div class="dh-l">取得方法・説明</div><div class="dh-v" style="white-space:pre-line;">'+esc(txt)+'</div></div>';
+  if(img) b+='<div style="background:#f8fafc;border-radius:10px;padding:8px;margin-bottom:12px;text-align:center;"><img src="'+esc(img)+'" alt="sample" style="max-width:100%;max-height:46vh;border-radius:6px;" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div style=&quot;padding:30px;color:#94a3b8;font-size:13px;&quot;>📷 '+esc(prep)+'</div>\';"></div>';
+  if(txt){ var txtHtml=(curLang==='ja')?fz(txt):esc(txt); b+='<div class="dh-row"><div class="dh-l">'+t('dh_method')+'</div><div class="dh-v" style="white-space:pre-line;">'+txtHtml+'</div></div>'; }
   document.getElementById('dhBody').innerHTML=b;
   document.getElementById('docHelpModal').classList.remove('hide');
 }
 function closeDocHelp(){ document.getElementById('docHelpModal').classList.add('hide'); }
 
 function renderDocs(){
-  var h='<div class="section-title">📄 あなたの提出書類</div>';
-  h+='<div class="note">大房行政書士法人でチェックが入った書類は「提出済（または不要）」になります。「未提出」の書類はご提出をお願いいたします。ご不明点は担当者までご連絡ください。</div>';
+  var h='<div class="section-title">📄 '+t('docs_title')+'</div>';
+  h+='<div class="note">'+t('docs_note')+'</div>';
   var upUrl=buildUploadUrl();
-  if(upUrl){ h+='<div><a class="upload-btn" href="'+esc(upUrl)+'" target="_blank" rel="noopener">📤 書類をアップロード</a></div>'; }
+  if(upUrl){ h+='<div><a class="upload-btn" href="'+esc(upUrl)+'" target="_blank" rel="noopener">📤 '+t('btn_upload')+'</a></div>'; }
   var list=docDisplayList();
-  if(!list.length){ h+='<div class="empty">提出書類リストはまだ準備中です。担当者にお問い合わせください。</div>'; return h; }
+  if(!list.length){ h+='<div class="empty">'+t('docs_empty')+'</div>'; return h; }
   list=list.slice().sort(function(a,b){ var da=isDocDone(a)?1:0, db=isDocDone(b)?1:0; if(da!==db)return da-db; return String(a.l).localeCompare(String(b.l),'ja'); });
   h+='<div class="doc-co">';
   list.forEach(function(d){
     var done=isDocDone(d);
     var ico=done?'✅':'⬜';
-    var stTxt=done?'提出済（または不要）':'未提出';
+    var stTxt=done?t('doc_done_state'):t('doc_todo_state');
     var stCls=done?'s-done':'s-todo';
-    var reqMark=(!done && d.r)?' <span style="color:#dc2626;font-size:10px;font-weight:800;">必須</span>':'';
+    var reqMark=(!done && d.r)?' <span style="color:#dc2626;font-size:10px;font-weight:800;">'+t('doc_required')+'</span>':'';
     var helpBtn=getDocHelp(d.l)?' <button class="help-q" data-n="'+esc(d.l)+'" onclick="openDocHelp(this.dataset.n)">？</button>':'';
-    h+='<div class="doc-row"><span class="doc-ico">'+ico+'</span><div class="doc-name">'+esc(d.l)+reqMark+helpBtn+'</div><span class="doc-state '+stCls+'">'+stTxt+'</span></div>';
+    var nameHtml=(curLang==='ja')?fz(d.l):esc(d.l);
+    h+='<div class="doc-row"><span class="doc-ico">'+ico+'</span><div class="doc-name">'+nameHtml+reqMark+helpBtn+'</div><span class="doc-state '+stCls+'">'+stTxt+'</span></div>';
   });
   h+='</div>';
   return h;
@@ -865,16 +1151,16 @@ function renderDocs(){
 
 function _pdfBtn(label,url,color,icon){
   if(url) return '<a class="pdf-btn" style="background:'+color+';" href="'+esc(url)+'" target="_blank" rel="noopener">'+icon+' '+label+'</a>';
-  return '<span class="pdf-btn pdf-none">'+icon+' '+label+'（未発行）</span>';
+  return '<span class="pdf-btn pdf-none">'+icon+' '+label+'（'+t('pdf_unissued')+'）</span>';
 }
 function renderPdf(){
-  var h='<div class="section-title">📑 発行書類</div>';
-  h+='<div class="note">大房行政書士法人が発行した書類です。発行され次第ここに表示され、タップで開けます。</div>';
+  var h='<div class="section-title">📑 '+t('pdf_title')+'</div>';
+  h+='<div class="note">'+t('pdf_note')+'</div>';
   h+='<div class="pdf-list">';
-  h+=_pdfBtn('申請中証明',pdfCert,'#2563eb','🪪');
-  h+=_pdfBtn('預かり証',pdfCustody,'#7c3aed','📋');
-  h+=_pdfBtn('申請受付番号',pdfReceipt,'#dc2626','📄');
-  h+=_pdfBtn('審査完了通知',pdfShinsa,'#16a34a','✅');
+  h+=_pdfBtn(t('pdf_cert'),pdfCert,'#2563eb','🪪');
+  h+=_pdfBtn(t('pdf_custody'),pdfCustody,'#7c3aed','📋');
+  h+=_pdfBtn(t('pdf_receipt'),pdfReceipt,'#dc2626','📄');
+  h+=_pdfBtn(t('pdf_shinsa'),pdfShinsa,'#16a34a','✅');
   h+='</div>';
   return h;
 }
@@ -884,58 +1170,106 @@ function renderInfo(){
   function row(l,v){ return '<div class="dt-row"><span class="dt-l">'+l+'</span><span class="dt-v">'+v+'</span></div>'; }
   var addr=[p.jp_postal_code?('〒'+p.jp_postal_code):'',p.jp_address||'',p.jp_detail_address||''].filter(Boolean).join(' ');
   var tel=p.phone||p.cel_phone||p.tel_num||'';
-  var h='<div class="section-title">🪪 本人情報</div>';
+  var h='<div class="section-title">🪪 '+t('info_title')+'</div>';
   h+='<div class="info-card">';
-  h+='<div class="dt-sec">基本情報</div>';
-  h+=row('氏名',_dv(c.applicant||c.name));
-  h+=row('生年月日',_dv(p.birthdate));
-  h+=row('性別',_dv(p.gender));
-  h+=row('国籍',_dv(p.nationality||c.nationality));
-  h+='<div class="dt-sec">証明書番号</div>';
-  h+=row('在留カード番号',_dv(p.residence_card));
-  h+=row('パスポート番号',_dv(p.passport));
-  h+=row('パスポート有効期限',_dv(p.passport_expiry));
-  h+='<div class="dt-sec">連絡先</div>';
-  h+=row('住所',_dv(addr));
-  h+=row('母国住所',_dv(p.home_country_address));
-  h+=row('電話',_dv(tel));
-  h+=row('メール',_dv(p.email));
+  h+='<div class="dt-sec">'+t('info_sec_basic')+'</div>';
+  h+=row(t('info_name'),_dv(c.applicant||c.name));
+  h+=row(t('info_birth'),_dv(p.birthdate));
+  h+=row(t('info_gender'),_dv(p.gender));
+  h+=row(t('info_nationality'),_dv(p.nationality||c.nationality));
+  h+='<div class="dt-sec">'+t('info_sec_cert')+'</div>';
+  h+=row(t('info_card_no'),_dv(p.residence_card));
+  h+=row(t('info_passport_no'),_dv(p.passport));
+  h+=row(t('info_passport_exp'),_dv(p.passport_expiry));
+  h+='<div class="dt-sec">'+t('info_sec_contact')+'</div>';
+  h+=row(t('info_address'),_dv(addr));
+  h+=row(t('info_home_address'),_dv(p.home_country_address));
+  h+=row(t('info_phone'),_dv(tel));
+  h+=row(t('info_email'),_dv(p.email));
   h+='</div>';
-  h+='<div class="note">内容に誤りがある場合は、担当者までご連絡ください。</div>';
+  h+=changeReqHtml();
   return h;
 }
 
+function changeReqHtml(){
+  var has=!!(applicantChangeReq && applicantChangeReq.text);
+  var curText=has?String(applicantChangeReq.text):'';
+  var h='<div class="cr-box">';
+  h+='<div class="cr-title">✏️ '+t('cr_title')+'</div>';
+  h+='<div class="cr-desc">'+t('cr_desc')+'</div>';
+  if(has){
+    h+='<div class="cr-sent-badge">✓ '+t('cr_submitted_badge')+'</div>';
+    if(applicantChangeReq.requested_at){ h+='<div class="cr-sent-at">'+t('cr_submitted_at')+'：'+esc(String(applicantChangeReq.requested_at))+'</div>'; }
+  }
+  h+='<textarea id="crText" class="cr-ta" placeholder="'+esc(tp('cr_placeholder'))+'">'+esc(curText)+'</textarea>';
+  h+='<div class="cr-btns">';
+  h+='<button class="cr-btn send" onclick="sendChangeReq()">'+(has?('🔄 '+t('cr_update')):('📨 '+t('cr_send')))+'</button>';
+  if(has){ h+='<button class="cr-btn cancel" onclick="cancelChangeReq()">🗑 '+t('cr_cancel')+'</button>'; }
+  h+='</div>';
+  if(has){ h+='<div class="cr-pending">⏳ '+t('cr_pending_note')+'</div>'; }
+  h+='<div id="crMsg" class="cr-msg"></div>';
+  h+='</div>';
+  return h;
+}
+
+function _crMsg(msg,color){ var el=document.getElementById('crMsg'); if(el){ el.textContent=msg; el.style.color=color||'#dc2626'; } }
+
+function sendChangeReq(){
+  var el=document.getElementById('crText'); if(!el) return;
+  var txt=(el.value||'').trim();
+  if(!txt){ _crMsg(tp('cr_empty'),'#dc2626'); return; }
+  _crMsg(tp('cr_sending'),'#64748b');
+  callRpc('applicant_view_change_req',{p_token:currentToken,p_pass:_correctPass,p_text:txt}).then(function(r){
+    var ra=(r&&(r.requested_at||r.requestedAt))||'';
+    applicantChangeReq={text:txt,requested_at:ra,status:'pending'};
+    render();
+  }).catch(function(){ _crMsg(tp('cr_send_fail'),'#dc2626'); });
+}
+
+function cancelChangeReq(){
+  if(!window.confirm(tp('cr_cancel_confirm'))) return;
+  _crMsg(tp('cr_sending'),'#64748b');
+  callRpc('applicant_view_change_req',{p_token:currentToken,p_pass:_correctPass,p_text:''}).then(function(){
+    applicantChangeReq=null;
+    render();
+  }).catch(function(){ _crMsg(tp('cr_send_fail'),'#dc2626'); });
+}
+
 function renderOffice(){
-  var h='<div class="section-title">🏢 事務所情報</div>';
+  var firm=(curLang==='ja')?fz('大房行政書士法人'):esc('大房行政書士法人');
+  var addrJa='東京都大田区蒲田５丁目１１−１０ FUNDES蒲田8階';
+  var addrRomaji='FUNDES Kamata 8F, 5-11-10 Kamata, Ota-ku, Tokyo';
+  var addrHtml=(curLang==='ja')?fz(addrJa):(esc(addrJa)+'<br>'+esc(addrRomaji));
+  var h='<div class="section-title">🏢 '+t('office_title')+'</div>';
   h+='<div class="info-card" style="padding:18px;line-height:1.9;">'
-    +'<div style="font-size:16px;font-weight:900;color:#0f2040;margin-bottom:8px;">大房行政書士法人</div>'
-    +'〒144-0052<br>東京都大田区蒲田５丁目１１−１０ FUNDES蒲田8階'
+    +'<div style="font-size:16px;font-weight:900;color:#0f2040;margin-bottom:8px;">'+firm+'</div>'
+    +'〒144-0052<br>'+addrHtml
     +'<div style="margin-top:6px;">TEL：<a href="tel:0364248849" style="color:#2563eb;font-weight:700;text-decoration:none;">03-6424-8849</a></div>'
-    +'<div style="margin-top:6px;">代表行政書士：大房 明良</div>'
-    +'<div>メール：<a href="mailto:mail@gyosei-cambo.com" style="color:#2563eb;font-weight:700;text-decoration:none;">mail@gyosei-cambo.com</a></div>'
+    +'<div style="margin-top:6px;">'+t('office_rep')+'：'+_dv('大房 明良')+'</div>'
+    +'<div>'+t('info_email')+'：<a href="mailto:mail@gyosei-cambo.com" style="color:#2563eb;font-weight:700;text-decoration:none;">mail@gyosei-cambo.com</a></div>'
     +'</div>';
-  h+='<div class="mail-note" style="margin-top:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;">📮 郵送物はここに送ってください</div>';
+  h+='<div class="mail-note" style="margin-top:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;">📮 '+t('office_mail_note')+'</div>';
   return h;
 }
 
 function renderFlow(){
   var groups=[
-    {dur:'約1ヶ月', range:'STEP 1〜4', label:'ご準備〜申請', steps:[
-      {ph:'STEP 1 ・ ヒアリング', t:'ヒアリング・必要書類のご案内', s:'担当者がヒアリングを行い、ご提出いただく書類をご案内します。'},
-      {ph:'STEP 2 ・ ご提出', t:'書類のご提出', s:'「提出書類」タブの一覧に沿って、書類をアップロード・ご提出ください。'},
-      {ph:'STEP 3 ・ 作成', t:'申請書類の作成・ご確認', s:'大房行政書士法人で申請書類を作成し、内容を確認します。'},
-      {ph:'STEP 4 ・ 申請', t:'入管へ申請（受付番号の発行）', s:'出入国在留管理庁へ申請します。受付番号が発行されます。'}
+    {dur:t('flow_g1_dur'), range:'STEP 1〜4', label:t('flow_g1_label'), steps:[
+      {ph:t('step1_ph'), t:t('step1_t'), s:t('step1_s')},
+      {ph:t('step2_ph'), t:t('step2_t'), s:t('step2_s')},
+      {ph:t('step3_ph'), t:t('step3_t'), s:t('step3_s')},
+      {ph:t('step4_ph'), t:t('step4_t'), s:t('step4_s')}
     ]},
-    {dur:'約2〜4ヶ月', range:'STEP 5〜6', label:'審査〜交付', steps:[
-      {ph:'STEP 5 ・ 審査', t:'入管による審査', s:'審査期間です。追加書類（追完）のご依頼が入ることがあります。'},
-      {ph:'STEP 6 ・ 交付', t:'許可・在留カード／認定証明書の交付', s:'許可後、在留カードまたは在留資格認定証明書が交付されます。'}
+    {dur:t('flow_g2_dur'), range:'STEP 5〜6', label:t('flow_g2_label'), steps:[
+      {ph:t('step5_ph'), t:t('step5_t'), s:t('step5_s')},
+      {ph:t('step6_ph'), t:t('step6_t'), s:t('step6_s')}
     ]}
   ];
-  var h='<div class="section-title">📌 申請の流れ</div>';
+  var h='<div class="section-title">📌 '+t('flow_title')+'</div>';
   h+='<div class="info-card" style="padding:18px 18px 12px;">';
   var n=0;
   groups.forEach(function(g){
-    h+='<div class="tl-grp"><span class="tl-dur">⏱ 目安 '+g.dur+'</span><span class="tl-grp-l">'+g.label+'（'+g.range+'）</span></div>';
+    h+='<div class="tl-grp"><span class="tl-dur">⏱ '+t('flow_dur_prefix')+' '+g.dur+'</span><span class="tl-grp-l">'+g.label+'（'+esc(g.range)+'）</span></div>';
     h+='<div class="tl">';
     g.steps.forEach(function(st){
       n++;
@@ -947,7 +1281,7 @@ function renderFlow(){
     h+='</div>';
   });
   h+='</div>';
-  h+='<div class="note">所要期間はあくまで目安で、申請種別や入管の混雑状況により前後します。現在の状況は担当者からのご連絡や各タブの表示でご確認ください。</div>';
+  h+='<div class="note">'+t('flow_note')+'</div>';
   return h;
 }
 
