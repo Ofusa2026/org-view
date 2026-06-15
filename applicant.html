@@ -9,7 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | 大房行政書士法人</title>
 <!-- ver.20260609.04: 申請人（人材本人）向け進捗・提出書類確認ページ -->
-<!-- ver.20260615.test25: 進捗タブに一時帰国欄(予定/予定なし・報告喚起)を追加 -->
+<!-- ver.20260615.test26: 在留期限・特例期限・一時帰国を同一カードセクションに統合＋特例期限の説明追加 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -122,7 +122,7 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .pass-btn{width:100%;padding:11px;background:#0f2040;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:800;cursor:pointer;}
 .pass-err{color:#dc2626;font-size:11px;margin-top:10px;min-height:14px;}
 .hide{display:none!important;}
-/* ver.20260615.test25: ふりがな */
+/* ver.20260615.test26: ふりがな */
 ruby{ruby-align:center;}
 rt{font-size:.52em;color:#64748b;font-weight:400;letter-spacing:0;line-height:1;}
 body{line-height:1.45;}
@@ -189,7 +189,7 @@ function callRpc(fn,args){return fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'
 function getParam(k){return new URLSearchParams(location.search).get(k);}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-/* ===================== ver.20260615.test25: 多言語化(8言語)＋ふりがな ===================== */
+/* ===================== ver.20260615.test26: 多言語化(8言語)＋ふりがな ===================== */
 var curLang='ja';
 try{ var _sv=localStorage.getItem('applicantLang'); if(_sv&&['ja','en','vi','id','zh','km','my','th'].indexOf(_sv)>=0) curLang=_sv; }catch(e){}
 
@@ -209,7 +209,7 @@ var FZ={
  '提出書類':'ていしゅつしょるい','必要書類':'ひつようしょるい','追加書類':'ついかしょるい','発行書類':'はっこうしょるい','書類':'しょるい',
  '進捗確認':'しんちょくかくにん','進捗':'しんちょく','本人情報':'ほんにんじょうほう','基本情報':'きほんじょうほう','事務所情報':'じむしょじょうほう','事務所':'じむしょ','情報':'じょうほう',
  '依頼事項':'いらいじこう','依頼':'いらい','必須':'ひっす','回答':'かいとう','提出済':'ていしゅつずみ','提出':'ていしゅつ','未提出':'みていしゅつ','未回答':'みかいとう','未着手':'みちゃくしゅ','未発行':'みはっこう','不要':'ふよう',
- '準備中':'じゅんびちゅう','準備':'じゅんび','残り':'のこり','現在':'げんざい','国交省':'こっこうしょう','特例期限':'とくれいきげん','期限切れ':'きげんぎれ','期限':'きげん',
+ '準備中':'じゅんびちゅう','準備':'じゅんび','残り':'のこり','現在':'げんざい','国交省':'こっこうしょう','特例期限':'とくれいきげん','特例期間':'とくれいきかん','特例':'とくれい','申請中':'しんせいちゅう','日本':'にほん','過':'す','期限切れ':'きげんぎれ','期限':'きげん',
  '更新手続き':'こうしんてつづき','手続き':'てつづき','更新':'こうしん','分野':'ぶんや','職種':'しょくしゅ','部署':'ぶしょ','担当者':'たんとうしゃ','担当':'たんとう','窓口':'まどぐち','電話':'でんわ','問い合わせ':'といあわせ','一時帰国':'いちじきこく','一時':'いちじ','帰国':'きこく','再入国':'さいにゅうこく','入国':'にゅうこく','予定':'よてい','未定':'みてい','報告':'ほうこく','事前':'じぜん','場合':'ばあい','必':'かなら',
  '氏名':'しめい','生年月日':'せいねんがっぴ','性別':'せいべつ','国籍':'こくせき','母国住所':'ぼこくじゅうしょ','住所':'じゅうしょ','母国':'ぼこく','有効期限':'ゆうこうきげん','連絡先':'れんらくさき','連絡':'れんらく',
  '内容':'ないよう','誤り':'あやまり','訂正':'ていせい','変更':'へんこう','送信日時':'そうしんにちじ','送信':'そうしん','取り消す':'とりけす','取消':'とりけし','確認':'かくにん','設定':'せってい','入力':'にゅうりょく','数字':'すうじ','桁':'けた',
@@ -314,6 +314,8 @@ var TR={
  doc_required:{ja:'必須',en:'Required',vi:'Bắt buộc',id:'Wajib',zh:'必须',km:'ចាំបាច់',my:'မဖြစ်မနေ',th:'จำเป็น'},
  note_specialist:{ja:'※ 技能実習をしていた方のみ',en:'* Only for those who did Technical Intern Training (Ginou Jisshu)',vi:'* Chỉ dành cho người từng thực tập kỹ năng (Ginou Jisshu)',id:'* Hanya untuk yang pernah ikut Pemagangan Teknis (Ginou Jisshu)',zh:'※ 仅限曾参加技能实习（技能実習）者',km:'* សម្រាប់តែអ្នកធ្លាប់កម្មសិក្សាជំនាញ (Ginou Jisshu) ប៉ុណ្ណោះ',my:'* နည်းပညာအလုပ်သင် (Ginou Jisshu) လုပ်ခဲ့ဖူးသူများသာ',th:'* เฉพาะผู้ที่เคยฝึกงานทักษะ (Ginou Jisshu) เท่านั้น'},
  temp_return_title:{ja:'🛫 一時帰国',en:'🛫 Temporary Return Home',vi:'🛫 Về nước tạm thời',id:'🛫 Pulang Sementara',zh:'🛫 临时回国',km:'🛫 ត្រឡប់ប្រទេសវិញបណ្ដោះអាសន្ន',my:'🛫 ယာယီပြည်တော်ပြန်',th:'🛫 กลับประเทศชั่วคราว'},
+ exp_tokurei_na:{ja:'対象外',en:'N/A',vi:'Không áp dụng',id:'Tidak berlaku',zh:'不适用',km:'មិនពាក់ព័ន្ធ',my:'မသက်ဆိုင်ပါ',th:'ไม่เกี่ยวข้อง'},
+ tokurei_explain:{ja:'💡 特例期限とは：在留期限が過ぎても、更新・変更の申請中であればこの期限まで日本に在留できます（特例期間）。',en:'💡 Special deadline: even after your residence period ends, you may stay in Japan until this date while your renewal/change application is under review (grace period).',vi:'💡 Hạn đặc biệt: dù thời hạn cư trú đã hết, bạn vẫn có thể ở Nhật đến ngày này nếu đang trong quá trình xin gia hạn/thay đổi (thời gian gia hạn đặc biệt).',id:'💡 Batas khusus: meski masa tinggal habis, Anda tetap boleh berada di Jepang sampai tanggal ini selama permohonan perpanjangan/perubahan sedang diproses (masa tenggang).',zh:'💡 特例期限：即使在留期限已过，只要更新・变更申请审查中，您可在日本停留至此日（特例期间）。',km:'💡 ថ្ងៃកំណត់ពិសេស៖ ទោះបីសុពលភាពស្នាក់នៅផុតក៏ដោយ អ្នកអាចស្នាក់នៅជប៉ុនរហូតដល់ថ្ងៃនេះ ប្រសិនបើពាក្យសុំបន្ត/ប្ដូរកំពុងពិនិត្យ (រយៈពេលអនុគ្រោះ)។',my:'💡 အထူးသတ်မှတ်ရက်— နေထိုင်ခွင့်ကုန်ဆုံးသော်လည်း သက်တမ်းတိုး/ပြောင်းလဲ လျှောက်ထားဆဲဖြစ်ပါက ဤရက်အထိ ဂျပန်တွင်နေထိုင်နိုင်သည် (အထူးကာလ)။',th:'💡 กำหนดพิเศษ: แม้ระยะพำนักจะหมด คุณยังอยู่ในญี่ปุ่นได้จนถึงวันนี้หากคำขอต่อ/เปลี่ยนกำลังพิจารณา (ช่วงผ่อนผัน)'},
  temp_return_planned:{ja:'一時帰国予定',en:'Planned departure',vi:'Dự kiến về nước',id:'Rencana keberangkatan',zh:'临时回国预定',km:'គ្រោងចេញដំណើរ',my:'ပြန်မည့်ရက်',th:'กำหนดเดินทางกลับ'},
  temp_return_in:{ja:'再入国予定',en:'Planned re-entry',vi:'Dự kiến nhập cảnh lại',id:'Rencana masuk kembali',zh:'再入境预定',km:'គ្រោងចូលវិញ',my:'ပြန်ဝင်မည့်ရက်',th:'กำหนดกลับเข้าญี่ปุ่น'},
  temp_return_none:{ja:'予定なし',en:'None scheduled',vi:'Không có kế hoạch',id:'Tidak ada rencana',zh:'无预定',km:'គ្មានគម្រោង',my:'အစီအစဉ်မရှិ',th:'ไม่มีกำหนด'},
@@ -741,18 +743,34 @@ function renderStatus(){
   var ml=getKokkoStatus(c);
   if(ml) h+='<div class="phase-mlit" style="color:'+agencyColor(ml)+';">'+t('kokko_prefix')+(curLang==='ja'?fz(ml):esc(ml))+'</div>';
   h+='</div>';
-  // 期限
+  // 期限・一時帰国（在留期限・特例期限・一時帰国を同じセクションに）
   var cards='';
   var ei=expInfo(c.expire);
-  if(_tokureiTracked(c)){
-    var ti=expInfo(_tokureiDate(c));
-    cards+='<div class="card '+(ti.cls==='danger'?'warn':(ti.cls==='soon'?'alert':''))+'"><div class="lbl">'+t('exp_tokurei')+'</div><div class="num"><span class="exp '+ti.cls+'">'+ti.txt+'</span></div></div>';
+  var trk=_tokureiTracked(c);
+  // 在留期限
+  if(trk){
     cards+='<div class="card"><div class="lbl">'+t('exp_zairyu')+'</div><div class="num" style="color:#94a3b8;">'+_dv(c.expire)+'</div></div>';
   } else {
     cards+='<div class="card '+(ei.cls==='danger'?'warn':(ei.cls==='soon'?'alert':''))+'"><div class="lbl">'+t('exp_zairyu')+'</div><div class="num"><span class="exp '+ei.cls+'">'+ei.txt+'</span></div></div>';
   }
+  // 特例期限
+  if(trk){
+    var ti=expInfo(_tokureiDate(c));
+    cards+='<div class="card '+(ti.cls==='danger'?'warn':(ti.cls==='soon'?'alert':''))+'"><div class="lbl">'+t('exp_tokurei')+'</div><div class="num"><span class="exp '+ti.cls+'">'+ti.txt+'</span></div></div>';
+  } else {
+    cards+='<div class="card"><div class="lbl">'+t('exp_tokurei')+'</div><div class="num" style="color:#cbd5e1;font-weight:600;">'+t('exp_tokurei_na')+'</div></div>';
+  }
+  // 一時帰国
+  var _tr1=(c.temp_return||(thePerson&&thePerson.temp_return)||'');
+  if(_tr1){
+    cards+='<div class="card"><div class="lbl">'+t('temp_return_title')+'</div><div class="num">'+_dv(_tr1)+'</div></div>';
+  } else {
+    cards+='<div class="card"><div class="lbl">'+t('temp_return_title')+'</div><div class="num" style="color:#cbd5e1;font-weight:600;">'+t('temp_return_none')+'</div></div>';
+  }
   h+='<div class="cards">'+cards+'</div>';
-  if(_expireTracked(c)||_tokureiTracked(c)) h+='<div class="exp-note">'+t('exp_note')+'</div>';
+  if(_expireTracked(c)||trk) h+='<div class="exp-note">'+t('exp_note')+'</div>';
+  h+='<div class="exp-note">'+t('tokurei_explain')+'</div>';
+  h+='<div class="exp-note" style="color:#b45309;">'+t('temp_return_report')+'</div>';
   // 申請情報
   h+='<div class="info-card">';
   h+='<div class="dt-row"><span class="dt-l">'+t('info_company')+'</span><span class="dt-v">'+_dv(c.company)+'</span></div>';
@@ -764,21 +782,6 @@ function renderStatus(){
   h+='<div class="dt-row"><span class="dt-l">'+t('info_receipt')+'</span><span class="dt-v">'+_dv(c.receipt_no)+'</span></div>';
   h+='<div class="dt-row"><span class="dt-l">'+t('info_shinsa')+'</span><span class="dt-v">'+_dv(c.shinsa_date)+'</span></div>';
   h+='</div>';
-  // 一時帰国
-  var _tr1=(c.temp_return||(thePerson&&thePerson.temp_return)||'');
-  var _trIn=(c.temp_return_in||(thePerson&&thePerson.temp_return_in)||'');
-  var _trTbd=(c.temp_return_in_tbd||(thePerson&&thePerson.temp_return_in_tbd)||'');
-  h+='<div class="section-title" style="margin-top:16px;">'+t('temp_return_title')+'</div>';
-  h+='<div class="info-card">';
-  if(_tr1){
-    h+='<div class="dt-row"><span class="dt-l">'+t('temp_return_planned')+'</span><span class="dt-v">'+_dv(_tr1)+'</span></div>';
-    var _inDisp=_trIn?_dv(_trIn):(_trTbd?t('temp_return_tbd'):'');
-    if(_inDisp) h+='<div class="dt-row"><span class="dt-l">'+t('temp_return_in')+'</span><span class="dt-v">'+_inDisp+'</span></div>';
-  } else {
-    h+='<div class="dt-row"><span class="dt-l">'+t('temp_return_planned')+'</span><span class="dt-v" style="color:#94a3b8;">'+t('temp_return_none')+'</span></div>';
-  }
-  h+='</div>';
-  h+='<div class="note">'+t('temp_return_report')+'</div>';
   // 大房行政書士法人担当
   if(c.team||c.staff){
     h+='<div class="section-title" style="margin-top:16px;">'+t('contact_title')+'</div>';
