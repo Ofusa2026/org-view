@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260615.test19: 人材モーダルの「書類PDF」を一覧のPDF列(buildDownloadCell)と同一表示に統一（旧: 認定証/預かり証の全配列を誤ラベルで列挙していた） -->
 <!-- ver.20260615.test18: 担当者リストの「保存」ボタンの絵文字が U0001f4be と文字化けしていた不具合修正（💾に） -->
 <!-- ver.20260615.test17: 支援事業所・支援担当者が表示されない不具合修正（offices/supportStaffListはprofileと同階層で返るためorgProfileに統合）。アイデムの2事業所が表示される -->
 <!-- ver.20260615.test16: 登録支援機関情報に「登録情報の変更を依頼」を追加（org→大房、org_change_req_<token>_orginfo として保存） -->
@@ -388,7 +389,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test18 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test19 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -997,12 +998,6 @@ var PERSON_FIELD_ORDER=['applicant_name_en','nationality','nationality_code','ge
 // PDF/構造化データは別セクションで扱うためグリッドから除外
 var PERSON_GRID_SKIP={application_cert_pdf_urls:1,custody_receipt_pdf_urls:1,kyoryoku_pdf_urls:1,drive_urls:1,kokko_drive_url:1,kokko_checklist:1,missing_docs:1,extra:1};
 function _hasV(v){ return v!=null && v!=='' && v!=='false'; }
-function _pdfLinks(arr,label,color){
-  if(!Array.isArray(arr)||!arr.length) return '';
-  var h='';
-  arr.forEach(function(x,i){ var u=(x&&x.url)?x.url:(typeof x==='string'?x:''); if(!u)return; h+='<a href="'+esc(u)+'" target="_blank" rel="noopener" style="display:inline-block;margin:2px 6px 2px 0;font-size:11px;color:'+color+';background:#fff;border:1px solid '+color+'44;border-radius:6px;padding:3px 9px;text-decoration:none;">📄 '+esc(label)+(arr.length>1?(' '+(i+1)):'')+'</a>'; });
-  return h;
-}
 function _docChecklistHtml(docMap){
   if(!docMap){ return '<div style="font-size:11px;color:#94a3b8;">書類データはありません。</div>'; }
   var names=Object.keys(docMap).sort(function(a,b){return a.localeCompare(b,'ja');});
@@ -1058,9 +1053,9 @@ function openPersonModal(caseId){
   keys.forEach(function(k){ var v=p[k]; if(v==null||v===''||typeof v==='object') return; var lab=PERSON_LABELS[k]||k; grid+='<div style="padding:4px 0;"><span style="display:inline-block;min-width:96px;font-size:10px;color:#94a3b8;font-weight:700;vertical-align:top;">'+esc(lab)+'</span><span style="font-size:12px;color:#1e293b;word-break:break-word;">'+esc(String(v))+'</span></div>'; });
   if(grid){ h+=_personSectionTitle('🧑 人材情報'); h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 18px;">'+grid+'</div>'; }
   else { h+=_personSectionTitle('🧑 人材情報'); h+='<div style="font-size:11px;color:#94a3b8;">この人材の詳細情報は登録されていません。</div>'; }
-  // PDF・リンク
-  var pdfs=_pdfLinks(p.application_cert_pdf_urls,'認定証','#7c3aed')+_pdfLinks(p.custody_receipt_pdf_urls,'預かり証','#0369a1')+_pdfLinks(p.kyoryoku_pdf_urls,'協力PDF','#0891b2');
-  if(pdfs){ h+=_personSectionTitle('📄 書類PDF'); h+='<div>'+pdfs+'</div>'; }
+  // PDF・リンク（ver.20260615.test19: 一覧のPDF列と同じものを表示）
+  h+=_personSectionTitle('📄 書類PDF');
+  h+=buildDownloadCell(c);
   // 書類チェックリスト（人材）
   h+=_personSectionTitle('✅ 書類チェックリスト（人材）');
   h+=_docChecklistHtml(personDocsAll[caseId]);
