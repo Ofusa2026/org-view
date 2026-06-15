@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260615.test17: 支援事業所・支援担当者が表示されない不具合修正（offices/supportStaffListはprofileと同階層で返るためorgProfileに統合）。アイデムの2事業所が表示される -->
 <!-- ver.20260615.test16: 登録支援機関情報に「登録情報の変更を依頼」を追加（org→大房、org_change_req_<token>_orginfo として保存） -->
 <!-- ver.20260615.test14: 書類チェックリストで「不要」にした書類を非表示に -->
 <!-- ver.20260615.test13: 人材詳細モーダルを追加（人材ボタン→persons全項目＋書類チェックリスト doc_check全状態）。get_org_share RPCも persons全項目/docCheck全org返却に改修 -->
@@ -386,7 +387,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test16 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test17 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -3860,7 +3861,13 @@ async function loadData(){
     // org情報＋担当者リスト（登録支援機関情報・担当者datalist）
     try{
       var prof=await sbRpc('get_org_profile',{p_token:currentToken,p_pass:(currentPass||null)});
-      if(prof && prof.profile){ orgProfile=prof.profile; intakeStaff=Array.isArray(prof.intakeStaff)?prof.intakeStaff:[]; }
+      if(prof && prof.profile){
+        orgProfile=prof.profile;
+        // ver.20260615.test17: offices/supportStaffList は profile と同階層で返るため統合（支援事業所・支援担当者が表示されない不具合修正）
+        orgProfile.offices=Array.isArray(prof.offices)?prof.offices:[];
+        orgProfile.supportStaffList=Array.isArray(prof.supportStaffList)?prof.supportStaffList:[];
+        intakeStaff=Array.isArray(prof.intakeStaff)?prof.intakeStaff:[];
+      }
       _fillClientStaffDatalist();
     }catch(e){ console.warn('[org profile load failed]', e); }
 
