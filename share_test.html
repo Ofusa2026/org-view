@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260615.test15: 人材詳細モーダルに「情報の変更依頼」を追加（登録支援機関→大房、org_change_req_設定として保存）。get_org_share RPCも同設定を返却 -->
 <!-- ver.20260615.test14: 書類チェックリストで「不要」にした書類を非表示に -->
 <!-- ver.20260615.test13: 人材詳細モーダルを追加（人材ボタン→persons全項目＋書類チェックリスト doc_check全状態）。get_org_share RPCも persons全項目/docCheck全org返却に改修 -->
 <!-- ver.20260615.test12: 新規案件依頼から「大房側担当(toritsugisha)」入力欄を撤去。取次は担当と別概念・田中デフォで支援機関側が入れるものではないため -->
@@ -385,7 +386,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test14 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test15 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -923,6 +924,8 @@ var GROUPS=[{id:'dashboard',label:'ダッシュボード'},{id:'active',label:'�
 var allCases=[],allReceipts=[],allShinsa=[],allCerts=[],allIntakes=[],orgProfile=null,intakeStaff=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus='',filterCompany='',filterClientStaff='',sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,isGpMode=false,gpInfoByCaseId={},_imeOn=false; // ver.20260606.13: allCerts追加（認定証PDF）
 // ver.20260615.test13: 人材詳細モーダル用 — 人材レコード/書類チェックリスト
 var allPersons={}, personDocsAll={}, coDocsAll={};
+// ver.20260615.test15: 登録支援機関からの変更依頼（case_id -> {text,requested_at,requested_by,status}）
+var orgChangeReqs={};
 // コメント入力中フラグ（再描画スキップ用）。値は編集中のtextareaのid（例:'owncmt_xxx'）
 var _editingCommentId=null;
 var _editingImeOn=false;
@@ -1064,10 +1067,54 @@ function openPersonModal(caseId){
     h+=_personSectionTitle('🏢 書類チェックリスト（企業）');
     h+=_docChecklistHtml(coDocsAll[c.companyId]);
   }
+  // ver.20260615.test15: 情報の変更依頼
+  h+=_personSectionTitle('✏️ 情報の変更依頼');
+  h+='<div id="changeReqArea_'+esc(caseId)+'">'+_changeReqHtml(caseId)+'</div>';
   document.getElementById('personModalBody').innerHTML=h;
   document.getElementById('personModalBg').classList.add('open');
 }
 function closePersonModal(){ var el=document.getElementById('personModalBg'); if(el) el.classList.remove('open'); }
+// ver.20260615.test15: 情報の変更依頼（登録支援機関→大房）
+function _changeReqHtml(caseId){
+  var cr=orgChangeReqs[caseId]||{};
+  var existing=(cr&&cr.text)?cr.text:'';
+  var meta='';
+  if(existing){
+    var when=cr.requested_at?String(cr.requested_at).slice(0,16).replace('T',' '):'';
+    meta='<div style="font-size:10.5px;color:#15803d;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:8px 11px;margin-bottom:9px;">📨 変更依頼を送信済み'+(when?'（'+esc(when)+'）':'')+'<div style="color:#334155;margin-top:4px;white-space:pre-wrap;word-break:break-word;font-size:11.5px;">'+esc(existing)+'</div></div>';
+  }
+  var h=meta;
+  h+='<div style="font-size:10.5px;color:#64748b;margin-bottom:6px;line-height:1.6;">変更してほしい情報（氏名・在留期限・住所・書類など）を記入して送信してください。大房側で確認のうえ対応します。</div>';
+  h+='<textarea id="changeReqInput_'+esc(caseId)+'" placeholder="例：在留期限が新しいカードでは2027-03-31です。更新をお願いします。" style="width:100%;min-height:76px;box-sizing:border-box;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:12px;font-family:inherit;resize:vertical;">'+esc(existing)+'</textarea>';
+  h+='<div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end;">';
+  if(existing) h+='<button type="button" onclick="cancelChangeRequest(\''+esc(caseId)+'\')" style="font-size:11px;color:#dc2626;background:#fff;border:1px solid #fecaca;border-radius:7px;padding:6px 12px;cursor:pointer;">依頼を取消</button>';
+  h+='<button type="button" onclick="submitChangeRequest(\''+esc(caseId)+'\')" style="font-size:11.5px;font-weight:700;color:#fff;background:#2563eb;border:none;border-radius:7px;padding:6px 16px;cursor:pointer;">'+(existing?'更新して再送信':'変更依頼を送信')+'</button>';
+  h+='</div>';
+  return h;
+}
+async function submitChangeRequest(caseId){
+  var ta=document.getElementById('changeReqInput_'+caseId);
+  if(!ta) return;
+  var text=(ta.value||'').trim();
+  if(!text){ alert('変更してほしい内容を入力してください。'); return; }
+  var data={text:text,requested_at:new Date().toISOString(),requested_by:orgName,status:'pending'};
+  try{
+    await saveOrgSetting('org_change_req_'+currentToken+'_'+caseId, JSON.stringify(data));
+    orgChangeReqs[caseId]=data;
+    var area=document.getElementById('changeReqArea_'+caseId);
+    if(area) area.innerHTML=_changeReqHtml(caseId);
+    alert('変更依頼を送信しました。\n大房側で確認のうえ対応いたします。');
+  }catch(e){ alert('送信に失敗しました: '+(e&&e.message?e.message:e)); }
+}
+async function cancelChangeRequest(caseId){
+  if(!confirm('この変更依頼を取り消しますか？')) return;
+  try{
+    await saveOrgSetting('org_change_req_'+currentToken+'_'+caseId, '');
+    delete orgChangeReqs[caseId];
+    var area=document.getElementById('changeReqArea_'+caseId);
+    if(area) area.innerHTML=_changeReqHtml(caseId);
+  }catch(e){ alert('取消に失敗しました: '+(e&&e.message?e.message:e)); }
+}
 // ===== /人材詳細モーダル =====
 // ver.20260615.test09: 担当セルを2段表示（上=登録支援機関側 client_staff / 下=大房側 staff）
 function _tantoCell2(clientStaff, ofusaStaff){
@@ -3901,15 +3948,17 @@ async function loadData(){
     var _cn=data.caseNotes||{};
     Object.keys(_cn).forEach(function(cid){var note=_cn[cid];if(typeof note==='string'){try{note=JSON.parse(note);}catch(e){note={progressMemo:note};}}caseNotes[cid]=note||{};});
 
-    orgComments={};orgOwnComments={};orgWithdraws={};orgChecks={};
+    orgComments={};orgOwnComments={};orgWithdraws={};orgChecks={};orgChangeReqs={};
     var _cmtPrefix='org_comment_'+currentToken+'_';
     var _ownPrefix='org_own_comment_'+currentToken+'_';
     var _wdPrefix='org_withdraw_'+currentToken+'_';
+    var _crPrefix='org_change_req_'+currentToken+'_';
     var _chkKey='org_checks_'+currentToken;
     (data.settings||[]).forEach(function(row){
       var k=row.key||'';
       if(k.indexOf(_ownPrefix)===0){ orgOwnComments[k.substring(_ownPrefix.length)]=row.value||''; }
       else if(k.indexOf(_cmtPrefix)===0){ orgComments[k.substring(_cmtPrefix.length)]=row.value||''; }
+      else if(k.indexOf(_crPrefix)===0){ var cr=row.value;if(typeof cr==='string'){try{cr=JSON.parse(cr);}catch(e){cr={text:cr};}}orgChangeReqs[k.substring(_crPrefix.length)]=cr||{}; }
       else if(k.indexOf(_wdPrefix)===0){ var v=row.value;if(typeof v==='string'){try{v=JSON.parse(v);}catch(e){v={type:v};}}orgWithdraws[k.substring(_wdPrefix.length)]=v||{}; }
       else if(k===_chkKey){ var cv=row.value;if(typeof cv==='string'){try{orgChecks=JSON.parse(cv)||{};}catch(e){orgChecks={};}}else if(cv&&typeof cv==='object'){orgChecks=cv;} }
     });
