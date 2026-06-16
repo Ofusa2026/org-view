@@ -7,8 +7,9 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>提出書類・進捗確認 | 大房行政書士法人</title>
+<title>所属機関マイページ | 大房行政書士法人</title>
 <!-- ver.20260611.01: 申請の流れをタイムライン型(applicant準拠)に変更／郵送物の案内を事務所情報の上に移動 -->
+<!-- ver.20260616.02: ページ名称を「提出書類・進捗確認」→「所属機関マイページ」に変更。企業名＋登録支援機関名(案件orgから抽出)の識別バーを常時表示。申請一覧に「進行中／発行済み・完了／すべて」セグメント追加(分類はshare同様 DONE_ST=['完了','審査完了'])。ダッシュボード集計・openListも同分類に統一 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -130,12 +131,24 @@ tr:hover td{background:#fcfcfd;}
 .list-item:hover{background:#f8fafc;}
 .li-nm{font-size:13px;font-weight:800;color:#0f2040;}
 .li-sub{font-size:10px;color:#64748b;margin-top:2px;}
+/* ver.20260616.01: 申請一覧セグメント（進行中／発行済み・完了／すべて） */
+.seg-bar{display:inline-flex;background:#eef2f7;border:1px solid #e2e8f0;border-radius:99px;padding:3px;gap:2px;margin-bottom:12px;flex-wrap:wrap;}
+.seg-btn{border:none;background:none;cursor:pointer;font-size:11.5px;font-weight:800;color:#64748b;padding:7px 14px;border-radius:99px;display:inline-flex;align-items:center;gap:6px;transition:.12s;white-space:nowrap;}
+.seg-btn:hover{color:#0f2040;}
+.seg-btn.active{background:#0f2040;color:#fff;box-shadow:0 1px 3px rgba(15,32,64,.25);}
+.seg-cnt{font-size:10px;font-weight:800;background:rgba(100,116,139,.18);color:#475569;border-radius:99px;padding:1px 7px;}
+.seg-btn.active .seg-cnt{background:rgba(255,255,255,.22);color:#fff;}
+/* ver.20260616.01: 企業名＋登録支援機関名の識別バー */
+.id-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;background:#fff;border:1px solid #e2e8f0;border-left:4px solid #2563eb;border-radius:12px;padding:12px 16px;margin-bottom:16px;}
+.id-co{font-size:15px;font-weight:900;color:#0f2040;}
+.id-org{font-size:12px;font-weight:700;color:#334155;background:#eff6ff;border:1px solid #bfdbfe;border-radius:99px;padding:5px 12px;}
+.id-org b{color:#1d4ed8;font-weight:900;}
 </style>
 </head>
 <body>
 <div class="header">
   <span class="header-logo">大房行政書士法人</span>
-  <span class="header-title">提出書類・進捗確認</span>
+  <span class="header-title">所属機関マイページ</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -298,6 +311,11 @@ function agencyColor(status){
 
 /* 完了とみなすステータス（ダッシュボード集計用） */
 function isDone(s){ return /受取|交付|完了|許可済/.test(s||''); }
+/* ver.20260616.01: share.html と同一のグループ分類。発行済み・完了は「完了／審査完了」のみ（許可済・郵送交付・窓口受取は進行中に残す） */
+var DONE_ST=['完了','審査完了'];
+function classifyCase(c){ return DONE_ST.indexOf((c&&c.status)||'')>=0?'done':'active'; }
+/* ver.20260616.01: 案件のorg(登録支援機関名)から重複なしの一覧を作る。複数機関の企業でもトークン単位で案件が分かれるため通常は1機関 */
+function _distinctOrgs(arr){ var seen=[]; (arr||[]).forEach(function(c){ var o=((c&&c.org)||'').trim(); if(o&&seen.indexOf(o)<0) seen.push(o); }); return seen.join(' ・ '); }
 
 /* 在留期限アラートの除外（本体 _KANRI_EXPIRE_EXCLUDE と同一）。申請済・審査中・交付・完了等は対象外 */
 var EXPIRE_EXCLUDE=['申請済(番号待)','審査中','特活審査中','★要追完','要追完 企業不足書類待ち','要追完 人材不足書類待ち','要追完 人材と企業不足書類待ち','許可済 受取方法調整中','入管受取ステータス変更中','★郵送交付','郵送交付中','郵送交付','★窓口受取','窓口受取','窓口受取（本人）','完了','審査完了'];
@@ -319,7 +337,7 @@ function _tokureiDate(c){
 }
 
 var companyId='', companyName='', companyDrive='', companyOfusaStaff='', companyShowMlit=false, currentToken='', _correctPass='';
-var allCases=[], coDocs={}, personsByCase={}, receiptByCase={}, shinsaByCase={}, missingDocCount=0, currentTab='dashboard';
+var allCases=[], coDocs={}, personsByCase={}, receiptByCase={}, shinsaByCase={}, missingDocCount=0, currentTab='dashboard', peopleGroup='active', supportOrgName='';
 
 async function checkPass(){
   var v=document.getElementById('passInput').value.trim();
@@ -339,7 +357,7 @@ async function init(){
     companyId=meta.company_id||'';
     companyName=meta.company_name||'';
     document.getElementById('headerOrg').textContent=companyName+' 様';
-    document.title=companyName+' 様 | 提出書類・進捗確認';
+    document.title=companyName+' 様 | 所属機関マイページ';
     if(meta.has_pass){
       document.getElementById('passOrgName').textContent=companyName+' 様';
       document.getElementById('passScreen').classList.remove('hide');
@@ -362,6 +380,7 @@ async function loadData(pass){
     companyName=co.name||companyName; companyDrive=co.drive_url||''; companyOfusaStaff=co.ofusa_staff||''; companyShowMlit=!!co.show_mlit;
     document.getElementById('headerOrg').textContent=companyName+' 様';
     allCases=Array.isArray(res.cases)?res.cases:[];
+    supportOrgName=_distinctOrgs(allCases);
     coDocs={};
     (res.co_doc_check||[]).forEach(function(row){
       var idx=row.doc_key.indexOf('::'); if(idx<0) return;
@@ -423,6 +442,7 @@ function computeMissing(){
 }
 
 function switchTab(t){ currentTab=t; document.querySelectorAll('.tab').forEach(function(el){el.classList.toggle('active',el.dataset.tab===t);}); render(); }
+function setPeopleGroup(g){ peopleGroup=g; render(); }
 
 function expInfo(dateStr){
   if(!dateStr) return {txt:'—',cls:'none',days:null};
@@ -435,11 +455,15 @@ function expInfo(dateStr){
 
 function render(){
   var m=document.getElementById('main');
-  if(currentTab==='dashboard') m.innerHTML=renderDashboard();
-  else if(currentTab==='docs') m.innerHTML=renderDocs();
-  else if(currentTab==='people') m.innerHTML=renderPeople();
-  else if(currentTab==='flow') m.innerHTML=renderFlow();
-  else if(currentTab==='office') m.innerHTML=renderOffice();
+  var idBar='<div class="id-bar"><div class="id-co">🏢 '+esc(companyName||'')+' 様</div>'
+    +(supportOrgName?'<div class="id-org">登録支援機関：<b>'+esc(supportOrgName)+'</b></div>':'')+'</div>';
+  var body='';
+  if(currentTab==='dashboard') body=renderDashboard();
+  else if(currentTab==='docs') body=renderDocs();
+  else if(currentTab==='people') body=renderPeople();
+  else if(currentTab==='flow') body=renderFlow();
+  else if(currentTab==='office') body=renderOffice();
+  m.innerHTML=idBar+body;
 }
 
 function _caseDeadline(c){
@@ -501,7 +525,7 @@ function renderStats(){
 
 function renderDashboard(){
   var total=allCases.length;
-  var done=allCases.filter(function(c){return isDone(c.status);}).length;
+  var done=allCases.filter(function(c){return classifyCase(c)==='done';}).length;
   var active=total-done;
   var soon=allCases.filter(function(c){if(!_expireTracked(c))return false;var i=expInfo(c.expire);return i.days!=null&&i.days>=0&&i.days<=90;}).length;
   var expired=allCases.filter(function(c){if(!_expireTracked(c))return false;var i=expInfo(c.expire);return i.days!=null&&i.days<0;}).length;
@@ -592,14 +616,21 @@ function exportCsv(){
 
 function renderPeople(){
   if(!allCases.length) return '<div class="empty">対象の人材がありません。</div>';
-  var h='<div class="section-title">📋 御社の申請一覧（'+allCases.length+'件）</div>';
+  var nDone=0; allCases.forEach(function(c){ if(classifyCase(c)==='done') nDone++; });
+  var nAll=allCases.length, nActive=nAll-nDone;
+  if(peopleGroup!=='all'&&peopleGroup!=='done'&&peopleGroup!=='active') peopleGroup='active';
+  var rows=(peopleGroup==='all')?allCases:allCases.filter(function(c){return classifyCase(c)===peopleGroup;});
+  function seg(id,label,cnt){ return '<button class="seg-btn'+(peopleGroup===id?' active':'')+'" onclick="setPeopleGroup(\''+id+'\')">'+label+'<span class="seg-cnt">'+cnt+'</span></button>'; }
+  var h='<div class="section-title">📋 御社の申請一覧</div>';
+  h+='<div class="seg-bar">'+seg('active','進行中',nActive)+seg('done','発行済み・完了',nDone)+seg('all','すべて',nAll)+'</div>';
   h+='<div class="note">行をタップすると、在留カード番号・パスポート・住所などの詳細が表示されます。</div>';
   h+='<div class="tbl-tools"><button class="tbtn" onclick="exportCsv()">⬇ CSV出力</button><button class="tbtn" onclick="window.print()">🖨 印刷</button></div>';
+  if(!rows.length){ h+='<div class="empty">この区分の申請はありません。</div>'; return h; }
   h+='<div class="tbl-wrap"><table><thead><tr>'
     +'<th>氏名</th><th>国籍</th><th>登録支援機関</th><th>申請在留資格</th><th>申請種別</th><th>分野・職種</th>'
     +'<th>進捗</th><th>受付番号</th><th>在留期限</th><th>担当窓口</th><th>PDF</th>'
     +'</tr></thead><tbody>';
-  allCases.forEach(function(c){
+  rows.forEach(function(c){
     var nm=c.applicant||c.name||'—';
     var field=[c.applicant_field,c.job_category].filter(Boolean).join(' / ')||(c.industry||'—');
     var ei=expInfo(c.expire);
@@ -678,8 +709,8 @@ function renderFlow(){
 function casesByKey(key){
   return allCases.filter(function(c){
     if(key==='all') return true;
-    if(key==='active') return !isDone(c.status);
-    if(key==='done') return isDone(c.status);
+    if(key==='active') return classifyCase(c)==='active';
+    if(key==='done') return classifyCase(c)==='done';
     var ei=expInfo(c.expire);
     if(key==='expired') return _expireTracked(c)&&ei.days!=null&&ei.days<0;
     if(key==='soon') return _expireTracked(c)&&ei.days!=null&&ei.days>=0&&ei.days<=90;
