@@ -9,7 +9,8 @@
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
 <!-- ver.20260611.01: 申請の流れをタイムライン型(applicant準拠)に変更／郵送物の案内を事務所情報の上に移動 -->
-<!-- ver.20260617.06: 所属機関情報をアンシスの企業項目全体(基本/所在地/代表者/財務/決算/比較対象/登録支援機関)に拡張(内部専用=ドライブURL/メモ/国交省認証情報は除外)。最上部に登録情報の変更依頼を追加(company_view_change_req→settings.company_change_req_<token>_orginfo、applicant/orgと同方式で大房側がsettingsで確認)。 -->
+<!-- ver.20260617.08: 申請一覧の印刷ボタンを削除（CSV出力のみ残す）。 -->
+<!-- ver.20260617.07: サイドバーに「ニュース等」を追加。shareと同じ news_posts/news_list RPC を利用し、未読バッジ・NEW表示・本文URLリンク化・画像表示に対応(audienceは支援機関がアイデムなら'aidem')。 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -187,6 +188,20 @@ tr:hover td{background:#fcfcfd;}
 .cr-btn{font-size:12px;font-weight:800;color:#fff;background:#2563eb;border:none;border-radius:7px;padding:7px 16px;cursor:pointer;}
 .cr-btn:hover{background:#1d4ed8;}
 .cr-btn.cancel{background:#fff;color:#64748b;border:1px solid #cbd5e1;}
+/* ver.20260617.07: ニュース等 */
+.sb-badge-new{background:#dc2626;color:#fff;font-size:10px;padding:1px 7px;border-radius:99px;font-weight:800;}
+.news-wrap{max-width:760px;margin:0 auto;padding:4px 2px 40px;}
+.news-head{font-size:18px;font-weight:800;color:#0f2040;margin:4px 2px 16px;display:flex;align-items:center;gap:8px;}
+.news-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:18px 20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(15,32,64,.06);}
+.news-card.unread{border-color:#fca5a5;box-shadow:0 0 0 2px rgba(220,38,38,.08);}
+.news-c-top{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;}
+.news-new-tag{background:#dc2626;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px;}
+.news-date{font-size:11.5px;color:#94a3b8;font-weight:700;}
+.news-title{font-size:15.5px;font-weight:800;color:#0f2040;margin:2px 0 10px;line-height:1.5;}
+.news-body{font-size:13.5px;color:#334155;line-height:1.85;white-space:pre-wrap;}
+.news-imgs{margin-top:14px;display:flex;flex-direction:column;gap:12px;}
+.news-imgs img{max-width:100%;border-radius:10px;border:1px solid #e2e8f0;display:block;}
+.news-empty{text-align:center;padding:60px 20px;color:#94a3b8;font-size:13px;}
 .pass-desc{font-size:11.5px;color:#64748b;line-height:1.6;margin:6px 0 12px;text-align:left;}
 /* ver.20260616.05: 一覧の折り返しセル・在留期限の縦積み表示 */
 .wrap-cell{white-space:normal !important;word-break:break-word;line-height:1.35;}
@@ -489,6 +504,7 @@ async function loadData(pass){
     receiptByCase={}; shinsaByCase={};
     (res.receipt||[]).forEach(function(x){ if(x.case_id&&x.drive_url&&!receiptByCase[x.case_id]) receiptByCase[x.case_id]=x.drive_url; });
     (res.shinsa||[]).forEach(function(x){ if(x.case_id&&x.drive_url&&!shinsaByCase[x.case_id]) shinsaByCase[x.case_id]=x.drive_url; });
+    await loadNews();
     renderSidebar();
     render();
     return {ok:true};
@@ -533,7 +549,7 @@ function computeMissing(){
   });
 }
 
-function switchGroup(g){ currentTab=g; renderSidebar(); render(); var mw=document.querySelector('.main-wrap'); if(mw) mw.scrollTop=0; }
+function switchGroup(g){ currentTab=g; if(g==='news'&&typeof markNewsSeen==='function') markNewsSeen(); renderSidebar(); render(); var mw=document.querySelector('.main-wrap'); if(mw) mw.scrollTop=0; }
 function renderSidebar(){
   var nDone=0; allCases.forEach(function(c){ if(classifyCase(c)==='done') nDone++; });
   var nAll=allCases.length, nActive=nAll-nDone;
@@ -544,6 +560,8 @@ function renderSidebar(){
   var h='<div class="sb-head"><div class="sb-head-co">🏢 '+esc(companyName||'')+' 様</div>'
     +(supportOrgName?'<div class="sb-head-org">登録支援機関<b>'+esc(supportOrgName)+'</b></div>':'')+'</div>';
   h+=item('dashboard','ダッシュボード',null);
+  var _nu=(typeof newsUnreadCount==='function')?newsUnreadCount():0;
+  h+=item('news','📰 ニュース等',(_nu>0?_nu:null),_nu>0);
   h+='<div class="sb-divider"></div>';
   h+=item('active','進行中',nActive);
   h+=item('done','発行済み・完了',nDone);
@@ -570,6 +588,7 @@ function render(){
   if(currentTab==='docs') m.innerHTML=renderDocs();
   else if(currentTab==='active'||currentTab==='done'||currentTab==='all') m.innerHTML=renderPeople(currentTab);
   else if(currentTab==='flow') m.innerHTML=renderFlow();
+  else if(currentTab==='news') m.innerHTML=renderNews();
   else if(currentTab==='orginfo') m.innerHTML=renderOrgInfo();
   else if(currentTab==='office') m.innerHTML=renderOffice();
   else m.innerHTML=renderDashboard();
@@ -726,6 +745,44 @@ function renderOrgInfo(){
   return h;
 }
 
+/* ===== ニュース等（shareと共通の news_posts / news_list を利用） ===== */
+var allNews=[];
+function _newsSeenKey(){ return 'co_news_last_seen_'+(currentToken||''); }
+async function loadNews(){
+  try{
+    var aud='all';
+    var so=(companyProfile&&companyProfile.support_org_name)||supportOrgName||'';
+    if(String(so).indexOf('アイデム')>=0) aud='aidem';
+    var data=await callRpc('news_list',{p_audience:aud});
+    allNews=Array.isArray(data)?data:[];
+  }catch(e){ allNews=[]; }
+}
+function _newsLastSeen(){ try{ return parseInt(localStorage.getItem(_newsSeenKey())||'0',10)||0; }catch(e){ return 0; } }
+function newsUnreadCount(){ var ls=_newsLastSeen(),n=0; allNews.forEach(function(a){ if(new Date(a.published_at).getTime()>ls) n++; }); return n; }
+function markNewsSeen(){ try{ var mx=0; allNews.forEach(function(a){ var t=new Date(a.published_at).getTime(); if(t>mx) mx=t; }); localStorage.setItem(_newsSeenKey(), String(mx||Date.now())); }catch(e){} }
+function _newsDate(v){ if(!v) return ''; var d=new Date(v); if(isNaN(d)) return String(v).slice(0,10); return d.getFullYear()+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+('0'+d.getDate()).slice(-2); }
+function _newsLinkify(text){ return esc(text).replace(/(https?:\/\/[^\s<>"']+)/g, function(u){ return '<a href="'+u+'" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:underline;word-break:break-all;">'+u+'</a>'; }); }
+function renderNews(){
+  var ls=_newsLastSeen();
+  var h='<div class="news-wrap"><div class="news-head">📰 ニュース等</div>';
+  if(!allNews.length){ return h+'<div class="news-empty">現在お知らせはありません。</div></div>'; }
+  allNews.forEach(function(a){
+    var isNew=(new Date(a.published_at).getTime()>ls);
+    h+='<div class="news-card'+(isNew?' unread':'')+'">';
+    h+='<div class="news-c-top">'+(isNew?'<span class="news-new-tag">NEW</span>':'')+'<span class="news-date">'+esc(_newsDate(a.published_at))+'</span></div>';
+    h+='<div class="news-title">'+esc(a.title||'')+'</div>';
+    if(a.body) h+='<div class="news-body">'+_newsLinkify(a.body)+'</div>';
+    var imgs=Array.isArray(a.images)?a.images:[];
+    if(imgs.length){
+      h+='<div class="news-imgs">';
+      imgs.forEach(function(im){ var u=(typeof im==='string')?im:(im&&im.url); if(u) h+='<img src="'+esc(u)+'" alt="" loading="lazy">'; });
+      h+='</div>';
+    }
+    h+='</div>';
+  });
+  return h+'</div>';
+}
+
 function renderDashboard(){
   var total=allCases.length;
   var done=allCases.filter(function(c){return classifyCase(c)==='done';}).length;
@@ -825,7 +882,7 @@ function renderPeople(group){
   var titles={active:'進行中の申請',done:'発行済み・完了',all:'すべての申請'};
   var h='<div class="section-title">📋 '+(titles[group]||'申請一覧')+'（'+rows.length+'件）</div>';
   h+='<div class="note">行をタップすると、在留カード番号・パスポート・住所などの詳細が表示されます。</div>';
-  h+='<div class="tbl-tools"><button class="tbtn" onclick="exportCsv()">⬇ CSV出力</button><button class="tbtn" onclick="window.print()">🖨 印刷</button></div>';
+  h+='<div class="tbl-tools"><button class="tbtn" onclick="exportCsv()">⬇ CSV出力</button></div>';
   if(!rows.length){ h+='<div class="empty">この区分の申請はありません。</div>'; return h; }
   h+='<div class="tbl-wrap"><table><thead><tr>'
     +'<th>氏名</th><th>国籍</th><th>登録支援機関</th><th>申請在留資格</th><th>申請種別</th><th>分野・職種</th>'
