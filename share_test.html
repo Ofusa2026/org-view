@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260615.test23: 新規案件依頼: 確認モーダルのアイデム拠点/担当者は非アイデムで非表示／依頼テキストから勤務地・雇用条件を削除／人材紹介手数料を入力可能に（依頼テキスト・確認に反映） -->
 <!-- ver.20260615.test22: ニュース等を「申請の流れ」の上へ移動＋本文URLをリンク化＋画像表示対応 -->
 <!-- ver.20260615.test21: サイドバーに「ニュース等」(登録支援機関向けお知らせ・未読バッジ)を追加。Supabase news_posts + news_list RPC 連動 -->
 <!-- ver.20260615.test20: 人材情報グリッドからケースID・国交自社給与・通算在留(年/月)を非表示 -->
@@ -405,7 +406,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test22 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test23 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -517,6 +518,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                 <th style="min-width:172px;">希望在留資格 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:152px;">受入れ経験 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:128px;" title="全員同額で反映されます">支援委託費(円・税抜)</th>
+                <th style="min-width:140px;" title="依頼テキストに反映されます">人材紹介手数料(円・税抜)</th>
                 <th style="min-width:112px;" id="nc_branchTh">アイデム拠点 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:180px;">担当者 <span class="req" id="nc_clientStaffReq" style="display:none;color:#dc2626;">*</span></th>
               </tr>
@@ -553,6 +555,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                   </div>
                 </td>
                 <td><input type="text" class="nc-input" id="nc_supportFee" placeholder="例：30000" inputmode="numeric"></td>
+                <td><input type="text" class="nc-input" id="nc_referralFee" placeholder="例：100000" inputmode="numeric"></td>
                 <td id="nc_branchTd">
                   <select class="nc-select" id="nc_aidemBranch" onchange="_onAidemBranchChange()">
                     <option value="">-- 選択 --</option>
@@ -4114,6 +4117,8 @@ function openNewCaseModal(){
   radios.forEach(function(r){ r.checked = false; });
   var feeEl=document.getElementById('nc_supportFee');
   if(feeEl) feeEl.value='';
+  var refEl=document.getElementById('nc_referralFee');
+  if(refEl) refEl.value='';
   document.getElementById('ncError').style.display='none';
   document.getElementById('ncSuccess').style.display='none';
   var bigSuc=document.getElementById('ncBigSuccess');
@@ -4353,6 +4358,8 @@ async function submitNewCase(){
   var acceptExp = acceptExpEl ? acceptExpEl.value : '';
   var supportFeeRaw = (document.getElementById('nc_supportFee')||{}).value || '';
   var supportFee = supportFeeRaw.replace(/[,，円\s]/g,'').trim();
+  var referralFeeRaw = (document.getElementById('nc_referralFee')||{}).value || '';
+  var referralFee = referralFeeRaw.replace(/[,，円\s]/g,'').trim();
   var aidemBranch = (document.getElementById('nc_aidemBranch')||{}).value || '';
   var clientStaff = (document.getElementById('nc_clientStaff')||{}).value || '';
   // ver.20260525.03: 「使用する支援事業所」は拠点から自動マッピング
@@ -4381,6 +4388,10 @@ async function submitNewCase(){
   }
   if(supportFee && !/^\d+$/.test(supportFee)){
     showNcError('支援委託費は数字のみで入力してください（例：30000）');
+    return;
+  }
+  if(referralFee && !/^\d+$/.test(referralFee)){
+    showNcError('人材紹介手数料は数字のみで入力してください（例：100000）');
     return;
   }
 
@@ -4438,7 +4449,7 @@ async function submitNewCase(){
     desiredStatusNote: desiredStatusNote,
     acceptExp: acceptExp,
     aidemBranch: aidemBranch, clientStaff: clientStaff,
-    supportFee: supportFee, jinzaiList: jinzaiList
+    supportFee: supportFee, referralFee: referralFee, jinzaiList: jinzaiList
   };
 
   // 確認モーダル表示
@@ -4476,10 +4487,14 @@ function _renderConfirmBody(p){
   h += '<div><div class="nc-cf-label">受入れ経験</div><div class="nc-cf-value">' + esc(p.acceptExp) + '</div></div>';
   h += '<div><div class="nc-cf-label">支援委託費（税抜・全員に同額適用）</div><div class="nc-cf-value">' + (p.supportFee ? '¥ ' + Number(p.supportFee).toLocaleString() : '（未入力）') + '</div></div>';
   h += '</div>';
-  h += '<div class="nc-cf-grid">';
-  h += '<div><div class="nc-cf-label">アイデム拠点</div><div class="nc-cf-value">' + esc(p.aidemBranch||'') + '</div></div>';
-  h += '<div><div class="nc-cf-label">アイデム担当者</div><div class="nc-cf-value">' + esc(p.clientStaff||'') + '</div></div>';
-  h += '</div>';
+  h += '<div class="nc-cf-label">人材紹介手数料（税抜）</div><div class="nc-cf-value">' + (p.referralFee ? '¥ ' + Number(p.referralFee).toLocaleString() : '（未入力）') + '</div>';
+  // アイデム拠点・担当者はアイデムのみ表示（非アイデムには出さない）
+  if(orgName === '株式会社アイデム'){
+    h += '<div class="nc-cf-grid">';
+    h += '<div><div class="nc-cf-label">アイデム拠点</div><div class="nc-cf-value">' + esc(p.aidemBranch||'') + '</div></div>';
+    h += '<div><div class="nc-cf-label">アイデム担当者</div><div class="nc-cf-value">' + esc(p.clientStaff||'') + '</div></div>';
+    h += '</div>';
+  }
   // ver.20260603.01: OFUSA担当者の自動振り分け表示は削除（アイデム側には見せない、OFUSA内部で振り分ける）
   h += '<div class="nc-cf-label">人材リスト（' + p.jinzaiList.length + '名）</div>';
   h += '<div class="nc-cf-jinzai-list"><table><thead><tr><th>#</th><th>氏名</th><th>国籍</th><th>現在の在留資格</th><th>在留期限</th><th>受取方法</th><th>推薦票</th></tr></thead><tbody>';
@@ -4659,15 +4674,16 @@ function _buildLineReportText(p){
     lines.push('　 在留資格：' + (cur || '（　　）'));
     lines.push('　 在留期限：' + (j.expire || '（　　）'));
   });
-  lines.push('■勤務地');
-  lines.push('　（　　）');
-  lines.push('■雇用条件');
-  lines.push('　（　　）');
   lines.push('■支援担当者');
   // ver.20260601.01: 担当者の値は空欄にする（行と項目名は残す、入力された担当者は反映しない）
   lines.push('　氏名：（　　）');
   lines.push('■人材紹介手数料');
-  lines.push('　（　　）');
+  // 人材紹介手数料が入力されていれば反映、無ければ空欄
+  if(p.referralFee){
+    lines.push('　¥' + Number(p.referralFee).toLocaleString());
+  } else {
+    lines.push('　（　　）');
+  }
   lines.push('■支援費');
   // 支援委託費が入力されていれば反映、無ければ空欄
   if(p.supportFee){
