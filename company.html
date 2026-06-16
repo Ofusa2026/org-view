@@ -9,7 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
 <!-- ver.20260611.01: 申請の流れをタイムライン型(applicant準拠)に変更／郵送物の案内を事務所情報の上に移動 -->
-<!-- ver.20260616.04: ダッシュボードに依頼事項(未提出書類・ヒアリング未回答＋フォームリンク)を表示。サイドバーに「所属機関情報」を追加し企業基本情報を表示。パスワードを必須化(初回は相手が設定→以降入力、company_view_set_passで保存。大房側はsettingsで閲覧可)。 -->
+<!-- ver.20260617.06: 所属機関情報をアンシスの企業項目全体(基本/所在地/代表者/財務/決算/比較対象/登録支援機関)に拡張(内部専用=ドライブURL/メモ/国交省認証情報は除外)。最上部に登録情報の変更依頼を追加(company_view_change_req→settings.company_change_req_<token>_orginfo、applicant/orgと同方式で大房側がsettingsで確認)。 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -174,7 +174,27 @@ tr:hover td{background:#fcfcfd;}
 .oi-row:last-child{border-bottom:none;}
 .oi-l{color:#94a3b8;width:120px;flex-shrink:0;font-weight:700;}
 .oi-v{color:#1e293b;font-weight:600;word-break:break-all;}
+/* ver.20260617.06: 所属機関情報グループ＋変更依頼ボックス */
+.oi-group{margin-bottom:16px;}
+.oi-gh{font-size:12px;font-weight:900;color:#475569;margin:0 0 6px 2px;border-left:3px solid #2563eb;padding-left:8px;}
+.cr-box{background:#fff;border:1px solid #bfdbfe;border-left:4px solid #2563eb;border-radius:12px;padding:13px 15px;margin-bottom:18px;}
+.cr-head{font-size:13px;font-weight:900;color:#1e40af;margin-bottom:6px;}
+.cr-note{font-size:11px;color:#64748b;line-height:1.6;margin-bottom:9px;}
+.cr-sent{font-size:11px;color:#15803d;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:8px 11px;margin-bottom:9px;}
+.cr-sent-txt{color:#334155;margin-top:4px;white-space:pre-wrap;word-break:break-word;}
+.cr-ta{width:100%;box-sizing:border-box;min-height:64px;border:1px solid #cbd5e1;border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:inherit;resize:vertical;}
+.cr-actions{display:flex;gap:8px;margin-top:8px;}
+.cr-btn{font-size:12px;font-weight:800;color:#fff;background:#2563eb;border:none;border-radius:7px;padding:7px 16px;cursor:pointer;}
+.cr-btn:hover{background:#1d4ed8;}
+.cr-btn.cancel{background:#fff;color:#64748b;border:1px solid #cbd5e1;}
 .pass-desc{font-size:11.5px;color:#64748b;line-height:1.6;margin:6px 0 12px;text-align:left;}
+/* ver.20260616.05: 一覧の折り返しセル・在留期限の縦積み表示 */
+.wrap-cell{white-space:normal !important;word-break:break-word;line-height:1.35;}
+.wrap-st .badge-st{white-space:normal !important;display:inline-block;line-height:1.3;}
+.exp-cell{display:flex;flex-direction:column;gap:2px;white-space:nowrap;}
+.exp-cell .ex-row{display:flex;align-items:center;gap:5px;}
+.exp-cell .exl{font-size:9px;color:#94a3b8;font-weight:700;flex-shrink:0;}
+.exp-cell .exv{font-size:11px;color:#475569;font-weight:700;}
 .sb-divider{height:1px;background:rgba(255,255,255,.08);margin:8px 12px;}
 .main-wrap{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
 .main{flex:1;padding:18px 20px;overflow:auto;min-width:0;}
@@ -368,6 +388,7 @@ function _expireTracked(c){ return c && (c.app_type||'')!=='申請なし' && EXP
 /* 特例期限（本体 _KANRI_TOKUREI_INCLUDE / _kanriGetTokureiDate と同一）。申請済み等で特例期間中の案件が対象 */
 var TOKUREI_INCLUDE=['審査中','特活審査中','申請済(番号待)','郵送交付','★郵送交付','窓口受取','★窓口受取','★要追完'];
 function _tokureiTracked(c){ return c && (c.app_type||'')!=='申請なし' && TOKUREI_INCLUDE.indexOf(c.status||'')!==-1; }
+function _dateOnly(v){ if(!v) return '—'; var s=String(v).slice(0,10); return s||'—'; }
 function _tokureiDate(c){
   if(!c) return null;
   if(c.tokurei_date) return c.tokurei_date;
@@ -380,7 +401,7 @@ function _tokureiDate(c){
   return null;
 }
 
-var companyId='', companyName='', companyDrive='', companyOfusaStaff='', companyShowMlit=false, currentToken='', _correctPass='', _passMode='enter', companyProfile=null;
+var companyId='', companyName='', companyDrive='', companyOfusaStaff='', companyShowMlit=false, currentToken='', _correctPass='', _passMode='enter', companyProfile=null, companyChangeReq=null;
 var allCases=[], coDocs={}, personsByCase={}, receiptByCase={}, shinsaByCase={}, missingDocCount=0, currentTab='dashboard', supportOrgName='';
 
 function _showPassScreen(){
@@ -419,6 +440,7 @@ async function passSubmit(){
   err.textContent='確認中...';
   var lr=await loadData(v);
   if(lr&&lr.passErr){ err.textContent='パスワードが違います'; return; }
+  _correctPass=v;
   document.getElementById('passScreen').classList.add('hide');
 }
 
@@ -450,6 +472,7 @@ async function loadData(pass){
     var co=res.company||{};
     companyName=co.name||companyName; companyDrive=co.drive_url||''; companyOfusaStaff=co.ofusa_staff||''; companyShowMlit=!!co.show_mlit;
     companyProfile=res.company_profile||null;
+    companyChangeReq=res.change_req||null;
     document.getElementById('headerOrg').textContent=companyName+' 様';
     allCases=Array.isArray(res.cases)?res.cases:[];
     supportOrgName=_distinctOrgs(allCases);
@@ -647,26 +670,59 @@ function _hearingFormUrl(c){
     +'&type='+base+'_'+suf
     +(c.applicant?'&name='+encodeURIComponent(c.applicant):'');
 }
-/* 所属機関情報ページ */
+/* 所属機関情報ページ（アンシスの企業項目を網羅）＋変更依頼 */
+var ORGINFO_GROUPS=[
+  {g:'基本情報', fields:[['name','名称'],['name_kana','ふりがな'],['name_en','名称（英語）'],['corp_no','法人番号'],['corp_type','法人種別'],['company_category','企業カテゴリー'],['industry','主たる業種'],['emp_ins_no','雇用保険番号'],['labor_ins_no','労働保険番号']]},
+  {g:'所在地', fields:[['zip','郵便番号'],['pref','都道府県'],['city','市区町村'],['address','住所'],['detail_address','建物名等'],['address_en','住所（英語）'],['tel','電話番号']]},
+  {g:'代表者', fields:[['rep_title','代表者役職'],['rep_name','代表者名'],['rep_name_en','代表者名（英語）'],['author_title','作成責任者役職'],['author_name','作成責任者氏名']]},
+  {g:'従業員・財務', fields:[['capital','資本金（円）'],['employees','常勤職員数'],['foreign_employees','外国人職員数'],['tech_trainees','技能実習生数'],['jp_salary','日本人の月額報酬'],['jp_voluntary_quit','日本人 自発的離職者'],['jp_involuntary_quit','日本人 非自発的離職者'],['fn_voluntary_quit','外国人 自発的離職者'],['fn_involuntary_quit','外国人 非自発的離職者']]},
+  {g:'決算', fields:[['sales_y1','前年度売上高'],['sales_y2','前々年度売上高'],['sales_y3','前々々年度売上高'],['ordinary_pl_y1','前年度経常損益'],['ordinary_pl_y2','前々年度経常損益'],['ordinary_pl_y3','前々々年度経常損益'],['net_pl_y1','前年度純損益'],['net_pl_y2','前々年度純損益'],['net_pl_y3','前々々年度純損益'],['net_assets_y1','前年度純資産'],['net_assets_y2','前々年度純資産'],['net_assets_y3','前々々年度純資産']]},
+  {g:'比較対象の日本人', fields:[['jp_comp_job_desc','職務内容'],['jp_comp_age','年齢'],['jp_comp_gender','性別'],['jp_comp_exp','経験年数'],['jp_comp_salary','賃金'],['jp_comp_reason','同等理由'],['wage_regulation','賃金規定有無']]},
+  {g:'登録支援機関・担当', fields:[['support_org_name','登録支援機関名'],['support_org_no','登録番号'],['support_org_address','登録支援機関 住所'],['support_staff','支援担当者'],['ofusa_staff','大房 担当'],['contact_email','ご連絡先メール']]}
+];
+function _orgChangeReqBox(){
+  var cr=companyChangeReq;
+  var sent=(cr&&cr.text)?true:false;
+  var h='<div class="cr-box">';
+  h+='<div class="cr-head">✏️ 登録情報の変更依頼</div>';
+  h+='<div class="cr-note">下記の登録情報に誤りや変更があれば、内容を記入して送信してください。大房側で確認のうえ対応いたします。</div>';
+  if(sent){
+    h+='<div class="cr-sent">📨 変更依頼を送信済み'+(cr.requested_at?'（'+esc(cr.requested_at)+'）':'')+'<div class="cr-sent-txt">'+esc(cr.text)+'</div></div>';
+  }
+  h+='<textarea id="crText" class="cr-ta" placeholder="例）電話番号が 03-1234-5678 に変わりました／代表者が交代しました 等">'+(sent?esc(cr.text):'')+'</textarea>';
+  h+='<div class="cr-actions"><button type="button" class="cr-btn" onclick="submitOrgChangeReq()">'+(sent?'更新して再送信':'変更依頼を送信')+'</button>';
+  if(sent) h+='<button type="button" class="cr-btn cancel" onclick="cancelOrgChangeReq()">取り消す</button>';
+  h+='</div></div>';
+  return h;
+}
+function submitOrgChangeReq(){
+  var el=document.getElementById('crText'); var t=(el&&el.value||'').trim();
+  if(!t){ alert('変更内容を入力してください。'); return; }
+  callRpc('company_view_change_req',{p_token:currentToken,p_pass:_correctPass,p_text:t}).then(function(r){
+    if(r&&r.ok){ companyChangeReq=r.change_req||{text:t,requested_at:'',status:'pending'}; alert('変更依頼を送信しました。\n大房側で確認のうえ対応いたします。'); render(); }
+    else alert('送信に失敗しました。時間をおいて再度お試しください。');
+  }).catch(function(){ alert('送信に失敗しました。'); });
+}
+function cancelOrgChangeReq(){
+  if(!confirm('この変更依頼を取り消しますか？')) return;
+  callRpc('company_view_change_req',{p_token:currentToken,p_pass:_correctPass,p_text:''}).then(function(){
+    companyChangeReq=null; render();
+  });
+}
 function renderOrgInfo(){
   var p=companyProfile||{};
-  function row(l,v){ return (v!=null&&String(v).trim()!=='')?'<div class="oi-row"><span class="oi-l">'+l+'</span><span class="oi-v">'+esc(v)+'</span></div>':''; }
-  var addr=[p.zip?('〒'+p.zip):'',p.pref,p.city,p.address,p.detail_address].filter(Boolean).join(' ');
   var h='<div class="section-title">🏢 所属機関情報</div>';
-  h+='<div class="note">大房行政書士法人に登録されている御社の情報です。誤りや変更があれば担当者までご連絡ください。</div>';
-  h+='<div class="info-card" style="padding:8px 18px;">';
-  h+=row('名称', p.name);
-  h+=row('ふりがな', p.name_kana);
-  h+=row('法人番号', p.corp_no);
-  h+=row('住所', addr);
-  h+=row('電話番号', p.tel);
-  h+=row('代表者', [p.rep_title,p.rep_name].filter(Boolean).join('　'));
-  h+=row('業種', p.industry);
-  h+=row('従業員数', p.employees?(p.employees+' 名'):'');
-  h+=row('外国人従業員数', p.foreign_employees?(p.foreign_employees+' 名'):'');
-  h+=row('ご連絡先メール', p.contact_email);
-  h+=row('大房 担当', p.ofusa_staff);
-  h+='</div>';
+  h+=_orgChangeReqBox();
+  var any=false;
+  ORGINFO_GROUPS.forEach(function(grp){
+    var rows='';
+    grp.fields.forEach(function(f){
+      var v=p[f[0]];
+      if(v!=null && String(v).trim()!==''){ rows+='<div class="oi-row"><span class="oi-l">'+f[1]+'</span><span class="oi-v">'+esc(v)+'</span></div>'; }
+    });
+    if(rows){ any=true; h+='<div class="oi-group"><div class="oi-gh">'+grp.g+'</div><div class="info-card" style="padding:4px 16px;">'+rows+'</div></div>'; }
+  });
+  if(!any) h+='<div class="note">登録情報がまだありません。</div>';
   return h;
 }
 
@@ -782,21 +838,24 @@ function renderPeople(group){
     h+='<tr class="people-row" onclick="openDetail(\''+esc(c.id)+'\')">';
     h+='<td><b>'+esc(nm)+'</b></td>';
     h+='<td>'+esc(natVal(c)||'—')+'</td>';
-    h+='<td>'+esc(c.org||'—')+'</td>';
-    h+='<td>'+esc(c.residence_status||'—')+'</td>';
+    h+='<td><div class="wrap-cell" style="max-width:108px;">'+esc(c.org||'—')+'</div></td>';
+    h+='<td><div class="wrap-cell" style="max-width:96px;">'+esc(c.residence_status||'—')+'</div></td>';
     h+='<td>'+esc(c.app_type||'—')+'</td>';
     h+='<td>'+esc(field)+'</td>';
     var est=getExternalStatus(c.status);
     var stCell='<span class="badge-st" style="'+stExtStyle(est)+'">'+esc(est)+'</span>';
     if(companyShowMlit){ var ml=getKokkoStatus(c); if(ml) stCell+='<div style="font-size:9px;color:'+agencyColor(ml)+';font-weight:700;margin-top:3px;">🏗 国交省 '+esc(ml)+'</div>'; }
-    h+='<td>'+stCell+'</td>';
+    h+='<td><div class="wrap-cell wrap-st" style="max-width:110px;">'+stCell+'</div></td>';
     h+='<td>'+esc(c.receipt_no||'—')+'</td>';
-    if(_tokureiTracked(c)){
-      var ti=expInfo(_tokureiDate(c));
-      h+='<td><div class="staff-cell"><div><span class="sl">特例</span><span class="exp '+ti.cls+'">'+esc(ti.txt)+'</span></div><div style="color:#cbd5e1;">在留 '+esc(c.expire||'—')+'</div></div></td>';
-    } else {
-      h+='<td><span class="exp '+ei.cls+'">'+esc(ei.txt)+'</span></td>';
-    }
+    // 在留期限（残日数なし・日付のみ）／特例日／一時帰国を縦に表示
+    var td2=_tokureiTracked(c)?_tokureiDate(c):null;
+    var tempR=_dateOnly(c.temp_return);
+    var expCell='<div class="exp-cell">';
+    expCell+='<div class="ex-row"><span class="exl">在留</span><span class="exp '+ei.cls+'">'+esc(_dateOnly(c.expire))+'</span></div>';
+    if(td2){ var ti=expInfo(td2); expCell+='<div class="ex-row"><span class="exl">特例</span><span class="exp '+ti.cls+'">'+esc(_dateOnly(td2))+'</span></div>'; }
+    if(tempR!=='—'){ expCell+='<div class="ex-row"><span class="exl">一時帰国</span><span class="exv">'+esc(tempR)+'</span></div>'; }
+    expCell+='</div>';
+    h+='<td>'+expCell+'</td>';
     h+='<td><div class="staff-cell"><div><span class="sl">部署</span>'+esc(c.team||'—')+'</div><div><span class="sl">担当</span>'+esc(c.staff||'—')+'</div></div></td>';
     h+='<td style="white-space:nowrap;">'+_rowPdfIcons(c)+'</td>';
     h+='</tr>';
