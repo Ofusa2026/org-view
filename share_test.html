@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260616.test34: 協力確認書Wordの宛先に下線を復活（テンプレ宛先=下線付き{addr_to}＋『殿』。JSのaddr_toは市区町村＋長を渡す） -->
 <!-- ver.20260616.test33: 協力確認書をHTML印刷→Word(.docx)出力に変更。入管庁正本様式をテンプレ化(data/kyoryoku_template.docx)し、docxtemplaterで変数差し込み(宛先/日付/①〜⑦)。ライブラリは同梱(vendor/pizzip,docxtemplater)。提出先ごとに1ファイルDL -->
 <!-- ver.20260616.test32: 協力確認書の提出先抽出で、申請人住所の先頭に郵便番号があると市区町村に郵便番号まで含まれていた不具合を修正（先頭の〒・郵便番号を除去してから市区町村抽出） -->
 <!-- ver.20260616.test31: 協力確認書の企業ドロップダウンを「案件ベース」→「登録支援機関に紐づく所属機関マスタ全件」に変更（get_org_companiesにid追加。案件未紐づけの会社も表示） -->
@@ -416,7 +417,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260616.test33 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260616.test34 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1758,7 +1759,7 @@ async function genKyoryokuCompany(){
     var x=new Date(), ymd=''+x.getFullYear()+('0'+(x.getMonth()+1)).slice(-2)+('0'+x.getDate()).slice(-2);
     var specs=checks.map(function(c){ return _kyoPageSpec(_kyoDestList[+c.value], email); });
     specs.forEach(function(sp, i){
-      var data={ addr_to:(sp.city? sp.city+'長\u3000殿':'\u3000殿'), date:_wareki(''),
+      var data={ addr_to:(sp.city? sp.city+'長':''), date:_wareki(''),
         f1:sp.name||'', f2:sp.addr||'', f3:sp.author||'', f4:sp.tel||'', f5:sp.email||'', f6:sp.hakenName||'', f7:sp.hakenAddr||'' };
       var blob=_kyoRenderDocx(buf, data);
       var fn='協力確認書_'+coName+'_'+(sp.city||('提出先'+(i+1)))+'_'+ymd+'.docx';
