@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260617.test37: 協力確認書テンプレを公式様式の記入ライン（下線付き全角スペースの長いライン＋fitText均等割ラベル）を保持する方式に変更し、①〜⑦の値を公式の下線ライン上に差し込む（前版は段落を作り直して公式ラインを壊し短い下線になっていた）。キャッシュトークン更新 -->
 <!-- ver.20260617.test36: 協力確認書 ①〜⑦の値にも下線を追加（テンプレ更新）／住所の市区町村抽出で文字間スペースを除去（東 京 都 大 田 区→大田区）。テンプレキャッシュトークン更新 -->
 <!-- ver.20260617.test35: 協力確認書テンプレの取得をキャッシュ無効化＋バージョン付きに（古いテンプレがCDN/ブラウザにキャッシュされ下線無しになっていた不具合の修正） -->
 <!-- ver.20260616.test34: 協力確認書Wordの宛先に下線を復活（テンプレ宛先=下線付き{addr_to}＋『殿』。JSのaddr_toは市区町村＋長を渡す） -->
@@ -419,7 +420,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test36 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test37 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1729,7 +1730,7 @@ async function _kyoEnsureLibs(){
 }
 async function _kyoTemplate(){
   if(_kyoTplBuf) return _kyoTplBuf;
-  var r=await fetch('data/kyoryoku_template.docx?v=20260617c', {cache:'no-store'});
+  var r=await fetch('data/kyoryoku_template.docx?v=20260617d', {cache:'no-store'});
   if(!r.ok) throw new Error('テンプレート取得失敗 '+r.status);
   _kyoTplBuf=await r.arrayBuffer();
   return _kyoTplBuf;
