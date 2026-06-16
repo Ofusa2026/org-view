@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260616.test30: 協力確認書の印刷様式を入管庁正本様式(001435038.docx)に忠実化（宛先=下線ブランク＋市・区・町・村長 殿／中央題名／本文両端揃え／①〜⑦をラベル行化＝枠テーブル廃止／注記②ぶら下げ） -->
 <!-- ver.20260615.test29: 協力確認書の作成で企業名を入力可（datalistコンボボックス）に／作成前に企業メールアドレスを必須入力（DB未登録のため⑤に反映） -->
 <!-- ver.20260615.test28: 協力確認書の作成を「案件ごと」→「企業ごと」に変更（case_id非表示）。提出先を選択式に（就業場所/申請人住所＝転入予定先の注記つき）。RPC get_org_kyoryoku_company（org限定） -->
 <!-- ver.20260615.test27: 協力確認書の本文を入管庁公式様式(001435038.docx)の正式文面に確定／新規案件依頼の「担当者」を「案件担当者」に名称変更（フォーム見出し・確認・リスト管理・依頼一覧） -->
@@ -412,7 +413,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test29 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260616.test30 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1642,7 +1643,7 @@ function _kyoRender(){
 }
 window._kyoRender=_kyoRender;
 /* 入管庁 正本様式（001435038.docx）の固定本文（公式2段落） */
-var KYORYOKU_BODY_HTML='<p style="text-indent:1em;margin:0 0 14px;line-height:1.95;">特定技能外国人の受入れに当たり、当該外国人が活動する事業所の所在地及び住居地が属する地方公共団体から、共生社会の実現のために実施する施策に対する協力を要請されたときは、当該要請に応じ、必要な協力をいたします。</p><p style="text-indent:1em;margin:0;line-height:1.95;">また、貴市区町村が属する都道府県が行う共生社会の実現のための施策の実施のために、本協力確認書に記載した内容が同都道府県に提供されることに同意します。</p>';
+var KYORYOKU_BODY_HTML='<p>特定技能外国人の受入れに当たり、当該外国人が活動する事業所の所在地及び住居地が属する地方公共団体から、共生社会の実現のために実施する施策に対する協力を要請されたときは、当該要請に応じ、必要な協力をいたします。</p><p>また、貴市区町村が属する都道府県が行う共生社会の実現のための施策の実施のために、本協力確認書に記載した内容が同都道府県に提供されることに同意します。</p>';
 function _wareki(str){
   var d;
   if(str){ var t=String(str).replace(/[.\/]/g,'-').trim(); var m=t.match(/(\d{4})-(\d{1,2})-(\d{1,2})/); if(m){ d=new Date(+m[1],+m[2]-1,+m[3]); } }
@@ -1712,16 +1713,28 @@ function _kyoPageSpec(dest, email){
     hakenName:isHaken?(s.officeName||''):'', hakenAddr:isHaken?(s.officeAddr||''):'' };
 }
 function _kyoPageHtml(f){
-  function row(no,label,val){ return '<tr><td class="no">'+no+'</td><td class="lb">'+label+'</td><td class="vl">'+(esc(val)||'')+'</td></tr>'; }
-  var addrLine=f.city ? (esc(f.city)+'長　殿') : '　　　　　長　殿';
-  var rows=row('①','特定技能所属機関名',f.name)+row('②','事業所の所在地',f.addr)
-    +row('③','担当者連絡先（部署・担当者名）',f.author)+row('④','電話番号',f.tel)
-    +row('⑤','メールアドレス',f.email)+row('⑥','派遣先機関名',f.hakenName)
-    +row('⑦','派遣先事業所の所在地',f.hakenAddr);
-  return '<div class="pg"><div class="addr">'+addrLine+'</div><div class="ttl">協力確認書</div>'
-    +'<div class="body">'+KYORYOKU_BODY_HTML+'</div><div class="date">'+_wareki('')+'</div>'
-    +'<table class="tbl">'+rows+'</table>'
-    +'<div class="note">※　直接雇用の場合：①〜⑤を記載してください。②は特定技能外国人が活動している事業所所在地を記載してください。<br>※　派遣形態の場合：①〜⑦を記載してください。②は協力要請の連絡先となる、特定技能所属機関の事業所所在地を記載してください。</div></div>';
+  var cityBlank=(f.city||'').replace(/[市区町村]$/,'');
+  var addrLine='<span class="ul">　'+esc(cityBlank)+'　</span>市・区・町・村長　殿';
+  function fld(label,val){ return '<div class="fld"><span class="lbl">'+label+'</span><span class="val">'+(esc(val)||'')+'</span></div>'; }
+  var fields=fld('①特定技能所属機関名',f.name)
+    +fld('②事業所の所在地',f.addr)
+    +fld('③担当者連絡先（部署・担当者名）',f.author)
+    +fld('④電話番号',f.tel)
+    +fld('⑤メールアドレス',f.email)
+    +fld('⑥派遣先機関名',f.hakenName)
+    +fld('⑦派遣先事業所の所在地',f.hakenAddr);
+  return '<div class="pg">'
+    +'<div class="addr">'+addrLine+'</div>'
+    +'<div class="ttl">協力確認書</div>'
+    +'<div class="body">'+KYORYOKU_BODY_HTML+'</div>'
+    +'<div class="date">'+_wareki('')+'</div>'
+    +'<div class="flds">'+fields+'</div>'
+    +'<div class="notes">'
+    +'<div class="note">※　直接雇用の場合：①〜⑤を記載してください。</div>'
+    +'<div class="note2">②は特定技能外国人が活動している事業所所在地を記載してください。</div>'
+    +'<div class="note">※　派遣形態の場合：①〜⑦を記載してください。</div>'
+    +'<div class="note2">②は協力要請の連絡先となる、特定技能所属機関の事業所所在地を記載してください。</div>'
+    +'</div></div>';
 }
 function genKyoryokuCompany(){
   var msg=document.getElementById('kyoGenMsg');
@@ -1737,12 +1750,22 @@ function genKyoryokuCompany(){
   var x=new Date(), ymd=''+x.getFullYear()+('0'+(x.getMonth()+1)).slice(-2)+('0'+x.getDate()).slice(-2);
   var coName=((_kyoCo.company&&_kyoCo.company.name)||'').replace(/[\\\/:*?"<>|　 ]/g,'');
   var title='協力確認書_'+coName+'_'+cities.join('・')+'_'+ymd;
-  var css='@page{size:A4;margin:25mm 22mm;}*{box-sizing:border-box;}body{font-family:"MS Mincho","\uff2d\uff33 \u660e\u671d",serif;color:#000;font-size:13pt;line-height:1.9;margin:0;}'
+  var css='@page{size:A4;margin:28mm 26mm;}*{box-sizing:border-box;}'
+    +'body{font-family:"MS Mincho","ＭＳ 明朝",serif;color:#000;font-size:11.5pt;line-height:1.9;margin:0;}'
     +'.pg{page-break-after:always;}.pg:last-child{page-break-after:auto;}'
-    +'.addr{font-size:13pt;margin-bottom:30px;}.ttl{text-align:center;font-size:20pt;font-weight:bold;letter-spacing:8px;margin:10px 0 28px;}'
-    +'.body{margin:0 0 26px;}.date{text-align:right;margin:0 0 24px;}'
-    +'.tbl{width:100%;border-collapse:collapse;}.tbl td{border:1px solid #000;padding:7px 9px;vertical-align:top;}'
-    +'.tbl .no{width:34px;text-align:center;}.tbl .lb{width:230px;}.note{font-size:10.5pt;margin-top:12px;}';
+    +'.addr{font-size:11.5pt;margin:0 0 54px;}'
+    +'.ul{border-bottom:1px solid #000;display:inline-block;min-width:120px;text-align:center;}'
+    +'.ttl{text-align:center;font-size:15pt;letter-spacing:8px;margin:0 0 38px;}'
+    +'.body{margin:0 0 28px;}'
+    +'.body p{text-align:justify;text-indent:1em;line-height:2.05;margin:0 0 12px;}'
+    +'.date{text-align:right;margin:0 0 38px;letter-spacing:2px;}'
+    +'.flds{margin:0 0 26px;}'
+    +'.fld{margin:0 0 18px;line-height:1.7;}'
+    +'.lbl{letter-spacing:1.5px;}'
+    +'.val{margin-left:1.2em;}'
+    +'.notes{margin-top:6px;font-size:11pt;}'
+    +'.note{margin:0 0 2px;}'
+    +'.note2{margin:0 0 10px;padding-left:2em;text-align:justify;}';
   var w=window.open('','_blank');
   if(!w){ say('⚠️ ポップアップがブロックされました。ポップアップを許可してください。', true); return; }
   w.document.write('<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>'+esc(title)+'</title><style>'+css+'</style></head><body>'+body+'<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},350);};</scr'+'ipt></body></html>');
