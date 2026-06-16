@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260615.test27: 協力確認書の本文を入管庁公式様式(001435038.docx)の正式文面に確定／新規案件依頼の「担当者」を「案件担当者」に名称変更（フォーム見出し・確認・リスト管理・依頼一覧） -->
 <!-- ver.20260615.test26: 協力確認書を案件(case_id)から自動入力して作成→印刷/PDF（登録支援機関に紐づく企業のみ・RPC get_org_kyoryoku でorg二重スコープ。Drive保存なし）。本文は要差替 -->
 <!-- ver.20260615.test25: 「協力確認書 提出先検索」を追加（全国市区町村・公式サイト/様式リンク・提出の説明。data/kyoryoku_cities.json を遅延読込） -->
 <!-- ver.20260615.test24: 新規案件依頼に「備考」欄を追加（依頼テキスト末尾・確認モーダル・other_support_noteに反映） -->
@@ -409,7 +410,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test26 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test27 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -523,7 +524,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                 <th style="min-width:128px;" title="全員同額で反映されます">支援委託費(円・税抜)</th>
                 <th style="min-width:140px;" title="依頼テキストに反映されます">人材紹介手数料(円・税抜)</th>
                 <th style="min-width:112px;" id="nc_branchTh">アイデム拠点 <span style="color:#dc2626;">*</span></th>
-                <th style="min-width:180px;">担当者 <span class="req" id="nc_clientStaffReq" style="display:none;color:#dc2626;">*</span></th>
+                <th style="min-width:180px;">案件担当者 <span class="req" id="nc_clientStaffReq" style="display:none;color:#dc2626;">*</span></th>
               </tr>
             </thead>
             <tbody>
@@ -1638,8 +1639,8 @@ function _kyoRender(){
   if(cs) cs.textContent = q ? (total+'件ヒット'+(total>50?'（先頭50件を表示）':'')) : ('全'+_kyoData.length+'件（先頭50件を表示。検索で絞り込み）');
 }
 window._kyoRender=_kyoRender;
-/* 入管庁 正本様式（001435038.docx）の固定本文。※docx の正式文面をユーザー確認後に差し替える */
-var KYORYOKU_BODY_HTML='【本文未設定】出入国在留管理庁の正本様式（001435038.docx）の固定本文（2段落）をここに差し込みます。docx の文面をご共有ください。';
+/* 入管庁 正本様式（001435038.docx）の固定本文（公式2段落） */
+var KYORYOKU_BODY_HTML='<p style="text-indent:1em;margin:0 0 14px;line-height:1.95;">特定技能外国人の受入れに当たり、当該外国人が活動する事業所の所在地及び住居地が属する地方公共団体から、共生社会の実現のために実施する施策に対する協力を要請されたときは、当該要請に応じ、必要な協力をいたします。</p><p style="text-indent:1em;margin:0;line-height:1.95;">また、貴市区町村が属する都道府県が行う共生社会の実現のための施策の実施のために、本協力確認書に記載した内容が同都道府県に提供されることに同意します。</p>';
 function _wareki(str){
   var d;
   if(str){ var t=String(str).replace(/[.\/]/g,'-').trim(); var m=t.match(/(\d{4})-(\d{1,2})-(\d{1,2})/); if(m){ d=new Date(+m[1],+m[2]-1,+m[3]); } }
@@ -1695,7 +1696,7 @@ function _openKyoryokuPrint(d){
     return '<div class="pg"><div class="addr">'+addrLine+'</div><div class="ttl">協力確認書</div>'
       +'<div class="body">'+KYORYOKU_BODY_HTML+'</div><div class="date">'+dateStr+'</div>'
       +'<table class="tbl">'+rows+'</table>'
-      +'<div class="note">※直接雇用の場合は①〜⑤、派遣の場合は①〜⑦を記載します。</div></div>';
+      +'<div class="note">※　直接雇用の場合：①〜⑤を記載してください。②は特定技能外国人が活動している事業所所在地を記載してください。<br>※　派遣形態の場合：①〜⑦を記載してください。②は協力要請の連絡先となる、特定技能所属機関の事業所所在地を記載してください。</div></div>';
   }
   var body=cities.map(page).join('');
   var x=new Date(), ymd=''+x.getFullYear()+('0'+(x.getMonth()+1)).slice(-2)+('0'+x.getDate()).slice(-2);
@@ -1703,7 +1704,7 @@ function _openKyoryokuPrint(d){
   var css='@page{size:A4;margin:25mm 22mm;}*{box-sizing:border-box;}body{font-family:"MS Mincho","ＭＳ 明朝",serif;color:#000;font-size:13pt;line-height:1.9;margin:0;}'
     +'.pg{page-break-after:always;}.pg:last-child{page-break-after:auto;}'
     +'.addr{font-size:13pt;margin-bottom:30px;}.ttl{text-align:center;font-size:20pt;font-weight:bold;letter-spacing:8px;margin:10px 0 28px;}'
-    +'.body{margin:0 0 26px;text-indent:1em;}.date{text-align:right;margin:0 0 24px;}'
+    +'.body{margin:0 0 26px;}.date{text-align:right;margin:0 0 24px;}'
     +'.tbl{width:100%;border-collapse:collapse;}.tbl td{border:1px solid #000;padding:7px 9px;vertical-align:top;}'
     +'.tbl .no{width:34px;text-align:center;}.tbl .lb{width:230px;}.note{font-size:10.5pt;margin-top:12px;}';
   var w=window.open('','_blank');
@@ -3182,7 +3183,7 @@ function renderIntakes(){
     h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin-bottom:12px;">';
     h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">';
     h+='<div style="min-width:0;"><div style="font-size:14px;font-weight:800;color:#0f2040;">'+esc(g.case_name||'(案件名なし)')+'</div>';
-    h+='<div style="font-size:11px;color:#64748b;margin-top:3px;">'+esc(g.company||'')+(g.app_type?'　/　'+esc(g.app_type):'')+(g.aidem_branch?'　/　拠点:'+esc(g.aidem_branch):'')+(g.client_staff?'　/　支援機関担当:'+esc(g.client_staff):'')+(g.accept_exp?'　/　受入れ経験:'+esc(g.accept_exp):'')+'　/　委託費:'+_intakeFee(g.support_fee)+'</div></div>';
+    h+='<div style="font-size:11px;color:#64748b;margin-top:3px;">'+esc(g.company||'')+(g.app_type?'　/　'+esc(g.app_type):'')+(g.aidem_branch?'　/　拠点:'+esc(g.aidem_branch):'')+(g.client_staff?'　/　案件担当者:'+esc(g.client_staff):'')+(g.accept_exp?'　/　受入れ経験:'+esc(g.accept_exp):'')+'　/　委託費:'+_intakeFee(g.support_fee)+'</div></div>';
     h+='<div style="text-align:right;flex-shrink:0;"><div>'+badges+'</div><div style="font-size:10.5px;color:#94a3b8;margin-top:4px;">送信: '+_intakeFmtDt(g.received_at)+'</div></div>';
     h+='</div>';
     h+='<div style="margin-top:10px;border-top:1px dashed #e2e8f0;padding-top:8px;">';
@@ -3359,8 +3360,8 @@ function renderOrgProfile(){
 
   // ✏️ 担当者リスト（新規案件依頼用・編集可）
   h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;padding:14px 16px;border-left:3px solid #0f2040;">';
-  h+='<div style="font-size:13px;font-weight:800;color:#0f2040;margin-bottom:4px;">✏️ 担当者リスト（新規案件依頼用）</div>';
-  h+='<div style="font-size:11px;color:#64748b;margin-bottom:10px;line-height:1.6;">新規案件依頼の「担当者」欄で選べる担当者を、ここで事前に登録できます。追加・削除したら<b>「保存」</b>を押してください。</div>';
+  h+='<div style="font-size:13px;font-weight:800;color:#0f2040;margin-bottom:4px;">✏️ 案件担当者リスト（新規案件依頼用）</div>';
+  h+='<div style="font-size:11px;color:#64748b;margin-bottom:10px;line-height:1.6;">新規案件依頼の「案件担当者」欄で選べる担当者を、ここで事前に登録できます。追加・削除したら<b>「保存」</b>を押してください。</div>';
   h+='<div id="orgStaffList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">';
   if(!intakeStaff.length){ h+='<div style="font-size:11.5px;color:#94a3b8;">まだ担当者が登録されていません。</div>'; }
   intakeStaff.forEach(function(n,i){
@@ -3368,7 +3369,7 @@ function renderOrgProfile(){
   });
   h+='</div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">';
-  h+='<input type="text" id="orgStaffInput" placeholder="担当者名を入力" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ncStaffAdd();}" style="flex:1;min-width:180px;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;">';
+  h+='<input type="text" id="orgStaffInput" placeholder="案件担当者名を入力" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ncStaffAdd();}" style="flex:1;min-width:180px;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;">';
   h+='<button onclick="ncStaffAdd()" style="padding:8px 16px;background:#0f2040;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">\uff0b 追加</button>';
   h+='<button onclick="ncStaffSave()" id="orgStaffSaveBtn" style="padding:8px 16px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">💾 保存</button>';
   h+='</div><div id="orgStaffMsg" style="font-size:11.5px;margin-top:8px;"></div>';
@@ -4569,7 +4570,7 @@ async function submitNewCase(){
   // ver.20260525.02: 担当者必須は「東」のみ。西/高育チームは入力欄ごと非表示
   clientStaff = (clientStaff||'').trim();
   if(_isAidemOrg && aidemBranch === '東' && !clientStaff){
-    showNcError('担当者を入力してください（リストから選択 / 直接入力もOK）');
+    showNcError('案件担当者を入力してください（リストから選択 / 直接入力もOK）');
     return;
   }
   if(supportFee && !/^\d+$/.test(supportFee)){
@@ -4681,7 +4682,7 @@ function _renderConfirmBody(p){
   if(orgName === '株式会社アイデム'){
     h += '<div class="nc-cf-grid">';
     h += '<div><div class="nc-cf-label">アイデム拠点</div><div class="nc-cf-value">' + esc(p.aidemBranch||'') + '</div></div>';
-    h += '<div><div class="nc-cf-label">アイデム担当者</div><div class="nc-cf-value">' + esc(p.clientStaff||'') + '</div></div>';
+    h += '<div><div class="nc-cf-label">案件担当者</div><div class="nc-cf-value">' + esc(p.clientStaff||'') + '</div></div>';
     h += '</div>';
   }
   // ver.20260603.01: OFUSA担当者の自動振り分け表示は削除（アイデム側には見せない、OFUSA内部で振り分ける）
