@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260617.test42: 協力確認書テンプレの①〜⑦を全項目タブ揃えに統一（③担当者連絡先のみfitText無しで記入ライン開始位置がズレていた不揃いを解消。ラベル左寄せ＋共通タブ位置から値・下線記入ライン開始）。キャッシュトークン更新 -->
 <!-- ver.20260617.test41: 協力確認書Word生成方式をindex(anken)側に統一。宛先(addr_to)に「長　殿」を含める方式に変更し、テンプレ宛先は{addr_to}（殿込み・全体下線）の1runに統一（殿の重複を解消・空提出先は『　殿』）。キャッシュトークン更新 -->
 <!-- ver.20260617.test40: 申請の流れ STEP①②を「依頼用スプレッドシート記載」→「新規案件依頼の入力」に変更（スプレッドシート運用廃止に伴う修正） -->
 <!-- ver.20260617.test39: サイドバー/見出しの「協力確認書 提出先検索」を「協力確認書作成」に名称変更 -->
@@ -424,7 +425,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test41 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test42 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1734,7 +1735,7 @@ async function _kyoEnsureLibs(){
 }
 async function _kyoTemplate(){
   if(_kyoTplBuf) return _kyoTplBuf;
-  var r=await fetch('data/kyoryoku_template.docx?v=20260617e', {cache:'no-store'});
+  var r=await fetch('data/kyoryoku_template.docx?v=20260617f', {cache:'no-store'});
   if(!r.ok) throw new Error('テンプレート取得失敗 '+r.status);
   _kyoTplBuf=await r.arrayBuffer();
   return _kyoTplBuf;
