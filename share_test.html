@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260615.test28: 協力確認書の作成を「案件ごと」→「企業ごと」に変更（case_id非表示）。提出先を選択式に（就業場所/申請人住所＝転入予定先の注記つき）。RPC get_org_kyoryoku_company（org限定） -->
 <!-- ver.20260615.test27: 協力確認書の本文を入管庁公式様式(001435038.docx)の正式文面に確定／新規案件依頼の「担当者」を「案件担当者」に名称変更（フォーム見出し・確認・リスト管理・依頼一覧） -->
 <!-- ver.20260615.test26: 協力確認書を案件(case_id)から自動入力して作成→印刷/PDF（登録支援機関に紐づく企業のみ・RPC get_org_kyoryoku でorg二重スコープ。Drive保存なし）。本文は要差替 -->
 <!-- ver.20260615.test25: 「協力確認書 提出先検索」を追加（全国市区町村・公式サイト/様式リンク・提出の説明。data/kyoryoku_cities.json を遅延読込） -->
@@ -410,7 +411,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test27 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test28 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1657,77 +1658,105 @@ function _kyoExtractCity(addr){
   var m=String(addr).match(/(?:東京都|北海道|(?:京都|大阪)府|.{2,3}県)?(.+?(?:郡.+?[町村]|市.+?区|[市区町村]))/);
   return m?m[1]:'';
 }
-async function genKyoryoku(){
-  var sel=document.getElementById('kyoCaseSel'), inp=document.getElementById('kyoCaseId'), msg=document.getElementById('kyoGenMsg');
+var _kyoCo=null, _kyoDestList=[];
+function _kyoFindSet(applicantName){
+  var sets=(_kyoCo&&_kyoCo.empSets)||[];
+  for(var i=0;i<sets.length;i++){ if(applicantName && sets[i].setName && sets[i].setName.indexOf(applicantName)>=0) return sets[i]; }
+  return sets[0]||{};
+}
+async function onKyoCompanyChange(){
+  var sel=document.getElementById('kyoCoSel'), box=document.getElementById('kyoDestBox'), msg=document.getElementById('kyoGenMsg');
   function say(t,err){ if(msg){ msg.textContent=t||''; msg.style.color=err?'#dc2626':'#16a34a'; } }
-  var cid=((inp&&inp.value)||'').trim() || ((sel&&sel.value)||'');
-  if(!cid){ say('案件を選択するか case_id を入力してください', true); return; }
-  var btn=document.getElementById('kyoGenBtn'); if(btn){ btn.disabled=true; btn.textContent='作成中…'; }
-  say('案件データを取得しています…');
+  _kyoCo=null; _kyoDestList=[]; if(box) box.innerHTML='';
+  var cid=(sel&&sel.value)||''; if(!cid){ say(''); return; }
+  say('企業データを取得しています…');
   try{
-    var d=await sbRpc('get_org_kyoryoku',{p_token:currentToken,p_pass:(currentPass||null),p_case_id:cid});
+    var d=await sbRpc('get_org_kyoryoku_company',{p_token:currentToken,p_pass:(currentPass||null),p_company_id:cid});
     if(!d || d.error){
-      var em={case_not_found:'この案件は見つからない、または貴社の案件ではありません',no_company:'案件に企業が紐づいていません',company_not_linked:'この企業は貴社（登録支援機関）に紐づいていません',invalid_pass:'認証エラーです'};
+      var em={company_not_linked:'この企業は貴社（登録支援機関）に紐づいていません',invalid_pass:'認証エラーです'};
       say('⚠️ '+((d&&em[d.error])||'取得に失敗しました'), true); return;
     }
-    _openKyoryokuPrint(d); say('');
+    _kyoCo=d; say(''); _kyoRenderDests();
   }catch(e){ say('⚠️ エラーが発生しました', true); }
-  finally{ if(btn){ btn.disabled=false; btn.textContent='📄 協力確認書を作成'; } }
 }
-function _openKyoryokuPrint(d){
-  var co=d.company||{}, applicant=d.applicant||'', sets=d.empSets||[], es=null;
-  for(var i=0;i<sets.length;i++){ if(applicant && sets[i].setName && sets[i].setName.indexOf(applicant)>=0){ es=sets[i]; break; } }
-  if(!es) es=sets[0]||{};
-  var isHaken=(co.isHaken===true); // is_haken_gen フラグのみで判定（店舗名≠会社名による誤判定を避ける）
-  var officeAddr=isHaken ? ((co.pref||'')+(co.city||'')+(co.detailAddress||co.address||'')) : (es.officeAddr||'');
-  var f={ name:co.name||'', addr:officeAddr, author:co.authorName||'', tel:(es.contactTel||es.officeContact||''),
-          email:co.contactEmail||'', hakenName:isHaken?(es.officeName||''):'', hakenAddr:isHaken?(es.officeAddr||''):'' };
-  var dateStr=_wareki(d.docCreateDate||'');
-  var c1=_kyoExtractCity(officeAddr), c2=_kyoExtractCity(d.personAddress||''), cities=[];
-  [c1,c2].forEach(function(c){ if(c && cities.indexOf(c)<0) cities.push(c); });
-  if(!cities.length) cities=[''];
+function _kyoRenderDests(){
+  var box=document.getElementById('kyoDestBox'); if(!box||!_kyoCo) return;
+  _kyoDestList=[];
+  var sets=_kyoCo.empSets||[], apps=_kyoCo.applicants||[];
+  var offSeen={}, offItems=[];
+  sets.forEach(function(s){ var city=_kyoExtractCity(s.officeAddr); if(city && !offSeen[city]){ offSeen[city]=1; var idx=_kyoDestList.length; _kyoDestList.push({kind:'office',city:city,set:s}); offItems.push({idx:idx,city:city,sub:s.officeName||s.officeAddr||''}); } });
+  var perSeen={}, perItems=[];
+  apps.forEach(function(a){ var city=_kyoExtractCity(a.address); if(!city) return; if(!perSeen[city]){ var idx=_kyoDestList.length; _kyoDestList.push({kind:'person',city:city,set:_kyoFindSet(a.applicant)}); perSeen[city]={idx:idx,cityName:city,names:[]}; perItems.push(perSeen[city]); } perSeen[city].names.push(a.applicant); });
+  var h='';
+  h+='<div style="font-size:12px;font-weight:800;color:#0f2040;margin:4px 0 6px;">提出先を選択（複数可・選択ごとに1通）</div>';
+  h+='<div style="font-size:11px;font-weight:700;color:#16a34a;margin:6px 0 4px;">🏢 所属機関の就業場所（雇用条件）</div>';
+  if(!offItems.length){ h+='<div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">就業場所の住所が登録されていません</div>'; }
+  offItems.forEach(function(it){ h+='<label style="display:flex;gap:8px;align-items:flex-start;padding:5px 2px;font-size:12px;cursor:pointer;"><input type="checkbox" class="kyoDest" value="'+it.idx+'" style="margin-top:2px;"><span><b>'+esc(it.city)+'</b> <span style="color:#94a3b8;">'+esc(it.sub)+'</span></span></label>'; });
+  h+='<div style="font-size:11px;font-weight:700;color:#2563eb;margin:10px 0 4px;">🏠 申請人の住所</div>';
+  h+='<div style="font-size:10.5px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:7px 9px;line-height:1.6;margin-bottom:6px;">⚠️ 協力確認書の提出先は「<b>転入予定先</b>（その市区町村に住む予定）」です。下は申請人の<b>現住所</b>から推定した候補のため、転入予定先と異なる場合があります。必ずご確認ください。</div>';
+  if(!perItems.length){ h+='<div style="font-size:11px;color:#94a3b8;">申請人住所が登録されていません</div>'; }
+  perItems.forEach(function(it){ h+='<label style="display:flex;gap:8px;align-items:flex-start;padding:5px 2px;font-size:12px;cursor:pointer;"><input type="checkbox" class="kyoDest" value="'+it.idx+'" style="margin-top:2px;"><span><b>'+esc(it.cityName)+'</b> <span style="color:#94a3b8;">'+esc(it.names.slice(0,3).join('・'))+(it.names.length>3?(' 他'+(it.names.length-3)+'名'):'')+'</span></span></label>'; });
+  h+='<div style="margin-top:12px;"><button id="kyoGenBtn" onclick="genKyoryokuCompany()" style="font-size:13px;font-weight:800;padding:9px 16px;border:none;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer;">📄 協力確認書を作成</button></div>';
+  box.innerHTML=h;
+}
+function _kyoPageSpec(dest){
+  var co=_kyoCo.company||{}, s=dest.set||{};
+  var isHaken=(co.isHaken===true);
+  var officeAddr=isHaken ? ((co.pref||'')+(co.city||'')+(co.detailAddress||co.address||'')) : (s.officeAddr||'');
+  return { city:dest.city, name:co.name||'', addr:officeAddr, author:co.authorName||'',
+    tel:(s.contactTel||s.officeContact||''), email:co.contactEmail||'',
+    hakenName:isHaken?(s.officeName||''):'', hakenAddr:isHaken?(s.officeAddr||''):'' };
+}
+function _kyoPageHtml(f){
   function row(no,label,val){ return '<tr><td class="no">'+no+'</td><td class="lb">'+label+'</td><td class="vl">'+(esc(val)||'')+'</td></tr>'; }
-  function page(city){
-    var addrLine=city ? (esc(city)+'長　殿') : '　　　　　長　殿';
-    var rows=row('①','特定技能所属機関名',f.name)+row('②','事業所の所在地',f.addr)
-      +row('③','担当者連絡先（部署・担当者名）',f.author)+row('④','電話番号',f.tel)
-      +row('⑤','メールアドレス',f.email)+row('⑥','派遣先機関名',f.hakenName)
-      +row('⑦','派遣先事業所の所在地',f.hakenAddr);
-    return '<div class="pg"><div class="addr">'+addrLine+'</div><div class="ttl">協力確認書</div>'
-      +'<div class="body">'+KYORYOKU_BODY_HTML+'</div><div class="date">'+dateStr+'</div>'
-      +'<table class="tbl">'+rows+'</table>'
-      +'<div class="note">※　直接雇用の場合：①〜⑤を記載してください。②は特定技能外国人が活動している事業所所在地を記載してください。<br>※　派遣形態の場合：①〜⑦を記載してください。②は協力要請の連絡先となる、特定技能所属機関の事業所所在地を記載してください。</div></div>';
-  }
-  var body=cities.map(page).join('');
+  var addrLine=f.city ? (esc(f.city)+'長　殿') : '　　　　　長　殿';
+  var rows=row('①','特定技能所属機関名',f.name)+row('②','事業所の所在地',f.addr)
+    +row('③','担当者連絡先（部署・担当者名）',f.author)+row('④','電話番号',f.tel)
+    +row('⑤','メールアドレス',f.email)+row('⑥','派遣先機関名',f.hakenName)
+    +row('⑦','派遣先事業所の所在地',f.hakenAddr);
+  return '<div class="pg"><div class="addr">'+addrLine+'</div><div class="ttl">協力確認書</div>'
+    +'<div class="body">'+KYORYOKU_BODY_HTML+'</div><div class="date">'+_wareki('')+'</div>'
+    +'<table class="tbl">'+rows+'</table>'
+    +'<div class="note">※　直接雇用の場合：①〜⑤を記載してください。②は特定技能外国人が活動している事業所所在地を記載してください。<br>※　派遣形態の場合：①〜⑦を記載してください。②は協力要請の連絡先となる、特定技能所属機関の事業所所在地を記載してください。</div></div>';
+}
+function genKyoryokuCompany(){
+  var msg=document.getElementById('kyoGenMsg');
+  function say(t,err){ if(msg){ msg.textContent=t||''; msg.style.color=err?'#dc2626':'#16a34a'; } }
+  if(!_kyoCo){ say('企業を選択してください', true); return; }
+  var checks=[].slice.call(document.querySelectorAll('.kyoDest:checked'));
+  if(!checks.length){ say('提出先を1つ以上選択してください', true); return; }
+  var specs=checks.map(function(c){ return _kyoPageSpec(_kyoDestList[+c.value]); });
+  var cities=specs.map(function(s){return s.city;});
+  var body=specs.map(_kyoPageHtml).join('');
   var x=new Date(), ymd=''+x.getFullYear()+('0'+(x.getMonth()+1)).slice(-2)+('0'+x.getDate()).slice(-2);
-  var title='協力確認書_'+applicant.replace(/[\\\/:*?"<>|　 ]/g,'')+'_'+cities.join('・')+'_'+ymd;
-  var css='@page{size:A4;margin:25mm 22mm;}*{box-sizing:border-box;}body{font-family:"MS Mincho","ＭＳ 明朝",serif;color:#000;font-size:13pt;line-height:1.9;margin:0;}'
+  var coName=((_kyoCo.company&&_kyoCo.company.name)||'').replace(/[\\\/:*?"<>|　 ]/g,'');
+  var title='協力確認書_'+coName+'_'+cities.join('・')+'_'+ymd;
+  var css='@page{size:A4;margin:25mm 22mm;}*{box-sizing:border-box;}body{font-family:"MS Mincho","\uff2d\uff33 \u660e\u671d",serif;color:#000;font-size:13pt;line-height:1.9;margin:0;}'
     +'.pg{page-break-after:always;}.pg:last-child{page-break-after:auto;}'
     +'.addr{font-size:13pt;margin-bottom:30px;}.ttl{text-align:center;font-size:20pt;font-weight:bold;letter-spacing:8px;margin:10px 0 28px;}'
     +'.body{margin:0 0 26px;}.date{text-align:right;margin:0 0 24px;}'
     +'.tbl{width:100%;border-collapse:collapse;}.tbl td{border:1px solid #000;padding:7px 9px;vertical-align:top;}'
     +'.tbl .no{width:34px;text-align:center;}.tbl .lb{width:230px;}.note{font-size:10.5pt;margin-top:12px;}';
   var w=window.open('','_blank');
-  if(!w){ var m=document.getElementById('kyoGenMsg'); if(m){ m.textContent='⚠️ ポップアップがブロックされました。ポップアップを許可してください。'; m.style.color='#dc2626'; } return; }
+  if(!w){ say('⚠️ ポップアップがブロックされました。ポップアップを許可してください。', true); return; }
   w.document.write('<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>'+esc(title)+'</title><style>'+css+'</style></head><body>'+body+'<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},350);};</scr'+'ipt></body></html>');
   w.document.close();
+  say(specs.length+'通を作成しました。印刷ダイアログから保存してください。');
 }
 async function renderKyoryoku(){
   var el=document.getElementById('main'); if(!el) return;
   var fb=document.getElementById('filter-bar'); if(fb){ fb.innerHTML=''; fb.style.display='none'; }
   var lk='font-size:11px;font-weight:700;padding:6px 12px;border-radius:7px;text-decoration:none;';
   var h='<div class="news-wrap"><div class="news-head">📋 協力確認書 提出先検索</div>';
-  // 作成（案件から自動入力）
-  var opts='<option value="">案件を選択…（'+allCases.length+'件）</option>';
-  allCases.forEach(function(c){ var lb=(c.applicant||c.name||'(無名)')+(c.company?(' ／ '+c.company):''); opts+='<option value="'+esc(c.id)+'">'+esc(lb)+'</option>'; });
+  // 作成（企業ごと）
+  var coMap={}; allCases.forEach(function(c){ if(c.companyId && !coMap[c.companyId]) coMap[c.companyId]=c.company||c.companyId; });
+  var coOpts='<option value="">企業を選択…</option>';
+  Object.keys(coMap).sort(function(a,b){return (coMap[a]||'').localeCompare(coMap[b]||'','ja');}).forEach(function(id){ coOpts+='<option value="'+esc(id)+'">'+esc(coMap[id])+'</option>'; });
   h+='<div style="background:#fff;border:1px solid #dbeafe;border-radius:14px;padding:16px 18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(15,32,64,.06);">';
-  h+='<div style="font-size:14px;font-weight:800;color:#1d4ed8;margin-bottom:4px;">📝 協力確認書の作成（案件から自動入力）</div>';
-  h+='<div style="font-size:12px;color:#64748b;line-height:1.7;margin-bottom:10px;">貴社の案件を選ぶと、所属機関名・所在地・担当者・派遣先などを差し込んだ様式を作成します。作成後はブラウザの印刷からPDF保存・印刷できます（Driveへの保存は行いません）。</div>';
-  h+='<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">';
-  h+='<select id="kyoCaseSel" style="flex:1;min-width:220px;font-size:13px;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;">'+opts+'</select>';
-  h+='<button id="kyoGenBtn" onclick="genKyoryoku()" style="font-size:13px;font-weight:800;padding:9px 16px;border:none;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer;white-space:nowrap;">📄 協力確認書を作成</button>';
-  h+='</div>';
-  h+='<div style="display:flex;gap:8px;align-items:center;margin-top:8px;"><span style="font-size:11px;color:#94a3b8;white-space:nowrap;">または case_id を直接入力:</span><input id="kyoCaseId" type="text" placeholder="case_id を貼り付け" style="flex:1;min-width:160px;font-size:12px;padding:6px 9px;border:1px solid #e2e8f0;border-radius:7px;"></div>';
+  h+='<div style="font-size:14px;font-weight:800;color:#1d4ed8;margin-bottom:4px;">📝 協力確認書の作成（企業ごと）</div>';
+  h+='<div style="font-size:12px;color:#64748b;line-height:1.7;margin-bottom:10px;">企業（所属機関）を選び、提出先の市区町村を選ぶと様式を作成します。作成後はブラウザの印刷からPDF保存・印刷できます（Driveへの保存は行いません）。</div>';
+  h+='<select id="kyoCoSel" onchange="onKyoCompanyChange()" style="width:100%;box-sizing:border-box;font-size:13px;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;">'+coOpts+'</select>';
+  h+='<div id="kyoDestBox" style="margin-top:12px;"></div>';
   h+='<div id="kyoGenMsg" style="font-size:12px;margin-top:8px;min-height:1.2em;"></div>';
   h+='</div>';
   // 説明
