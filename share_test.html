@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260615.test21: サイドバーに「ニュース等」(登録支援機関向けお知らせ・未読バッジ)を追加。Supabase news_posts + news_list RPC 連動 -->
 <!-- ver.20260615.test20: 人材情報グリッドからケースID・国交自社給与・通算在留(年/月)を非表示 -->
 <!-- ver.20260615.test19: 人材モーダルの「書類PDF」を一覧のPDF列(buildDownloadCell)と同一表示に統一（旧: 認定証/預かり証の全配列を誤ラベルで列挙していた） -->
 <!-- ver.20260615.test18: 担当者リストの「保存」ボタンの絵文字が U0001f4be と文字化けしていた不具合修正（💾に） -->
@@ -131,6 +132,19 @@ th[data-col-key="name"],th[data-col-key="company"],th[data-col-key="_mlit"]{whit
 .sb-badge{background:rgba(255,255,255,.15);color:white;font-size:10px;padding:1px 6px;border-radius:99px;font-weight:700;}
 .sb-item.active .sb-badge{background:#6366f1;}
 .sb-divider{height:1px;background:rgba(255,255,255,.08);margin:6px 0;}
+.sb-badge-new{background:#dc2626;color:#fff;font-size:10px;padding:1px 7px;border-radius:99px;font-weight:800;}
+.news-wrap{max-width:760px;margin:0 auto;padding:18px 16px 60px;}
+.news-head{font-size:18px;font-weight:800;color:#0f2040;margin:4px 2px 16px;display:flex;align-items:center;gap:8px;}
+.news-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:18px 20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(15,32,64,.06);}
+.news-card.unread{border-color:#fca5a5;box-shadow:0 0 0 2px rgba(220,38,38,.08);}
+.news-c-top{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;}
+.news-new-tag{background:#dc2626;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px;}
+.news-date{font-size:11.5px;color:#94a3b8;font-weight:700;}
+.news-title{font-size:15.5px;font-weight:800;color:#0f2040;margin:2px 0 10px;line-height:1.5;}
+.news-body{font-size:13.5px;color:#334155;line-height:1.85;white-space:pre-wrap;}
+.news-imgs{margin-top:14px;display:flex;flex-direction:column;gap:12px;}
+.news-imgs img{max-width:100%;border-radius:10px;border:1px solid #e2e8f0;display:block;}
+.news-empty{text-align:center;padding:60px 20px;color:#94a3b8;font-size:13px;}
 .main-wrap{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
 /* ver.20260527.32: filter-barのstickyを廃止。main-wrap内の通常flex要素として固定位置に。
    .main側がスクロール領域なので、filter-barの裏にコンテンツが潜り込む問題を解消。 */
@@ -390,7 +404,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test20 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test21 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1527,6 +1541,47 @@ function buildRow(c){
   return h;
 }
 
+/* ===== ニュース等（登録支援機関向けお知らせ） ===== */
+var allNews=[];
+var NEWS_SEEN_KEY='share_news_last_seen_test';
+async function loadNews(){
+  try{
+    var aud=(orgName==='株式会社アイデム')?'aidem':'all';
+    var data=await sbRpc('news_list',{p_audience:aud});
+    allNews=Array.isArray(data)?data:[];
+  }catch(e){ console.warn('[news load failed]', e&&e.message); allNews=[]; }
+}
+function _newsLastSeen(){ try{ return parseInt(localStorage.getItem(NEWS_SEEN_KEY)||'0',10)||0; }catch(e){ return 0; } }
+function newsUnreadCount(){ var ls=_newsLastSeen(),n=0; allNews.forEach(function(a){ if(new Date(a.published_at).getTime()>ls) n++; }); return n; }
+function markNewsSeen(){ try{ var mx=0; allNews.forEach(function(a){ var t=new Date(a.published_at).getTime(); if(t>mx) mx=t; }); localStorage.setItem(NEWS_SEEN_KEY, String(mx||Date.now())); }catch(e){} }
+function _newsDate(v){ if(!v) return ''; var d=new Date(v); if(isNaN(d)) return String(v).slice(0,10); return d.getFullYear()+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+('0'+d.getDate()).slice(-2); }
+function renderNews(){
+  var el=document.getElementById('main'); if(!el) return;
+  var fb=document.getElementById('filter-bar'); if(fb){ fb.innerHTML=''; fb.style.display='none'; }
+  var ls=_newsLastSeen();
+  var h='<div class="news-wrap"><div class="news-head">📰 ニュース等</div>';
+  if(!allNews.length){
+    h+='<div class="news-empty">現在お知らせはありません。</div></div>';
+    el.innerHTML=h; return;
+  }
+  allNews.forEach(function(a){
+    var isNew=(new Date(a.published_at).getTime()>ls);
+    h+='<div class="news-card'+(isNew?' unread':'')+'">';
+    h+='<div class="news-c-top">'+(isNew?'<span class="news-new-tag">NEW</span>':'')+'<span class="news-date">'+esc(_newsDate(a.published_at))+'</span></div>';
+    h+='<div class="news-title">'+esc(a.title||'')+'</div>';
+    if(a.body) h+='<div class="news-body">'+esc(a.body)+'</div>';
+    var imgs=Array.isArray(a.images)?a.images:[];
+    if(imgs.length){
+      h+='<div class="news-imgs">';
+      imgs.forEach(function(im){ var u=(typeof im==='string')?im:(im&&im.url); if(u) h+='<img src="'+esc(u)+'" alt="" loading="lazy">'; });
+      h+='</div>';
+    }
+    h+='</div>';
+  });
+  h+='</div>';
+  el.innerHTML=h;
+}
+
 function renderSidebar(){
   var h='';
   // ver.20260518.13: ダッシュボードはバッジ無し、その他はgroupCasesの件数
@@ -1552,6 +1607,11 @@ function renderSidebar(){
   h+='<div class="sb-item'+(currentGroup==='intakes'?' active':'')+'" onclick="switchGroup(\'intakes\')">📤 送信した依頼 <span class="sb-badge">'+allIntakes.filter(function(x){return x.status==='pending'||x.status==='rejected';}).length+'</span></div>';
   h+='<div class="sb-item'+(currentGroup==='orgprofile'?' active':'')+'" onclick="switchGroup(\'orgprofile\')">🏢 登録支援機関情報</div>';
   h+='<div class="sb-divider"></div>';
+  // ニュース等（登録支援機関向けお知らせ）
+  {
+    var _nu=newsUnreadCount();
+    h+='<div class="sb-item'+(currentGroup==='news'?' active':'')+'" onclick="switchGroup(\'news\')"><span>📰 ニュース等</span>'+(_nu>0?'<span class="sb-badge-new">'+_nu+'</span>':'')+'</div>';
+  }
   if(isSidebarItemVisible('receipts')){
     h+='<div class="sb-item'+(currentGroup==='receipts'?' active':'')+'" onclick="switchGroup(\'receipts\')">申請記録 <span class="sb-badge">'+allReceipts.length+'</span></div>';
   }
@@ -3170,6 +3230,7 @@ function renderCurrent(){
   else if(currentGroup==='madoguchi_shinsei' || currentGroup==='madoguchi_uketori'){renderMadoguchi(currentGroup);}
   else if(currentGroup==='intakes'){renderIntakes();}
   else if(currentGroup==='orgprofile'){renderOrgProfile();}
+  else if(currentGroup==='news'){renderNews();}
   else{renderMain();}
 }
 // ver.20260519.22: 検索のdebounce（重い再描画を入力ストロークごとに走らせない）
@@ -3192,6 +3253,7 @@ function _debouncedSearch(value){
 function toggleSidebar(){ var l=document.querySelector('.layout'); if(l) l.classList.toggle('sb-collapsed'); }
 function switchGroup(gid){
   currentGroup=gid;
+  if(gid==='news') markNewsSeen();
   renderSidebar();
   renderCurrent();
   // ver.20260519.24: タブ切替で .main のスクロール位置をトップに戻す
@@ -3988,6 +4050,7 @@ async function loadData(){
       if(idata && Array.isArray(idata.intakes)) allIntakes=idata.intakes;
     }catch(e){ console.warn('[get_org_intakes failed]', e); }
 
+    await loadNews();
     renderSidebar();
     renderCurrent();
     if(!_dataReloadTimer){

@@ -9,7 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | 大房行政書士法人</title>
 <!-- ver.20260609.04: 申請人（人材本人）向け進捗・提出書類確認ページ -->
-<!-- ver.20260615.test30: サイン済書類に署名者・署名日を表示＋Drive未保存は保存処理中表示 -->
+<!-- ver.20260615.test32: 代表行政書士の氏名重複を解消＋明良の読みをあきらに修正 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -46,10 +46,10 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .doc-help{padding:0 16px 12px 46px;}
 .doc-subnote{padding:0 16px 8px 46px;font-size:11px;color:#b45309;font-weight:700;line-height:1.5;}
 .sign-act{padding:2px 16px 12px 46px;}
-.sign-btn{display:inline-flex;align-items:center;gap:6px;background:#7c3aed;color:#fff;font-size:13px;font-weight:800;padding:9px 16px;border-radius:10px;text-decoration:none;}
+.sign-btn{display:inline-block;text-align:center;line-height:1.7;background:#7c3aed;color:#fff;font-size:13px;font-weight:800;padding:9px 16px;border-radius:10px;text-decoration:none;}
 .sign-btn.view{background:#0f2040;}
 .sign-meta{padding:0 16px 4px 46px;font-size:11.5px;color:#64748b;line-height:1.6;}
-.sign-saving{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:8px 12px;}
+.sign-saving{display:inline-block;line-height:1.7;font-size:12.5px;font-weight:700;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:8px 12px;}
 .doc-help-l{font-size:10.5px;font-weight:800;color:#2563eb;margin-bottom:4px;}
 .doc-help-v{font-size:12px;color:#1e3a5f;line-height:1.65;background:#eff6ff;border-left:3px solid #3b82f6;border-radius:8px;padding:9px 11px;white-space:pre-line;}
 .doc-help-img{margin-top:8px;text-align:left;}
@@ -59,10 +59,10 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .doc-state{font-size:10px;font-weight:800;padding:2px 9px;border-radius:99px;flex-shrink:0;}
 .s-done{background:#f0fdf4;color:#15803d;border:1px solid #86efac;}
 .s-todo{background:#fff7ed;color:#ea580c;border:1px solid #fdba74;}
-.upload-btn{display:inline-flex;align-items:center;gap:8px;background:#16a34a;color:#fff;text-decoration:none;font-size:12px;font-weight:800;padding:11px 18px;border-radius:10px;margin-bottom:14px;box-shadow:0 2px 6px rgba(22,163,74,.25);}
+.upload-btn{display:inline-block;line-height:1.7;background:#16a34a;color:#fff;text-decoration:none;font-size:12px;font-weight:800;padding:11px 18px;border-radius:10px;margin-bottom:14px;box-shadow:0 2px 6px rgba(22,163,74,.25);}
 .upload-btn:hover{background:#15803d;}
 .pdf-list{display:flex;flex-direction:column;gap:10px;}
-.pdf-btn{display:flex;align-items:center;gap:10px;text-decoration:none;font-size:13px;font-weight:800;padding:14px 16px;border-radius:12px;color:#fff;}
+.pdf-btn{display:block;line-height:1.6;text-decoration:none;font-size:13px;font-weight:800;padding:14px 16px;border-radius:12px;color:#fff;}
 .pdf-none{background:#f1f5f9!important;color:#94a3b8!important;border:1px dashed #cbd5e1;font-weight:700;}
 .todo-box{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:4px 0;margin-bottom:18px;box-shadow:0 1px 3px rgba(15,32,64,.06);}
 .todo-row{display:flex;align-items:center;gap:11px;padding:13px 16px;border-bottom:1px solid #f1f5f9;}
@@ -80,7 +80,7 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .tr-report{font-size:14.5px;font-weight:800;color:#92400e;background:#fffbeb;border:1.5px solid #fcd34d;border-radius:11px;padding:13px 15px;margin:8px 0 16px;line-height:1.85;}
 .tr-report rt{font-weight:600;}
 .contact-btns{display:flex;gap:10px;}
-.cbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;font-size:13px;font-weight:800;padding:13px;border-radius:11px;color:#fff;}
+.cbtn{flex:1;display:block;text-align:center;line-height:1.7;text-decoration:none;font-size:13px;font-weight:800;padding:13px;border-radius:11px;color:#fff;}
 .cbtn.tel{background:#16a34a;}
 .cbtn.mail{background:#2563eb;}
 .help-q{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:#e0e7ff;color:#3730a3;font-size:11px;font-weight:900;border:none;cursor:pointer;margin-left:6px;vertical-align:middle;flex-shrink:0;}
@@ -117,7 +117,7 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .tl-ttl{font-size:13.5px;font-weight:800;color:#0f2040;line-height:1.5;}
 .tl-sub{font-size:11.5px;color:#64748b;margin-top:3px;line-height:1.6;}
 .tl-grp{display:flex;align-items:center;gap:8px;margin:2px 0 12px;flex-wrap:wrap;}
-.tl-dur{display:inline-flex;align-items:center;gap:5px;background:#0f2040;color:#fff;font-size:11.5px;font-weight:800;padding:4px 11px;border-radius:999px;white-space:nowrap;}
+.tl-dur{display:inline-block;line-height:1.6;background:#0f2040;color:#fff;font-size:11.5px;font-weight:800;padding:4px 11px;border-radius:999px;white-space:nowrap;}
 .tl-grp-l{font-size:11px;font-weight:700;color:#64748b;}
 .tl-grp+.tl{padding-top:2px;}
 .pass-screen{position:fixed;inset:0;background:#0f2040;display:flex;align-items:center;justify-content:center;z-index:500;padding:20px;}
@@ -129,7 +129,7 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .pass-btn{width:100%;padding:11px;background:#0f2040;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:800;cursor:pointer;}
 .pass-err{color:#dc2626;font-size:11px;margin-top:10px;min-height:14px;}
 .hide{display:none!important;}
-/* ver.20260615.test30: ふりがな */
+/* ver.20260615.test32: ふりがな */
 ruby{ruby-align:center;margin:0;}
 rt{font-size:.48em;color:#64748b;font-weight:400;letter-spacing:-.03em;line-height:1;}
 body{line-height:1.45;}
@@ -197,7 +197,7 @@ function callRpc(fn,args){return fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'
 function getParam(k){return new URLSearchParams(location.search).get(k);}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-/* ===================== ver.20260615.test30: 多言語化(8言語)＋ふりがな ===================== */
+/* ===================== ver.20260615.test32: 多言語化(8言語)＋ふりがな ===================== */
 var curLang='ja';
 try{ var _sv=localStorage.getItem('applicantLang'); if(_sv&&['ja','en','vi','id','zh','km','my','th'].indexOf(_sv)>=0) curLang=_sv; }catch(e){}
 
@@ -225,7 +225,7 @@ var FZ={
  '取得方法':'しゅとくほうほう','取得':'しゅとく','方法':'ほうほう','案内':'あんない','説明':'せつめい','発行':'はっこう','表示':'ひょうじ','預かり証':'あずかりしょう','預かり':'あずかり','許可':'きょか','交付':'こうふ','追完':'ついかん','一致':'いっち',
  '顔写真':'かおじゃしん','写真':'しゃしん','合格証':'ごうかくしょう','技能実習':'ぎのうじっしゅう','技能試験':'ぎのうしけん','技能':'ぎのう','試験':'しけん','日本語':'にほんご','専門級':'せんもんきゅう','専門':'せんもん','方':'かた',
  '所得':'しょとく','年金手帳':'ねんきんてちょう','年金':'ねんきん','手帳':'てちょう','住民票':'じゅうみんひょう','郵送物':'ゆうそうぶつ','郵送':'ゆうそう',
- '東京都':'とうきょうと','大田区':'おおたく','蒲田':'かまた','大房':'おおふさ','明良':'あきよし','様':'さま','上記':'じょうき','一般的':'いっぱんてき','画面':'がめん','日時':'にちじ',
+ '東京都':'とうきょうと','大田区':'おおたく','蒲田':'かまた','大房':'おおふさ','明良':'あきら','様':'さま','上記':'じょうき','一般的':'いっぱんてき','画面':'がめん','日時':'にちじ',
  '月':'げつ','日':'にち','級':'きゅう','約':'やく','件':'けん','番号':'ばんごう'
 };
 var FZ_KEYS=Object.keys(FZ).sort(function(a,b){return Array.from(b).length-Array.from(a).length;});
@@ -387,7 +387,7 @@ var TR={
  cr_pending_note:{ja:'この依頼は担当者が確認中です。',en:'This request is under review by your representative.',vi:'Yêu cầu này đang được người phụ trách xem xét.',id:'Permintaan ini sedang ditinjau penanggung jawab.',zh:'此申请正由负责人确认中。',km:'ការស្នើសុំនេះកំពុងត្រូវបានពិនិត្យដោយអ្នកទទួលបន្ទុក។',my:'ဤတောင်းဆိုချက်ကို တာဝန်ခံကစစ်ဆေးနေပါသည်။',th:'คำขอนี้อยู่ระหว่างการตรวจสอบโดยผู้รับผิดชอบ'},
  /* 事務所 */
  office_title:{ja:'🏢 事務所情報',en:'🏢 Our office',vi:'🏢 Văn phòng',id:'🏢 Kantor kami',zh:'🏢 事务所信息',km:'🏢 ការិយាល័យ',my:'🏢 ရုံးခန်း',th:'🏢 สำนักงาน'},
- office_rep:{ja:'代表行政書士：大房 明良',en:'Representative: Akiyoshi Ofusa',vi:'Đại diện: Akiyoshi Ofusa',id:'Perwakilan: Akiyoshi Ofusa',zh:'代表行政书士：大房 明良',km:'អ្នកតំណាង៖ Akiyoshi Ofusa',my:'ကိုယ်စားလှယ်: Akiyoshi Ofusa',th:'ผู้แทน: Akiyoshi Ofusa'},
+ office_rep:{ja:'代表行政書士：大房 明良',en:'Representative: Akira Ofusa',vi:'Đại diện: Akira Ofusa',id:'Perwakilan: Akira Ofusa',zh:'代表行政书士：大房 明良',km:'អ្នកតំណាង៖ Akira Ofusa',my:'ကိုယ်စားလှယ်: Akira Ofusa',th:'ผู้แทน: Akira Ofusa'},
  office_mail_note:{ja:'📮 郵送物はここに送ってください',en:'📮 Please send postal mail here',vi:'📮 Vui lòng gửi bưu phẩm đến đây',id:'📮 Kirim surat ke alamat ini',zh:'📮 邮寄物请寄到此处',km:'📮 សូមផ្ញើសំបុត្រមកទីនេះ',my:'📮 စာပို့ရန် ဤနေရာသို့ပို့ပါ',th:'📮 กรุณาส่งไปรษณีย์มาที่นี่'},
  /* 申請の流れ */
  flow_title:{ja:'📌 申請の流れ',en:'📌 Application process',vi:'📌 Quy trình hồ sơ',id:'📌 Alur permohonan',zh:'📌 申请流程',km:'📌 ដំណើរការពាក្យសុំ',my:'📌 လျှောက်ထားမှုလုပ်ငန်းစဉ်',th:'📌 ขั้นตอนการยื่นคำขอ'},
@@ -1354,7 +1354,7 @@ function renderOffice(){
     +'<div style="font-size:16px;font-weight:900;color:#0f2040;margin-bottom:8px;">'+firm+'</div>'
     +'〒144-0052<br>'+addrHtml
     +'<div style="margin-top:6px;">TEL：<a href="tel:0364248849" style="color:#2563eb;font-weight:700;text-decoration:none;">03-6424-8849</a></div>'
-    +'<div style="margin-top:6px;">'+t('office_rep')+'：'+_dv('大房 明良')+'</div>'
+    +'<div style="margin-top:6px;">'+t('office_rep')+'</div>'
     +'<div>'+t('info_email')+'：<a href="mailto:mail@gyosei-cambo.com" style="color:#2563eb;font-weight:700;text-decoration:none;">mail@gyosei-cambo.com</a></div>'
     +'</div>';
   h+='<div class="mail-note" style="margin-top:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;">📮 '+t('office_mail_note')+'</div>';
