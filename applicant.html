@@ -9,7 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <title>提出書類・進捗確認 | 大房行政書士法人</title>
 <!-- ver.20260609.04: 申請人（人材本人）向け進捗・提出書類確認ページ -->
-<!-- ver.20260615.test27: 一時帰国の報告のお願いを大きめの警告ボックス表示に変更 -->
+<!-- ver.20260615.test29: サイン書類タブをサイン済書類(ドライブURL)の一覧表示に簡素化 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -22,7 +22,7 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .tab.active{color:#0f2040;border-bottom-color:#0f2040;}
 .tab .badge{display:inline-block;margin-left:5px;background:#dc2626;color:#fff;border-radius:99px;font-size:9px;font-weight:800;padding:1px 6px;}
 .wrap{max-width:680px;margin:0 auto;padding:16px;}
-.section-title{font-size:14px;font-weight:800;color:#0f2040;margin:6px 0 10px;display:flex;align-items:center;gap:8px;}
+.section-title{font-size:14px;font-weight:800;color:#0f2040;margin:6px 0 10px;line-height:1.5;}
 .phase-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin-bottom:16px;text-align:center;}
 .phase-lbl{font-size:11px;color:#64748b;font-weight:700;}
 .phase-st{display:inline-block;margin-top:8px;padding:8px 18px;border-radius:99px;font-size:15px;font-weight:900;border:1px solid;}
@@ -45,6 +45,9 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .doc-row{display:flex;align-items:center;gap:10px;padding:10px 16px;}
 .doc-help{padding:0 16px 12px 46px;}
 .doc-subnote{padding:0 16px 8px 46px;font-size:11px;color:#b45309;font-weight:700;line-height:1.5;}
+.sign-act{padding:2px 16px 12px 46px;}
+.sign-btn{display:inline-flex;align-items:center;gap:6px;background:#7c3aed;color:#fff;font-size:13px;font-weight:800;padding:9px 16px;border-radius:10px;text-decoration:none;}
+.sign-btn.view{background:#0f2040;}
 .doc-help-l{font-size:10.5px;font-weight:800;color:#2563eb;margin-bottom:4px;}
 .doc-help-v{font-size:12px;color:#1e3a5f;line-height:1.65;background:#eff6ff;border-left:3px solid #3b82f6;border-radius:8px;padding:9px 11px;white-space:pre-line;}
 .doc-help-img{margin-top:8px;text-align:left;}
@@ -124,9 +127,9 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .pass-btn{width:100%;padding:11px;background:#0f2040;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:800;cursor:pointer;}
 .pass-err{color:#dc2626;font-size:11px;margin-top:10px;min-height:14px;}
 .hide{display:none!important;}
-/* ver.20260615.test27: ふりがな */
-ruby{ruby-align:center;}
-rt{font-size:.52em;color:#64748b;font-weight:400;letter-spacing:0;line-height:1;}
+/* ver.20260615.test29: ふりがな */
+ruby{ruby-align:center;margin:0;}
+rt{font-size:.48em;color:#64748b;font-weight:400;letter-spacing:-.03em;line-height:1;}
 body{line-height:1.45;}
 /* 言語切替 */
 .header-right{margin-left:auto;display:flex;align-items:center;gap:10px;min-width:0;}
@@ -163,6 +166,7 @@ body{line-height:1.45;}
 <div class="tabs" id="tabs" style="display:none;">
   <button class="tab active" data-tab="status" onclick="switchTab('status')"><span class="tab-l">進捗</span></button>
   <button class="tab" data-tab="docs" onclick="switchTab('docs')"><span class="tab-l">提出書類</span><span class="badge hide" id="tabDocBadge">0</span></button>
+  <button class="tab" data-tab="sign" onclick="switchTab('sign')"><span class="tab-l">サイン書類</span><span class="badge hide" id="tabSignBadge">0</span></button>
   <button class="tab" data-tab="pdf" onclick="switchTab('pdf')"><span class="tab-l">発行書類</span></button>
   <button class="tab" data-tab="info" onclick="switchTab('info')"><span class="tab-l">本人情報</span></button>
   <button class="tab" data-tab="office" onclick="switchTab('office')"><span class="tab-l">事務所情報等</span></button>
@@ -191,7 +195,7 @@ function callRpc(fn,args){return fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'
 function getParam(k){return new URLSearchParams(location.search).get(k);}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-/* ===================== ver.20260615.test27: 多言語化(8言語)＋ふりがな ===================== */
+/* ===================== ver.20260615.test29: 多言語化(8言語)＋ふりがな ===================== */
 var curLang='ja';
 try{ var _sv=localStorage.getItem('applicantLang'); if(_sv&&['ja','en','vi','id','zh','km','my','th'].indexOf(_sv)>=0) curLang=_sv; }catch(e){}
 
@@ -208,7 +212,7 @@ var FZ={
  '所属機関':'しょぞくきかん','登録支援機関':'とうろくしえんきかん','支援機関':'しえんきかん','機関':'きかん',
  '審査完了通知':'しんさかんりょうつうち','審査完了':'しんさかんりょう','審査中':'しんさちゅう','審査':'しんさ',
  '雇用条件':'こようじょうけん','企業確認':'きぎょうかくにん','企業押印':'きぎょうおういん','企業':'きぎょう','書類収集':'しょるいしゅうしゅう',
- '提出書類':'ていしゅつしょるい','必要書類':'ひつようしょるい','追加書類':'ついかしょるい','発行書類':'はっこうしょるい','書類':'しょるい',
+ '提出書類':'ていしゅつしょるい','必要書類':'ひつようしょるい','追加書類':'ついかしょるい','発行書類':'はっこうしょるい','済書類':'ずみしょるい','未署名':'みしょめい','署名':'しょめい','必要':'ひつよう','完了':'かんりょう','開':'ひら','済':'す','書類':'しょるい',
  '進捗確認':'しんちょくかくにん','進捗':'しんちょく','本人情報':'ほんにんじょうほう','基本情報':'きほんじょうほう','事務所情報':'じむしょじょうほう','事務所':'じむしょ','情報':'じょうほう',
  '依頼事項':'いらいじこう','依頼':'いらい','必須':'ひっす','回答':'かいとう','提出済':'ていしゅつずみ','提出':'ていしゅつ','未提出':'みていしゅつ','未回答':'みかいとう','未着手':'みちゃくしゅ','未発行':'みはっこう','不要':'ふよう',
  '準備中':'じゅんびちゅう','準備':'じゅんび','残り':'のこり','現在':'げんざい','国交省':'こっこうしょう','特例期限':'とくれいきげん','特例期間':'とくれいきかん','特例':'とくれい','申請中':'しんせいちゅう','日本':'にほん','過':'す','期限切れ':'きげんぎれ','期限':'きげん',
@@ -323,6 +327,17 @@ var TR={
  temp_return_none:{ja:'予定なし',en:'None scheduled',vi:'Không có kế hoạch',id:'Tidak ada rencana',zh:'无预定',km:'គ្មានគម្រោង',my:'အစီအစဉ်မရှិ',th:'ไม่มีกำหนด'},
  temp_return_tbd:{ja:'未定',en:'Undecided',vi:'Chưa xác định',id:'Belum ditentukan',zh:'未定',km:'មិនទាន់កំណត់',my:'မဆုံးဖြတ်ရသေး',th:'ยังไม่กำหนด'},
  temp_return_report:{ja:'⚠️ 一時帰国される場合は、必ず事前に担当者までご報告ください。',en:'⚠️ If you plan a temporary return home, you must report it to your representative in advance.',vi:'⚠️ Nếu bạn dự định về nước tạm thời, hãy báo trước cho người phụ trách.',id:'⚠️ Jika berencana pulang sementara, wajib lapor ke penanggung jawab terlebih dahulu.',zh:'⚠️ 如计划临时回国，请务必事先向负责人报告。',km:'⚠️ ប្រសិនបើអ្នកគ្រោងត្រឡប់ប្រទេសវិញ សូមរាយការណ៍ជូនអ្នកទទួលបន្ទុកជាមុនជានិច្ច។',my:'⚠️ ယာယီပြည်တော်ပြန်မည်ဆိုပါက တာဝန်ခံကို ကြိုတင်အကြောင်းကြားရန် လိုအပ်ပါသည်။',th:'⚠️ หากวางแผนกลับประเทศชั่วคราว กรุณาแจ้งผู้รับผิดชอบล่วงหน้าทุกครั้ง'},
+ tab_sign:{ja:'サイン書類',en:'Sign',vi:'Ký',id:'Tanda tangan',zh:'签名',km:'ហត្ថលេខា',my:'လက်မှတ်',th:'ลงนาม'},
+ sign_title:{ja:'📝 サイン済書類',en:'📝 Signed documents',vi:'📝 Tài liệu đã ký',id:'📝 Dokumen yang sudah ditandatangani',zh:'📝 已签名文件',km:'📝 ឯកសារដែលបានចុះហត្ថលេខា',my:'📝 လက်မှတ်ထိုးပြီးစာရွက်များ',th:'📝 เอกสารที่ลงนามแล้ว'},
+ sign_note:{ja:'サイン（署名）が完了した書類です。タップするとドライブで書類を開けます。',en:'Documents you have already signed. Tap to open the file in Drive.',vi:'Các tài liệu bạn đã ký. Nhấn để mở tệp trên Drive.',id:'Dokumen yang sudah Anda tandatangani. Ketuk untuk membuka file di Drive.',zh:'您已签名完成的文件。点击可在云端硬盘中打开。',km:'ឯកសារដែលអ្នកបានចុះហត្ថលេខារួច។ ចុចដើម្បីបើកនៅក្នុង Drive។',my:'သင်လက်မှတ်ထိုးပြီးသော စာရွက်များ။ Drive တွင်ဖွင့်ရန် နှိပ်ပါ။',th:'เอกสารที่คุณลงนามเรียบร้อยแล้ว แตะเพื่อเปิดไฟล์ใน Drive'},
+ sign_prompt:{ja:'サインが必要な書類があります（残{n}件）',en:'You have documents to sign ({n} left)',vi:'Bạn có tài liệu cần ký ({n} còn lại)',id:'Ada dokumen untuk ditandatangani (sisa {n})',zh:'有需要签名的文件（剩余{n}件）',km:'មានឯកសារត្រូវចុះហត្ថលេខា (នៅសល់ {n})',my:'လက်မှတ်ထိုးရန်စာရွက် ရှိသည် ({n} ကျန်)',th:'มีเอกสารที่ต้องลงนาม (เหลือ {n})'},
+ sign_pending:{ja:'未署名',en:'Awaiting signature',vi:'Chưa ký',id:'Belum ditandatangani',zh:'未签名',km:'មិនទាន់ចុះហត្ថលេខា',my:'လက်မှတ်မထိုးရသေး',th:'ยังไม่ลงนาม'},
+ sign_signed:{ja:'署名済み',en:'Signed',vi:'Đã ký',id:'Sudah ditandatangani',zh:'已签名',km:'បានចុះហត្ថលេខា',my:'လက်မှတ်ထိုးပြီး',th:'ลงนามแล้ว'},
+ sign_expired:{ja:'期限切れ',en:'Expired',vi:'Hết hạn',id:'Kedaluwarsa',zh:'已过期',km:'ផុតកំណត់',my:'သက်တမ်းကုန်',th:'หมดอายุ'},
+ sign_btn:{ja:'署名する',en:'Sign',vi:'Ký tên',id:'Tanda tangani',zh:'签名',km:'ចុះហត្ថលេខា',my:'လက်မှတ်ထိုး',th:'ลงนาม'},
+ sign_view_pdf:{ja:'ドライブで書類を開く',en:'Open file in Drive',vi:'Mở tệp trên Drive',id:'Buka file di Drive',zh:'在云端硬盘中打开',km:'បើកឯកសារក្នុង Drive',my:'Drive တွင်ဖွင့်ရန်',th:'เปิดไฟล์ใน Drive'},
+ sign_empty:{ja:'現在、サイン済みの書類はありません。',en:'There are no signed documents yet.',vi:'Chưa có tài liệu nào đã ký.',id:'Belum ada dokumen yang ditandatangani.',zh:'目前没有已签名的文件。',km:'មិនទាន់មានឯកសារដែលបានចុះហត្ថលេខាទេ។',my:'လက်မှတ်ထိုးပြီးစာရွက် မရှိသေးပါ။',th:'ยังไม่มีเอกสารที่ลงนามแล้ว'},
+ sign_doc_default:{ja:'サイン書類',en:'Document',vi:'Tài liệu',id:'Dokumen',zh:'文件',km:'ឯកសារ',my:'စာရွက်',th:'เอกสาร'},
  /* ヘルプモーダル */
  dh_method:{ja:'取得方法・説明',en:'How to obtain / Notes',vi:'Cách lấy / Ghi chú',id:'Cara memperoleh / Catatan',zh:'取得方法・说明',km:'របៀបទទួលបាន / កំណត់សម្គាល់',my:'ရယူနည်း / မှတ်ချက်',th:'วิธีขอรับ / หมายเหตุ'},
  dh_sample_prep:{ja:'📷 サンプル画像準備中',en:'📷 Sample image coming soon',vi:'📷 Ảnh mẫu sắp có',id:'📷 Gambar contoh segera',zh:'📷 样本图准备中',km:'📷 រូបភាពគំរូនឹងមានឆាប់ៗ',my:'📷 နမူနာပုံ မကြာမီရရှိမည်',th:'📷 รูปตัวอย่างเร็วๆ นี้'},
@@ -435,7 +450,7 @@ function applyStaticI18n(){
   document.documentElement.lang=curLang;
   var ht=document.getElementById('hdrTitle'); if(ht) ht.innerHTML=t('header_title');
   var logo=document.querySelector('.header-logo'); if(logo) logo.innerHTML=(curLang==='ja')?fz('大房行政書士法人'):'大房行政書士法人';
-  var map={status:'tab_status',docs:'tab_docs',pdf:'tab_pdf',info:'tab_info',office:'tab_office',flow:'tab_flow'};
+  var map={status:'tab_status',docs:'tab_docs',pdf:'tab_pdf',info:'tab_info',office:'tab_office',flow:'tab_flow',sign:'tab_sign'};
   document.querySelectorAll('.tab').forEach(function(btn){
     var key=map[btn.dataset.tab]; if(!key) return;
     var l=btn.querySelector('.tab-l'); if(l) l.innerHTML=t(key);
@@ -595,7 +610,7 @@ function buildUploadUrl(){
 
 function _hasVal(v){ return v!=null && v!=='' && v!=='false'; }
 
-var theCase=null, thePerson={}, cacheDocs=[], doneSet={}, missingDocCount=0, pdfCert='', pdfCustody='', pdfReceipt='', pdfShinsa='', hasHearingForm=false, _passMode='enter', currentTab='status', currentToken='', _correctPass='', applicantChangeReq=null;
+var theCase=null, thePerson={}, cacheDocs=[], doneSet={}, missingDocCount=0, pdfCert='', pdfCustody='', pdfReceipt='', pdfShinsa='', hasHearingForm=false, _passMode='enter', currentTab='status', currentToken='', _correctPass='', applicantChangeReq=null, signRequests=[], pendingSignCount=0;
 
 function savePin(token,pin){
   return callRpc('applicant_view_set_pin',{p_token:token,p_pin:pin}).then(function(r){return !!(r&&r.ok);}).catch(function(){return false;});
@@ -656,6 +671,7 @@ async function loadData(pass){
     if(res.change_req!=null && res.change_req!==''){
       try{ applicantChangeReq=(typeof res.change_req==='string')?JSON.parse(res.change_req):res.change_req; }catch(e){ applicantChangeReq=null; }
     }
+    signRequests=Array.isArray(res.sign_requests)?res.sign_requests:[];
     pdfCert=''; pdfCustody=''; pdfReceipt=res.pdf_receipt||''; pdfShinsa=res.pdf_shinsa||'';
     var _ac=thePerson.application_cert_pdf_urls; if(Array.isArray(_ac)&&_ac.length){ var _l1=_ac[_ac.length-1]; if(_l1&&_l1.url) pdfCert=_l1.url; }
     var _cu=thePerson.custody_receipt_pdf_urls; if(Array.isArray(_cu)&&_cu.length){ var _l2=_cu[_cu.length-1]; if(_l2&&_l2.url) pdfCustody=_l2.url; }
@@ -687,6 +703,11 @@ function computeMissing(){
   docDisplayList().forEach(function(d){ if(!isDocDone(d)) missingDocCount++; });
   var b=document.getElementById('tabDocBadge');
   if(missingDocCount>0){ b.textContent=missingDocCount; b.classList.remove('hide'); } else { b.classList.add('hide'); }
+  // サイン済書類（署名完了かつドライブURLあり）の件数バッジ
+  var signedCount=0;
+  signRequests.forEach(function(s){ if(s && (s.signed_at||s.status==='signed'||s.status==='confirmed') && s.signed_pdf_url) signedCount++; });
+  var sb=document.getElementById('tabSignBadge');
+  if(sb){ if(signedCount>0){ sb.textContent=signedCount; sb.classList.remove('hide'); } else { sb.classList.add('hide'); } }
 }
 
 function switchTab(t){ currentTab=t; document.querySelectorAll('.tab').forEach(function(el){el.classList.toggle('active',el.dataset.tab===t);}); render(); }
@@ -695,6 +716,7 @@ function render(){
   var m=document.getElementById('main');
   if(currentTab==='status') m.innerHTML=renderStatus();
   else if(currentTab==='docs') m.innerHTML=renderDocs();
+  else if(currentTab==='sign') m.innerHTML=renderSign();
   else if(currentTab==='pdf') m.innerHTML=renderPdf();
   else if(currentTab==='info') m.innerHTML=renderInfo();
   else if(currentTab==='office') m.innerHTML=renderOffice();
@@ -1173,7 +1195,11 @@ function docHelpInline(d){
 }
 
 function renderDocs(){
-  var h='<div class="section-title">📄 '+t('docs_title')+'</div>';
+  var h='';
+  if(docDisplayList().length>0 && !docsAllDone()){
+    h+='<div class="next-box"><div class="next-l">'+t('next_ask_title')+'</div><div class="next-t">'+t('next_docs',{n:missingDocCount})+'</div></div>';
+  }
+  h+='<div class="section-title">📄 '+t('docs_title')+'</div>';
   h+='<div class="note">'+t('docs_note')+'</div>';
   var upUrl=buildUploadUrl();
   if(upUrl){ h+='<div><a class="upload-btn" href="'+esc(upUrl)+'" target="_blank" rel="noopener">📤 '+t('btn_upload')+'</a></div>'; }
@@ -1203,6 +1229,24 @@ function _pdfBtn(label,url,color,icon){
   if(url) return '<a class="pdf-btn" style="background:'+color+';" href="'+esc(url)+'" target="_blank" rel="noopener">'+icon+' '+label+'</a>';
   return '<span class="pdf-btn pdf-none">'+icon+' '+label+'（'+t('pdf_unissued')+'）</span>';
 }
+function renderSign(){
+  var h='<div class="section-title">'+t('sign_title')+'</div>';
+  h+='<div class="note">'+t('sign_note')+'</div>';
+  var list=signRequests.filter(function(s){ return s && (s.signed_at || s.status==='signed' || s.status==='confirmed') && s.signed_pdf_url; });
+  if(!list.length){ h+='<div class="empty">'+t('sign_empty')+'</div>'; return h; }
+  list.sort(function(a,b){ return String(b.signed_at||'').localeCompare(String(a.signed_at||'')); });
+  h+='<div class="doc-co">';
+  list.forEach(function(s){
+    var nm=s.doc_type||tp('sign_doc_default');
+    var nameHtml=(curLang==='ja')?fz(nm):esc(nm);
+    h+='<div class="doc-item"><div class="doc-row"><span class="doc-ico">✅</span><div class="doc-name">'+nameHtml+'</div><span class="doc-state s-done">'+t('sign_signed')+'</span></div>';
+    h+='<div class="sign-act"><a class="sign-btn view" href="'+esc(s.signed_pdf_url)+'" target="_blank" rel="noopener">📄 '+t('sign_view_pdf')+'</a></div>';
+    h+='</div>';
+  });
+  h+='</div>';
+  return h;
+}
+
 function renderPdf(){
   var h='<div class="section-title">📑 '+t('pdf_title')+'</div>';
   h+='<div class="note">'+t('pdf_note')+'</div>';
