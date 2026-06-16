@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260617.test41: 協力確認書Word生成方式をindex(anken)側に統一。宛先(addr_to)に「長　殿」を含める方式に変更し、テンプレ宛先は{addr_to}（殿込み・全体下線）の1runに統一（殿の重複を解消・空提出先は『　殿』）。キャッシュトークン更新 -->
 <!-- ver.20260617.test40: 申請の流れ STEP①②を「依頼用スプレッドシート記載」→「新規案件依頼の入力」に変更（スプレッドシート運用廃止に伴う修正） -->
 <!-- ver.20260617.test39: サイドバー/見出しの「協力確認書 提出先検索」を「協力確認書作成」に名称変更 -->
 <!-- ver.20260617.test38: 新規案件依頼の備考(other_support_note)を整理。受取方法/推薦票/在留資格詳細は各専用カラム(delivery_method/recommend_letter_required/residence_status/desired_status)に保存するため備考から除外し、案件側の備考欄には入力された「備考」のみが入るように変更。固定文言「（アイデムShareより登録）」も撤去 -->
@@ -423,7 +424,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test40 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test41 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1733,7 +1734,7 @@ async function _kyoEnsureLibs(){
 }
 async function _kyoTemplate(){
   if(_kyoTplBuf) return _kyoTplBuf;
-  var r=await fetch('data/kyoryoku_template.docx?v=20260617d', {cache:'no-store'});
+  var r=await fetch('data/kyoryoku_template.docx?v=20260617e', {cache:'no-store'});
   if(!r.ok) throw new Error('テンプレート取得失敗 '+r.status);
   _kyoTplBuf=await r.arrayBuffer();
   return _kyoTplBuf;
@@ -1766,7 +1767,7 @@ async function genKyoryokuCompany(){
     var x=new Date(), ymd=''+x.getFullYear()+('0'+(x.getMonth()+1)).slice(-2)+('0'+x.getDate()).slice(-2);
     var specs=checks.map(function(c){ return _kyoPageSpec(_kyoDestList[+c.value], email); });
     specs.forEach(function(sp, i){
-      var data={ addr_to:(sp.city? sp.city+'長':''), date:_wareki(''),
+      var data={ addr_to:(sp.city? sp.city+'長\u3000殿':'\u3000殿'), date:_wareki(''),
         f1:sp.name||'', f2:sp.addr||'', f3:sp.author||'', f4:sp.tel||'', f5:sp.email||'', f6:sp.hakenName||'', f7:sp.hakenAddr||'' };
       var blob=_kyoRenderDocx(buf, data);
       var fn='協力確認書_'+coName+'_'+(sp.city||('提出先'+(i+1)))+'_'+ymd+'.docx';
