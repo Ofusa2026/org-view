@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260616.test32: 協力確認書の提出先抽出で、申請人住所の先頭に郵便番号があると市区町村に郵便番号まで含まれていた不具合を修正（先頭の〒・郵便番号を除去してから市区町村抽出） -->
 <!-- ver.20260616.test31: 協力確認書の企業ドロップダウンを「案件ベース」→「登録支援機関に紐づく所属機関マスタ全件」に変更（get_org_companiesにid追加。案件未紐づけの会社も表示） -->
 <!-- ver.20260616.test30: 協力確認書の印刷様式を入管庁正本様式(001435038.docx)に忠実化（宛先=下線ブランク＋市・区・町・村長 殿／中央題名／本文両端揃え／①〜⑦をラベル行化＝枠テーブル廃止／注記②ぶら下げ） -->
 <!-- ver.20260615.test29: 協力確認書の作成で企業名を入力可（datalistコンボボックス）に／作成前に企業メールアドレスを必須入力（DB未登録のため⑤に反映） -->
@@ -414,7 +415,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260616.test31 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260616.test32 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1658,7 +1659,8 @@ function _wareki(str){
 }
 function _kyoExtractCity(addr){
   if(!addr) return '';
-  var m=String(addr).match(/(?:東京都|北海道|(?:京都|大阪)府|.{2,3}県)?(.+?(?:郡.+?[町村]|市.+?区|[市区町村]))/);
+  var a=String(addr).replace(/^[\s\u3000]*〒?[\s\u3000]*[0-9０-９]{3}[-－‐ー]?[0-9０-９]{4}[\s\u3000]*/,''); // 先頭の郵便番号を除去
+  var m=a.match(/(?:東京都|北海道|(?:京都|大阪)府|.{2,3}県)?(.+?(?:郡.+?[町村]|市.+?区|[市区町村]))/);
   return m?m[1]:'';
 }
 var _kyoCo=null, _kyoDestList=[], _kyoCoList=null;
