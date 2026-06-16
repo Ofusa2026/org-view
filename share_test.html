@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260617.test38: 新規案件依頼の備考(other_support_note)を整理。受取方法/推薦票/在留資格詳細は各専用カラム(delivery_method/recommend_letter_required/residence_status/desired_status)に保存するため備考から除外し、案件側の備考欄には入力された「備考」のみが入るように変更。固定文言「（アイデムShareより登録）」も撤去 -->
 <!-- ver.20260617.test37: 協力確認書テンプレを公式様式の記入ライン（下線付き全角スペースの長いライン＋fitText均等割ラベル）を保持する方式に変更し、①〜⑦の値を公式の下線ライン上に差し込む（前版は段落を作り直して公式ラインを壊し短い下線になっていた）。キャッシュトークン更新 -->
 <!-- ver.20260617.test36: 協力確認書 ①〜⑦の値にも下線を追加（テンプレ更新）／住所の市区町村抽出で文字間スペースを除去（東 京 都 大 田 区→大田区）。テンプレキャッシュトークン更新 -->
 <!-- ver.20260617.test35: 協力確認書テンプレの取得をキャッシュ無効化＋バージョン付きに（古いテンプレがCDN/ブラウザにキャッシュされ下線無しになっていた不具合の修正） -->
@@ -420,7 +421,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test37 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test38 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -4827,20 +4828,13 @@ async function executeSubmit(){
       if(p.desiredStatus === 'その他' && p.desiredStatusNote){
         desiredStatusWithNote = 'その他: ' + p.desiredStatusNote;
       }
-      // 補足ノートも合体
-      var noteParts = ['受取方法: ' + j.ukeMethod];
-      if(rec) noteParts.push('推薦票: 必要');
-      if(j.currentStatus === 'その他' && j.currentStatusNote){
-        noteParts.push('現在資格(詳細): ' + j.currentStatusNote);
-      }
-      // ver.20260527.24: 希望在留資格その他詳細もノートに追加
-      if(p.desiredStatus === 'その他' && p.desiredStatusNote){
-        noteParts.push('希望資格(詳細): ' + p.desiredStatusNote);
-      }
+      // ver.20260617: 受取方法・推薦票・在留資格詳細はそれぞれ専用カラム
+      //   (delivery_method / recommend_letter_required / residence_status / desired_status) に保存するため、
+      //   other_support_note には「備考」(p.remarks) だけを入れる（案件詳細の備考欄にそのまま反映される）。
+      var noteParts = [];
       if(p.remarks){
-        noteParts.push('備考: ' + p.remarks);
+        noteParts.push(p.remarks);
       }
-      noteParts.push('（アイデムShareより登録）');
       return {
         applicant: j.name,
         case_name: p.caseName,
