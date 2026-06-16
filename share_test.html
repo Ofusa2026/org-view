@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260615.test25: 「協力確認書 提出先検索」を追加（全国市区町村・公式サイト/様式リンク・提出の説明。data/kyoryoku_cities.json を遅延読込） -->
 <!-- ver.20260615.test24: 新規案件依頼に「備考」欄を追加（依頼テキスト末尾・確認モーダル・other_support_noteに反映） -->
 <!-- ver.20260615.test23: 新規案件依頼: 確認モーダルのアイデム拠点/担当者は非アイデムで非表示／依頼テキストから勤務地・雇用条件を削除／人材紹介手数料を入力可能に（依頼テキスト・確認に反映） -->
 <!-- ver.20260615.test22: ニュース等を「申請の流れ」の上へ移動＋本文URLをリンク化＋画像表示対応 -->
@@ -407,7 +408,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test24 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260615.test25 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1591,6 +1592,93 @@ function renderNews(){
   el.innerHTML=h;
 }
 
+/* ===== 協力確認書 提出先検索（全国市区町村・公開データ） ===== */
+var _kyoData=null;
+async function _kyoLoad(){
+  if(_kyoData) return _kyoData;
+  var res=await fetch('data/kyoryoku_cities.json',{cache:'force-cache'});
+  if(!res.ok) throw new Error('fetch failed '+res.status);
+  _kyoData=await res.json();
+  return _kyoData;
+}
+function _kyoBadge(city){
+  var s=city.slice(-1);
+  if(s==='市') return {t:'市',c:'#2563eb',b:'#eff6ff'};
+  if(s==='町') return {t:'町',c:'#16a34a',b:'#f0fdf4'};
+  if(s==='村') return {t:'村',c:'#9333ea',b:'#faf5ff'};
+  if(s==='区') return {t:'特別区',c:'#dc2626',b:'#fef2f2'};
+  return {t:'',c:'#64748b',b:'#f1f5f9'};
+}
+function _kyoRender(){
+  var el=document.getElementById('kyoList'), cs=document.getElementById('kyoCount');
+  if(!el || !_kyoData) return;
+  var q=(((document.getElementById('kyoSearch')||{}).value)||'').replace(/[\s　]+/g,'');
+  var res=[], total=0;
+  for(var i=0;i<_kyoData.length;i++){
+    var c=_kyoData[i];
+    if(!q || c.city.indexOf(q)>=0 || c.kana.indexOf(q)>=0 || c.pref.indexOf(q)>=0){
+      total++; if(res.length<50) res.push(c);
+    }
+  }
+  var h='';
+  res.forEach(function(c){
+    var bd=_kyoBadge(c.city);
+    var g='https://www.google.com/search?q='+encodeURIComponent(c.city+' 特定技能 協力確認書 提出');
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid #f1f5f9;flex-wrap:wrap;">';
+    h+='<span style="font-size:9px;font-weight:800;color:'+bd.c+';background:'+bd.b+';border-radius:4px;padding:1px 6px;flex-shrink:0;">'+bd.t+'</span>';
+    h+='<span style="font-size:11px;color:#94a3b8;min-width:62px;">'+esc(c.pref)+'</span>';
+    h+='<span style="font-size:13px;font-weight:700;color:#0f2040;flex:1;min-width:100px;">'+esc(c.city)+'</span>';
+    if(c.url) h+='<a href="'+esc(c.url)+'" target="_blank" rel="noopener" style="font-size:10px;font-weight:700;color:#2563eb;text-decoration:none;white-space:nowrap;">🌐 公式サイト</a>';
+    h+='<a href="'+g+'" target="_blank" rel="noopener" style="font-size:10px;font-weight:700;color:#dc2626;text-decoration:none;white-space:nowrap;">🔎 協力確認書を探す</a>';
+    h+='</div>';
+  });
+  if(!res.length) h='<div style="padding:18px;text-align:center;color:#94a3b8;font-size:12px;">該当する市区町村がありません</div>';
+  el.innerHTML=h;
+  if(cs) cs.textContent = q ? (total+'件ヒット'+(total>50?'（先頭50件を表示）':'')) : ('全'+_kyoData.length+'件（先頭50件を表示。検索で絞り込み）');
+}
+window._kyoRender=_kyoRender;
+async function renderKyoryoku(){
+  var el=document.getElementById('main'); if(!el) return;
+  var fb=document.getElementById('filter-bar'); if(fb){ fb.innerHTML=''; fb.style.display='none'; }
+  var lk='font-size:11px;font-weight:700;padding:6px 12px;border-radius:7px;text-decoration:none;';
+  var h='<div class="news-wrap"><div class="news-head">📋 協力確認書 提出先検索</div>';
+  // 説明
+  h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px 18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(15,32,64,.06);">';
+  h+='<div style="font-size:13.5px;color:#334155;line-height:1.85;">協力確認書は、特定技能外国人を受け入れる際に、<b>所属機関の事業所所在地</b>および<b>申請人の住居地</b>の市区町村が、特定技能外国人の受入れに関する地域での情報共有・相談等に協力していることを確認するための書類です（出入国在留管理庁の正本様式・全国共通）。</div>';
+  h+='<div style="font-size:13px;color:#0f2040;font-weight:800;margin:12px 0 6px;">提出の流れ</div>';
+  h+='<div style="font-size:13px;color:#334155;line-height:1.85;">① 下の検索で対象の市区町村の公式サイトを確認<br>② 上部の入管庁・正本様式に記入<br>③ 各市区町村の案内に従って提出し、<b>提出年月日・提出先</b>を控える</div>';
+  h+='<div style="font-size:12px;color:#92400e;line-height:1.8;margin-top:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:9px 11px;">';
+  h+='・入管庁の正本様式が全国共通の正本です（市区町村HPに様式が無くてもこちらでOK）。<br>';
+  h+='・<b>入管申請では協力確認書の写し提出は不要</b>です（申請書3(32)に提出年月日・提出先を記載すれば足ります）。<br>';
+  h+='・政令指定都市＝市単位で提出（同一市内で区が変わっても再提出不要）。東京23区＝区ごとに提出。<br>';
+  h+='・掲載URLはオープンデータ転載のため一部古い場合があります。提出前に実URLをご確認ください。';
+  h+='</div>';
+  // 入管庁リンク
+  h+='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">';
+  h+='<a href="https://www.moj.go.jp/isa/applications/ssw/01_00120.html" target="_blank" rel="noopener" style="'+lk+'background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;">🏛 制度ページ</a>';
+  h+='<a href="https://www.moj.go.jp/isa/content/001435038.docx" target="_blank" rel="noopener" style="'+lk+'background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;">📄 様式(Word)</a>';
+  h+='<a href="https://www.moj.go.jp/isa/content/001439587.pdf" target="_blank" rel="noopener" style="'+lk+'background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;">📑 記載例(直接雇用)</a>';
+  h+='<a href="https://www.moj.go.jp/isa/content/001439588.pdf" target="_blank" rel="noopener" style="'+lk+'background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;">📑 記載例(派遣)</a>';
+  h+='<a href="https://www.moj.go.jp/isa/applications/ssw/03_00122.html" target="_blank" rel="noopener" style="'+lk+'background:#faf5ff;color:#9333ea;border:1px solid #e9d5ff;">❓ Q&amp;A</a>';
+  h+='</div></div>';
+  // 検索
+  h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px 18px;box-shadow:0 1px 3px rgba(15,32,64,.06);">';
+  h+='<input id="kyoSearch" type="text" oninput="_kyoRender()" placeholder="市区町村名・ふりがな・都道府県で検索（漢字／ひらがな）" style="width:100%;box-sizing:border-box;font-size:13px;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;outline:none;">';
+  h+='<div id="kyoCount" style="font-size:11px;color:#94a3b8;margin:8px 2px;">読み込み中…</div>';
+  h+='<div id="kyoList" style="max-height:520px;overflow-y:auto;border:1px solid #f1f5f9;border-radius:8px;"><div style="padding:18px;text-align:center;color:#94a3b8;font-size:12px;">データを読み込んでいます…</div></div>';
+  h+='</div></div>';
+  el.innerHTML=h;
+  try{
+    await _kyoLoad();
+    _kyoRender();
+    var s=document.getElementById('kyoSearch'); if(s) s.focus();
+  }catch(e){
+    var lst=document.getElementById('kyoList');
+    if(lst) lst.innerHTML='<div style="padding:18px;text-align:center;color:#dc2626;font-size:12px;">データの読み込みに失敗しました。時間をおいて再度お試しください。</div>';
+    var cs=document.getElementById('kyoCount'); if(cs) cs.textContent='';
+  }
+}
+
 function renderSidebar(){
   var h='';
   // ver.20260518.13: ダッシュボードはバッジ無し、その他はgroupCasesの件数
@@ -1644,6 +1732,9 @@ function renderSidebar(){
     var _nu=newsUnreadCount();
     h+='<div class="sb-item'+(currentGroup==='news'?' active':'')+'" onclick="switchGroup(\'news\')"><span>📰 ニュース等</span>'+(_nu>0?'<span class="sb-badge-new">'+_nu+'</span>':'')+'</div>';
   }
+  // 協力確認書 提出先検索
+  h+='<div class="sb-divider"></div>';
+  h+='<div class="sb-item'+(currentGroup==='kyoryoku'?' active':'')+'" onclick="switchGroup(\'kyoryoku\')">📋 協力確認書 提出先検索</div>';
   if(isSidebarItemVisible('flow')){
     h+='<div class="sb-divider"></div>';
     h+='<div class="flow-sb-item" onclick="openFlowModal()">📋 申請の流れ <span style="margin-left:auto;font-size:10px;">ℹ️</span></div>';
@@ -3241,6 +3332,7 @@ function renderCurrent(){
   else if(currentGroup==='intakes'){renderIntakes();}
   else if(currentGroup==='orgprofile'){renderOrgProfile();}
   else if(currentGroup==='news'){renderNews();}
+  else if(currentGroup==='kyoryoku'){renderKyoryoku();}
   else{renderMain();}
 }
 // ver.20260519.22: 検索のdebounce（重い再描画を入力ストロークごとに走らせない）
