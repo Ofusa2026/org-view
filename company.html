@@ -9,7 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
 <!-- ver.20260611.01: 申請の流れをタイムライン型(applicant準拠)に変更／郵送物の案内を事務所情報の上に移動 -->
-<!-- ver.20260616.02: ページ名称を「提出書類・進捗確認」→「所属機関マイページ」に変更。企業名＋登録支援機関名(案件orgから抽出)の識別バーを常時表示。申請一覧に「進行中／発行済み・完了／すべて」セグメント追加(分類はshare同様 DONE_ST=['完了','審査完了'])。ダッシュボード集計・openListも同分類に統一 -->
+<!-- ver.20260616.03: UIをshare本番に寄せ、上部タブ＋上部バーを廃止して左サイドバー型レイアウトに変更（モバイルは横スクロール）。サイドバー項目=ダッシュボード/進行中/発行済み・完了/すべて/提出書類/申請の流れ/事務所情報。企業名＋登録支援機関名はサイドバー上部に表示。分類はshare同様 DONE_ST=['完了','審査完了'] -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -143,6 +143,36 @@ tr:hover td{background:#fcfcfd;}
 .id-co{font-size:15px;font-weight:900;color:#0f2040;}
 .id-org{font-size:12px;font-weight:700;color:#334155;background:#eff6ff;border:1px solid #bfdbfe;border-radius:99px;padding:5px 12px;}
 .id-org b{color:#1d4ed8;font-weight:900;}
+/* ver.20260616.03: share本番準拠のサイドバー型レイアウト */
+html,body{height:100%;}
+body{margin:0;display:flex;flex-direction:column;min-height:100vh;}
+.layout{display:flex;flex:1;min-height:0;}
+.sidebar{width:176px;background:#1e293b;flex-shrink:0;padding:12px 0;overflow-y:auto;}
+.sb-head{padding:2px 14px 12px;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sb-head-co{font-size:12.5px;font-weight:900;color:#fff;line-height:1.3;word-break:break-all;}
+.sb-head-org{font-size:10px;color:rgba(255,255,255,.5);margin-top:7px;line-height:1.3;}
+.sb-head-org b{display:block;color:#a5b4fc;font-size:11px;font-weight:800;margin-top:2px;word-break:break-all;}
+.sb-item{padding:10px 14px;cursor:pointer;font-size:11.5px;font-weight:700;color:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:space-between;gap:6px;border-left:3px solid transparent;transition:.1s;}
+.sb-item:hover{background:rgba(255,255,255,.07);color:#fff;}
+.sb-item.active{background:rgba(99,102,241,.2);color:#a5b4fc;border-left-color:#6366f1;}
+.sb-badge{background:rgba(255,255,255,.15);color:#fff;font-size:10px;padding:1px 7px;border-radius:99px;font-weight:800;}
+.sb-item.active .sb-badge{background:#6366f1;}
+.sb-badge.warn{background:#dc2626;color:#fff;}
+.sb-divider{height:1px;background:rgba(255,255,255,.08);margin:8px 12px;}
+.main-wrap{flex:1;min-width:0;overflow:auto;}
+.main{padding:18px 20px 40px;max-width:1100px;}
+@media(max-width:560px){
+  body{display:block;}
+  .header{position:sticky;top:0;z-index:200;}
+  .layout{display:block;}
+  .sidebar{width:auto;display:flex;align-items:stretch;overflow-x:auto;padding:0;position:sticky;top:48px;z-index:120;}
+  .sb-head{flex-shrink:0;min-width:140px;padding:6px 12px;margin:0;border-bottom:none;border-right:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;justify-content:center;}
+  .sb-head-org{margin-top:2px;}
+  .sb-item{flex-direction:column;gap:2px;padding:8px 12px;font-size:10px;border-left:none;border-bottom:3px solid transparent;white-space:nowrap;flex-shrink:0;justify-content:center;text-align:center;}
+  .sb-item.active{border-bottom-color:#6366f1;border-left:none;}
+  .sb-divider{display:none;}
+  .main{padding:14px 14px 30px;}
+}
 </style>
 </head>
 <body>
@@ -152,15 +182,10 @@ tr:hover td{background:#fcfcfd;}
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
-<div class="tabs" id="tabs" style="display:none;">
-  <button class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">ダッシュボード</button>
-  <button class="tab" data-tab="docs" onclick="switchTab('docs')">提出書類<span class="badge hide" id="tabDocBadge">0</span></button>
-  <button class="tab" data-tab="people" onclick="switchTab('people')">申請一覧</button>
-  <button class="tab" data-tab="flow" onclick="switchTab('flow')">申請の流れ</button>
-  <button class="tab" data-tab="office" onclick="switchTab('office')">事務所情報等</button>
+<div class="layout" id="layout">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="main-wrap"><div class="main" id="main"><div class="loading">⏳ 読み込み中...</div></div></div>
 </div>
-
-<div class="wrap"><div id="main"><div class="loading">⏳ 読み込み中...</div></div></div>
 
 <!-- パスワード画面 -->
 <div id="passScreen" class="pass-screen hide">
@@ -337,7 +362,7 @@ function _tokureiDate(c){
 }
 
 var companyId='', companyName='', companyDrive='', companyOfusaStaff='', companyShowMlit=false, currentToken='', _correctPass='';
-var allCases=[], coDocs={}, personsByCase={}, receiptByCase={}, shinsaByCase={}, missingDocCount=0, currentTab='dashboard', peopleGroup='active', supportOrgName='';
+var allCases=[], coDocs={}, personsByCase={}, receiptByCase={}, shinsaByCase={}, missingDocCount=0, currentTab='dashboard', supportOrgName='';
 
 async function checkPass(){
   var v=document.getElementById('passInput').value.trim();
@@ -394,7 +419,7 @@ async function loadData(pass){
     receiptByCase={}; shinsaByCase={};
     (res.receipt||[]).forEach(function(x){ if(x.case_id&&x.drive_url&&!receiptByCase[x.case_id]) receiptByCase[x.case_id]=x.drive_url; });
     (res.shinsa||[]).forEach(function(x){ if(x.case_id&&x.drive_url&&!shinsaByCase[x.case_id]) shinsaByCase[x.case_id]=x.drive_url; });
-    document.getElementById('tabs').style.display='flex';
+    renderSidebar();
     render();
     return {ok:true};
   }catch(e){ document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+esc(e.message)+'</div>'; return {ok:false}; }
@@ -436,13 +461,29 @@ function computeMissing(){
     if(!docInList(coDocs[name])) return;
     if(docState(coDocs[name])==='todo') missingDocCount++;
   });
-  var b=document.getElementById('tabDocBadge');
-  if(missingDocCount>0){ b.textContent=missingDocCount; b.classList.remove('hide'); }
-  else{ b.classList.add('hide'); }
 }
 
-function switchTab(t){ currentTab=t; document.querySelectorAll('.tab').forEach(function(el){el.classList.toggle('active',el.dataset.tab===t);}); render(); }
-function setPeopleGroup(g){ peopleGroup=g; render(); }
+function switchGroup(g){ currentTab=g; renderSidebar(); render(); var mw=document.querySelector('.main-wrap'); if(mw) mw.scrollTop=0; }
+function renderSidebar(){
+  var nDone=0; allCases.forEach(function(c){ if(classifyCase(c)==='done') nDone++; });
+  var nAll=allCases.length, nActive=nAll-nDone;
+  function item(id,label,badge,warn){
+    var b=(badge==null)?'':'<span class="sb-badge'+(warn?' warn':'')+'">'+badge+'</span>';
+    return '<div class="sb-item'+(currentTab===id?' active':'')+'" onclick="switchGroup(\''+id+'\')"><span>'+label+'</span>'+b+'</div>';
+  }
+  var h='<div class="sb-head"><div class="sb-head-co">🏢 '+esc(companyName||'')+' 様</div>'
+    +(supportOrgName?'<div class="sb-head-org">登録支援機関<b>'+esc(supportOrgName)+'</b></div>':'')+'</div>';
+  h+=item('dashboard','ダッシュボード',null);
+  h+='<div class="sb-divider"></div>';
+  h+=item('active','進行中',nActive);
+  h+=item('done','発行済み・完了',nDone);
+  h+=item('all','すべて',nAll);
+  h+='<div class="sb-divider"></div>';
+  h+=item('docs','提出書類',(missingDocCount>0?missingDocCount:null),missingDocCount>0);
+  h+=item('flow','申請の流れ',null);
+  h+=item('office','事務所情報',null);
+  document.getElementById('sidebar').innerHTML=h;
+}
 
 function expInfo(dateStr){
   if(!dateStr) return {txt:'—',cls:'none',days:null};
@@ -455,15 +496,11 @@ function expInfo(dateStr){
 
 function render(){
   var m=document.getElementById('main');
-  var idBar='<div class="id-bar"><div class="id-co">🏢 '+esc(companyName||'')+' 様</div>'
-    +(supportOrgName?'<div class="id-org">登録支援機関：<b>'+esc(supportOrgName)+'</b></div>':'')+'</div>';
-  var body='';
-  if(currentTab==='dashboard') body=renderDashboard();
-  else if(currentTab==='docs') body=renderDocs();
-  else if(currentTab==='people') body=renderPeople();
-  else if(currentTab==='flow') body=renderFlow();
-  else if(currentTab==='office') body=renderOffice();
-  m.innerHTML=idBar+body;
+  if(currentTab==='docs') m.innerHTML=renderDocs();
+  else if(currentTab==='active'||currentTab==='done'||currentTab==='all') m.innerHTML=renderPeople(currentTab);
+  else if(currentTab==='flow') m.innerHTML=renderFlow();
+  else if(currentTab==='office') m.innerHTML=renderOffice();
+  else m.innerHTML=renderDashboard();
 }
 
 function _caseDeadline(c){
@@ -497,7 +534,7 @@ function _dashHero(total,soon,expired){
   return '<div class="hero-cards">'
     +'<div class="hero-card"><div class="hl">受入人数</div><div class="hn">'+total+'<small>名</small></div></div>'
     +'<div class="hero-card '+((soon+expired)>0?'hot':'')+'" onclick="openList(\'soon\')"><div class="hl">在留期限90日以内</div><div class="hn">'+(soon+expired)+'<small>名</small></div></div>'
-    +'<div class="hero-card '+(missingDocCount>0?'hot':'')+'" onclick="switchTab(\'docs\')"><div class="hl">未提出書類</div><div class="hn">'+missingDocCount+'<small>件</small></div></div>'
+    +'<div class="hero-card '+(missingDocCount>0?'hot':'')+'" onclick="switchGroup(\'docs\')"><div class="hl">未提出書類</div><div class="hn">'+missingDocCount+'<small>件</small></div></div>'
     +'</div>';
 }
 var _NAT_NORM={'INDONESIA':'インドネシア','VIETNAM':'ベトナム','VIET NAM':'ベトナム','MYANMAR':'ミャンマー','BURMA':'ミャンマー','CAMBODIA':'カンボジア','PHILIPPINES':'フィリピン','NEPAL':'ネパール','CHINA':'中国','THAILAND':'タイ','SRI LANKA':'スリランカ','MONGOLIA':'モンゴル','BANGLADESH':'バングラデシュ','INDIA':'インド','LAOS':'ラオス'};
@@ -533,10 +570,10 @@ function renderDashboard(){
   h+=_dashAlertList();
   h+=_dashHero(total,soon,expired);
   h+='<div class="cards">';
-  h+='<div class="card" onclick="openList(\'all\')"><div class="lbl">全申請件数</div><div class="num">'+total+'<small> 件</small></div></div>';
-  h+='<div class="card" onclick="openList(\'active\')"><div class="lbl">進行中の申請</div><div class="num">'+active+'<small> 件</small></div></div>';
-  h+='<div class="card" onclick="openList(\'done\')"><div class="lbl">手続き完了</div><div class="num">'+done+'<small> 件</small></div></div>';
-  h+='<div class="card '+(missingDocCount>0?'warn':'')+'" onclick="switchTab(\'docs\')"><div class="lbl">未提出の書類</div><div class="num">'+missingDocCount+'<small> 件</small></div></div>';
+  h+='<div class="card" onclick="switchGroup(\'all\')"><div class="lbl">全申請件数</div><div class="num">'+total+'<small> 件</small></div></div>';
+  h+='<div class="card" onclick="switchGroup(\'active\')"><div class="lbl">進行中の申請</div><div class="num">'+active+'<small> 件</small></div></div>';
+  h+='<div class="card" onclick="switchGroup(\'done\')"><div class="lbl">手続き完了</div><div class="num">'+done+'<small> 件</small></div></div>';
+  h+='<div class="card '+(missingDocCount>0?'warn':'')+'" onclick="switchGroup(\'docs\')"><div class="lbl">未提出の書類</div><div class="num">'+missingDocCount+'<small> 件</small></div></div>';
   h+='</div>';
   // 大房行政書士法人担当窓口（部署=案件チーム最頻値 / 担当=ofusa_staff）
   var teamCount={}; allCases.forEach(function(c){var t=(c.team||'').trim();if(t)teamCount[t]=(teamCount[t]||0)+1;});
@@ -614,15 +651,12 @@ function exportCsv(){
   document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
 }
 
-function renderPeople(){
+function renderPeople(group){
+  group=(group==='active'||group==='done'||group==='all')?group:'all';
   if(!allCases.length) return '<div class="empty">対象の人材がありません。</div>';
-  var nDone=0; allCases.forEach(function(c){ if(classifyCase(c)==='done') nDone++; });
-  var nAll=allCases.length, nActive=nAll-nDone;
-  if(peopleGroup!=='all'&&peopleGroup!=='done'&&peopleGroup!=='active') peopleGroup='active';
-  var rows=(peopleGroup==='all')?allCases:allCases.filter(function(c){return classifyCase(c)===peopleGroup;});
-  function seg(id,label,cnt){ return '<button class="seg-btn'+(peopleGroup===id?' active':'')+'" onclick="setPeopleGroup(\''+id+'\')">'+label+'<span class="seg-cnt">'+cnt+'</span></button>'; }
-  var h='<div class="section-title">📋 御社の申請一覧</div>';
-  h+='<div class="seg-bar">'+seg('active','進行中',nActive)+seg('done','発行済み・完了',nDone)+seg('all','すべて',nAll)+'</div>';
+  var rows=(group==='all')?allCases:allCases.filter(function(c){return classifyCase(c)===group;});
+  var titles={active:'進行中の申請',done:'発行済み・完了',all:'すべての申請'};
+  var h='<div class="section-title">📋 '+(titles[group]||'申請一覧')+'（'+rows.length+'件）</div>';
   h+='<div class="note">行をタップすると、在留カード番号・パスポート・住所などの詳細が表示されます。</div>';
   h+='<div class="tbl-tools"><button class="tbtn" onclick="exportCsv()">⬇ CSV出力</button><button class="tbtn" onclick="window.print()">🖨 印刷</button></div>';
   if(!rows.length){ h+='<div class="empty">この区分の申請はありません。</div>'; return h; }
