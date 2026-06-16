@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260617.test39: サイドバー/見出しの「協力確認書 提出先検索」を「協力確認書作成」に名称変更 -->
 <!-- ver.20260617.test38: 新規案件依頼の備考(other_support_note)を整理。受取方法/推薦票/在留資格詳細は各専用カラム(delivery_method/recommend_letter_required/residence_status/desired_status)に保存するため備考から除外し、案件側の備考欄には入力された「備考」のみが入るように変更。固定文言「（アイデムShareより登録）」も撤去 -->
 <!-- ver.20260617.test37: 協力確認書テンプレを公式様式の記入ライン（下線付き全角スペースの長いライン＋fitText均等割ラベル）を保持する方式に変更し、①〜⑦の値を公式の下線ライン上に差し込む（前版は段落を作り直して公式ラインを壊し短い下線になっていた）。キャッシュトークン更新 -->
 <!-- ver.20260617.test36: 協力確認書 ①〜⑦の値にも下線を追加（テンプレ更新）／住所の市区町村抽出で文字間スペースを除去（東 京 都 大 田 区→大田区）。テンプレキャッシュトークン更新 -->
@@ -421,7 +422,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test38 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test39 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1777,7 +1778,7 @@ async function renderKyoryoku(){
   var el=document.getElementById('main'); if(!el) return;
   var fb=document.getElementById('filter-bar'); if(fb){ fb.innerHTML=''; fb.style.display='none'; }
   var lk='font-size:11px;font-weight:700;padding:6px 12px;border-radius:7px;text-decoration:none;';
-  var h='<div class="news-wrap"><div class="news-head">📋 協力確認書 提出先検索</div>';
+  var h='<div class="news-wrap"><div class="news-head">📋 協力確認書作成</div>';
   // 作成（企業ごと）: 登録支援機関に紐づく所属機関マスタを全件表示（案件未紐づけの会社も出す）
   if(_kyoCoList===null){
     try{ var _kr=await sbRpc('get_org_companies',{p_token:currentToken,p_pass:(currentPass||null)}); _kyoCoList=Array.isArray(_kr)?_kr:[]; }
@@ -1890,7 +1891,7 @@ function renderSidebar(){
   }
   // 協力確認書 提出先検索
   h+='<div class="sb-divider"></div>';
-  h+='<div class="sb-item'+(currentGroup==='kyoryoku'?' active':'')+'" onclick="switchGroup(\'kyoryoku\')">📋 協力確認書 提出先検索</div>';
+  h+='<div class="sb-item'+(currentGroup==='kyoryoku'?' active':'')+'" onclick="switchGroup(\'kyoryoku\')">📋 協力確認書作成</div>';
   if(isSidebarItemVisible('flow')){
     h+='<div class="sb-divider"></div>';
     h+='<div class="flow-sb-item" onclick="openFlowModal()">📋 申請の流れ <span style="margin-left:auto;font-size:10px;">ℹ️</span></div>';
