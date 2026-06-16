@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260617.test36: 協力確認書 ①〜⑦の値にも下線を追加（テンプレ更新）／住所の市区町村抽出で文字間スペースを除去（東 京 都 大 田 区→大田区）。テンプレキャッシュトークン更新 -->
 <!-- ver.20260617.test35: 協力確認書テンプレの取得をキャッシュ無効化＋バージョン付きに（古いテンプレがCDN/ブラウザにキャッシュされ下線無しになっていた不具合の修正） -->
 <!-- ver.20260616.test34: 協力確認書Wordの宛先に下線を復活（テンプレ宛先=下線付き{addr_to}＋『殿』。JSのaddr_toは市区町村＋長を渡す） -->
 <!-- ver.20260616.test33: 協力確認書をHTML印刷→Word(.docx)出力に変更。入管庁正本様式をテンプレ化(data/kyoryoku_template.docx)し、docxtemplaterで変数差し込み(宛先/日付/①〜⑦)。ライブラリは同梱(vendor/pizzip,docxtemplater)。提出先ごとに1ファイルDL -->
@@ -418,7 +419,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test35 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test36 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1662,7 +1663,8 @@ function _wareki(str){
 }
 function _kyoExtractCity(addr){
   if(!addr) return '';
-  var a=String(addr).replace(/^[\s\u3000]*〒?[\s\u3000]*[0-9０-９]{3}[-－‐ー]?[0-9０-９]{4}[\s\u3000]*/,''); // 先頭の郵便番号を除去
+  var a=String(addr).replace(/[\s\u3000]+/g,''); // 崩れデータのスペースを除去（東 京 都 大 田 区 → 東京都大田区）
+  a=a.replace(/^〒?[0-9０-９]{3}[-－‐ー]?[0-9０-９]{4}/,''); // 先頭の郵便番号を除去
   var m=a.match(/(?:東京都|北海道|(?:京都|大阪)府|.{2,3}県)?(.+?(?:郡.+?[町村]|市.+?区|[市区町村]))/);
   return m?m[1]:'';
 }
@@ -1727,7 +1729,7 @@ async function _kyoEnsureLibs(){
 }
 async function _kyoTemplate(){
   if(_kyoTplBuf) return _kyoTplBuf;
-  var r=await fetch('data/kyoryoku_template.docx?v=20260617b', {cache:'no-store'});
+  var r=await fetch('data/kyoryoku_template.docx?v=20260617c', {cache:'no-store'});
   if(!r.ok) throw new Error('テンプレート取得失敗 '+r.status);
   _kyoTplBuf=await r.arrayBuffer();
   return _kyoTplBuf;
