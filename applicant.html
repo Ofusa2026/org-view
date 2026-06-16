@@ -10,6 +10,7 @@
 <title>マイページ | 大房行政書士法人</title>
 <!-- ver.20260609.04: 申請人（人材本人）向け進捗・提出書類確認ページ -->
 <!-- ver.20260615.test33: ページ名を「提出書類・進捗確認」→「マイページ」に変更（本人共有しやすく・8言語対応） -->
+<!-- ver.20260616.multidoc: 署名済み書類のリンクを複数(docs)対応（1署名でN枚） -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -1251,7 +1252,15 @@ function renderSign(){
     if(s.signer_name) meta.push(t('sign_signer')+'：'+esc(s.signer_name));
     if(s.signed_at) meta.push(t('sign_date')+'：'+esc(_fmtDateTime(s.signed_at)));
     if(meta.length) h+='<div class="sign-meta">'+meta.join('　')+'</div>';
-    if(s.signed_pdf_url){
+    var _sdocs=(s.docs&&Array.isArray(s.docs))?s.docs.filter(function(d){return d&&d.signed_pdf_url;}):[];
+    if(_sdocs.length){
+      h+='<div class="sign-act">';
+      _sdocs.forEach(function(d){
+        var _lbl=(_sdocs.length>1&&d.name)?('📄 '+esc(d.name)):('📄 '+t('sign_view_pdf'));
+        h+='<a class="sign-btn view" href="'+esc(d.signed_pdf_url)+'" target="_blank" rel="noopener" style="margin-right:6px;margin-bottom:6px;">'+_lbl+'</a>';
+      });
+      h+='</div>';
+    } else if(s.signed_pdf_url){
       h+='<div class="sign-act"><a class="sign-btn view" href="'+esc(s.signed_pdf_url)+'" target="_blank" rel="noopener">📄 '+t('sign_view_pdf')+'</a></div>';
     } else {
       h+='<div class="sign-act"><span class="sign-saving">⏳ '+t('sign_saving')+'</span></div>';
