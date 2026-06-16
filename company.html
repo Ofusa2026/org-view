@@ -9,6 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
 <!-- ver.20260611.01: 申請の流れをタイムライン型(applicant準拠)に変更／郵送物の案内を事務所情報の上に移動 -->
+<!-- ver.20260617.09: 「ニュース等」をサイドバーの一番下（事務所情報の後）に移動。 -->
 <!-- ver.20260617.08: 申請一覧の印刷ボタンを削除（CSV出力のみ残す）。 -->
 <!-- ver.20260617.07: サイドバーに「ニュース等」を追加。shareと同じ news_posts/news_list RPC を利用し、未読バッジ・NEW表示・本文URLリンク化・画像表示に対応(audienceは支援機関がアイデムなら'aidem')。 -->
 <style>
@@ -560,8 +561,6 @@ function renderSidebar(){
   var h='<div class="sb-head"><div class="sb-head-co">🏢 '+esc(companyName||'')+' 様</div>'
     +(supportOrgName?'<div class="sb-head-org">登録支援機関<b>'+esc(supportOrgName)+'</b></div>':'')+'</div>';
   h+=item('dashboard','ダッシュボード',null);
-  var _nu=(typeof newsUnreadCount==='function')?newsUnreadCount():0;
-  h+=item('news','📰 ニュース等',(_nu>0?_nu:null),_nu>0);
   h+='<div class="sb-divider"></div>';
   h+=item('active','進行中',nActive);
   h+=item('done','発行済み・完了',nDone);
@@ -571,6 +570,8 @@ function renderSidebar(){
   h+=item('flow','申請の流れ',null);
   h+=item('orginfo','所属機関情報',null);
   h+=item('office','事務所情報',null);
+  var _nu=(typeof newsUnreadCount==='function')?newsUnreadCount():0;
+  h+=item('news','📰 ニュース等',(_nu>0?_nu:null),_nu>0);
   document.getElementById('sidebar').innerHTML=h;
 }
 
