@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260616.test33: 協力確認書をHTML印刷→Word(.docx)出力に変更。入管庁正本様式をテンプレ化(data/kyoryoku_template.docx)し、docxtemplaterで変数差し込み(宛先/日付/①〜⑦)。ライブラリは同梱(vendor/pizzip,docxtemplater)。提出先ごとに1ファイルDL -->
 <!-- ver.20260616.test32: 協力確認書の提出先抽出で、申請人住所の先頭に郵便番号があると市区町村に郵便番号まで含まれていた不具合を修正（先頭の〒・郵便番号を除去してから市区町村抽出） -->
 <!-- ver.20260616.test31: 協力確認書の企業ドロップダウンを「案件ベース」→「登録支援機関に紐づく所属機関マスタ全件」に変更（get_org_companiesにid追加。案件未紐づけの会社も表示） -->
 <!-- ver.20260616.test30: 協力確認書の印刷様式を入管庁正本様式(001435038.docx)に忠実化（宛先=下線ブランク＋市・区・町・村長 殿／中央題名／本文両端揃え／①〜⑦をラベル行化＝枠テーブル廃止／注記②ぶら下げ） -->
@@ -415,7 +416,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260616.test32 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260616.test33 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1715,31 +1716,33 @@ function _kyoPageSpec(dest, email){
     tel:(s.contactTel||s.officeContact||''), email:(email!=null?email:(co.contactEmail||'')),
     hakenName:isHaken?(s.officeName||''):'', hakenAddr:isHaken?(s.officeAddr||''):'' };
 }
-function _kyoPageHtml(f){
-  var cityBlank=(f.city||'').replace(/[市区町村]$/,'');
-  var addrLine='<span class="ul">　'+esc(cityBlank)+'　</span>市・区・町・村長　殿';
-  function fld(label,val){ return '<div class="fld"><span class="lbl">'+label+'</span><span class="val">'+(esc(val)||'')+'</span></div>'; }
-  var fields=fld('①特定技能所属機関名',f.name)
-    +fld('②事業所の所在地',f.addr)
-    +fld('③担当者連絡先（部署・担当者名）',f.author)
-    +fld('④電話番号',f.tel)
-    +fld('⑤メールアドレス',f.email)
-    +fld('⑥派遣先機関名',f.hakenName)
-    +fld('⑦派遣先事業所の所在地',f.hakenAddr);
-  return '<div class="pg">'
-    +'<div class="addr">'+addrLine+'</div>'
-    +'<div class="ttl">協力確認書</div>'
-    +'<div class="body">'+KYORYOKU_BODY_HTML+'</div>'
-    +'<div class="date">'+_wareki('')+'</div>'
-    +'<div class="flds">'+fields+'</div>'
-    +'<div class="notes">'
-    +'<div class="note">※　直接雇用の場合：①〜⑤を記載してください。</div>'
-    +'<div class="note2">②は特定技能外国人が活動している事業所所在地を記載してください。</div>'
-    +'<div class="note">※　派遣形態の場合：①〜⑦を記載してください。</div>'
-    +'<div class="note2">②は協力要請の連絡先となる、特定技能所属機関の事業所所在地を記載してください。</div>'
-    +'</div></div>';
+var _kyoTplBuf=null, _kyoLibsLoaded=false;
+function _kyoLoadScript(src){ return new Promise(function(res,rej){ var sc=document.createElement('script'); sc.src=src; sc.onload=function(){res();}; sc.onerror=function(){rej(new Error('load failed: '+src));}; document.head.appendChild(sc); }); }
+async function _kyoEnsureLibs(){
+  if(!window.PizZip) await _kyoLoadScript('vendor/pizzip.min.js');
+  if(!window.docxtemplater) await _kyoLoadScript('vendor/docxtemplater.js');
+  _kyoLibsLoaded=true;
 }
-function genKyoryokuCompany(){
+async function _kyoTemplate(){
+  if(_kyoTplBuf) return _kyoTplBuf;
+  var r=await fetch('data/kyoryoku_template.docx');
+  if(!r.ok) throw new Error('テンプレート取得失敗 '+r.status);
+  _kyoTplBuf=await r.arrayBuffer();
+  return _kyoTplBuf;
+}
+function _kyoSaveBlob(blob, filename){
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ try{document.body.removeChild(a);}catch(e){} URL.revokeObjectURL(url); }, 1500);
+}
+function _kyoRenderDocx(buf, data){
+  var zip=new window.PizZip(buf.slice(0));
+  var doc=new window.docxtemplater(zip, {paragraphLoop:true, linebreaks:true, nullGetter:function(){return '';}});
+  doc.render(data);
+  return doc.getZip().generate({type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+}
+async function genKyoryokuCompany(){
   var msg=document.getElementById('kyoGenMsg');
   function say(t,err){ if(msg){ msg.textContent=t||''; msg.style.color=err?'#dc2626':'#16a34a'; } }
   if(!_kyoCo){ say('企業を選択してください', true); return; }
@@ -1747,33 +1750,22 @@ function genKyoryokuCompany(){
   if(!checks.length){ say('提出先を1つ以上選択してください', true); return; }
   var email=((document.getElementById('kyoEmail')||{}).value||'').trim();
   if(!email){ say('企業のメールアドレスを入力してください（⑤）', true); var ke=document.getElementById('kyoEmail'); if(ke) ke.focus(); return; }
-  var specs=checks.map(function(c){ return _kyoPageSpec(_kyoDestList[+c.value], email); });
-  var cities=specs.map(function(s){return s.city;});
-  var body=specs.map(_kyoPageHtml).join('');
-  var x=new Date(), ymd=''+x.getFullYear()+('0'+(x.getMonth()+1)).slice(-2)+('0'+x.getDate()).slice(-2);
-  var coName=((_kyoCo.company&&_kyoCo.company.name)||'').replace(/[\\\/:*?"<>|　 ]/g,'');
-  var title='協力確認書_'+coName+'_'+cities.join('・')+'_'+ymd;
-  var css='@page{size:A4;margin:28mm 26mm;}*{box-sizing:border-box;}'
-    +'body{font-family:"MS Mincho","ＭＳ 明朝",serif;color:#000;font-size:11.5pt;line-height:1.9;margin:0;}'
-    +'.pg{page-break-after:always;}.pg:last-child{page-break-after:auto;}'
-    +'.addr{font-size:11.5pt;margin:0 0 54px;}'
-    +'.ul{border-bottom:1px solid #000;display:inline-block;min-width:120px;text-align:center;}'
-    +'.ttl{text-align:center;font-size:15pt;letter-spacing:8px;margin:0 0 38px;}'
-    +'.body{margin:0 0 28px;}'
-    +'.body p{text-align:justify;text-indent:1em;line-height:2.05;margin:0 0 12px;}'
-    +'.date{text-align:right;margin:0 0 38px;letter-spacing:2px;}'
-    +'.flds{margin:0 0 26px;}'
-    +'.fld{margin:0 0 18px;line-height:1.7;}'
-    +'.lbl{letter-spacing:1.5px;}'
-    +'.val{margin-left:1.2em;}'
-    +'.notes{margin-top:6px;font-size:11pt;}'
-    +'.note{margin:0 0 2px;}'
-    +'.note2{margin:0 0 10px;padding-left:2em;text-align:justify;}';
-  var w=window.open('','_blank');
-  if(!w){ say('⚠️ ポップアップがブロックされました。ポップアップを許可してください。', true); return; }
-  w.document.write('<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>'+esc(title)+'</title><style>'+css+'</style></head><body>'+body+'<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},350);};</scr'+'ipt></body></html>');
-  w.document.close();
-  say(specs.length+'通を作成しました。印刷ダイアログから保存してください。');
+  say('Wordを生成しています…');
+  try{
+    await _kyoEnsureLibs();
+    var buf=await _kyoTemplate();
+    var coName=((_kyoCo.company&&_kyoCo.company.name)||'').replace(/[\\\/:*?"<>|　 ]/g,'');
+    var x=new Date(), ymd=''+x.getFullYear()+('0'+(x.getMonth()+1)).slice(-2)+('0'+x.getDate()).slice(-2);
+    var specs=checks.map(function(c){ return _kyoPageSpec(_kyoDestList[+c.value], email); });
+    specs.forEach(function(sp, i){
+      var data={ addr_to:(sp.city? sp.city+'長\u3000殿':'\u3000殿'), date:_wareki(''),
+        f1:sp.name||'', f2:sp.addr||'', f3:sp.author||'', f4:sp.tel||'', f5:sp.email||'', f6:sp.hakenName||'', f7:sp.hakenAddr||'' };
+      var blob=_kyoRenderDocx(buf, data);
+      var fn='協力確認書_'+coName+'_'+(sp.city||('提出先'+(i+1)))+'_'+ymd+'.docx';
+      setTimeout(function(){ _kyoSaveBlob(blob, fn); }, i*400);
+    });
+    say(specs.length+'件のWordを生成しました（ダウンロード）。複数のときはブラウザの「複数ファイルのダウンロード」を許可してください。');
+  }catch(e){ say('⚠️ Word生成でエラー: '+((e&&e.message)||e), true); }
 }
 async function renderKyoryoku(){
   var el=document.getElementById('main'); if(!el) return;
