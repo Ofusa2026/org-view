@@ -9,6 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
 <!-- ver.20260611.01: 申請の流れをタイムライン型(applicant準拠)に変更／郵送物の案内を事務所情報の上に移動 -->
+<!-- ver.20260617.10: サイドバーに「協力確認書」を新設。会社が自分で入管庁正本様式の協力確認書(.docx)を作成可能に(専用RPC company_view_kyoryoku＋vendor/docxtemplater・data/kyoryoku_template.docx流用)。就業場所/申請人住所からの提出先候補・市区町村検索・直接指定に対応。 -->
 <!-- ver.20260617.09: 「ニュース等」をサイドバーの一番下（事務所情報の後）に移動。 -->
 <!-- ver.20260617.08: 申請一覧の印刷ボタンを削除（CSV出力のみ残す）。 -->
 <!-- ver.20260617.07: サイドバーに「ニュース等」を追加。shareと同じ news_posts/news_list RPC を利用し、未読バッジ・NEW表示・本文URLリンク化・画像表示に対応(audienceは支援機関がアイデムなら'aidem')。 -->
@@ -569,6 +570,7 @@ function renderSidebar(){
   h+=item('docs','提出書類',(missingDocCount>0?missingDocCount:null),missingDocCount>0);
   h+=item('flow','申請の流れ',null);
   h+=item('orginfo','所属機関情報',null);
+  h+=item('kyoryoku','協力確認書',null);
   h+=item('office','事務所情報',null);
   var _nu=(typeof newsUnreadCount==='function')?newsUnreadCount():0;
   h+=item('news','📰 ニュース等',(_nu>0?_nu:null),_nu>0);
@@ -590,6 +592,7 @@ function render(){
   else if(currentTab==='active'||currentTab==='done'||currentTab==='all') m.innerHTML=renderPeople(currentTab);
   else if(currentTab==='flow') m.innerHTML=renderFlow();
   else if(currentTab==='news') m.innerHTML=renderNews();
+  else if(currentTab==='kyoryoku'){ m.innerHTML=renderKyoryoku(); _kyoInit(); }
   else if(currentTab==='orginfo') m.innerHTML=renderOrgInfo();
   else if(currentTab==='office') m.innerHTML=renderOffice();
   else m.innerHTML=renderDashboard();
@@ -782,6 +785,187 @@ function renderNews(){
     h+='</div>';
   });
   return h+'</div>';
+}
+
+/* ===== 協力確認書作成（自社のデータから入管庁正本様式のWordを生成） ===== */
+var _kyoCo=null, _kyoDestList=[], _kyoTplBuf=null, _kyoData=null;
+function _kyoMsg(t,err){ var m=document.getElementById('kyoGenMsg'); if(m){ m.textContent=t||''; m.style.color=err?'#dc2626':'#16a34a'; } }
+function _wareki(str){
+  var d;
+  if(str){ var t=String(str).replace(/[.\/]/g,'-').trim(); var m=t.match(/(\d{4})-(\d{1,2})-(\d{1,2})/); if(m){ d=new Date(+m[1],+m[2]-1,+m[3]); } }
+  if(!d||isNaN(d.getTime())) d=new Date();
+  var y=d.getFullYear(),mo=d.getMonth()+1,da=d.getDate(),ymd=y*10000+mo*100+da,era,ey;
+  if(ymd>=20190501){era='令和';ey=y-2018;} else if(ymd>=19890108){era='平成';ey=y-1988;} else if(ymd>=19261225){era='昭和';ey=y-1925;} else {era='';ey=y;}
+  return era+((ey===1&&era)?'元':ey)+'年'+mo+'月'+da+'日';
+}
+function _kyoExtractCity(addr){
+  if(!addr) return '';
+  var a=String(addr).replace(/[\s\u3000]+/g,'');
+  a=a.replace(/^〒?[0-9０-９]{3}[-－‐ー]?[0-9０-９]{4}/,'');
+  var m=a.match(/(?:東京都|北海道|(?:京都|大阪)府|.{2,3}県)?(.+?(?:郡.+?[町村]|市.+?区|[市区町村]))/);
+  return m?m[1]:'';
+}
+async function _kyoLoadCities(){
+  if(_kyoData) return _kyoData;
+  var res=await fetch('data/kyoryoku_cities.json',{cache:'force-cache'});
+  if(!res.ok) throw new Error('fetch failed '+res.status);
+  _kyoData=await res.json(); return _kyoData;
+}
+function _kyoBadge(city){
+  var s=city.slice(-1);
+  if(s==='市') return {t:'市',c:'#2563eb',b:'#eff6ff'};
+  if(s==='町') return {t:'町',c:'#16a34a',b:'#f0fdf4'};
+  if(s==='村') return {t:'村',c:'#9333ea',b:'#faf5ff'};
+  if(s==='区') return {t:'特別区',c:'#dc2626',b:'#fef2f2'};
+  return {t:'',c:'#64748b',b:'#f1f5f9'};
+}
+function _kyoRenderCities(){
+  var el=document.getElementById('kyoList'), cs=document.getElementById('kyoCount');
+  if(!el || !_kyoData) return;
+  var q=(((document.getElementById('kyoSearch')||{}).value)||'').replace(/[\s　]+/g,'');
+  var res=[], total=0;
+  for(var i=0;i<_kyoData.length;i++){ var c=_kyoData[i];
+    if(!q || c.city.indexOf(q)>=0 || c.kana.indexOf(q)>=0 || c.pref.indexOf(q)>=0){ total++; if(res.length<50) res.push(c); } }
+  var h='';
+  res.forEach(function(c){
+    var bd=_kyoBadge(c.city);
+    var g='https://www.google.com/search?q='+encodeURIComponent(c.city+' 特定技能 協力確認書 提出');
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid #f1f5f9;flex-wrap:wrap;">';
+    h+='<span style="font-size:9px;font-weight:800;color:'+bd.c+';background:'+bd.b+';border-radius:4px;padding:1px 6px;flex-shrink:0;">'+bd.t+'</span>';
+    h+='<span style="font-size:11px;color:#94a3b8;min-width:62px;">'+esc(c.pref)+'</span>';
+    h+='<span style="font-size:13px;font-weight:700;color:#0f2040;flex:1;min-width:100px;">'+esc(c.city)+'</span>';
+    h+='<button type="button" onclick="_kyoPickCity(\''+esc(c.city).replace(/'/g,"\\'")+'\')" style="font-size:10px;font-weight:700;color:#fff;background:#2563eb;border:none;border-radius:6px;padding:3px 9px;cursor:pointer;white-space:nowrap;">提出先にする</button>';
+    if(c.url) h+='<a href="'+esc(c.url)+'" target="_blank" rel="noopener" style="font-size:10px;font-weight:700;color:#16a34a;text-decoration:none;white-space:nowrap;">🌐 公式</a>';
+    h+='</div>';
+  });
+  if(!res.length) h='<div style="padding:18px;text-align:center;color:#94a3b8;font-size:12px;">該当する市区町村がありません</div>';
+  el.innerHTML=h;
+  if(cs) cs.textContent = q ? (total+'件ヒット'+(total>50?'（先頭50件を表示）':'')) : ('全'+_kyoData.length+'件（検索で絞り込み）');
+}
+function _kyoPickCity(city){ var inp=document.getElementById('kyoManualCity'); if(inp){ inp.value=city; inp.scrollIntoView({behavior:'smooth',block:'center'}); _kyoMsg('提出先「'+city+'」を指定しました。内容を確認して「協力確認書を作成」を押してください。'); } }
+function _kyoFindSet(applicantName){
+  var sets=(_kyoCo&&_kyoCo.empSets)||[];
+  for(var i=0;i<sets.length;i++){ if(applicantName && sets[i].setName && sets[i].setName.indexOf(applicantName)>=0) return sets[i]; }
+  return sets[0]||{};
+}
+function _kyoRenderDests(){
+  var box=document.getElementById('kyoDestBox'); if(!box||!_kyoCo) return;
+  _kyoDestList=[];
+  var sets=_kyoCo.empSets||[], apps=_kyoCo.applicants||[];
+  var offSeen={}, offItems=[];
+  sets.forEach(function(s){ var city=_kyoExtractCity(s.officeAddr); if(city && !offSeen[city]){ offSeen[city]=1; var idx=_kyoDestList.length; _kyoDestList.push({kind:'office',city:city,set:s}); offItems.push({idx:idx,city:city,sub:s.officeName||s.officeAddr||''}); } });
+  var perSeen={}, perItems=[];
+  apps.forEach(function(a){ var city=_kyoExtractCity(a.address); if(!city) return; if(!perSeen[city]){ var idx=_kyoDestList.length; _kyoDestList.push({kind:'person',city:city,set:_kyoFindSet(a.applicant)}); perSeen[city]={idx:idx,cityName:city,names:[]}; perItems.push(perSeen[city]); } perSeen[city].names.push(a.applicant); });
+  var co=_kyoCo.company||{};
+  var h='';
+  h+='<div style="margin-bottom:12px;"><label style="font-size:12px;font-weight:700;color:#0f2040;">貴社のメールアドレス（⑤・必須）</label><input type="email" id="kyoEmail" value="'+esc(co.contactEmail||'')+'" placeholder="example@company.co.jp" style="width:100%;box-sizing:border-box;font-size:13px;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;margin-top:4px;"></div>';
+  h+='<div style="font-size:12px;font-weight:800;color:#0f2040;margin:4px 0 6px;">提出先を選択（複数可・選択ごとに1通）</div>';
+  h+='<div style="font-size:11px;font-weight:700;color:#16a34a;margin:6px 0 4px;">🏢 就業場所（雇用条件）</div>';
+  if(!offItems.length){ h+='<div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">就業場所の住所が登録されていません</div>'; }
+  offItems.forEach(function(it){ h+='<label style="display:flex;gap:8px;align-items:flex-start;padding:5px 2px;font-size:12px;cursor:pointer;"><input type="checkbox" class="kyoDest" value="'+it.idx+'" style="margin-top:2px;"><span><b>'+esc(it.city)+'</b> <span style="color:#94a3b8;">'+esc(it.sub)+'</span></span></label>'; });
+  h+='<div style="font-size:11px;font-weight:700;color:#2563eb;margin:10px 0 4px;">🏠 申請人の住所</div>';
+  h+='<div style="font-size:10.5px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:7px 9px;line-height:1.6;margin-bottom:6px;">⚠️ 提出先は「<b>転入予定先</b>（その市区町村に住む予定）」です。下は申請人の<b>現住所</b>からの推定候補のため、転入予定先と異なる場合があります。必ずご確認ください。</div>';
+  if(!perItems.length){ h+='<div style="font-size:11px;color:#94a3b8;">申請人住所が登録されていません</div>'; }
+  perItems.forEach(function(it){ h+='<label style="display:flex;gap:8px;align-items:flex-start;padding:5px 2px;font-size:12px;cursor:pointer;"><input type="checkbox" class="kyoDest" value="'+it.idx+'" style="margin-top:2px;"><span><b>'+esc(it.cityName)+'</b> <span style="color:#94a3b8;">'+esc(it.names.slice(0,3).join('・'))+(it.names.length>3?(' 他'+(it.names.length-3)+'名'):'')+'</span></span></label>'; });
+  h+='<div style="font-size:11px;font-weight:700;color:#9333ea;margin:12px 0 4px;">✍️ 提出先を直接指定（任意）</div>';
+  h+='<input type="text" id="kyoManualCity" placeholder="例）横浜市／大田区（下の検索からも指定できます）" style="width:100%;box-sizing:border-box;font-size:13px;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;">';
+  h+='<div style="margin-top:14px;"><button type="button" id="kyoGenBtn" onclick="genKyoryoku()" style="font-size:13px;font-weight:800;padding:9px 16px;border:none;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer;">📄 協力確認書を作成</button></div>';
+  box.innerHTML=h;
+}
+function _kyoPageSpec(dest, email){
+  var co=_kyoCo.company||{}, s=(dest&&dest.set)||(_kyoCo.empSets&&_kyoCo.empSets[0])||{};
+  var isHaken=(co.isHaken===true);
+  var compAddr=(co.pref||'')+(co.city||'')+(co.detailAddress||co.address||'');
+  var officeAddr = isHaken ? compAddr : (s.officeAddr||compAddr);
+  return { city:dest.city, name:co.name||'', addr:officeAddr, author:co.authorName||'',
+    tel:(s.contactTel||s.officeContact||''), email:(email!=null?email:(co.contactEmail||'')),
+    hakenName:isHaken?(s.officeName||''):'', hakenAddr:isHaken?(s.officeAddr||''):'' };
+}
+function _kyoLoadScript(src){ return new Promise(function(res,rej){ var sc=document.createElement('script'); sc.src=src; sc.onload=function(){res();}; sc.onerror=function(){rej(new Error('load failed: '+src));}; document.head.appendChild(sc); }); }
+async function _kyoEnsureLibs(){
+  if(!window.PizZip) await _kyoLoadScript('vendor/pizzip.min.js');
+  if(!window.docxtemplater) await _kyoLoadScript('vendor/docxtemplater.js');
+}
+async function _kyoTemplate(){
+  if(_kyoTplBuf) return _kyoTplBuf;
+  var r=await fetch('data/kyoryoku_template.docx?v=20260617d', {cache:'no-store'});
+  if(!r.ok) throw new Error('テンプレート取得失敗 '+r.status);
+  _kyoTplBuf=await r.arrayBuffer(); return _kyoTplBuf;
+}
+function _kyoSaveBlob(blob, filename){
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ try{document.body.removeChild(a);}catch(e){} URL.revokeObjectURL(url); }, 1500);
+}
+function _kyoRenderDocx(buf, data){
+  var zip=new window.PizZip(buf.slice(0));
+  var doc=new window.docxtemplater(zip, {paragraphLoop:true, linebreaks:true, nullGetter:function(){return '';}});
+  doc.render(data);
+  return doc.getZip().generate({type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+}
+async function genKyoryoku(){
+  if(!_kyoCo){ _kyoMsg('企業データを読み込み中です。少し待って再度お試しください。', true); return; }
+  var checks=[].slice.call(document.querySelectorAll('.kyoDest:checked')).map(function(c){ return _kyoDestList[+c.value]; });
+  var manual=((document.getElementById('kyoManualCity')||{}).value||'').trim();
+  var dests=checks.slice();
+  if(manual){ dests.push({kind:'manual', city:(_kyoExtractCity(manual)||manual), set:(_kyoCo.empSets&&_kyoCo.empSets[0])||{}}); }
+  if(!dests.length){ _kyoMsg('提出先を選択するか、市区町村を入力してください', true); return; }
+  var email=((document.getElementById('kyoEmail')||{}).value||'').trim();
+  if(!email){ _kyoMsg('貴社のメールアドレスを入力してください（⑤）', true); var ke=document.getElementById('kyoEmail'); if(ke) ke.focus(); return; }
+  _kyoMsg('Wordを生成しています…');
+  try{
+    await _kyoEnsureLibs();
+    var buf=await _kyoTemplate();
+    var coName=((_kyoCo.company&&_kyoCo.company.name)||'').replace(/[\\\/:*?"<>|　 ]/g,'');
+    var x=new Date(), ymd=''+x.getFullYear()+('0'+(x.getMonth()+1)).slice(-2)+('0'+x.getDate()).slice(-2);
+    var specs=dests.map(function(d){ return _kyoPageSpec(d, email); });
+    specs.forEach(function(sp, i){
+      var data={ addr_to:(sp.city? sp.city+'長':''), date:_wareki(''),
+        f1:sp.name||'', f2:sp.addr||'', f3:sp.author||'', f4:sp.tel||'', f5:sp.email||'', f6:sp.hakenName||'', f7:sp.hakenAddr||'' };
+      var blob=_kyoRenderDocx(buf, data);
+      var fn='協力確認書_'+coName+'_'+(sp.city||('提出先'+(i+1)))+'_'+ymd+'.docx';
+      setTimeout(function(){ _kyoSaveBlob(blob, fn); }, i*400);
+    });
+    _kyoMsg(specs.length+'件のWordを生成しました（ダウンロード）。複数のときはブラウザの「複数ファイルのダウンロード」を許可してください。');
+  }catch(e){ _kyoMsg('⚠️ Word生成でエラー: '+((e&&e.message)||e), true); }
+}
+async function _kyoInit(){
+  try{
+    if(!_kyoCo){ var d=await callRpc('company_view_kyoryoku',{p_token:currentToken,p_pass:_correctPass}); _kyoCo=(d&&!d.error)?d:null; }
+    _kyoRenderDests();
+  }catch(e){ var box=document.getElementById('kyoDestBox'); if(box) box.innerHTML='<div style="font-size:12px;color:#dc2626;">企業データの取得に失敗しました。</div>'; }
+  try{ await _kyoLoadCities(); _kyoRenderCities(); }catch(e){ var lst=document.getElementById('kyoList'); if(lst) lst.innerHTML='<div style="padding:18px;text-align:center;color:#dc2626;font-size:12px;">市区町村データの読み込みに失敗しました。</div>'; }
+}
+function renderKyoryoku(){
+  var lk='font-size:11px;font-weight:700;padding:6px 12px;border-radius:7px;text-decoration:none;';
+  var h='<div class="news-wrap"><div class="news-head">📋 協力確認書作成</div>';
+  h+='<div style="background:#fff;border:1px solid #dbeafe;border-radius:14px;padding:16px 18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(15,32,64,.06);">';
+  h+='<div style="font-size:14px;font-weight:800;color:#1d4ed8;margin-bottom:4px;">📝 協力確認書の作成</div>';
+  h+='<div style="font-size:12px;color:#64748b;line-height:1.7;margin-bottom:10px;">就業場所・申請人の住所から提出先候補を選ぶか、市区町村を直接指定すると、入管庁の正本様式（全国共通）のWord（.docx）を作成します。提出先ごとに1ファイルがダウンロードされます。</div>';
+  h+='<div id="kyoDestBox" style="margin-top:4px;"><div style="font-size:12px;color:#94a3b8;">企業データを読み込んでいます…</div></div>';
+  h+='<div id="kyoGenMsg" style="font-size:12px;margin-top:8px;min-height:1.2em;"></div>';
+  h+='</div>';
+  h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px 18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(15,32,64,.06);">';
+  h+='<div style="font-size:13.5px;color:#334155;line-height:1.85;">協力確認書は、特定技能外国人を受け入れる際に、<b>事業所所在地</b>および<b>申請人の住居地</b>の市区町村が地域での情報共有・相談等に協力していることを確認する書類です（出入国在留管理庁の正本様式・全国共通）。</div>';
+  h+='<div style="font-size:12px;color:#92400e;line-height:1.8;margin-top:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:9px 11px;">';
+  h+='・入管庁の正本様式が全国共通の正本です（市区町村HPに様式が無くてもこちらでOK）。<br>';
+  h+='・政令指定都市＝市単位で提出。東京23区＝区ごとに提出。<br>';
+  h+='・提出後は<b>提出年月日・提出先</b>を控えてください。';
+  h+='</div>';
+  h+='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">';
+  h+='<a href="https://www.moj.go.jp/isa/applications/ssw/01_00120.html" target="_blank" rel="noopener" style="'+lk+'background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;">🏛 制度ページ</a>';
+  h+='<a href="https://www.moj.go.jp/isa/content/001435038.docx" target="_blank" rel="noopener" style="'+lk+'background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;">📄 様式(Word)</a>';
+  h+='<a href="https://www.moj.go.jp/isa/content/001439587.pdf" target="_blank" rel="noopener" style="'+lk+'background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;">📑 記載例(直接雇用)</a>';
+  h+='<a href="https://www.moj.go.jp/isa/content/001439588.pdf" target="_blank" rel="noopener" style="'+lk+'background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;">📑 記載例(派遣)</a>';
+  h+='</div></div>';
+  h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px 18px;box-shadow:0 1px 3px rgba(15,32,64,.06);">';
+  h+='<div style="font-size:12px;font-weight:800;color:#0f2040;margin-bottom:8px;">🔎 提出先の市区町村を探す</div>';
+  h+='<input id="kyoSearch" type="text" oninput="_kyoRenderCities()" placeholder="市区町村名・ふりがな・都道府県で検索" style="width:100%;box-sizing:border-box;font-size:13px;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;outline:none;">';
+  h+='<div id="kyoCount" style="font-size:11px;color:#94a3b8;margin:8px 2px;">読み込み中…</div>';
+  h+='<div id="kyoList" style="max-height:420px;overflow-y:auto;border:1px solid #f1f5f9;border-radius:8px;"><div style="padding:18px;text-align:center;color:#94a3b8;font-size:12px;">データを読み込んでいます…</div></div>';
+  h+='</div></div>';
+  return h;
 }
 
 function renderDashboard(){
