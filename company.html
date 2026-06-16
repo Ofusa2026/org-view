@@ -9,7 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
 <!-- ver.20260611.01: 申請の流れをタイムライン型(applicant準拠)に変更／郵送物の案内を事務所情報の上に移動 -->
-<!-- ver.20260616.03: UIをshare本番に寄せ、上部タブ＋上部バーを廃止して左サイドバー型レイアウトに変更（モバイルは横スクロール）。サイドバー項目=ダッシュボード/進行中/発行済み・完了/すべて/提出書類/申請の流れ/事務所情報。企業名＋登録支援機関名はサイドバー上部に表示。分類はshare同様 DONE_ST=['完了','審査完了'] -->
+<!-- ver.20260616.04: ダッシュボードに依頼事項(未提出書類・ヒアリング未回答＋フォームリンク)を表示。サイドバーに「所属機関情報」を追加し企業基本情報を表示。パスワードを必須化(初回は相手が設定→以降入力、company_view_set_passで保存。大房側はsettingsで閲覧可)。 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -143,11 +143,9 @@ tr:hover td{background:#fcfcfd;}
 .id-co{font-size:15px;font-weight:900;color:#0f2040;}
 .id-org{font-size:12px;font-weight:700;color:#334155;background:#eff6ff;border:1px solid #bfdbfe;border-radius:99px;padding:5px 12px;}
 .id-org b{color:#1d4ed8;font-weight:900;}
-/* ver.20260616.03: share本番準拠のサイドバー型レイアウト */
-html,body{height:100%;}
-body{margin:0;display:flex;flex-direction:column;min-height:100vh;}
-.layout{display:flex;flex:1;min-height:0;}
-.sidebar{width:176px;background:#1e293b;flex-shrink:0;padding:12px 0;overflow-y:auto;}
+/* ver.20260616.03: share本番準拠のサイドバー型レイアウト（メイン領域のみ内部スクロール） */
+.layout{display:flex;height:calc(100vh - 48px);}
+.sidebar{width:176px;background:#1e293b;flex-shrink:0;padding:12px 0;position:sticky;top:48px;height:calc(100vh - 48px);overflow-y:auto;}
 .sb-head{padding:2px 14px 12px;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,.08);}
 .sb-head-co{font-size:12.5px;font-weight:900;color:#fff;line-height:1.3;word-break:break-all;}
 .sb-head-org{font-size:10px;color:rgba(255,255,255,.5);margin-top:7px;line-height:1.3;}
@@ -158,20 +156,38 @@ body{margin:0;display:flex;flex-direction:column;min-height:100vh;}
 .sb-badge{background:rgba(255,255,255,.15);color:#fff;font-size:10px;padding:1px 7px;border-radius:99px;font-weight:800;}
 .sb-item.active .sb-badge{background:#6366f1;}
 .sb-badge.warn{background:#dc2626;color:#fff;}
+/* ver.20260616.04: 依頼事項パネル・所属機関情報行・パスワード説明 */
+.req-card{background:#fff;border:1px solid #fde68a;border-left:4px solid #f59e0b;border-radius:14px;padding:14px 16px;margin-bottom:18px;}
+.req-card.ok{border-color:#bbf7d0;border-left-color:#22c55e;}
+.req-head{font-size:13px;font-weight:900;color:#92400e;margin-bottom:10px;}
+.req-card.ok .req-head{color:#15803d;}
+.req-clear{font-size:12.5px;color:#15803d;font-weight:700;}
+.req-item{display:flex;gap:10px;padding:10px 0;border-top:1px dashed #fde68a;}
+.req-item:first-of-type{border-top:none;}
+.req-ic{font-size:18px;flex-shrink:0;line-height:1.4;}
+.req-body{flex:1;min-width:0;}
+.req-ttl{font-size:12.5px;font-weight:800;color:#0f2040;}
+.req-sub{font-size:11px;color:#64748b;margin-top:3px;line-height:1.5;word-break:break-word;}
+.req-btn{display:inline-block;margin-top:8px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:11.5px;font-weight:800;padding:7px 14px;cursor:pointer;text-decoration:none;}
+.req-btn:hover{background:#d97706;}
+.oi-row{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid #f1f5f9;font-size:12.5px;}
+.oi-row:last-child{border-bottom:none;}
+.oi-l{color:#94a3b8;width:120px;flex-shrink:0;font-weight:700;}
+.oi-v{color:#1e293b;font-weight:600;word-break:break-all;}
+.pass-desc{font-size:11.5px;color:#64748b;line-height:1.6;margin:6px 0 12px;text-align:left;}
 .sb-divider{height:1px;background:rgba(255,255,255,.08);margin:8px 12px;}
-.main-wrap{flex:1;min-width:0;overflow:auto;}
-.main{padding:18px 20px 40px;max-width:1100px;}
+.main-wrap{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
+.main{flex:1;padding:18px 20px;overflow:auto;min-width:0;}
 @media(max-width:560px){
-  body{display:block;}
-  .header{position:sticky;top:0;z-index:200;}
-  .layout{display:block;}
-  .sidebar{width:auto;display:flex;align-items:stretch;overflow-x:auto;padding:0;position:sticky;top:48px;z-index:120;}
+  .layout{flex-direction:column;height:auto;}
+  .sidebar{width:auto;height:auto;position:sticky;top:48px;z-index:120;display:flex;align-items:stretch;overflow-x:auto;padding:0;}
   .sb-head{flex-shrink:0;min-width:140px;padding:6px 12px;margin:0;border-bottom:none;border-right:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;justify-content:center;}
   .sb-head-org{margin-top:2px;}
   .sb-item{flex-direction:column;gap:2px;padding:8px 12px;font-size:10px;border-left:none;border-bottom:3px solid transparent;white-space:nowrap;flex-shrink:0;justify-content:center;text-align:center;}
   .sb-item.active{border-bottom-color:#6366f1;border-left:none;}
   .sb-divider{display:none;}
-  .main{padding:14px 14px 30px;}
+  .main-wrap{overflow:visible;}
+  .main{overflow:visible;padding:14px 14px 30px;}
 }
 </style>
 </head>
@@ -190,11 +206,14 @@ body{margin:0;display:flex;flex-direction:column;min-height:100vh;}
 <!-- パスワード画面 -->
 <div id="passScreen" class="pass-screen hide">
   <div class="pass-box">
-    <div class="pass-title">パスワードを入力してください</div>
+    <div class="pass-title" id="passTitle">パスワードを入力してください</div>
     <div class="pass-org" id="passOrgName">読み込み中...</div>
+    <div class="pass-desc" id="passDesc"></div>
     <input class="pass-input" type="password" id="passInput" placeholder="パスワード"
-      onkeydown="if(event.key==='Enter')checkPass()">
-    <button class="pass-btn" onclick="checkPass()">ログイン</button>
+      onkeydown="if(event.key==='Enter')passSubmit()">
+    <input class="pass-input hide" type="password" id="passInput2" placeholder="もう一度（確認）"
+      onkeydown="if(event.key==='Enter')passSubmit()">
+    <button class="pass-btn" id="passBtn" onclick="passSubmit()">ログイン</button>
     <div class="pass-err" id="passErr"></div>
   </div>
 </div>
@@ -361,14 +380,45 @@ function _tokureiDate(c){
   return null;
 }
 
-var companyId='', companyName='', companyDrive='', companyOfusaStaff='', companyShowMlit=false, currentToken='', _correctPass='';
+var companyId='', companyName='', companyDrive='', companyOfusaStaff='', companyShowMlit=false, currentToken='', _correctPass='', _passMode='enter', companyProfile=null;
 var allCases=[], coDocs={}, personsByCase={}, receiptByCase={}, shinsaByCase={}, missingDocCount=0, currentTab='dashboard', supportOrgName='';
 
-async function checkPass(){
+function _showPassScreen(){
+  var pt=document.getElementById('passTitle'), pd=document.getElementById('passDesc'),
+      pb=document.getElementById('passBtn'), pi2=document.getElementById('passInput2');
+  document.getElementById('passOrgName').textContent=companyName+' 様';
+  if(_passMode==='setup'){
+    pt.textContent='初回ログイン：パスワードを設定してください';
+    pd.textContent='このページを開ける合言葉（パスワード）を設定します。次回以降は同じパスワードでログインします。4文字以上。';
+    pi2.classList.remove('hide');
+    pb.textContent='設定してログイン';
+  } else {
+    pt.textContent='パスワードを入力してください';
+    pd.textContent='';
+    pi2.classList.add('hide');
+    pb.textContent='ログイン';
+  }
+  document.getElementById('passScreen').classList.remove('hide');
+  setTimeout(function(){document.getElementById('passInput').focus();},100);
+}
+
+async function passSubmit(){
   var v=document.getElementById('passInput').value.trim();
-  document.getElementById('passErr').textContent='確認中...';
+  var err=document.getElementById('passErr');
+  if(_passMode==='setup'){
+    var v2=document.getElementById('passInput2').value.trim();
+    if(v.length<4){ err.textContent='パスワードは4文字以上で設定してください'; return; }
+    if(v!==v2){ err.textContent='確認用パスワードが一致しません'; return; }
+    err.textContent='設定中...';
+    var sr=await callRpc('company_view_set_pass',{p_token:currentToken,p_pass:v});
+    if(!sr||!sr.ok){
+      if(sr&&sr.error==='exists'){ _passMode='enter'; document.getElementById('passInput2').value=''; _showPassScreen(); err.textContent='すでにパスワードが設定されています。入力してログインしてください。'; return; }
+      err.textContent='設定に失敗しました。もう一度お試しください。'; return;
+    }
+  }
+  err.textContent='確認中...';
   var lr=await loadData(v);
-  if(lr&&lr.passErr){ document.getElementById('passErr').textContent='パスワードが違います'; return; }
+  if(lr&&lr.passErr){ err.textContent='パスワードが違います'; return; }
   document.getElementById('passScreen').classList.add('hide');
 }
 
@@ -383,13 +433,9 @@ async function init(){
     companyName=meta.company_name||'';
     document.getElementById('headerOrg').textContent=companyName+' 様';
     document.title=companyName+' 様 | 所属機関マイページ';
-    if(meta.has_pass){
-      document.getElementById('passOrgName').textContent=companyName+' 様';
-      document.getElementById('passScreen').classList.remove('hide');
-      setTimeout(function(){document.getElementById('passInput').focus();},100);
-      return;
-    }
-    await loadData('');
+    // ver.20260616.04: パスワード必須。未設定なら初回設定(setup)、設定済みなら入力(enter)。
+    _passMode = meta.has_pass ? 'enter' : 'setup';
+    _showPassScreen();
   }catch(e){ document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+esc(e.message)+'</div>'; }
 }
 
@@ -403,6 +449,7 @@ async function loadData(pass){
     if(res.company_id) companyId=res.company_id;
     var co=res.company||{};
     companyName=co.name||companyName; companyDrive=co.drive_url||''; companyOfusaStaff=co.ofusa_staff||''; companyShowMlit=!!co.show_mlit;
+    companyProfile=res.company_profile||null;
     document.getElementById('headerOrg').textContent=companyName+' 様';
     allCases=Array.isArray(res.cases)?res.cases:[];
     supportOrgName=_distinctOrgs(allCases);
@@ -481,6 +528,7 @@ function renderSidebar(){
   h+='<div class="sb-divider"></div>';
   h+=item('docs','提出書類',(missingDocCount>0?missingDocCount:null),missingDocCount>0);
   h+=item('flow','申請の流れ',null);
+  h+=item('orginfo','所属機関情報',null);
   h+=item('office','事務所情報',null);
   document.getElementById('sidebar').innerHTML=h;
 }
@@ -499,6 +547,7 @@ function render(){
   if(currentTab==='docs') m.innerHTML=renderDocs();
   else if(currentTab==='active'||currentTab==='done'||currentTab==='all') m.innerHTML=renderPeople(currentTab);
   else if(currentTab==='flow') m.innerHTML=renderFlow();
+  else if(currentTab==='orginfo') m.innerHTML=renderOrgInfo();
   else if(currentTab==='office') m.innerHTML=renderOffice();
   else m.innerHTML=renderDashboard();
 }
@@ -560,6 +609,67 @@ function renderStats(){
   return h;
 }
 
+/* ver.20260616.04: ダッシュボードの依頼事項（未提出書類・ヒアリング未回答） */
+function renderRequests(){
+  var items=[];
+  var missing=[];
+  Object.keys(coDocs).forEach(function(name){ if(docInList(coDocs[name]) && docState(coDocs[name])==='todo') missing.push(name); });
+  if(missing.length){
+    items.push('<div class="req-item"><div class="req-ic">📄</div><div class="req-body">'
+      +'<div class="req-ttl">未提出の書類が '+missing.length+'件 あります</div>'
+      +'<div class="req-sub">'+missing.map(esc).join('／')+'</div>'
+      +'<button class="req-btn" onclick="switchGroup(\'docs\')">提出書類を開く</button></div></div>');
+  }
+  var HEARING_PENDING=['★ヒアリングフォーム送付','ヒアリングフォーム回答待ち(送付済)','ヒアリングフォーム回答待ち (送付済)'];
+  allCases.forEach(function(c){
+    if(HEARING_PENDING.indexOf(c.status||'')<0) return;
+    var url=_hearingFormUrl(c);
+    items.push('<div class="req-item"><div class="req-ic">📝</div><div class="req-body">'
+      +'<div class="req-ttl">'+esc(c.applicant||c.name||'')+' 様のヒアリングフォームが未回答です</div>'
+      +'<div class="req-sub">まだご回答いただいていません。下のボタンからご記入ください。</div>'
+      +(url?'<a class="req-btn" href="'+esc(url)+'" target="_blank" rel="noopener">📝 ヒアリングフォームを開く</a>':'')
+      +'</div></div>');
+  });
+  if(!items.length){
+    return '<div class="req-card ok"><div class="req-head">📌 ご依頼事項</div>'
+      +'<div class="req-clear">✅ 現在ご対応いただく依頼事項はありません。</div></div>';
+  }
+  return '<div class="req-card"><div class="req-head">📌 ご依頼事項（'+items.length+'件）</div>'+items.join('')+'</div>';
+}
+/* 在留資格＋申請種別からヒアリングフォーム種別を導出してURLを作る */
+function _hearingFormUrl(c){
+  var res=String(c.residence_status||'');
+  var base=(res.indexOf('特定技能')>=0)?'tokutei'
+    :(res.indexOf('技術')>=0||res.indexOf('人文')>=0||res.indexOf('国際')>=0)?'gijinkoku':'tokutei';
+  var at=String(c.app_type||'');
+  var suf=(at.indexOf('認定')>=0)?'nintei':(at.indexOf('更新')>=0)?'koushin':(at.indexOf('変更')>=0)?'henkou':'koushin';
+  return 'https://ofusa2026.github.io/form/form.html?case='+encodeURIComponent(c.id)
+    +'&type='+base+'_'+suf
+    +(c.applicant?'&name='+encodeURIComponent(c.applicant):'');
+}
+/* 所属機関情報ページ */
+function renderOrgInfo(){
+  var p=companyProfile||{};
+  function row(l,v){ return (v!=null&&String(v).trim()!=='')?'<div class="oi-row"><span class="oi-l">'+l+'</span><span class="oi-v">'+esc(v)+'</span></div>':''; }
+  var addr=[p.zip?('〒'+p.zip):'',p.pref,p.city,p.address,p.detail_address].filter(Boolean).join(' ');
+  var h='<div class="section-title">🏢 所属機関情報</div>';
+  h+='<div class="note">大房行政書士法人に登録されている御社の情報です。誤りや変更があれば担当者までご連絡ください。</div>';
+  h+='<div class="info-card" style="padding:8px 18px;">';
+  h+=row('名称', p.name);
+  h+=row('ふりがな', p.name_kana);
+  h+=row('法人番号', p.corp_no);
+  h+=row('住所', addr);
+  h+=row('電話番号', p.tel);
+  h+=row('代表者', [p.rep_title,p.rep_name].filter(Boolean).join('　'));
+  h+=row('業種', p.industry);
+  h+=row('従業員数', p.employees?(p.employees+' 名'):'');
+  h+=row('外国人従業員数', p.foreign_employees?(p.foreign_employees+' 名'):'');
+  h+=row('ご連絡先メール', p.contact_email);
+  h+=row('大房 担当', p.ofusa_staff);
+  h+='</div>';
+  return h;
+}
+
 function renderDashboard(){
   var total=allCases.length;
   var done=allCases.filter(function(c){return classifyCase(c)==='done';}).length;
@@ -567,6 +677,7 @@ function renderDashboard(){
   var soon=allCases.filter(function(c){if(!_expireTracked(c))return false;var i=expInfo(c.expire);return i.days!=null&&i.days>=0&&i.days<=90;}).length;
   var expired=allCases.filter(function(c){if(!_expireTracked(c))return false;var i=expInfo(c.expire);return i.days!=null&&i.days<0;}).length;
   var h='';
+  h+=renderRequests();
   h+=_dashAlertList();
   h+=_dashHero(total,soon,expired);
   h+='<div class="cards">';
