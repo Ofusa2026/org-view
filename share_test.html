@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260617.test45: 新規案件依頼の案件担当者を最大2名選択可に（②欄追加・「、」結合でclient_staff保存）／リスト未登録の担当者は送信時に自動で案件担当者リストへ追加・保存 -->
 <!-- ver.20260617.test44: 画面名「案件進捗確認」→「登録支援機関マイページ」に変更（ヘッダー見出し・タイトル・document.title） -->
 <!-- ver.20260617.test43: 協力確認書作成に「任意の市区町村を手入力で提出先追加」機能を追加（index方式。候補に無い転入予定先などを直接入力可。②事業所所在地等は先頭の就業場所を流用） -->
 <!-- ver.20260617.test42: 協力確認書テンプレの①〜⑦を全項目タブ揃えに統一（③担当者連絡先のみfitText無しで記入ライン開始位置がズレていた不揃いを解消。ラベル左寄せ＋共通タブ位置から値・下線記入ライン開始）。キャッシュトークン更新 -->
@@ -427,7 +428,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 登録支援機関マイページ</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test44 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test45 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -587,7 +588,8 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                 </td>
                 <td>
                   <div id="nc_clientStaffField">
-                    <input type="text" class="nc-input" id="nc_clientStaff" list="nc_clientStaffList" placeholder="リストから選択 / 直接入力" autocomplete="off">
+                    <input type="text" class="nc-input" id="nc_clientStaff" list="nc_clientStaffList" placeholder="案件担当者① リストから選択 / 直接入力" autocomplete="off">
+                    <input type="text" class="nc-input" id="nc_clientStaff2" list="nc_clientStaffList" placeholder="案件担当者②（任意・2人目）" autocomplete="off" style="margin-top:6px;">
                     <datalist id="nc_clientStaffList"></datalist>
                   </div>
                 </td>
@@ -3308,6 +3310,20 @@ function _fillClientStaffDatalist(){
   var html=''; (intakeStaff||[]).forEach(function(n){ if(n) html+='<option value="'+esc(n)+'"></option>'; });
   dl.innerHTML=html;
 }
+// ver.20260617: 新規案件依頼で入力された案件担当者のうち、リスト未登録の名前を自動で担当者リストに追加して保存
+async function _autoAddIntakeStaff(names){
+  try{
+    if(!Array.isArray(names) || !names.length) return;
+    var added=false;
+    names.forEach(function(n){
+      n=(n||'').trim();
+      if(n && intakeStaff.indexOf(n)===-1){ intakeStaff.push(n); added=true; }
+    });
+    if(!added) return;
+    _fillClientStaffDatalist();
+    await sbRpc('upsert_org_intake_staff',{p_token:currentToken,p_pass:(currentPass||null),p_staff:intakeStaff});
+  }catch(e){ console.warn('[auto-add intake staff] skipped:', e); }
+}
 function _pfRow(label,val,wide){
   if(val===null||val===undefined||String(val)==='') return '';
   return '<div style="'+(wide?'grid-column:span 2;':'')+'"><div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:2px;">'+esc(label)+'</div><div style="font-size:12.5px;color:#1e293b;word-break:break-word;line-height:1.5;">'+esc(String(val))+'</div></div>';
@@ -4365,6 +4381,8 @@ function openNewCaseModal(){
   if(brEl) brEl.value='';
   var cstEl=document.getElementById('nc_clientStaff');
   if(cstEl) cstEl.value='';
+  var cstEl2=document.getElementById('nc_clientStaff2');
+  if(cstEl2) cstEl2.value='';
   // ver.20260525.02: アイデム担当者欄は初期非表示（拠点で「東」を選んだとき表示）
   var cstField=document.getElementById('nc_clientStaffField');
   if(cstField) cstField.style.display='none';
@@ -4643,7 +4661,11 @@ async function submitNewCase(){
   var referralFee = referralFeeRaw.replace(/[,，円\s]/g,'').trim();
   var remarks = ((document.getElementById('nc_remarks')||{}).value || '').trim();
   var aidemBranch = (document.getElementById('nc_aidemBranch')||{}).value || '';
-  var clientStaff = (document.getElementById('nc_clientStaff')||{}).value || '';
+  var clientStaff1 = ((document.getElementById('nc_clientStaff')||{}).value || '').trim();
+  var clientStaff2 = ((document.getElementById('nc_clientStaff2')||{}).value || '').trim();
+  // ver.20260617: 案件担当者は最大2名。重複・空を除いて「、」で結合（index受け皿は「、」で分割）
+  var clientStaffArr = [clientStaff1, clientStaff2].filter(Boolean).filter(function(v,i,a){return a.indexOf(v)===i;});
+  var clientStaff = clientStaffArr.join('、');
   // ver.20260525.03: 「使用する支援事業所」は拠点から自動マッピング
   //   東 / 高育チーム → 株式会社アイデム（東京都新宿区）
   //   西            → 株式会社アイデムパート・グローバル人材紹介チーム（大阪府大阪市西区）
@@ -4663,8 +4685,7 @@ async function submitNewCase(){
   var _isAidemOrg=(orgName==='株式会社アイデム');
   if(_isAidemOrg && !aidemBranch){ showNcError('アイデム拠点を選択してください'); return; }
   // ver.20260525.02: 担当者必須は「東」のみ。西/高育チームは入力欄ごと非表示
-  clientStaff = (clientStaff||'').trim();
-  if(_isAidemOrg && aidemBranch === '東' && !clientStaff){
+  if(_isAidemOrg && aidemBranch === '東' && !clientStaffArr.length){
     showNcError('案件担当者を入力してください（リストから選択 / 直接入力もOK）');
     return;
   }
@@ -4730,7 +4751,7 @@ async function submitNewCase(){
     // ver.20260527.24: 希望在留資格「その他」の詳細メモ
     desiredStatusNote: desiredStatusNote,
     acceptExp: acceptExp,
-    aidemBranch: aidemBranch, clientStaff: clientStaff,
+    aidemBranch: aidemBranch, clientStaff: clientStaff, clientStaffArr: clientStaffArr,
     supportFee: supportFee, referralFee: referralFee, remarks: remarks, jinzaiList: jinzaiList
   };
 
@@ -4892,6 +4913,9 @@ async function executeSubmit(){
       console.error('[create_org_intake failed]', _res);
       throw new Error('登録に失敗しました: ' + (_res && _res.error ? _res.error : 'unknown'));
     }
+
+    // ver.20260617: リストに無い案件担当者は自動で「案件担当者リスト（新規案件依頼用）」へ追加
+    _autoAddIntakeStaff(p.clientStaffArr);
 
     // 確認モーダルを閉じる
     closeConfirmModal();
