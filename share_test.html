@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260617.test44: 画面名「案件進捗確認」→「登録支援機関マイページ」に変更（ヘッダー見出し・タイトル・document.title） -->
 <!-- ver.20260617.test43: 協力確認書作成に「任意の市区町村を手入力で提出先追加」機能を追加（index方式。候補に無い転入予定先などを直接入力可。②事業所所在地等は先頭の就業場所を流用） -->
 <!-- ver.20260617.test42: 協力確認書テンプレの①〜⑦を全項目タブ揃えに統一（③担当者連絡先のみfitText無しで記入ライン開始位置がズレていた不揃いを解消。ラベル左寄せ＋共通タブ位置から値・下線記入ライン開始）。キャッシュトークン更新 -->
 <!-- ver.20260617.test41: 協力確認書Word生成方式をindex(anken)側に統一。宛先(addr_to)に「長　殿」を含める方式に変更し、テンプレ宛先は{addr_to}（殿込み・全体下線）の1runに統一（殿の重複を解消・空提出先は『　殿』）。キャッシュトークン更新 -->
@@ -43,7 +44,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>案件進捗確認 | OFUSA</title>
+<title>登録支援機関マイページ | OFUSA</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -425,8 +426,8 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <button id="sbToggleBtn" onclick="toggleSidebar()" title="サイドバーの開閉" style="background:rgba(255,255,255,.12);border:none;color:white;font-size:16px;line-height:1;padding:8px 11px;border-radius:8px;cursor:pointer;flex-shrink:0;">☰</button>
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
-    <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test43 (RPC)</div>
+    <div class="header-title">📋 登録支援機関マイページ</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test44 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -4154,7 +4155,7 @@ function checkPass(){
   currentPass=input;
   document.getElementById('passScreen').style.display='none';
   document.getElementById('headerOrg').textContent=orgName+' 様';
-  document.title=orgName+' 様 | 案件進捗確認';
+  document.title=orgName+' 様 | 登録支援機関マイページ';
   loadData();
 }
 
@@ -4177,7 +4178,7 @@ async function init(){
       return;
     }
     document.getElementById('headerOrg').textContent=orgName+' 様';
-    document.title=orgName+' 様 | 案件進捗確認';
+    document.title=orgName+' 様 | 登録支援機関マイページ';
     await loadData();
   }catch(e){document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+e.message+'</div>';}
 }
@@ -4185,7 +4186,7 @@ async function init(){
 async function loadData(){
   try{
     document.getElementById('headerOrg').textContent=orgName+' 様';
-    document.title=orgName+' 様 | 案件進捗確認';
+    document.title=orgName+' 様 | 登録支援機関マイページ';
     // ver.20260612.test07: 新規案件依頼を全orgで有効化
     var ncBtn=document.getElementById('newCaseBtn');
     if(ncBtn) ncBtn.style.display='';
