@@ -7,10 +7,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>マイページ | 大房行政書士法人</title>
+<title>申請人マイページ | 大房行政書士法人</title>
 <!-- ver.20260609.04: 申請人（人材本人）向け進捗・提出書類確認ページ -->
 <!-- ver.20260615.test33: ページ名を「提出書類・進捗確認」→「マイページ」に変更（本人共有しやすく・8言語対応） -->
 <!-- ver.20260616.multidoc: 署名済み書類のリンクを複数(docs)対応（1署名でN枚） -->
+<!-- ver.20260617.test34: ページ名を「マイページ」→「申請人マイページ」に変更（タイトル・ヘッダー・i18n 全8言語に申請人/Applicantを反映） -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -159,7 +160,7 @@ body{line-height:1.45;}
 <body>
 <div class="header">
   <span class="header-logo">大房行政書士法人</span>
-  <span class="header-title" id="hdrTitle">マイページ</span>
+  <span class="header-title" id="hdrTitle">申請人マイページ</span>
   <div class="header-right">
     <div id="langSwitch" class="lang-switch"></div>
     <div class="header-org" id="headerName">読み込み中...</div>
@@ -251,7 +252,7 @@ function fz(text){
 
 /* --- 翻訳辞書 --- */
 var TR={
- header_title:{ja:'マイページ',en:'My Page',vi:'Trang của tôi',id:'Halaman Saya',zh:'我的页面',km:'ទំព័ររបស់ខ្ញុំ',my:'ကျွန်ုပ်၏စာမျက်နှာ',th:'หน้าของฉัน'},
+ header_title:{ja:'申請人マイページ',en:'Applicant My Page',vi:'Trang của người nộp đơn',id:'Halaman Pemohon',zh:'申请人页面',km:'ទំព័រអ្នកដាក់ពាក្យ',my:'လျှောက်ထားသူစာမျက်နှာ',th:'หน้าผู้ยื่นคำขอ'},
  sama:{ja:'様',en:'',vi:'',id:'',zh:'先生/女士',km:'',my:'',th:''},
  tab_status:{ja:'進捗',en:'Status',vi:'Tiến độ',id:'Status',zh:'进度',km:'ស្ថានភាព',my:'အခြေအနေ',th:'สถานะ'},
  tab_docs:{ja:'提出書類',en:'Documents',vi:'Hồ sơ',id:'Dokumen',zh:'提交材料',km:'ឯកសារ',my:'စာရွက်စာတမ်း',th:'เอกสาร'},
