@@ -12,6 +12,7 @@
 <!-- ver.20260615.test33: ページ名を「提出書類・進捗確認」→「マイページ」に変更（本人共有しやすく・8言語対応） -->
 <!-- ver.20260616.multidoc: 署名済み書類のリンクを複数(docs)対応（1署名でN枚） -->
 <!-- ver.20260617.test34: ページ名を「マイページ」→「申請人マイページ」に変更（タイトル・ヘッダー・i18n 全8言語に申請人/Applicantを反映） -->
+<!-- ver.20260617.test35: ステータスが「サイン書類返送待ち(送付済)」のとき、あなたへのお願いに『お送りしたサイン書類にサインをしてください』を表示（8言語対応） -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
@@ -290,6 +291,7 @@ var TR={
  next_ask_title:{ja:'👉 あなたへのお願い',en:'👉 Action needed',vi:'👉 Việc bạn cần làm',id:'👉 Yang perlu Anda lakukan',zh:'👉 请您配合',km:'👉 សកម្មភាពដែលត្រូវធ្វើ',my:'👉 လုပ်ဆောင်ရန်လိုသည်',th:'👉 สิ่งที่ต้องดำเนินการ'},
  next_hearing:{ja:'ヒアリングフォームにご回答ください',en:'Please answer the hearing form',vi:'Vui lòng trả lời phiếu phỏng vấn',id:'Mohon isi formulir wawancara',zh:'请回答问询表',km:'សូមឆ្លើយសំណួរសម្ភាសន៍',my:'အင်တာဗျူးပုံစံကိုဖြេပါ',th:'กรุณาตอบแบบฟอร์มสัมภาษณ์'},
  next_docs:{ja:'必要書類をご提出ください（残{n}件）',en:'Please submit the required documents ({n} left)',vi:'Vui lòng nộp hồ sơ cần thiết (còn {n})',id:'Mohon serahkan dokumen yang diperlukan (sisa {n})',zh:'请提交必要材料（剩余{n}件）',km:'សូមដាក់ឯកសារដែលត្រូវការ (នៅសល់ {n})',my:'လိုအပ်သောစာရွက်စာတမ်းတင်ပါ ({n} ကျန်)',th:'กรุณายื่นเอกสารที่จำเป็น (เหลือ {n})'},
+ next_sign_return:{ja:'📩 お送りしたサイン書類にサインをしてください。',en:'📩 Please sign the documents we sent you.',vi:'📩 Vui lòng ký vào tài liệu chúng tôi đã gửi cho bạn.',id:'📩 Mohon tanda tangani dokumen yang kami kirimkan.',zh:'📩 请在我们寄送的文件上签名。',km:'📩 សូមចុះហត្ថលេខាលើឯកសារដែលយើងបានផ្ញើជូន។',my:'📩 ကျွန်ုပ်တို့ပို့လိုက်သော စာရွက်စာတမ်းများတွင် လက်မှတ်ထိုးပေးပါ။',th:'📩 กรุณาลงนามในเอกสารที่เราส่งให้คุณ'},
  next_ok_title:{ja:'✅ ご対応ありがとうございます',en:'✅ Thank you',vi:'✅ Cảm ơn bạn',id:'✅ Terima kasih',zh:'✅ 感谢您的配合',km:'✅ សូមអរគុណ',my:'✅ ကျေးဇူးတင်ပါသည်',th:'✅ ขอบคุณ'},
  next_ok_body:{ja:'現在、大房行政書士法人で手続きを進めています。進捗はこの画面でご確認いただけます。',en:'Ofusa is now processing your application. You can check the progress on this screen.',vi:'Văn phòng Ofusa đang xử lý hồ sơ của bạn. Bạn có thể xem tiến độ tại màn hình này.',id:'Ofusa sedang memproses permohonan Anda. Anda dapat memeriksa progres di layar ini.',zh:'目前大房行政书士法人正在为您办理手续。可在此画面确认进度。',km:'ឥឡូវនេះ Ofusa កំពុងដំណើរការពាក្យសុំរបស់អ្នក។ អ្នកអាចពិនិត្យវឌ្ឍនភាពនៅលើអេក្រង់នេះ។',my:'Ofusa သည် သင့်လျှောက်လွှာကို ဆောင်ရွက်နေပါသည်။ ဤစခရင်တွင် တိုးတက်မှုကို စစ်ဆေးနိုင်ပါသည်။',th:'ขณะนี้ Ofusa กำลังดำเนินการคำขอของคุณ คุณสามารถตรวจสอบความคืบหน้าได้ที่หน้าจอนี้'},
  cur_progress:{ja:'現在の進捗',en:'Current status',vi:'Tiến độ hiện tại',id:'Status saat ini',zh:'当前进度',km:'ស្ថានភាពបច្ចុប្បន្ន',my:'လက်ရှိအခြေအနေ',th:'สถานะปัจจุบัน'},
@@ -752,11 +754,17 @@ function renderTodo(){
   return h;
 }
 
+function _isSignReturnStatus(s){
+  if(!s) return false;
+  var x=String(s).replace(/[\s\u3000]/g,'');
+  return x.indexOf('サイン書類返送待ち')===0 && x.indexOf('送付済')>=0;
+}
 function renderNextAction(){
   var hAns=hearingAnswered();
   var dHas=docDisplayList().length>0;
   var dDone=docsAllDone();
   var msgs=[];
+  if(_isSignReturnStatus(theCase.status)) msgs.push(t('next_sign_return'));
   if(!hAns) msgs.push(t('next_hearing'));
   if(dHas&&!dDone) msgs.push(t('next_docs',{n:missingDocCount}));
   if(msgs.length){
