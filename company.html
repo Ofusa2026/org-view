@@ -9,6 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
 <!-- ver.20260611.01: 申請の流れをタイムライン型(applicant準拠)に変更／郵送物の案内を事務所情報の上に移動 -->
+<!-- ver.20260617.13: ご依頼事項を「種類ごとのセクション（未提出書類／押印／1-6確認／ヒアリング）」に分け、各セクション内に該当案件（氏名＋ステータス変更日＋必要なボタン）を入れ子表示に変更。 -->
 <!-- ver.20260617.12: ご依頼事項に「1-6企業確認待ち(送付済)＝雇用契約書(1-6号)の確認依頼」を追加（押印依頼の下、ステータス変更日つき）。 -->
 <!-- ver.20260617.11: ご依頼事項に「企業押印返送待ち＝押印依頼中」を追加。各案件にステータス変更日(status_date,audit_log由来)を付与し、依頼事項と進捗列に「（M月D日時点）」を表示。 -->
 <!-- ver.20260617.10: サイドバーに「協力確認書」を新設。会社が自分で入管庁正本様式の協力確認書(.docx)を作成可能に(専用RPC company_view_kyoryoku＋vendor/docxtemplater・data/kyoryoku_template.docx流用)。就業場所/申請人住所からの提出先候補・市区町村検索・直接指定に対応。 -->
@@ -175,6 +176,17 @@ tr:hover td{background:#fcfcfd;}
 .req-sub{font-size:11px;color:#64748b;margin-top:3px;line-height:1.5;word-break:break-word;}
 .req-btn{display:inline-block;margin-top:8px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:11.5px;font-weight:800;padding:7px 14px;cursor:pointer;text-decoration:none;}
 .req-btn:hover{background:#d97706;}
+/* ver.20260617.13: 種類別セクション＋案件入れ子 */
+.req-sec{padding:12px 0;border-top:1px dashed #fde68a;}
+.req-sec:first-of-type{border-top:none;padding-top:4px;}
+.req-sec-h{font-size:12.5px;font-weight:900;color:#0f2040;display:flex;align-items:center;gap:6px;}
+.req-sec-n{background:#f59e0b;color:#fff;font-size:10px;font-weight:800;padding:1px 8px;border-radius:99px;}
+.req-sec-note{font-size:11px;color:#64748b;line-height:1.6;margin:5px 0 7px;word-break:break-word;}
+.req-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:5px 0 5px 8px;border-left:2px solid #fde68a;margin:3px 0;}
+.req-nm{font-size:12.5px;font-weight:700;color:#0f2040;}
+.req-as{font-size:10px;color:#94a3b8;font-weight:600;}
+.req-row-btn{margin-left:auto;background:#f59e0b;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:800;padding:5px 12px;cursor:pointer;text-decoration:none;}
+.req-row-btn:hover{background:#d97706;}
 .oi-row{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid #f1f5f9;font-size:12.5px;}
 .oi-row:last-child{border-bottom:none;}
 .oi-l{color:#94a3b8;width:120px;flex-shrink:0;font-weight:700;}
@@ -658,46 +670,54 @@ function renderStats(){
   return h;
 }
 
-/* ver.20260616.04: ダッシュボードの依頼事項（未提出書類・ヒアリング未回答） */
+/* ver.20260617.13: ダッシュボードの依頼事項を「種類ごとのセクション＋該当案件入れ子」に */
+function _reqSection(icon, title, count, body, note){
+  return '<div class="req-sec"><div class="req-sec-h">'+icon+' '+esc(title)
+    +' <span class="req-sec-n">'+count+'件</span></div>'
+    +(note?'<div class="req-sec-note">'+note+'</div>':'')
+    +body+'</div>';
+}
+function _reqRow(c, extra){
+  return '<div class="req-row"><span class="req-nm">'+esc(c.applicant||c.name||'')+' 様</span>'
+    +'<span class="req-as">'+_asOf(c.status_date)+'</span>'+(extra||'')+'</div>';
+}
 function renderRequests(){
-  var items=[];
+  var secs=[];
+  // 未提出書類
   var missing=[];
   Object.keys(coDocs).forEach(function(name){ if(docInList(coDocs[name]) && docState(coDocs[name])==='todo') missing.push(name); });
   if(missing.length){
-    items.push('<div class="req-item"><div class="req-ic">📄</div><div class="req-body">'
-      +'<div class="req-ttl">未提出の書類が '+missing.length+'件 あります</div>'
-      +'<div class="req-sub">'+missing.map(esc).join('／')+'</div>'
-      +'<button class="req-btn" onclick="switchGroup(\'docs\')">提出書類を開く</button></div></div>');
+    var dbody=missing.map(function(n){ return '<div class="req-row"><span class="req-nm">'+esc(n)+'</span></div>'; }).join('')
+      +'<button class="req-btn" onclick="switchGroup(\'docs\')">提出書類を開く</button>';
+    secs.push(_reqSection('📄','未提出の書類', missing.length, dbody));
   }
-  // 企業押印（返送待ち）＝押印を依頼中
-  allCases.forEach(function(c){
-    if(String(c.status||'').indexOf('企業押印返送待ち')<0) return;
-    items.push('<div class="req-item"><div class="req-ic">🖊️</div><div class="req-body">'
-      +'<div class="req-ttl">'+esc(c.applicant||c.name||'')+' 様の書類について、貴社の押印をお願いしています'+_asOf(c.status_date)+'</div>'
-      +'<div class="req-sub">押印後、書類のご返送をお願いいたします。</div></div></div>');
-  });
-  // 1-6企業確認待ち＝雇用契約書(参考様式1-6号)の内容確認を依頼中
-  allCases.forEach(function(c){
-    if(String(c.status||'').indexOf('1-6企業確認待ち')<0) return;
-    items.push('<div class="req-item"><div class="req-ic">📑</div><div class="req-body">'
-      +'<div class="req-ttl">'+esc(c.applicant||c.name||'')+' 様の雇用契約書（参考様式1-6号）のご確認をお願いしています'+_asOf(c.status_date)+'</div>'
-      +'<div class="req-sub">お送りした内容をご確認いただき、問題なければ担当者までご連絡ください。</div></div></div>');
-  });
+  // 企業押印（返送待ち）
+  var oshi=allCases.filter(function(c){ return String(c.status||'').indexOf('企業押印返送待ち')>=0; });
+  if(oshi.length){
+    secs.push(_reqSection('🖊️','押印のお願い', oshi.length,
+      oshi.map(function(c){ return _reqRow(c); }).join(''),
+      '下記の方の書類に押印のうえ、ご返送をお願いします。'));
+  }
+  // 1-6企業確認待ち
+  var kk=allCases.filter(function(c){ return String(c.status||'').indexOf('1-6企業確認待ち')>=0; });
+  if(kk.length){
+    secs.push(_reqSection('📑','雇用契約書（参考様式1-6号）のご確認', kk.length,
+      kk.map(function(c){ return _reqRow(c); }).join(''),
+      'お送りした内容をご確認のうえ、問題なければ担当者までご連絡ください。'));
+  }
+  // ヒアリング未回答
   var HEARING_PENDING=['★ヒアリングフォーム送付','ヒアリングフォーム回答待ち(送付済)','ヒアリングフォーム回答待ち (送付済)'];
-  allCases.forEach(function(c){
-    if(HEARING_PENDING.indexOf(c.status||'')<0) return;
-    var url=_hearingFormUrl(c);
-    items.push('<div class="req-item"><div class="req-ic">📝</div><div class="req-body">'
-      +'<div class="req-ttl">'+esc(c.applicant||c.name||'')+' 様のヒアリングフォームが未回答です'+_asOf(c.status_date)+'</div>'
-      +'<div class="req-sub">まだご回答いただいていません。下のボタンからご記入ください。</div>'
-      +(url?'<a class="req-btn" href="'+esc(url)+'" target="_blank" rel="noopener">📝 ヒアリングフォームを開く</a>':'')
-      +'</div></div>');
-  });
-  if(!items.length){
+  var hp=allCases.filter(function(c){ return HEARING_PENDING.indexOf(c.status||'')>=0; });
+  if(hp.length){
+    secs.push(_reqSection('📝','ヒアリングフォームのご回答', hp.length,
+      hp.map(function(c){ var url=_hearingFormUrl(c); return _reqRow(c, url?'<a class="req-row-btn" href="'+esc(url)+'" target="_blank" rel="noopener">記入する</a>':''); }).join(''),
+      'まだご回答いただいていません。「記入する」からご入力ください。'));
+  }
+  if(!secs.length){
     return '<div class="req-card ok"><div class="req-head">📌 ご依頼事項</div>'
       +'<div class="req-clear">✅ 現在ご対応いただく依頼事項はありません。</div></div>';
   }
-  return '<div class="req-card"><div class="req-head">📌 ご依頼事項（'+items.length+'件）</div>'+items.join('')+'</div>';
+  return '<div class="req-card"><div class="req-head">📌 ご依頼事項</div>'+secs.join('')+'</div>';
 }
 /* ステータス変更日を「（M月D日時点）」表記にする（DBはJST=+09:00シリアライズなので日付部をそのまま使用） */
 function _asOf(v){ if(!v) return ''; var m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/); if(!m) return ''; return '（'+(+m[2])+'月'+(+m[3])+'日時点）'; }
