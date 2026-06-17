@@ -9,6 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
 <!-- ver.20260611.01: 申請の流れをタイムライン型(applicant準拠)に変更／郵送物の案内を事務所情報の上に移動 -->
+<!-- ver.20260617.16: 企業ヒアリングの表示を「対象会社のみ」に。判定=フラグ(company_view_cfg.hearing_show: true強制表示/false強制非表示)優先、未設定はフォーム存在(company_hearing_exists)で判定。フォーム未作成かつ未指定の会社(昔からの取引先など)には出さない。 -->
 <!-- ver.20260617.15: 会社が回答する「企業ヒアリングフォーム(type=company)」を別枠化。URLを常時カードで掲載(回答済みでも更新用に表示)。未回答ならご依頼事項にも別セクションで表示。回答済み判定=form_responses(case_id=co_企業ID,form_type=company,submitted)。 -->
 <!-- ver.20260617.14: ご依頼事項からヒアリングフォーム(人材=申請人側の回答待ち)セクションを削除。会社が行う依頼ではないため。残す依頼=未提出書類/押印のお願い/雇用契約書1-6号の確認。 -->
 <!-- ver.20260617.13: ご依頼事項を「種類ごとのセクション（未提出書類／押印／1-6確認／ヒアリング）」に分け、各セクション内に該当案件（氏名＋ステータス変更日＋必要なボタン）を入れ子表示に変更。 -->
@@ -445,7 +446,7 @@ function _tokureiDate(c){
   return null;
 }
 
-var companyId='', companyName='', companyDrive='', companyOfusaStaff='', companyShowMlit=false, currentToken='', _correctPass='', _passMode='enter', companyProfile=null, companyChangeReq=null, companyHearingDone=false;
+var companyId='', companyName='', companyDrive='', companyOfusaStaff='', companyShowMlit=false, currentToken='', _correctPass='', _passMode='enter', companyProfile=null, companyChangeReq=null, companyHearingDone=false, companyHearingExists=false, companyHearingShow=null;
 var allCases=[], coDocs={}, personsByCase={}, receiptByCase={}, shinsaByCase={}, missingDocCount=0, currentTab='dashboard', supportOrgName='';
 
 function _showPassScreen(){
@@ -518,6 +519,8 @@ async function loadData(pass){
     companyProfile=res.company_profile||null;
     companyChangeReq=res.change_req||null;
     companyHearingDone=!!res.company_hearing_done;
+    companyHearingExists=!!res.company_hearing_exists;
+    companyHearingShow=(res.hearing_show===true)?true:((res.hearing_show===false)?false:null);
     document.getElementById('headerOrg').textContent=companyName+' 様';
     allCases=Array.isArray(res.cases)?res.cases:[];
     supportOrgName=_distinctOrgs(allCases);
@@ -720,8 +723,8 @@ function renderRequests(){
   }
   // 注: ヒアリングフォーム回答待ち(送付済)は「人材(申請人)側」のヒアリングのため、会社の依頼事項には出さない
   // 企業ヒアリングフォーム（type=company＝会社が回答するもの）が未回答なら依頼として表示
-  if(!companyHearingDone){
-    var hu=_companyHearingUrl();
+  // 表示対象の会社のみ（フォームがある／フラグでON。昔からの取引先などフォーム無しは出さない）
+  if(_showHearing() && !companyHearingDone){
     secs.push(_reqSection('📋','企業ヒアリングフォームのご回答', 1,
       _companyHearingRow(),
       '貴社の情報に関するヒアリングフォームにご回答をお願いします。'));
@@ -739,12 +742,20 @@ function _companyHearingUrl(){
   return 'https://ofusa2026.github.io/form/form.html?case='+encodeURIComponent('co_'+companyId)
     +'&type=company'+(companyName?'&name='+encodeURIComponent(companyName):'');
 }
+/* 企業ヒアリングを表示するか。フラグ優先(true/false)、未設定はフォーム存在で判定。
+   → フォーム未作成かつ未指定の会社(昔からの取引先など)には出さない。 */
+function _showHearing(){
+  if(companyHearingShow===true) return true;
+  if(companyHearingShow===false) return false;
+  return !!companyHearingExists;
+}
 function _companyHearingRow(){
   return '<div class="req-row"><span class="req-nm">企業ヒアリングフォーム</span>'
     +'<a class="req-row-btn" href="'+esc(_companyHearingUrl())+'" target="_blank" rel="noopener">回答する</a></div>';
 }
 /* 企業ヒアリングフォームのURLを常時掲載するカード（回答済みでも更新用に表示） */
 function _companyHearingCard(){
+  if(!_showHearing()) return '';
   var done=companyHearingDone;
   var h='<div class="chf-card">';
   h+='<div class="chf-main"><div class="chf-ttl">📋 企業ヒアリングフォーム'
