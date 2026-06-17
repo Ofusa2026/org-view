@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260617.test43: 協力確認書作成に「任意の市区町村を手入力で提出先追加」機能を追加（index方式。候補に無い転入予定先などを直接入力可。②事業所所在地等は先頭の就業場所を流用） -->
 <!-- ver.20260617.test42: 協力確認書テンプレの①〜⑦を全項目タブ揃えに統一（③担当者連絡先のみfitText無しで記入ライン開始位置がズレていた不揃いを解消。ラベル左寄せ＋共通タブ位置から値・下線記入ライン開始）。キャッシュトークン更新 -->
 <!-- ver.20260617.test41: 協力確認書Word生成方式をindex(anken)側に統一。宛先(addr_to)に「長　殿」を含める方式に変更し、テンプレ宛先は{addr_to}（殿込み・全体下線）の1runに統一（殿の重複を解消・空提出先は『　殿』）。キャッシュトークン更新 -->
 <!-- ver.20260617.test40: 申請の流れ STEP①②を「依頼用スプレッドシート記載」→「新規案件依頼の入力」に変更（スプレッドシート運用廃止に伴う修正） -->
@@ -425,7 +426,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test42 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test43 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1674,7 +1675,7 @@ function _kyoExtractCity(addr){
   var m=a.match(/(?:東京都|北海道|(?:京都|大阪)府|.{2,3}県)?(.+?(?:郡.+?[町村]|市.+?区|[市区町村]))/);
   return m?m[1]:'';
 }
-var _kyoCo=null, _kyoDestList=[], _kyoCoList=null;
+var _kyoCo=null, _kyoDestList=[], _kyoCoList=null, _kyoManualCities=[];
 function _kyoFindSet(applicantName){
   var sets=(_kyoCo&&_kyoCo.empSets)||[];
   for(var i=0;i<sets.length;i++){ if(applicantName && sets[i].setName && sets[i].setName.indexOf(applicantName)>=0) return sets[i]; }
@@ -1699,7 +1700,7 @@ async function onKyoCompanyChange(){
 }
 function _kyoRenderDests(){
   var box=document.getElementById('kyoDestBox'); if(!box||!_kyoCo) return;
-  _kyoDestList=[];
+  _kyoDestList=[]; _kyoManualCities=[];
   var sets=_kyoCo.empSets||[], apps=_kyoCo.applicants||[];
   var offSeen={}, offItems=[];
   sets.forEach(function(s){ var city=_kyoExtractCity(s.officeAddr); if(city && !offSeen[city]){ offSeen[city]=1; var idx=_kyoDestList.length; _kyoDestList.push({kind:'office',city:city,set:s}); offItems.push({idx:idx,city:city,sub:s.officeName||s.officeAddr||''}); } });
@@ -1715,8 +1716,29 @@ function _kyoRenderDests(){
   h+='<div style="font-size:10.5px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:7px 9px;line-height:1.6;margin-bottom:6px;">⚠️ 協力確認書の提出先は「<b>転入予定先</b>（その市区町村に住む予定）」です。下は申請人の<b>現住所</b>から推定した候補のため、転入予定先と異なる場合があります。必ずご確認ください。</div>';
   if(!perItems.length){ h+='<div style="font-size:11px;color:#94a3b8;">申請人住所が登録されていません</div>'; }
   perItems.forEach(function(it){ h+='<label style="display:flex;gap:8px;align-items:flex-start;padding:5px 2px;font-size:12px;cursor:pointer;"><input type="checkbox" class="kyoDest" value="'+it.idx+'" style="margin-top:2px;"><span><b>'+esc(it.cityName)+'</b> <span style="color:#94a3b8;">'+esc(it.names.slice(0,3).join('・'))+(it.names.length>3?(' 他'+(it.names.length-3)+'名'):'')+'</span></span></label>'; });
+  h+='<div style="font-size:11px;font-weight:700;color:#7c3aed;margin:12px 0 4px;">➕ 任意の市区町村を追加（手入力）</div>';
+  h+='<div style="font-size:10.5px;color:#64748b;margin-bottom:5px;">就業場所・申請人住所の候補に無い提出先（転入予定先など）を直接入力できます。②事業所の所在地などは先頭の就業場所を使用します。</div>';
+  h+='<div style="display:flex;gap:6px;margin-bottom:4px;"><input id="kyoManualInput" type="text" placeholder="例：横浜市港北区 ／ 千代田区 ／ 佐野市" onkeydown="if(event.key===\'Enter\'){event.preventDefault();kyoAddManualDest();}" style="flex:1;box-sizing:border-box;font-size:13px;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;"><button type="button" onclick="kyoAddManualDest()" style="font-size:12px;font-weight:800;padding:0 14px;border:none;border-radius:8px;background:#7c3aed;color:#fff;cursor:pointer;white-space:nowrap;">＋ 追加</button></div>';
+  h+='<div id="kyoManualList"></div>';
   h+='<div style="margin-top:12px;"><button id="kyoGenBtn" onclick="genKyoryokuCompany()" style="font-size:13px;font-weight:800;padding:9px 16px;border:none;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer;">📄 協力確認書を作成</button></div>';
   box.innerHTML=h;
+}
+function kyoAddManualDest(){
+  var inp=document.getElementById('kyoManualInput'); if(!inp) return;
+  var city=(inp.value||'').trim(); if(!city){ inp.focus(); return; }
+  if(_kyoManualCities.indexOf(city)>=0){ inp.value=''; inp.focus(); return; }
+  var sets=(_kyoCo&&_kyoCo.empSets)||[];
+  var idx=_kyoDestList.length;
+  _kyoDestList.push({kind:'custom', city:city, set:(sets[0]||null)});
+  _kyoManualCities.push(city);
+  var wrap=document.getElementById('kyoManualList');
+  if(wrap){
+    var row=document.createElement('label');
+    row.style.cssText='display:flex;gap:8px;align-items:flex-start;padding:5px 2px;font-size:12px;cursor:pointer;';
+    row.innerHTML='<input type="checkbox" class="kyoDest" value="'+idx+'" checked style="margin-top:2px;"><span><b>'+esc(city)+'</b> <span style="color:#94a3b8;">（手入力）</span></span>';
+    wrap.appendChild(row);
+  }
+  inp.value=''; inp.focus();
 }
 function _kyoPageSpec(dest, email){
   var co=_kyoCo.company||{}, s=dest.set||{};
