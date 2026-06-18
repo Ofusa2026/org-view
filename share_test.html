@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260617.test46: 登録支援機関情報に「メールアドレス（複数登録可）」を追加（support_orgs.extra->emails に保存。RPC upsert_org_emails / get_org_profile が emails を返す） -->
 <!-- ver.20260617.test45: 新規案件依頼の案件担当者を最大2名選択可に（②欄追加・「、」結合でclient_staff保存）／リスト未登録の担当者は送信時に自動で案件担当者リストへ追加・保存 -->
 <!-- ver.20260617.test44: 画面名「案件進捗確認」→「登録支援機関マイページ」に変更（ヘッダー見出し・タイトル・document.title） -->
 <!-- ver.20260617.test43: 協力確認書作成に「任意の市区町村を手入力で提出先追加」機能を追加（index方式。候補に無い転入予定先などを直接入力可。②事業所所在地等は先頭の就業場所を流用） -->
@@ -428,7 +429,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 登録支援機関マイページ</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test45 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test46 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -969,7 +970,7 @@ var NOTIF_SHORT_LABELS={'受付番号取込':'受付番号','申請済(番号待
 var DONE_ST=['完了','審査完了'];
 // ver.20260518.13: ダッシュボードを追加、完了の表記をシンプル化
 var GROUPS=[{id:'dashboard',label:'ダッシュボード'},{id:'active',label:'進行中'},{id:'done',label:'発行済み・完了'},{id:'all',label:'すべて'}];
-var allCases=[],allReceipts=[],allShinsa=[],allCerts=[],allIntakes=[],orgProfile=null,intakeStaff=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus='',filterCompany='',filterClientStaff='',sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,isGpMode=false,gpInfoByCaseId={},_imeOn=false; // ver.20260606.13: allCerts追加（認定証PDF）
+var allCases=[],allReceipts=[],allShinsa=[],allCerts=[],allIntakes=[],orgProfile=null,intakeStaff=[],orgEmails=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus='',filterCompany='',filterClientStaff='',sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,isGpMode=false,gpInfoByCaseId={},_imeOn=false; // ver.20260606.13: allCerts追加（認定証PDF）
 // ver.20260615.test13: 人材詳細モーダル用 — 人材レコード/書類チェックリスト
 var allPersons={}, personDocsAll={}, coDocsAll={};
 // ver.20260615.test16: 登録支援機関からの変更依頼（key suffix -> {text,requested_at,requested_by,status}）
@@ -3469,6 +3470,23 @@ function renderOrgProfile(){
     h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;overflow:hidden;"><div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8fafc;cursor:pointer;border-left:3px solid #8b5cf6;" onclick="var b=this.nextElementSibling;var o=b.style.display===\'none\';b.style.display=o?\'block\':\'none\';this.querySelector(\'.psa\').textContent=o?\'▼\':\'▶\';"><div style="font-size:13px;font-weight:800;color:#0f2040;">👤 支援担当者（'+ssl.length+'名）</div><span class="psa" style="font-size:11px;color:#94a3b8;">▶</span></div><div style="display:none;padding:8px 14px;">'+sh+'</div></div>';
   }
 
+  // メールアドレス（複数・編集可） ver.20260617.test46
+  h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;padding:14px 16px;border-left:3px solid #0ea5e9;">';
+  h+='<div style="font-size:13px;font-weight:800;color:#0f2040;margin-bottom:4px;">📧 メールアドレス（複数登録可）</div>';
+  h+='<div style="font-size:11px;color:#64748b;margin-bottom:10px;line-height:1.6;">大房からのご連絡先メールアドレスを登録できます（複数可）。追加・削除したら<b>「保存」</b>を押してください。</div>';
+  h+='<div id="orgEmailList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">';
+  if(!orgEmails.length){ h+='<div style="font-size:11.5px;color:#94a3b8;">まだメールアドレスが登録されていません。</div>'; }
+  orgEmails.forEach(function(em,i){
+    h+='<span style="display:inline-flex;align-items:center;justify-content:space-between;gap:6px;background:#f0f9ff;border:1px solid #e0f2fe;border-radius:8px;padding:6px 8px 6px 12px;font-size:12.5px;color:#0369a1;word-break:break-all;">'+esc(em)+'<button onclick="orgEmailRemove('+i+')" title="削除" style="background:#e0f2fe;border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;color:#0369a1;font-size:11px;line-height:1;flex-shrink:0;">\u2715</button></span>';
+  });
+  h+='</div>';
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">';
+  h+='<input type="email" id="orgEmailInput" placeholder="example@company.co.jp" onkeydown="if(event.key===\'Enter\'){event.preventDefault();orgEmailAdd();}" style="flex:1;min-width:200px;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;">';
+  h+='<button onclick="orgEmailAdd()" style="padding:8px 16px;background:#0f2040;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">＋ 追加</button>';
+  h+='<button onclick="orgEmailSave()" id="orgEmailSaveBtn" style="padding:8px 16px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">💾 保存</button>';
+  h+='</div><div id="orgEmailMsg" style="font-size:11.5px;margin-top:8px;"></div>';
+  h+='</div>';
+
   // ✏️ 担当者リスト（新規案件依頼用・編集可）
   h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;padding:14px 16px;border-left:3px solid #0f2040;">';
   h+='<div style="font-size:13px;font-weight:800;color:#0f2040;margin-bottom:4px;">✏️ 案件担当者リスト（新規案件依頼用）</div>';
@@ -3520,6 +3538,35 @@ async function ncStaffSave(){
   }catch(e){ errMsg='❌ 保存エラー: '+((e&&e.message)||e); }
   renderOrgProfile();
   var msg=document.getElementById('orgStaffMsg');
+  if(msg){ if(okMsg){ msg.style.color='#16a34a'; msg.textContent=okMsg; } else { msg.style.color='#dc2626'; msg.textContent=errMsg; } }
+}
+function _isEmailLike(v){ return /^[^@\s]+@[^@\s]+$/.test(v); }
+function orgEmailAdd(){
+  var inp=document.getElementById('orgEmailInput'); if(!inp) return;
+  var v=(inp.value||'').trim();
+  var msg=document.getElementById('orgEmailMsg');
+  if(!v) return;
+  if(!_isEmailLike(v)){ if(msg){ msg.style.color='#dc2626'; msg.textContent='❌ メールアドレスの形式が正しくありません（@を含む）。'; } inp.focus(); return; }
+  if(orgEmails.indexOf(v)===-1){ orgEmails.push(v); }
+  renderOrgProfile();
+  setTimeout(function(){ var e=document.getElementById('orgEmailInput'); if(e) e.focus(); },30);
+}
+function orgEmailRemove(i){ orgEmails.splice(i,1); renderOrgProfile(); }
+async function orgEmailSave(){
+  var btn=document.getElementById('orgEmailSaveBtn');
+  if(btn){ btn.disabled=true; btn.textContent='保存中...'; }
+  var okMsg='', errMsg='';
+  try{
+    var res=await sbRpc('upsert_org_emails',{p_token:currentToken,p_pass:(currentPass||null),p_emails:orgEmails});
+    if(res && res.ok){
+      if(Array.isArray(res.emails)) orgEmails=res.emails;
+      okMsg='✅ 保存しました。';
+    }else{
+      errMsg='❌ 保存に失敗しました'+(res&&res.error?'（'+res.error+'）':'')+'。';
+    }
+  }catch(e){ errMsg='❌ 保存エラー: '+((e&&e.message)||e); }
+  renderOrgProfile();
+  var msg=document.getElementById('orgEmailMsg');
   if(msg){ if(okMsg){ msg.style.color='#16a34a'; msg.textContent=okMsg; } else { msg.style.color='#dc2626'; msg.textContent=errMsg; } }
 }
 // ver.20260519.21: 現在のタブに応じた再描画（検索・フィルタ変更時に使う）
@@ -4228,6 +4275,7 @@ async function loadData(){
         orgProfile.offices=Array.isArray(prof.offices)?prof.offices:[];
         orgProfile.supportStaffList=Array.isArray(prof.supportStaffList)?prof.supportStaffList:[];
         intakeStaff=Array.isArray(prof.intakeStaff)?prof.intakeStaff:[];
+        orgEmails=Array.isArray(prof.emails)?prof.emails:[];
       }
       _fillClientStaffDatalist();
     }catch(e){ console.warn('[org profile load failed]', e); }
