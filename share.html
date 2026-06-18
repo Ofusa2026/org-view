@@ -367,7 +367,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260616.01</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260619.01</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1405,6 +1405,24 @@ function buildRow(c){
       ? '<div style="font-size:12px;color:#475569;">'+esc(c.gpIraiDate)+'</div>'
       : '<span style="color:#cbd5e1;font-size:12px;">—</span>';
     h+='<td data-col-key="gpIraiDate" style="white-space:nowrap;text-align:center;min-width:100px;">'+_iraiHtml+'</td>';
+    // ver.20260619.01: 申請受付日(receiptDate) + 申請からの経過日数（GP限定）
+    var _shinseiHtml;
+    if(c.receiptDate){
+      _shinseiHtml='<div style="font-size:12px;color:#475569;">'+esc(c.receiptDate)+'</div>';
+      try{
+        var _todayD5=new Date(); _todayD5.setHours(0,0,0,0);
+        var _shinseiD=new Date(c.receiptDate); _shinseiD.setHours(0,0,0,0);
+        if(!isNaN(_shinseiD.getTime())){
+          var _elapsed5=Math.floor((_todayD5-_shinseiD)/86400000);
+          if(_elapsed5>=0){
+            _shinseiHtml+='<div style="font-size:11px;color:#0f2040;font-weight:700;margin-top:2px;">'+_elapsed5+'日経過</div>';
+          }
+        }
+      }catch(e){}
+    } else {
+      _shinseiHtml='<span style="color:#cbd5e1;font-size:12px;">—</span>';
+    }
+    h+='<td data-col-key="gpShinseiElapsed" style="white-space:nowrap;text-align:center;min-width:100px;">'+_shinseiHtml+'</td>';
   } else {
     h+='<td data-col-key="name" style="min-width:200px;max-width:320px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;">'+esc(c.applicant||'')+'</div></td>'; // ver.20260518.06: 案件名を全文表示（折り返し）
   }
@@ -1591,6 +1609,7 @@ var COLS=[
   {key:'name',label:'案件名 / 申請者'},
   {key:'gpKumiaiDate',label:'組合受領'}, // ver.20260606.12: クリックでソート可能に
   {key:'gpIraiDate',label:'依頼日'},     // ver.20260606.12: クリックでソート可能に
+  {key:'gpShinseiElapsed',label:'申請受付日',noSort:true}, // ver.20260619.01: 申請受付日(receipt_date)＋申請からの経過日数（GP限定）
   {key:'company',label:'所属機関'},
   {key:'appType',label:'種別'},
   {key:'staff',label:'担当'},
