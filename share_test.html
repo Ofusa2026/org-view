@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260618.test53: コメント・要望の送信履歴を3件分の高さで表示し、それ以上はスクロール（件数表示つき） -->
 <!-- ver.20260618.test52: 一覧ヘッダー直下に列ごとの絞り込み行を追加（所属機関・案件受領日・種別・担当・ステータスは値選択、他機関申請・受付番号・帰国予定はあり/なし）。クリアで一括解除 -->
 <!-- ver.20260618.test51: コメント・要望ウィジェットの絵文字が「U0001f4ac」と文字化けしていた不具合修正（無効なJSエスケープ\U…を実絵文字💬🔍に） -->
 <!-- ver.20260618.test50: コメント・要望を全画面・全タブ常時表示のフローティングウィジェット化（右下固定・「—」ボタンで小さく折りたたみ可、状態をlocalStorageに保持）。ダッシュボード最下部固定をやめた -->
@@ -438,7 +439,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 登録支援機関マイページ</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260618.test52 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260618.test53 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -2918,7 +2919,9 @@ async function _loadFeedbackHistory(){
     var rows=Array.isArray(res)?res:[];
     if(!rows.length){ box.innerHTML='<div style="font-size:11px;color:#94a3b8;">送信履歴はまだありません。</div>'; return; }
     var caseName={}; (allCases||[]).forEach(function(c){ if(c.id) caseName[c.id]=(c.name||'')+(c.applicant?' / '+c.applicant:''); });
-    var hh='<div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:5px;">送信履歴</div>';
+    var hh='<div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:5px;">送信履歴<span style="font-weight:400;color:#cbd5e1;">（'+rows.length+'件）</span></div>';
+    // ver.20260618.test53: 送信履歴は3件分の高さで表示、それ以上はスクロール
+    hh+='<div style="max-height:186px;overflow-y:auto;padding-right:4px;">';
     rows.forEach(function(f){
       var stColor=f.status==='done'?'#16a34a':'#d97706';
       var stLabel=f.status==='done'?'対応済':'未対応';
@@ -2928,6 +2931,7 @@ async function _loadFeedbackHistory(){
       hh+='<div style="font-size:12px;color:#334155;white-space:pre-wrap;word-break:break-word;">'+esc(f.body||'')+'</div>';
       hh+='</div>';
     });
+    hh+='</div>';
     box.innerHTML=hh;
   }catch(e){ box.innerHTML='<div style="font-size:11px;color:#dc2626;">履歴の取得に失敗しました。</div>'; }
 }
