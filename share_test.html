@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260618.test51: コメント・要望ウィジェットの絵文字が「U0001f4ac」と文字化けしていた不具合修正（無効なJSエスケープ\U…を実絵文字💬🔍に） -->
 <!-- ver.20260618.test50: コメント・要望を全画面・全タブ常時表示のフローティングウィジェット化（右下固定・「—」ボタンで小さく折りたたみ可、状態をlocalStorageに保持）。ダッシュボード最下部固定をやめた -->
 <!-- ver.20260618.test49: コメント・要望の「案件ごと」で名前・企業名・案件名による検索絞り込みを追加（検索ボックス＋リスト表示・該当件数） -->
 <!-- ver.20260618.test48: ダッシュボードに「コメント・要望」欄を追加（右下・全体/案件ごと選択可・送信履歴表示）。org_feedbackテーブル＋RPC(submit_org_feedback/list_org_feedback)で保存しindex側で確認 -->
@@ -433,7 +434,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 登録支援機関マイページ</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260618.test50 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260618.test51 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -2811,10 +2812,10 @@ function _mountFeedbackWidget(){
 }
 function _feedbackWidgetInner(){
   var h='';
-  h+='<button id="fbCollapsedBtn" onclick="_fbToggleWidget()" style="display:none;align-items:center;gap:7px;background:#7c3aed;color:#fff;border:none;border-radius:999px;padding:11px 18px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(124,58,237,.45);">\U0001f4ac コメント・要望</button>';
+  h+='<button id="fbCollapsedBtn" onclick="_fbToggleWidget()" style="display:none;align-items:center;gap:7px;background:#7c3aed;color:#fff;border:none;border-radius:999px;padding:11px 18px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(124,58,237,.45);">💬 コメント・要望</button>';
   h+='<div id="fbPanel" style="width:min(92vw,380px);background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 10px 34px rgba(15,32,64,.20);overflow:hidden;">';
   h+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#7c3aed;color:#fff;padding:10px 14px;">';
-  h+='<span style="font-size:13.5px;font-weight:800;">\U0001f4ac コメント・要望</span>';
+  h+='<span style="font-size:13.5px;font-weight:800;">💬 コメント・要望</span>';
   h+='<button onclick="_fbToggleWidget()" title="小さくする" style="background:rgba(255,255,255,.22);color:#fff;border:none;border-radius:7px;width:26px;height:26px;cursor:pointer;font-size:18px;line-height:1;font-weight:800;">\u2013</button>';
   h+='</div>';
   h+='<div style="padding:13px 15px;max-height:72vh;overflow:auto;">';
@@ -2824,7 +2825,7 @@ function _feedbackWidgetInner(){
   h+='<label style="display:inline-flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="radio" name="fbScope" value="case" onchange="_fbToggleScope()"> 案件ごと</label>';
   h+='</div>';
   h+='<div id="fbCaseWrap" style="display:none;margin-bottom:8px;">';
-  h+='<input type="text" id="fbCaseSearch" placeholder="\U0001f50d 名前・企業名・案件名で検索" oninput="_fbFilterCases()" style="width:100%;box-sizing:border-box;font-size:12.5px;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;margin-bottom:6px;">';
+  h+='<input type="text" id="fbCaseSearch" placeholder="🔍 名前・企業名・案件名で検索" oninput="_fbFilterCases()" style="width:100%;box-sizing:border-box;font-size:12.5px;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;margin-bottom:6px;">';
   h+='<select id="fbCaseSel" size="6" style="width:100%;box-sizing:border-box;font-size:12.5px;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;">'+_feedbackCaseOptions()+'</select>';
   h+='<div id="fbCaseCount" style="font-size:10.5px;color:#94a3b8;margin-top:3px;"></div>';
   h+='</div>';

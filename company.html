@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260618d: コメント・要望ウィジェットの絵文字文字化け修正（💬🔍） -->
 <!-- ver.20260618c: コメント・要望を全タブ常時表示のフローティングウィジェット化（右下固定・折りたたみ可・localStorage保持） -->
 <!-- ver.20260618b: コメント・要望の「案件ごと」に名前・案件名の検索絞り込みを追加 -->
 <!-- ver.20260618: ダッシュボードに「コメント・要望」欄を追加（右下・全体/案件ごと・送信履歴）。org_feedback＋RPC(submit_company_feedback/list_company_feedback)でindex側確認 -->
@@ -1091,10 +1092,10 @@ function _mountFeedbackWidget(){
 }
 function _feedbackWidgetInner(){
   var h='';
-  h+='<button id="fbCollapsedBtn" onclick="_fbToggleWidget()" style="display:none;align-items:center;gap:7px;background:#7c3aed;color:#fff;border:none;border-radius:999px;padding:11px 18px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(124,58,237,.45);">\U0001f4ac コメント・要望</button>';
+  h+='<button id="fbCollapsedBtn" onclick="_fbToggleWidget()" style="display:none;align-items:center;gap:7px;background:#7c3aed;color:#fff;border:none;border-radius:999px;padding:11px 18px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(124,58,237,.45);">💬 コメント・要望</button>';
   h+='<div id="fbPanel" style="width:min(92vw,380px);background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 10px 34px rgba(15,32,64,.20);overflow:hidden;">';
   h+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#7c3aed;color:#fff;padding:10px 14px;">';
-  h+='<span style="font-size:13.5px;font-weight:800;">\U0001f4ac コメント・要望</span>';
+  h+='<span style="font-size:13.5px;font-weight:800;">💬 コメント・要望</span>';
   h+='<button onclick="_fbToggleWidget()" title="小さくする" style="background:rgba(255,255,255,.22);color:#fff;border:none;border-radius:7px;width:26px;height:26px;cursor:pointer;font-size:18px;line-height:1;font-weight:800;">\u2013</button>';
   h+='</div>';
   h+='<div style="padding:13px 15px;max-height:72vh;overflow:auto;">';
@@ -1104,7 +1105,7 @@ function _feedbackWidgetInner(){
   h+='<label style="display:inline-flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="radio" name="fbScope" value="case" onchange="_fbToggleScope()"> 案件ごと</label>';
   h+='</div>';
   h+='<div id="fbCaseWrap" style="display:none;margin-bottom:8px;">';
-  h+='<input type="text" id="fbCaseSearch" placeholder="\U0001f50d 名前・案件名で検索" oninput="_fbFilterCases()" style="width:100%;box-sizing:border-box;font-size:12.5px;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;margin-bottom:6px;">';
+  h+='<input type="text" id="fbCaseSearch" placeholder="🔍 名前・案件名で検索" oninput="_fbFilterCases()" style="width:100%;box-sizing:border-box;font-size:12.5px;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;margin-bottom:6px;">';
   h+='<select id="fbCaseSel" size="6" style="width:100%;box-sizing:border-box;font-size:12.5px;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;">'+_feedbackCaseOptions()+'</select>';
   h+='<div id="fbCaseCount" style="font-size:10.5px;color:#94a3b8;margin-top:3px;"></div>';
   h+='</div>';
