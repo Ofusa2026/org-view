@@ -8,6 +8,8 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260618c: コメント・要望を全タブ常時表示のフローティングウィジェット化（右下固定・折りたたみ可・localStorage保持） -->
+<!-- ver.20260618b: コメント・要望の「案件ごと」に名前・案件名の検索絞り込みを追加 -->
 <!-- ver.20260618: ダッシュボードに「コメント・要望」欄を追加（右下・全体/案件ごと・送信履歴）。org_feedback＋RPC(submit_company_feedback/list_company_feedback)でindex側確認 -->
 <!-- ver.20260611.01: 申請の流れをタイムライン型(applicant準拠)に変更／郵送物の案内を事務所情報の上に移動 -->
 <!-- ver.20260617.16: 企業ヒアリングの表示を「対象会社のみ」に。判定=フラグ(company_view_cfg.hearing_show: true強制表示/false強制非表示)優先、未設定はフォーム存在(company_hearing_exists)で判定。フォーム未作成かつ未指定の会社(昔からの取引先など)には出さない。 -->
@@ -628,6 +630,7 @@ function render(){
   else if(currentTab==='orginfo') m.innerHTML=renderOrgInfo();
   else if(currentTab==='office') m.innerHTML=renderOffice();
   else m.innerHTML=renderDashboard();
+  _mountFeedbackWidget(); // 全タブで常時表示
 }
 
 function _caseDeadline(c){
@@ -1053,34 +1056,79 @@ function renderKyoryoku(){
 }
 
 // ver.20260618: コメント・要望（company→大房 / index表示）
-function _feedbackCaseOptions(){
-  var opts='<option value="">案件を選択…</option>';
+function _feedbackCaseOptions(filter){
+  var f=(filter||'').trim().toLowerCase();
+  var opts='<option value="">'+(f?'— 該当案件を選択 —':'案件を選択…')+'</option>';
   (allCases||[]).forEach(function(c){
     if(!c.id) return;
-    var label=(c.applicant||c.name||'');
+    var applicant=c.applicant||'', name=c.name||'';
+    if(f && (applicant+' '+name).toLowerCase().indexOf(f)<0) return;
+    var label=(applicant||name)+((applicant&&name&&applicant!==name)?' / '+name:'');
     opts+='<option value="'+esc(c.id)+'">'+esc(label)+'</option>';
   });
   return opts;
 }
-function _feedbackBoxHtml(){
-  var h='<div style="max-width:560px;margin:18px 0 4px auto;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px 18px;border-left:4px solid #7c3aed;box-shadow:0 1px 3px rgba(15,32,64,.06);">';
-  h+='<div style="font-size:14px;font-weight:800;color:#0f2040;margin-bottom:3px;">\U0001f4ac コメント・要望</div>';
-  h+='<div style="font-size:11px;color:#64748b;margin-bottom:10px;line-height:1.6;">大房へのコメント・ご要望をお送りいただけます。「全体への要望」または「案件ごと」を選べます。送信内容は大房側（案件管理）で確認します。</div>';
+function _fbFilterCases(){
+  var sel=document.getElementById('fbCaseSel'); if(!sel) return;
+  var term=((document.getElementById('fbCaseSearch')||{}).value)||'';
+  var prev=sel.value;
+  sel.innerHTML=_feedbackCaseOptions(term);
+  if(prev){ for(var i=0;i<sel.options.length;i++){ if(sel.options[i].value===prev){ sel.value=prev; break; } } }
+  var cnt=document.getElementById('fbCaseCount');
+  if(cnt){ var n=sel.options.length-1; cnt.textContent=term.trim()?(n+'件 該当'):(n+'件'); }
+}
+var _fbCollapsed=false;
+function _mountFeedbackWidget(){
+  if(document.getElementById('fbWidget')) return;
+  try{ _fbCollapsed=(localStorage.getItem('fb_collapsed_'+currentToken)==='1'); }catch(e){}
+  var w=document.createElement('div');
+  w.id='fbWidget';
+  w.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9999;font-family:inherit;';
+  w.innerHTML=_feedbackWidgetInner();
+  document.body.appendChild(w);
+  _fbApplyCollapsed();
+  _loadCompanyFeedbackHistory();
+}
+function _feedbackWidgetInner(){
+  var h='';
+  h+='<button id="fbCollapsedBtn" onclick="_fbToggleWidget()" style="display:none;align-items:center;gap:7px;background:#7c3aed;color:#fff;border:none;border-radius:999px;padding:11px 18px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(124,58,237,.45);">\U0001f4ac コメント・要望</button>';
+  h+='<div id="fbPanel" style="width:min(92vw,380px);background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 10px 34px rgba(15,32,64,.20);overflow:hidden;">';
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#7c3aed;color:#fff;padding:10px 14px;">';
+  h+='<span style="font-size:13.5px;font-weight:800;">\U0001f4ac コメント・要望</span>';
+  h+='<button onclick="_fbToggleWidget()" title="小さくする" style="background:rgba(255,255,255,.22);color:#fff;border:none;border-radius:7px;width:26px;height:26px;cursor:pointer;font-size:18px;line-height:1;font-weight:800;">\u2013</button>';
+  h+='</div>';
+  h+='<div style="padding:13px 15px;max-height:72vh;overflow:auto;">';
+  h+='<div style="font-size:11px;color:#64748b;margin-bottom:9px;line-height:1.6;">大房へのコメント・ご要望をお送りいただけます。「全体への要望」または「案件ごと」を選べます。送信内容は大房側（案件管理）で確認します。</div>';
   h+='<div style="display:flex;gap:14px;margin-bottom:8px;">';
   h+='<label style="display:inline-flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="radio" name="fbScope" value="global" checked onchange="_fbToggleScope()"> 全体への要望</label>';
   h+='<label style="display:inline-flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="radio" name="fbScope" value="case" onchange="_fbToggleScope()"> 案件ごと</label>';
   h+='</div>';
-  h+='<select id="fbCaseSel" style="display:none;width:100%;box-sizing:border-box;font-size:12.5px;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;margin-bottom:8px;">'+_feedbackCaseOptions()+'</select>';
-  h+='<textarea id="fbBody" placeholder="コメント・ご要望をご記入ください" style="width:100%;box-sizing:border-box;min-height:80px;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;resize:vertical;"></textarea>';
+  h+='<div id="fbCaseWrap" style="display:none;margin-bottom:8px;">';
+  h+='<input type="text" id="fbCaseSearch" placeholder="\U0001f50d 名前・案件名で検索" oninput="_fbFilterCases()" style="width:100%;box-sizing:border-box;font-size:12.5px;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;margin-bottom:6px;">';
+  h+='<select id="fbCaseSel" size="6" style="width:100%;box-sizing:border-box;font-size:12.5px;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;">'+_feedbackCaseOptions()+'</select>';
+  h+='<div id="fbCaseCount" style="font-size:10.5px;color:#94a3b8;margin-top:3px;"></div>';
+  h+='</div>';
+  h+='<textarea id="fbBody" placeholder="コメント・ご要望をご記入ください" style="width:100%;box-sizing:border-box;min-height:72px;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;resize:vertical;"></textarea>';
   h+='<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;"><button id="fbSendBtn" onclick="submitCompanyFeedback()" style="font-size:13px;font-weight:800;color:#fff;background:#7c3aed;border:none;border-radius:8px;padding:9px 22px;cursor:pointer;">送信</button></div>';
   h+='<div id="fbMsg" style="font-size:11.5px;margin-top:6px;"></div>';
   h+='<div id="fbHistory" style="margin-top:12px;"></div>';
-  h+='</div>';
+  h+='</div></div>';
   return h;
+}
+function _fbToggleWidget(){
+  _fbCollapsed=!_fbCollapsed;
+  try{ localStorage.setItem('fb_collapsed_'+currentToken, _fbCollapsed?'1':'0'); }catch(e){}
+  _fbApplyCollapsed();
+}
+function _fbApplyCollapsed(){
+  var btn=document.getElementById('fbCollapsedBtn'), panel=document.getElementById('fbPanel');
+  if(btn) btn.style.display=_fbCollapsed?'inline-flex':'none';
+  if(panel) panel.style.display=_fbCollapsed?'none':'block';
 }
 function _fbToggleScope(){
   var scEl=document.querySelector('input[name="fbScope"]:checked');
-  var sel=document.getElementById('fbCaseSel'); if(sel) sel.style.display=(scEl&&scEl.value==='case')?'':'none';
+  var wrap=document.getElementById('fbCaseWrap'); if(wrap) wrap.style.display=(scEl&&scEl.value==='case')?'':'none';
+  if(scEl&&scEl.value==='case') _fbFilterCases();
 }
 async function submitCompanyFeedback(){
   var scEl=document.querySelector('input[name="fbScope"]:checked');
@@ -1166,8 +1214,6 @@ function renderDashboard(){
     h+='<div class="note">⚠️ 未提出の書類が <b>'+missingDocCount+'件</b> あります。「提出書類」タブからご確認のうえ、ご提出をお願いいたします。</div>';
   }
   h+=renderStats();
-  h+=_feedbackBoxHtml(); // ver.20260618: コメント・要望
-  setTimeout(_loadCompanyFeedbackHistory,0);
   return h;
 }
 
