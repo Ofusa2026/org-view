@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260618.test49: コメント・要望の「案件ごと」で名前・企業名・案件名による検索絞り込みを追加（検索ボックス＋リスト表示・該当件数） -->
 <!-- ver.20260618.test48: ダッシュボードに「コメント・要望」欄を追加（右下・全体/案件ごと選択可・送信履歴表示）。org_feedbackテーブル＋RPC(submit_org_feedback/list_org_feedback)で保存しindex側で確認 -->
 <!-- ver.20260617.test47: 一覧（進行中）に「案件受領日」列(request_date)を追加。get_org_shareがrequest_dateを返すよう更新。既存の独自列設定orgでも常時表示 -->
 <!-- ver.20260617.test46: 登録支援機関情報に「メールアドレス（複数登録可）」を追加（support_orgs.extra->emails に保存。RPC upsert_org_emails / get_org_profile が emails を返す） -->
@@ -431,7 +432,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 登録支援機関マイページ</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260618.test48 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260618.test49 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -2777,14 +2778,26 @@ function renderDashboard(){
 }
 
 // ver.20260618.test48: コメント・要望（org→大房 / index表示）
-function _feedbackCaseOptions(){
-  var opts='<option value="">案件を選択…</option>';
+function _feedbackCaseOptions(filter){
+  var f=(filter||'').trim().toLowerCase();
+  var opts='<option value="">'+(f?'— 該当案件を選択 —':'案件を選択…')+'</option>';
   (allCases||[]).forEach(function(c){
     if(!c.id) return;
-    var label=(c.company?'['+c.company+'] ':'')+(c.name||'')+(c.applicant?' / '+c.applicant:'');
+    var company=c.company||'', name=c.name||'', applicant=c.applicant||'';
+    if(f && (company+' '+name+' '+applicant).toLowerCase().indexOf(f)<0) return;
+    var label=(company?'['+company+'] ':'')+name+(applicant?' / '+applicant:'');
     opts+='<option value="'+esc(c.id)+'">'+esc(label)+'</option>';
   });
   return opts;
+}
+function _fbFilterCases(){
+  var sel=document.getElementById('fbCaseSel'); if(!sel) return;
+  var term=((document.getElementById('fbCaseSearch')||{}).value)||'';
+  var prev=sel.value;
+  sel.innerHTML=_feedbackCaseOptions(term);
+  if(prev){ for(var i=0;i<sel.options.length;i++){ if(sel.options[i].value===prev){ sel.value=prev; break; } } }
+  var cnt=document.getElementById('fbCaseCount');
+  if(cnt){ var n=sel.options.length-1; cnt.textContent=term.trim()?(n+'件 該当'):(n+'件'); }
 }
 function _feedbackBoxHtml(){
   var h='<div style="max-width:560px;margin:18px 0 4px auto;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:16px 18px;border-left:4px solid #7c3aed;box-shadow:0 1px 3px rgba(15,32,64,.06);">';
@@ -2794,7 +2807,11 @@ function _feedbackBoxHtml(){
   h+='<label style="display:inline-flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="radio" name="fbScope" value="global" checked onchange="_fbToggleScope()"> 全体への要望</label>';
   h+='<label style="display:inline-flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="radio" name="fbScope" value="case" onchange="_fbToggleScope()"> 案件ごと</label>';
   h+='</div>';
-  h+='<select id="fbCaseSel" style="display:none;width:100%;box-sizing:border-box;font-size:12.5px;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;margin-bottom:8px;">'+_feedbackCaseOptions()+'</select>';
+  h+='<div id="fbCaseWrap" style="display:none;margin-bottom:8px;">';
+  h+='<input type="text" id="fbCaseSearch" placeholder="\U0001f50d 名前・企業名・案件名で検索" oninput="_fbFilterCases()" style="width:100%;box-sizing:border-box;font-size:12.5px;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;margin-bottom:6px;">';
+  h+='<select id="fbCaseSel" size="6" style="width:100%;box-sizing:border-box;font-size:12.5px;padding:6px;border:1.5px solid #e2e8f0;border-radius:8px;">'+_feedbackCaseOptions()+'</select>';
+  h+='<div id="fbCaseCount" style="font-size:10.5px;color:#94a3b8;margin-top:3px;"></div>';
+  h+='</div>';
   h+='<textarea id="fbBody" placeholder="コメント・ご要望をご記入ください" style="width:100%;box-sizing:border-box;min-height:80px;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;resize:vertical;"></textarea>';
   h+='<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;"><button id="fbSendBtn" onclick="submitOrgFeedback()" style="font-size:13px;font-weight:800;color:#fff;background:#7c3aed;border:none;border-radius:8px;padding:9px 22px;cursor:pointer;">送信</button></div>';
   h+='<div id="fbMsg" style="font-size:11.5px;margin-top:6px;"></div>';
@@ -2804,7 +2821,8 @@ function _feedbackBoxHtml(){
 }
 function _fbToggleScope(){
   var scEl=document.querySelector('input[name="fbScope"]:checked');
-  var sel=document.getElementById('fbCaseSel'); if(sel) sel.style.display=(scEl&&scEl.value==='case')?'':'none';
+  var wrap=document.getElementById('fbCaseWrap'); if(wrap) wrap.style.display=(scEl&&scEl.value==='case')?'':'none';
+  if(scEl&&scEl.value==='case') _fbFilterCases();
 }
 async function submitOrgFeedback(){
   var scEl=document.querySelector('input[name="fbScope"]:checked');
