@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260618.test52: 一覧ヘッダー直下に列ごとの絞り込み行を追加（所属機関・案件受領日・種別・担当・ステータスは値選択、他機関申請・受付番号・帰国予定はあり/なし）。クリアで一括解除 -->
 <!-- ver.20260618.test51: コメント・要望ウィジェットの絵文字が「U0001f4ac」と文字化けしていた不具合修正（無効なJSエスケープ\U…を実絵文字💬🔍に） -->
 <!-- ver.20260618.test50: コメント・要望を全画面・全タブ常時表示のフローティングウィジェット化（右下固定・「—」ボタンで小さく折りたたみ可、状態をlocalStorageに保持）。ダッシュボード最下部固定をやめた -->
 <!-- ver.20260618.test49: コメント・要望の「案件ごと」で名前・企業名・案件名による検索絞り込みを追加（検索ボックス＋リスト表示・該当件数） -->
@@ -426,6 +427,9 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 .nc-radio-btn:hover{border-color:#94a3b8;background:#f8fafc;}
 .nc-radio-btn input[type="radio"]{margin:0;cursor:pointer;accent-color:#2563eb;}
 .nc-radio-btn:has(input[type="radio"]:checked){border-color:#2563eb;background:#eff6ff;color:#1e40af;font-weight:700;}
+.filter-row th.filter-th{padding:4px 6px;background:#1a2c4e;border-top:1px solid rgba(255,255,255,.08);}
+.filter-row select.col-filter{width:100%;max-width:140px;font-size:10px;padding:3px 4px;border:1px solid #3b4a66;border-radius:5px;background:#fff;color:#0f2040;cursor:pointer;font-family:inherit;}
+.filter-row select.col-filter.active{border-color:#7c3aed;background:#f5f3ff;font-weight:700;}
 </style>
 </head>
 <body>
@@ -434,7 +438,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 登録支援機関マイページ</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260618.test51 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260618.test52 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -975,7 +979,7 @@ var NOTIF_SHORT_LABELS={'受付番号取込':'受付番号','申請済(番号待
 var DONE_ST=['完了','審査完了'];
 // ver.20260518.13: ダッシュボードを追加、完了の表記をシンプル化
 var GROUPS=[{id:'dashboard',label:'ダッシュボード'},{id:'active',label:'進行中'},{id:'done',label:'発行済み・完了'},{id:'all',label:'すべて'}];
-var allCases=[],allReceipts=[],allShinsa=[],allCerts=[],allIntakes=[],orgProfile=null,intakeStaff=[],orgEmails=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus='',filterCompany='',filterClientStaff='',sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,isGpMode=false,gpInfoByCaseId={},_imeOn=false; // ver.20260606.13: allCerts追加（認定証PDF）
+var allCases=[],allReceipts=[],allShinsa=[],allCerts=[],allIntakes=[],orgProfile=null,intakeStaff=[],orgEmails=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus='',filterCompany='',filterClientStaff='',colFilters={},sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,isGpMode=false,gpInfoByCaseId={},_imeOn=false; // ver.20260606.13: allCerts追加（認定証PDF）
 // ver.20260615.test13: 人材詳細モーダル用 — 人材レコード/書類チェックリスト
 var allPersons={}, personDocsAll={}, coDocsAll={};
 // ver.20260615.test16: 登録支援機関からの変更依頼（key suffix -> {text,requested_at,requested_by,status}）
@@ -1159,6 +1163,12 @@ function groupCases(gid){
   if(filterCompany) base=base.filter(function(c){return c.company===filterCompany;});
   // ver.20260527.17: アイデム担当者フィルタ
   if(filterClientStaff) base=base.filter(function(c){return c.clientStaff===filterClientStaff;});
+  // ver.20260618.test52: ヘッダー列フィルタ
+  Object.keys(colFilters).forEach(function(k){
+    var v=colFilters[k]; if(v===''||v==null) return;
+    var def=FILTER_DEFS[k]; if(!def) return;
+    base=base.filter(function(c){ return def.type==='bool' ? ((def.get(c)?'1':'0')===v) : (def.get(c)===v); });
+  });
   // ソート
   // ver.20260525.09: デフォルトは「受付日（receiptDate）が新しい順」（申請記録と同じロジック）
   //                  受付日なしは末尾。列ヘッダークリック時の sortCol が優先。
@@ -2005,6 +2015,35 @@ function isSidebarItemVisible(itemId){
   return cfg.sidebar[itemId] !== false;
 }
 
+// ver.20260618.test52: ヘッダー列での絞り込み
+var FILTER_DEFS={
+  company:    {type:'value', get:function(c){return c.company||'';}},
+  requestDate:{type:'value', desc:true, get:function(c){return c.requestDate||'';}},
+  appType:    {type:'value', get:function(c){return c.appType||'';}},
+  staff:      {type:'value', get:function(c){return c.clientStaff||'';}},
+  status:     {type:'value', get:function(c){return getExternalStatus(c.status)||'';}},
+  _mlit:      {type:'bool',  get:function(c){return !!getMlitStatus(c);}},
+  receiptNo:  {type:'bool',  get:function(c){return !!(c.receiptNo);}},
+  tempReturn: {type:'bool',  get:function(c){return !!(c.tempReturn);}}
+};
+function setColFilter(key,val){ colFilters[key]=val; renderMain(); }
+function _colFilterActive(){ return Object.keys(colFilters).some(function(k){return colFilters[k]!=='' && colFilters[k]!=null;}); }
+function clearColFilters(){ colFilters={}; }
+function filterThHtml(col){
+  var def=FILTER_DEFS[col.key];
+  if(!def) return '<th data-col-key="'+col.key+'" class="filter-th"></th>';
+  var cur=colFilters[col.key]||'';
+  var opts='<option value="">（全て）</option>';
+  if(def.type==='bool'){
+    opts+='<option value="1"'+(cur==='1'?' selected':'')+'>あり</option>';
+    opts+='<option value="0"'+(cur==='0'?' selected':'')+'>なし</option>';
+  }else{
+    var vals=Array.from(new Set((allCases||[]).map(def.get).filter(Boolean)));
+    vals.sort(function(a,b){return def.desc?String(b).localeCompare(String(a),'ja'):String(a).localeCompare(String(b),'ja');});
+    vals.forEach(function(v){ opts+='<option value="'+esc(v)+'"'+(cur===v?' selected':'')+'>'+esc(v)+'</option>'; });
+  }
+  return '<th data-col-key="'+col.key+'" class="filter-th"><select class="col-filter'+(cur?' active':'')+'" onchange="setColFilter(\''+col.key+'\',this.value)" onclick="event.stopPropagation()">'+opts+'</select></th>';
+}
 function thHtml(col){
   // ver.20260521.01: data-col-key付与
   if(col.noSort)return '<th data-col-key="'+col.key+'">'+col.label+'</th>';
@@ -2051,7 +2090,7 @@ function renderFilterBar(){
     h+='</select>';
   }
   // クリアボタン
-  if(searchQuery||filterStatus||filterCompany||filterClientStaff) h+='<button onclick="searchQuery=\'\';filterStatus=\'\';filterCompany=\'\';filterClientStaff=\'\';renderSidebar();renderCurrent()" style="padding:7px 12px;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap;">✕ クリア</button>';
+  if(searchQuery||filterStatus||filterCompany||filterClientStaff||_colFilterActive()) h+='<button onclick="searchQuery=\'\';filterStatus=\'\';filterCompany=\'\';filterClientStaff=\'\';clearColFilters();renderSidebar();renderCurrent()" style="padding:7px 12px;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap;">✕ クリア</button>';
   h+='<span style="font-size:11px;color:#94a3b8;white-space:nowrap;">'+cases.length+'件</span>';
   // ver.20260606.05: GPモード CSV出力ボタン
   if(isGpMode){
@@ -2928,6 +2967,8 @@ function renderMain(){
   else{
     h+='<div class="tbl-wrap"><table><thead><tr>';
     COLS.forEach(function(c){h+=thHtml(c);}); // ver.20260521.01: thead全表示。非表示はapplyColumnVisibilityで処理
+    h+='</tr><tr class="filter-row">'; // ver.20260618.test52: 列ごとの絞り込み行
+    COLS.forEach(function(c){h+=filterThHtml(c);});
     h+='</tr></thead><tbody>';
     cases.forEach(function(c){h+=buildRow(c);});
     h+='</tbody></table></div>';
