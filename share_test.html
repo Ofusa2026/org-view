@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260617.test47: 一覧（進行中）に「案件受領日」列(request_date)を追加。get_org_shareがrequest_dateを返すよう更新。既存の独自列設定orgでも常時表示 -->
 <!-- ver.20260617.test46: 登録支援機関情報に「メールアドレス（複数登録可）」を追加（support_orgs.extra->emails に保存。RPC upsert_org_emails / get_org_profile が emails を返す） -->
 <!-- ver.20260617.test45: 新規案件依頼の案件担当者を最大2名選択可に（②欄追加・「、」結合でclient_staff保存）／リスト未登録の担当者は送信時に自動で案件担当者リストへ追加・保存 -->
 <!-- ver.20260617.test44: 画面名「案件進捗確認」→「登録支援機関マイページ」に変更（ヘッダー見出し・タイトル・document.title） -->
@@ -429,7 +430,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 登録支援機関マイページ</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test46 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260617.test47 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1496,6 +1497,7 @@ function buildRow(c){
     h+='<td data-col-key="name" style="min-width:110px;max-width:170px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;word-break:break-word;">'+esc(c.applicant||'')+'</div>'+_personBtn(cid)+'</td>'; // ver.20260612.test05: 幅を半分に＋折り返し
   }
   h+='<td data-col-key="company" style="min-width:110px;max-width:170px;"><div style="font-size:10px;font-weight:600;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(c.company||'—')+'</div></td>'; // ver.20260612.test05: 折り返して全文表示
+  h+='<td data-col-key="requestDate" style="font-size:10px;white-space:nowrap;color:#475569;min-width:88px;">'+(c.requestDate?esc(c.requestDate):'<span style="color:#d1d5db;">—</span>')+'</td>'; // ver.20260617.test47: 案件受領日
   h+='<td data-col-key="appType" style="width:48px;">'+typeHtml+'</td>';
   // ver.20260615.test09: 「担当」列を2段表示（上=登録支援機関側 client_staff / 下=大房側 staff）
   h+='<td data-col-key="staff" style="width:100px;vertical-align:top;">'+_tantoCell2(c.clientStaff,c.staff)+'</td>';
@@ -1934,6 +1936,7 @@ var COLS=[
   {key:'gpKumiaiDate',label:'組合受領'}, // ver.20260606.12: クリックでソート可能に
   {key:'gpIraiDate',label:'依頼日'},     // ver.20260606.12: クリックでソート可能に
   {key:'company',label:'所属機関'},
+  {key:'requestDate',label:'案件受領日'}, // ver.20260617.test47: 案件受領日(request_date)を一覧に表示
   {key:'appType',label:'種別'},
   {key:'staff',label:'担当'},
   {key:'status',label:'ステータス'},
@@ -1954,7 +1957,7 @@ var COLS=[
 //   - 未確認3セクション: すべて非表示
 //   - サイドバー: 全項目表示 (ver.20260525.12)
 var DEFAULT_PROGRESS_CFG = {
-  main:    { enabled: true,  cols: ['name','company','appType','staff','status','_mlit','expire','receiptNo','tempReturn','deliveryMethod','_downloads'] },
+  main:    { enabled: true,  cols: ['name','company','requestDate','appType','staff','status','_mlit','expire','receiptNo','tempReturn','deliveryMethod','_downloads'] },
   applied: { enabled: false },
   pending: { enabled: false },
   review:  { enabled: false },
@@ -2822,8 +2825,9 @@ function applyColumnVisibility(){
     if(!cols) return; // 設定なし=全表示
     var mainEl=document.getElementById('main');
     if(!mainEl) return;
+    var _ALWAYS_SHOW=['requestDate']; // ver.20260617.test47: 新列はcfg未登録の既存orgでも表示
     COLS.forEach(function(c){
-      var show=cols.indexOf(c.key)>=0;
+      var show=(_ALWAYS_SHOW.indexOf(c.key)>=0)||cols.indexOf(c.key)>=0;
       var nodes=mainEl.querySelectorAll('[data-col-key="'+c.key+'"]');
       for(var i=0;i<nodes.length;i++){
         nodes[i].style.display = show ? '' : 'none';
@@ -4296,7 +4300,7 @@ async function loadData(){
     }
 
     allCases=(data.cases||[]).map(function(c){
-      var base={id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',companyId:c.company_id||'',residenceStatus:c.residence_status||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',receiptDate:c.receipt_date||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',madoguchiDate:c.madoguchi_date||'',madoguchiReceiveDate:c.madoguchi_receive_date||'',clientStaff:c.client_staff||'',deliveryMethod:c.delivery_method||'mail',otherAgencies:c.other_agencies||{},updated_at:c.updated_at||''};
+      var base={id:c.id,applicant:c.applicant||'',name:c.name||'',company:c.company||'',companyId:c.company_id||'',residenceStatus:c.residence_status||'',status:c.status||'',expire:c.expire||'',tokureiDate:c.tokurei_date||'',staff:c.staff||'',team:c.team||'',appType:c.app_type||'',receiptNo:c.receipt_no||'',receiptDate:c.receipt_date||'',requestDate:c.request_date||'',tempReturn:c.temp_return||'',applicantField:c.applicant_field||'',madoguchiDate:c.madoguchi_date||'',madoguchiReceiveDate:c.madoguchi_receive_date||'',clientStaff:c.client_staff||'',deliveryMethod:c.delivery_method||'mail',otherAgencies:c.other_agencies||{},updated_at:c.updated_at||''};
       if(isGpMode){var g=gpInfoByCaseId[c.id];base.gpOrderId=g?(g.oc_order_id||''):'';base.gpKumiaiDate=g?(g.kumiai_receipt_date||''):'';base.gpIraiDate=g?(g.irai_date||''):'';}
       return base;
     });
