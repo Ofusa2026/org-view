@@ -367,7 +367,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260619.01</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260619.02</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -1049,7 +1049,7 @@ function groupCases(gid){
   // ver.20260527.16: 「担当」列(staff)ソートはアイデム担当者(clientStaff)で比較
   if(sortCol){
     base=base.slice().sort(function(a,b){
-      var sortKey = (sortCol === 'staff') ? 'clientStaff' : sortCol;
+      var sortKey = (sortCol === 'staff') ? 'clientStaff' : (sortCol === 'gpShinseiElapsed') ? 'receiptDate' : sortCol; // ver.20260619.02: 申請受付日は受付日(receiptDate)で比較
       var av=a[sortKey]||'',bv=b[sortKey]||'';
       if(!av&&!bv)return 0; if(!av)return 1; if(!bv)return -1;
       var r=av.localeCompare?av.localeCompare(bv,'ja'):(av<bv?-1:av>bv?1:0);
@@ -1609,7 +1609,7 @@ var COLS=[
   {key:'name',label:'案件名 / 申請者'},
   {key:'gpKumiaiDate',label:'組合受領'}, // ver.20260606.12: クリックでソート可能に
   {key:'gpIraiDate',label:'依頼日'},     // ver.20260606.12: クリックでソート可能に
-  {key:'gpShinseiElapsed',label:'申請受付日',noSort:true}, // ver.20260619.01: 申請受付日(receipt_date)＋申請からの経過日数（GP限定）
+  {key:'gpShinseiElapsed',label:'申請受付日'}, // ver.20260619.02: 申請受付日(receipt_date)＋申請からの経過日数（GP限定）。ソート可（receiptDateで比較）
   {key:'company',label:'所属機関'},
   {key:'appType',label:'種別'},
   {key:'staff',label:'担当'},
