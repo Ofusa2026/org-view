@@ -367,7 +367,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260619.02</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260620.01</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -838,6 +838,15 @@ var NOTIF_LABELS={'申請済(番号待)':'📤 申請済（番号待ち）','受
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20260620.01',
+    date: '2026-06-20',
+    audience: 'aidem',
+    notify: true,
+    items: [
+      '🏛 進捗確認のサイドバーに「窓口申請」「窓口受取」を追加しました。窓口での申請・受取の予定が入っている案件を、件数つきで確認できます。'
+    ]
+  },
   {
     version: 'ver.20260616.01',
     date: '2026-06-16',
@@ -1582,7 +1591,7 @@ function renderSidebar(){
     h+='<div class="sb-item'+(currentGroup==='shinsa'?' active':'')+'" onclick="switchGroup(\'shinsa\')">審査完了 <span class="sb-badge">'+allShinsa.length+'</span></div>';
   }
   // ver.20260519.17: アイデム専用 窓口申請/窓口受取（日付ベース判定）
-  if(orgName==='株式会社アイデム'){
+  if(_isAidemViewer()){   // ver.20260620.01: アイデム自前も窓口申請/受取を表示
     var showMshinsei = isSidebarItemVisible('madoguchi_shinsei');
     var showMuketori = isSidebarItemVisible('madoguchi_uketori');
     if(showMshinsei || showMuketori){
