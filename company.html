@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260622.01: 企業ヒアリングフォーム＝回答済みは自己更新ボタンを出さず、回答後の変更は右下の「コメント・要望」へ誘導 -->
 <!-- ver.20260618d2: コメント・要望の送信履歴を3件分の高さ＋スクロール化（件数表示つき） -->
 <!-- ver.20260618d: コメント・要望ウィジェットの絵文字文字化け修正（💬🔍） -->
 <!-- ver.20260618c: コメント・要望を全タブ常時表示のフローティングウィジェット化（右下固定・折りたたみ可・localStorage保持） -->
@@ -759,15 +760,15 @@ function _companyHearingRow(){
   return '<div class="req-row"><span class="req-nm">企業ヒアリングフォーム</span>'
     +'<a class="req-row-btn" href="'+esc(_companyHearingUrl())+'" target="_blank" rel="noopener">回答する</a></div>';
 }
-/* 企業ヒアリングフォームのURLを常時掲載するカード（回答済みでも更新用に表示） */
+/* 企業ヒアリングフォームのURLカード（未回答時のみ回答ボタン。回答済みは変更をコメント・要望へ誘導） */
 function _companyHearingCard(){
   if(!_showHearing()) return '';
   var done=companyHearingDone;
   var h='<div class="chf-card">';
   h+='<div class="chf-main"><div class="chf-ttl">📋 企業ヒアリングフォーム'
     +(done?'<span class="chf-tag done">回答済み</span>':'<span class="chf-tag todo">未回答</span>')+'</div>';
-  h+='<div class="chf-note">'+(done?'内容に変更があれば、こちらから更新できます。':'貴社の情報に関するヒアリングフォームです。ご回答をお願いします。')+'</div></div>';
-  h+='<a class="chf-btn" href="'+esc(_companyHearingUrl())+'" target="_blank" rel="noopener">'+(done?'内容を確認・更新':'回答する')+'</a>';
+  h+='<div class="chf-note">'+(done?'回答後に内容を変更したい場合は、右下の「コメント・要望」からお知らせください。':'貴社の情報に関するヒアリングフォームです。ご回答をお願いします。')+'</div></div>';
+  if(!done){ h+='<a class="chf-btn" href="'+esc(_companyHearingUrl())+'" target="_blank" rel="noopener">回答する</a>'; } // ver.20260622.01: 回答済みは自己更新ボタンを出さず、変更はコメント・要望へ誘導
   h+='</div>';
   return h;
 }
