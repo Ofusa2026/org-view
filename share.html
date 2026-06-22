@@ -367,7 +367,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 案件進捗確認</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260620.01</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260622.01</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -3736,6 +3736,18 @@ async function loadData(){
           if(!Array.isArray(requiredDocsCoKokko) || !requiredDocsCoKokko.length) return null;
           return requiredDocsCoKokko.slice();
         };
+        // ver.20260622.01: 【順序バグ修正】不足書類の統計計算より前に「現行書類リスト」設定を確定させる。
+        // これが後回しだと requiredDocsCo が空のまま計算され、入管列フィルターが効かず
+        // 国交省書類まで入管列に混在してしまう（下の settings parse は冪等なので残置）。
+        requiredDocs={}; caseCustomDocs={}; requiredDocsCo=[]; requiredDocsCoField={};
+        (data.settings||[]).forEach(function(row){
+          var k=row.key||'';
+          if(k==='required_docs'){ try{var rd=row.value;if(typeof rd==='string')rd=JSON.parse(rd);if(rd&&typeof rd==='object')requiredDocs=rd;}catch(e){} }
+          else if(k==='case_custom_docs'){ try{var cd=row.value;if(typeof cd==='string')cd=JSON.parse(cd);if(cd&&typeof cd==='object')caseCustomDocs=cd;}catch(e){} }
+          else if(k==='required_docs_co'){ try{var rc=row.value;if(typeof rc==='string')rc=JSON.parse(rc);if(Array.isArray(rc))requiredDocsCo=rc;}catch(e){} }
+          else if(k==='required_docs_co_field'){ try{var rf=row.value;if(typeof rf==='string')rf=JSON.parse(rf);if(rf&&typeof rf==='object')requiredDocsCoField=rf;}catch(e){} }
+          else if(k==='required_docs_co_kokko'){ try{var rk=row.value;if(typeof rk==='string')rk=JSON.parse(rk);if(Array.isArray(rk)&&rk.length)requiredDocsCoKokko=rk;}catch(e){} }
+        });
         allCases.forEach(function(c){
           // ver.20260612.01: 建設/非建設で大分岐し、人材・企業それぞれの非表示フラグを決定
           // ver.20260612.02: 特定技能2号は国交省申請対象外なので、 建設×2号は通常判定（hideCo=false）
