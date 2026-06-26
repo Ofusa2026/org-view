@@ -439,7 +439,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div>
     <div class="header-logo">OFUSA 大房行政書士法人</div>
     <div class="header-title">📋 登録支援機関マイページ</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260618.test53 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260622.test54 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -864,6 +864,9 @@ function getMlitStatus(c){
   if(!oa.kokkoSho || oa.kokkoSho_fuyo) return '';
   return oa.kokkoSho_status || '未設定';
 }
+// ver.20260622.test54: 国交省ステータスの表示丸め（prodより移植）
+var MLIT_DISPLAY_MAP={'準備中(企業ボール)':'準備中(企業ボール)','精査 / 事前補正依頼中(企業ボール)':'準備中(企業ボール)','企業確認中':'準備中(企業ボール)','準備中(ナンバリング未対応)':'準備中(大房ボール)','準備中(ナンバリング済み)':'準備中(大房ボール)','申請可能':'準備中(大房ボール)','申請済み':'申請中','補正未着手':'申請中','補正可能':'申請中','補正完了':'申請中','完了(許可済)':'許可済み','未紐付':'','未設定':''};
+function getMlitStatusDisplay(c){ var t=getMlitStatus(c); if(!t) return t; if(MLIT_DISPLAY_MAP.hasOwnProperty(t)) return MLIT_DISPLAY_MAP[t]; return '申請手続き中'; }
 
 // お知らせモーダル内のステータス表示ラベル
 var NOTIF_LABELS={'申請済(番号待)':'📤 申請済（番号待ち）','受付番号取込':'🔢 受付番号が付きました','審査完了':'✅ 審査完了','認定証発行':'🎉 認定証明書 発行','審査中':'✅ 申請済み・受付番号紐付','許可済 受取方法調整中':'🎉 許可済 受取方法調整中','入管受取ステータス変更中':'🏛 入管受取ステータス変更中','郵送交付':'📮 郵送交付','★郵送交付':'📮 郵送交付','★窓口受取':'🏢 窓口受取','窓口受取（本人）':'🏢 窓口受取（本人）'};
@@ -981,6 +984,9 @@ var DONE_ST=['完了','審査完了'];
 // ver.20260518.13: ダッシュボードを追加、完了の表記をシンプル化
 var GROUPS=[{id:'dashboard',label:'ダッシュボード'},{id:'active',label:'進行中'},{id:'done',label:'発行済み・完了'},{id:'all',label:'すべて'}];
 var allCases=[],allReceipts=[],allShinsa=[],allCerts=[],allIntakes=[],orgProfile=null,intakeStaff=[],orgEmails=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus='',filterCompany='',filterClientStaff='',colFilters={},sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,isGpMode=false,gpInfoByCaseId={},_imeOn=false; // ver.20260606.13: allCerts追加（認定証PDF）
+// ver.20260622.test54: 書類リスト用グローバル変数（settingsから取得 / 案件管理側と同期）→ 国交省/入管分離に必要
+var requiredDocs={},caseCustomDocs={},requiredDocsCo=[],requiredDocsCoField={};
+var requiredDocsCoKokko=['1. 履歴事項全部証明書','2. 建設業許可','3. 標準報酬決定通知書','4. キャリアアップID','5. 会員証明書','6. 委任状','7. 求人票','8. 同等の技能を有する日本人と同等額以上の報酬であることの説明書','9. 就業規則および賃金規程','10. 賃金台帳','11. 経歴書','12. 雇用契約書','13. 36協定','14. 年間カレンダー','15. 重要事項説明書','16. 技能者ID'];
 // ver.20260615.test13: 人材詳細モーダル用 — 人材レコード/書類チェックリスト
 var allPersons={}, personDocsAll={}, coDocsAll={};
 // ver.20260615.test16: 登録支援機関からの変更依頼（key suffix -> {text,requested_at,requested_by,status}）
@@ -1249,19 +1255,20 @@ var REQUEST_16_FIX_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfPlaceholder
 function showGpMissing(caseId){
   var c=allCases.find(function(x){return x.id===caseId;});
   if(!c) return;
-  var pList=c.gpPersonMissing||[];
-  var cList=c.gpCoMissing||[];
+  // ver.20260622.test54: 人材 / 企業（国交省）/ 企業（入管）の3区分で表示（prodより移植）
+  var _ps=c.gpPersonStats||{missing:[]};
+  var _cks=c.gpCoKokkoStats||{missing:[]};
+  var _cns=c.gpCoNyukanStats||{missing:[]};
   var body='';
-  if(pList.length){
-    body+='<div style="font-weight:700;color:#dc2626;font-size:13px;margin-bottom:8px;border-bottom:1px solid #fecaca;padding-bottom:4px;">👤 人材書類（未確認 '+pList.length+'件）</div><ul style="margin:0 0 16px 0;padding:0 0 0 22px;font-size:12px;color:#374151;line-height:1.7;">';
-    pList.forEach(function(d){ body+='<li>'+esc(d)+'</li>'; });
-    body+='</ul>';
-  }
-  if(cList.length){
-    body+='<div style="font-weight:700;color:#dc2626;font-size:13px;margin-bottom:8px;border-bottom:1px solid #fecaca;padding-bottom:4px;">🏢 企業書類（未確認 '+cList.length+'件）</div><ul style="margin:0 0 16px 0;padding:0 0 0 22px;font-size:12px;color:#374151;line-height:1.7;">';
-    cList.forEach(function(d){ body+='<li>'+esc(d)+'</li>'; });
-    body+='</ul>';
-  }
+  var _sec=function(icon,title,list,hidden){
+    if(hidden||!list||!list.length) return '';
+    var h='<div style="font-weight:700;color:#dc2626;font-size:13px;margin-bottom:8px;border-bottom:1px solid #fecaca;padding-bottom:4px;">'+icon+' '+title+'（未確認 '+list.length+'件）</div><ul style="margin:0 0 16px 0;padding:0 0 0 22px;font-size:12px;color:#374151;line-height:1.7;">';
+    list.forEach(function(d){ h+='<li>'+esc(d)+'</li>'; });
+    return h+'</ul>';
+  };
+  body+=_sec('👤','人材書類',_ps.missing,c._hidePerson);
+  body+=_sec('🏗','企業書類（国交省）',_cks.missing,c._hideCoKokko);
+  body+=_sec('🏢','企業書類（入管）',_cns.missing,c._hideCoNyukan);
   if(!body) body='<div style="color:#10b981;font-size:13px;font-weight:700;">不足書類はありません ✓</div>';
   // モーダル表示
   var modal=document.createElement('div');
@@ -1432,7 +1439,7 @@ function buildRow(c){
     stHtml='<span class="st-badge" style="background:'+extCol.bg+';color:'+extCol.col+';border-color:'+extCol.bor+';" title="内部ステータス: '+esc(c.status||'')+'">'+esc(extLabel)+'</span>';
   }
   // 他機関申請（建設分野のみ表示）
-  var mlitLabel=getMlitStatus(c);
+  var mlitLabel=getMlitStatusDisplay(c); // ver.20260622.test54: 表示丸め版を使用
   var mlitHtml=mlitLabel?'<span class="st-badge" style="background:#f8fafc;color:'+agencyColor(mlitLabel)+';border-color:#e2e8f0;white-space:normal;max-width:none;line-height:1.3;">🏗 国交省 '+esc(mlitLabel)+'</span>':'<span style="color:#d1d5db;font-size:10px;">—</span>';
   var tCls=c.appType==='認定'?'type-nintei':c.appType==='更新'?'type-koshin':c.appType==='変更'?'type-henkou':'type-other';
   var typeHtml=c.appType?'<span class="type-badge '+tCls+'">'+esc(c.appType)+'</span>':'—';
@@ -1508,6 +1515,13 @@ function buildRow(c){
       _iraiHtml='<span style="color:#cbd5e1;font-size:12px;">—</span>';
     }
     h+='<td data-col-key="gpIraiDate" style="white-space:nowrap;text-align:center;min-width:100px;">'+_iraiHtml+'</td>';
+    // ver.20260622.test54: 申請受付日(receipt_date)+経過日数（prodより移植）
+    var _shinseiHtml;
+    if(c.receiptDate){
+      _shinseiHtml='<div style="font-size:12px;color:#475569;">'+esc(c.receiptDate)+'</div>';
+      try{ var _td5=new Date();_td5.setHours(0,0,0,0); var _sd=new Date(c.receiptDate);_sd.setHours(0,0,0,0); if(!isNaN(_sd.getTime())){ var _el5=Math.floor((_td5-_sd)/86400000); if(_el5>=0) _shinseiHtml+='<div style="font-size:11px;color:#0f2040;font-weight:700;margin-top:2px;">'+_el5+'日経過</div>'; } }catch(e){}
+    } else { _shinseiHtml='<span style="color:#cbd5e1;font-size:12px;">—</span>'; }
+    h+='<td data-col-key="gpShinseiElapsed" style="white-space:nowrap;text-align:center;min-width:100px;">'+_shinseiHtml+'</td>';
   } else {
     h+='<td data-col-key="name" style="min-width:110px;max-width:170px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;word-break:break-word;">'+esc(c.applicant||'')+'</div>'+_personBtn(cid)+'</td>'; // ver.20260612.test05: 幅を半分に＋折り返し
   }
@@ -1547,16 +1561,24 @@ function buildRow(c){
   // ver.20260606.04: GPモード - 不足書類列（クリックで詳細表示）
   // ver.20260606.11: 文字サイズアップ
   if(isGpMode){
-    var _pMis=(c.gpPersonMissing||[]).length;
-    var _cMis=(c.gpCoMissing||[]).length;
-    var _missTotal=_pMis+_cMis;
-    var _missHtml;
-    if(_missTotal===0){
-      _missHtml='<span style="color:#10b981;font-size:16px;font-weight:700;">✓</span>';
-    } else {
-      _missHtml='<span onclick="showGpMissing(\''+c.id+'\')" style="cursor:pointer;display:inline-block;font-size:12px;color:#dc2626;background:#fee2e2;padding:4px 10px;border-radius:5px;font-weight:700;border:1px solid #fca5a5;line-height:1.3;" title="クリックで不足書類の詳細">人材'+_pMis+' / 企業'+_cMis+'</span>';
-    }
-    h+='<td data-col-key="gpMissingDocs" style="white-space:nowrap;text-align:center;">'+_missHtml+'</td>';
+    // ver.20260622.test54: 不足書類を3列に分割（人材 / 企業（国交省）/ 企業（入管））+ 国交省経過日数（prodより移植）
+    var _pS=c.gpPersonStats||{total:0,ok:0,missing:[],okList:[]};
+    var _cnS=c.gpCoNyukanStats||{total:0,ok:0,missing:[],okList:[]};
+    var _ckS=c.gpCoKokkoStats||{total:0,ok:0,missing:[],okList:[]};
+    var _mkCell=function(stats,hidden){
+      var mis=stats.missing.length;
+      if(hidden) return '<td style="white-space:nowrap;text-align:center;"><div style="display:inline-block;font-size:10px;padding:5px 9px;background:#f8fafc;border-radius:5px;border:1px solid #e2e8f0;color:#9ca3af;">—</div></td>';
+      if(stats.total===0) return '<td style="white-space:nowrap;text-align:center;"><div style="display:inline-block;padding:5px 9px;background:#f8fafc;border-radius:5px;border:1px solid #e2e8f0;color:#9ca3af;font-size:10px;">0/0</div></td>';
+      if(mis===0) return '<td style="white-space:nowrap;text-align:center;"><div onclick="showGpMissing(\''+c.id+'\')" title="クリックで書類の詳細を確認" style="display:inline-block;cursor:pointer;padding:5px 9px;background:#d1fae5;border-radius:5px;border:1px solid #6ee7b7;font-size:11px;color:#059669;font-weight:700;">'+stats.ok+'/'+stats.total+' ✓</div></td>';
+      return '<td style="white-space:nowrap;text-align:center;"><div onclick="showGpMissing(\''+c.id+'\')" title="クリックで不足書類の詳細" style="display:inline-block;cursor:pointer;padding:5px 9px;background:#fee2e2;border-radius:5px;border:1px solid #fca5a5;font-size:11px;color:#dc2626;font-weight:700;">'+stats.ok+'/'+stats.total+' <span style="font-size:10px;">('+mis+')</span></div></td>';
+    };
+    h+=_mkCell(_pS,c._hidePerson).replace('<td ','<td data-col-key="gpMissingDocs" ');
+    h+=_mkCell(_ckS,c._hideCoKokko).replace('<td ','<td data-col-key="gpMissingDocsCoKokko" ');
+    h+=_mkCell(_cnS,c._hideCoNyukan).replace('<td ','<td data-col-key="gpMissingDocsCoNyukan" ');
+    var _elapsed=c.gpKokkoElapsed, _elHtml;
+    if(_elapsed===null||_elapsed===undefined){ _elHtml='<span style="font-size:11px;color:#9ca3af;">—</span>'; }
+    else { var _est; if(_elapsed>=60)_est='background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;'; else if(_elapsed>=30)_est='background:#fef3c7;color:#92400e;border:1px solid #fcd34d;'; else _est='background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;'; _elHtml='<span style="display:inline-block;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:700;'+_est+'">'+_elapsed+'日</span>'; }
+    h+='<td data-col-key="gpKokkoElapsed" style="white-space:nowrap;text-align:center;">'+_elHtml+'</td>';
   }
   // ver.20260518.16: PDFカラム（受付番号PDF + 審査完了PDF）
   h+='<td data-col-key="_downloads" style="font-size:10px;min-width:130px;">'+buildDownloadCell(c)+'</td>';
@@ -1914,7 +1936,7 @@ function renderSidebar(){
     h+='<div class="sb-item'+(currentGroup==='shinsa'?' active':'')+'" onclick="switchGroup(\'shinsa\')">審査完了 <span class="sb-badge">'+allShinsa.length+'</span></div>';
   }
   // ver.20260519.17: アイデム専用 窓口申請/窓口受取（日付ベース判定）
-  if(orgName==='株式会社アイデム'){
+  if(_isAidemViewer()){   // ver.20260620.01: アイデム自前も窓口申請/受取を表示
     var showMshinsei = isSidebarItemVisible('madoguchi_shinsei');
     var showMuketori = isSidebarItemVisible('madoguchi_uketori');
     if(showMshinsei || showMuketori){
@@ -1950,6 +1972,7 @@ var COLS=[
   {key:'name',label:'案件名 / 申請者'},
   {key:'gpKumiaiDate',label:'組合受領'}, // ver.20260606.12: クリックでソート可能に
   {key:'gpIraiDate',label:'依頼日'},     // ver.20260606.12: クリックでソート可能に
+  {key:'gpShinseiElapsed',label:'申請受付日',noSort:true}, // ver.20260622.test54: 申請受付日(receipt_date)+経過日数（prodより移植）
   {key:'company',label:'所属機関'},
   {key:'requestDate',label:'案件受領日'}, // ver.20260617.test47: 案件受領日(request_date)を一覧に表示
   {key:'appType',label:'種別'},
@@ -1960,7 +1983,10 @@ var COLS=[
   {key:'receiptNo',label:'受付番号'},
   {key:'tempReturn',label:'帰国予定'},
   {key:'deliveryMethod',label:'受取方法'}, // ver.20260601.01: 受取方法列を追加
-  {key:'gpMissingDocs',label:'不足書類',noSort:true}, // ver.20260606.04: GPモード専用 不足書類列
+  {key:'gpMissingDocs',label:'不足書類（人材）',noSort:true}, // ver.20260613.02: 人材専用に
+  {key:'gpMissingDocsCoKokko',label:'不足書類（企業・国交省）',noSort:true}, // ver.20260613.02: 国交省企業書類（prodより移植）
+  {key:'gpMissingDocsCoNyukan',label:'不足書類（企業・入管）',noSort:true}, // ver.20260613.02: 入管企業書類（prodより移植）
+  {key:'gpKokkoElapsed',label:'国交省経過日数',noSort:true}, // ver.20260613.05: 国交省書類の最古案内日からの経過日数（prodより移植）
   {key:'_downloads',label:'PDF',noSort:true}, // ver.20260518.16: 資料DL→PDFに変更
   {key:'_comment',label:'大房コメント',noSort:true},
   {key:'_own_comment',label:'登録支援機関様コメント',noSort:true}
@@ -4506,17 +4532,164 @@ async function loadData(){
           if(!coDocs[r.co_id][name]) coDocs[r.co_id][name]={};
           coDocs[r.co_id][name][prefix]=r.value;
         });
-        var _calcMissing=function(docMap,mode){
-          var missing=[]; if(!docMap||mode==='skip') return missing;
-          Object.keys(docMap).forEach(function(name){var d=docMap[name];if(_hasVal(d.skip))return;if(_hasVal(d.staff))return;if(mode==='annaiOnly'&&!_hasVal(d.req))return;missing.push(name);});
-          return missing;
+        var _calcMissingStats=function(docMap,hide,docListFilter){
+          var stats={total:0,ok:0,missing:[],okList:[]};
+          if(!docMap||hide) return stats;
+          var _useFilter=Array.isArray(docListFilter) && docListFilter.length>0;
+          // ver.20260613.08: アクションチェック → どれか1書類でも staff:: か skip:: があれば表示対象
+          var _hasAnyAction=false;
+          var _checkNames=_useFilter ? docListFilter : Object.keys(docMap);
+          _checkNames.forEach(function(name){
+            var d=docMap[name];
+            if(d && (_hasVal(d.staff) || _hasVal(d.skip))){
+              _hasAnyAction=true;
+            }
+          });
+          if(!_hasAnyAction) return stats;  // 何もアクションなし → 「—」表示
+          // 通常の集計
+          Object.keys(docMap).forEach(function(name){
+            var d=docMap[name];
+            if(_hasVal(d.skip)) return;                            // 不要マーク → 集計対象外
+            if(!_hasVal(d.req) && !_hasVal(d.staff)) return;      // 案内も確認もなし → 集計対象外
+            if(_useFilter && docListFilter.indexOf(name)<0) return;  // 現行リスト外 → 除外
+            stats.total++;
+            if(_hasVal(d.staff)){
+              stats.ok++;
+              stats.okList.push(name);
+            } else {
+              stats.missing.push(name);
+            }
+          });
+          return stats;
         };
+        // ver.20260613.01: 案件の「現行人材書類リスト」を計算（custom優先、なければ required_docs[appType]）
+        var _getDocListForCase=function(c){
+          var appType=c.appType||'';
+          var listKey=null;
+          if(appType.indexOf('更新')>=0) listKey='更新';
+          else if(appType.indexOf('変更')>=0) listKey='変更';
+          else if(appType.indexOf('認定')>=0) listKey='認定';
+          if(!listKey) return null;  // 申請種別不明ならフィルターしない
+          // case_custom_docs[caseId][listKey] が優先
+          var custom=caseCustomDocs[c.id] && caseCustomDocs[c.id][listKey];
+          if(Array.isArray(custom) && custom.length) return custom;
+          // 基本リスト
+          var base=requiredDocs[listKey];
+          return Array.isArray(base) ? base : null;
+        };
+        // ver.20260613.01: 案件の「現行企業書類リスト」を計算（基本 + 分野別追加）
+        var _getCoDocListForCase=function(c){
+          if(!Array.isArray(requiredDocsCo) || !requiredDocsCo.length) return null;
+          var list=requiredDocsCo.slice();
+          var field=c.applicantField||'';
+          if(field && requiredDocsCoField && typeof requiredDocsCoField==='object'){
+            Object.keys(requiredDocsCoField).forEach(function(k){
+              if(field.indexOf(k)>=0){
+                (requiredDocsCoField[k]||[]).forEach(function(d){
+                  if(list.indexOf(d)<0) list.push(d);
+                });
+              }
+            });
+          }
+          return list;
+        };
+        // ver.20260613.02: 案件の「現行国交省企業書類リスト」を計算
+        var _getCoKokkoDocListForCase=function(c){
+          if(!Array.isArray(requiredDocsCoKokko) || !requiredDocsCoKokko.length) return null;
+          return requiredDocsCoKokko.slice();
+        };
+        // ver.20260622.01: 【順序バグ修正】不足書類の統計計算より前に「現行書類リスト」設定を確定させる。
+        // これが後回しだと requiredDocsCo が空のまま計算され、入管列フィルターが効かず
+        // 国交省書類まで入管列に混在してしまう（下の settings parse は冪等なので残置）。
+        requiredDocs={}; caseCustomDocs={}; requiredDocsCo=[]; requiredDocsCoField={};
+        (data.settings||[]).forEach(function(row){
+          var k=row.key||'';
+          if(k==='required_docs'){ try{var rd=row.value;if(typeof rd==='string')rd=JSON.parse(rd);if(rd&&typeof rd==='object')requiredDocs=rd;}catch(e){} }
+          else if(k==='case_custom_docs'){ try{var cd=row.value;if(typeof cd==='string')cd=JSON.parse(cd);if(cd&&typeof cd==='object')caseCustomDocs=cd;}catch(e){} }
+          else if(k==='required_docs_co'){ try{var rc=row.value;if(typeof rc==='string')rc=JSON.parse(rc);if(Array.isArray(rc))requiredDocsCo=rc;}catch(e){} }
+          else if(k==='required_docs_co_field'){ try{var rf=row.value;if(typeof rf==='string')rf=JSON.parse(rf);if(rf&&typeof rf==='object')requiredDocsCoField=rf;}catch(e){} }
+          else if(k==='required_docs_co_kokko'){ try{var rk=row.value;if(typeof rk==='string')rk=JSON.parse(rk);if(Array.isArray(rk)&&rk.length)requiredDocsCoKokko=rk;}catch(e){} }
+        });
         allCases.forEach(function(c){
-          var rs=c.residenceStatus||'';var hasTokutei=/特定技能/.test(rs);var hasKatsudo=/特定活動/.test(rs);
-          var mode='default'; if(hasKatsudo&&!hasTokutei)mode='skip'; else if(hasTokutei)mode='annaiOnly';
-          c._immiMode=mode;
-          c.gpPersonMissing=_calcMissing(personDocs[c.id],mode);
-          c.gpCoMissing=c.companyId?_calcMissing(coDocs[c.companyId],mode):[];
+          // ver.20260612.01: 建設/非建設で大分岐し、人材・企業それぞれの非表示フラグを決定
+          // ver.20260612.02: 特定技能2号は国交省申請対象外なので、 建設×2号は通常判定（hideCo=false）
+          // ver.20260613.02: 企業書類を「入管(coNyukan)」「国交省(coKokko)」に分けて、 それぞれ非表示判定
+          // ver.20260613.04: ステータスが「完了」「審査完了」(=発行済み)の案件は不足書類を全部非表示
+          var oa=c.otherAgencies||{};
+          var isKensetsu=!!(oa.kokkoSho && !oa.kokkoSho_fuyo);
+          var rs=c.residenceStatus||'';
+          var hasTokutei=/特定技能/.test(rs);
+          var hasKatsudo=/特定活動/.test(rs);
+          var has2Go=/特定技能2号/.test(rs);
+          var has1Go=hasTokutei && !has2Go;  // 「特定技能2号」を含まなければ1号扱い
+          var kokkoFinished=(oa.kokkoSho_status==='完了(許可済)');
+          // ver.20260613.04: 完了系ステータス（発行済み）
+          var isDone=(c.status==='完了' || c.status==='審査完了');
+          var hidePerson=false,hideCoNyukan=false,hideCoKokko=false;
+          if(isDone){
+            // 発行済み → もう書類追跡の対象外
+            hidePerson=true; hideCoNyukan=true; hideCoKokko=true;
+          } else if(isKensetsu){
+            // 建設業：国交省申請段階か否かで入管/国交省の表示を分ける
+            if(hasKatsudo && !hasTokutei){
+              // 特活のみ → 国交省段階 → 入管書類はまだ案内しない
+              hideCoNyukan=true;
+            } else if(has1Go && !kokkoFinished){
+              // 1号×国交省未完了 → 同様
+              hideCoNyukan=true;
+            } else if(has2Go){
+              // 2号 → 国交省対象外
+              hideCoKokko=true;
+            }
+            // それ以外（1号×国交省完了、 更新変更等）は両方表示
+          } else {
+            // 非建設業：国交省対象外
+            hideCoKokko=true;
+            if(hasKatsudo && !hasTokutei){
+              // 特活のみ → 人材も入管も非表示
+              hidePerson=true; hideCoNyukan=true;
+            }
+          }
+          c._hidePerson=hidePerson;
+          c._hideCoNyukan=hideCoNyukan;
+          c._hideCoKokko=hideCoKokko;
+          // 後方互換のための _hideCo（入管基準で残す）
+          c._hideCo=hideCoNyukan;
+          // ver.20260613.01: 現行書類リスト（案件管理側と同期）を取得してフィルター
+          var _personFilter=_getDocListForCase(c);
+          var _coFilter=_getCoDocListForCase(c);
+          var _coKokkoFilter=_getCoKokkoDocListForCase(c);
+          c.gpPersonStats=_calcMissingStats(personDocs[c.id],hidePerson,_personFilter);
+          // 入管企業書類（従来の gpCoStats と同じ意味）
+          c.gpCoNyukanStats=c.companyId?_calcMissingStats(coDocs[c.companyId],hideCoNyukan,_coFilter):{total:0,ok:0,missing:[],okList:[]};
+          // 国交省企業書類（新規）
+          c.gpCoKokkoStats=c.companyId?_calcMissingStats(coDocs[c.companyId],hideCoKokko,_coKokkoFilter):{total:0,ok:0,missing:[],okList:[]};
+          // 後方互換のため gpCoStats も gpCoNyukanStats と同じ値で持つ
+          c.gpCoStats=c.gpCoNyukanStats;
+          c.gpPersonMissing=c.gpPersonStats.missing;
+          c.gpCoMissing=c.gpCoNyukanStats.missing;
+          // ver.20260613.05: 国交省書類の最古案内日からの経過日数を計算
+          // 国交省書類リスト内で req:: 日付があるものから最古を取得 → 今日まで何日経過
+          c.gpKokkoElapsed=null;  // 計算不可ならnull
+          if(!hideCoKokko && c.companyId && Array.isArray(_coKokkoFilter) && _coKokkoFilter.length){
+            var _coMap=coDocs[c.companyId]||{};
+            var _oldestReq=null;
+            _coKokkoFilter.forEach(function(name){
+              var d=_coMap[name];
+              if(d && _hasVal(d.req) && !_hasVal(d.skip) && !_hasVal(d.staff)){
+                // 不足扱いの書類のうち、 最古の案内日を採用
+                var _dt=new Date(d.req);
+                if(!isNaN(_dt.getTime())){
+                  if(!_oldestReq || _dt < _oldestReq) _oldestReq=_dt;
+                }
+              }
+            });
+            if(_oldestReq){
+              var _todayD=new Date(); _todayD.setHours(0,0,0,0);
+              _oldestReq.setHours(0,0,0,0);
+              c.gpKokkoElapsed=Math.floor((_todayD-_oldestReq)/86400000);
+            }
+          }
         });
       }catch(eDc){ console.warn('[gp missing docs]', eDc); }
     }
