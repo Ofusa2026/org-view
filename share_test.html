@@ -439,7 +439,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260630.test56 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260630.test57 (RPC)</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -3464,18 +3464,49 @@ function _intakeStatusBadge(st){
 function _intakeDelivery(v){ if(v==='window'||v==='窓口受取') return '窓口受取'; if(v==='mail'||v==='郵送交付'||v==='郵送') return '郵送交付'; return v?esc(v):'—'; }
 function _intakeFee(v){ if(v===null||v===undefined||v==='') return '—'; var n=parseInt(String(v).replace(/[^0-9.-]/g,''),10); if(isNaN(n)) return esc(String(v)); return '¥'+n.toLocaleString('ja-JP')+'（税抜）'; }
 function _intakeRecommend(v){ return (v===true||v==='true'||v===1)?'要':'不要'; }
+var intakeFY=null, intakeMonth='all';
+function _intakeFY(iso){ var d=new Date(iso); if(isNaN(d.getTime())) return null; var y=d.getFullYear(),m=d.getMonth()+1; return m>=4?y:y-1; }
+function switchIntakeFY(y){ intakeFY=y; intakeMonth='all'; renderIntakes(); }
+function switchIntakeMonth(m){ intakeMonth=m; renderIntakes(); }
+function _intakeMonTab(val,label,active){ return '<button onclick="switchIntakeMonth(\''+val+'\')" style="padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid '+(active?'#6366f1':'#e2e8f0')+';background:'+(active?'#6366f1':'#fff')+';color:'+(active?'#fff':'#475569')+';white-space:nowrap;">'+label+'</button>'; }
 function renderIntakes(){
   var fb=document.getElementById('filter-bar'); if(fb) fb.innerHTML='';
   var h='<div style="padding:4px 2px 14px;">';
   h+='<div style="font-size:17px;font-weight:900;color:#0f2040;">📤 送信した依頼</div>';
-  h+='<div style="font-size:11.5px;color:#64748b;margin-top:4px;line-height:1.6;">OFUSAに送信した新規案件依頼の受付状況です。<b>確認待ち</b>＝OFUSAが確認中／<b>登録済み</b>＝正式案件として登録済み（「進行中」「すべて」タブに表示）／<b>差し戻し</b>＝内容をご確認のうえOFUSAへご連絡ください。<br>※ 登録済みは直近30日分のみ表示しています。</div>';
+  h+='<div style="font-size:11.5px;color:#64748b;margin-top:4px;line-height:1.6;">OFUSAに送信した新規案件依頼の受付状況です。<b>確認待ち</b>＝OFUSAが確認中／<b>登録済み</b>＝正式案件として登録済み（「進行中」「すべて」タブに表示）／<b>差し戻し</b>＝内容をご確認のうえOFUSAへご連絡ください。</div>';
   h+='</div>';
   if(!allIntakes || !allIntakes.length){
     h+='<div class="empty">送信した依頼はありません</div>';
     document.getElementById('main').innerHTML=h; return;
   }
+  // ver.20260630.test57: 年度切替＋月別タブ
+  var fySet={}; allIntakes.forEach(function(x){ var fy=_intakeFY(x.received_at); if(fy!=null) fySet[fy]=1; });
+  var fys=Object.keys(fySet).map(Number).sort(function(a,b){return b-a;});
+  if(intakeFY==null || fys.indexOf(intakeFY)<0) intakeFY=(fys.length?fys[0]:null);
+  if(fys.length){
+    var _i=fys.indexOf(intakeFY);
+    h+='<div style="display:flex;align-items:center;gap:8px;margin:2px 2px 12px;flex-wrap:wrap;">';
+    h+='<button onclick="switchIntakeFY('+fys[Math.min(_i+1,fys.length-1)]+')" '+(_i>=fys.length-1?'disabled':'')+' style="border:1px solid #e2e8f0;background:#fff;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:13px;'+(_i>=fys.length-1?'opacity:.35;cursor:default;':'')+'">◀</button>';
+    h+='<select onchange="switchIntakeFY(parseInt(this.value,10))" style="border:1px solid #cbd5e1;border-radius:8px;padding:5px 10px;font-size:13px;font-weight:800;color:#0f2040;">'+fys.map(function(y){return '<option value="'+y+'"'+(y===intakeFY?' selected':'')+'>'+y+'年度</option>';}).join('')+'</select>';
+    h+='<button onclick="switchIntakeFY('+fys[Math.max(_i-1,0)]+')" '+(_i<=0?'disabled':'')+' style="border:1px solid #e2e8f0;background:#fff;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:13px;'+(_i<=0?'opacity:.35;cursor:default;':'')+'">▶</button>';
+    h+='<span style="font-size:10.5px;color:#94a3b8;">（年度＝4月〜翻3月）</span>';
+    h+='</div>';
+  }
+  var inFY=(intakeFY==null)?allIntakes.slice():allIntakes.filter(function(x){return _intakeFY(x.received_at)===intakeFY;});
+  var monCnt={}; inFY.forEach(function(x){ var d=new Date(x.received_at); if(!isNaN(d.getTime())) monCnt[d.getMonth()+1]=(monCnt[d.getMonth()+1]||0)+1; });
+  var fyMonths=[4,5,6,7,8,9,10,11,12,1,2,3].filter(function(m){return monCnt[m];});
+  if(intakeMonth!=='all' && fyMonths.indexOf(parseInt(intakeMonth,10))<0) intakeMonth='all';
+  h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 2px 14px;">';
+  h+=_intakeMonTab('all','すべて（'+inFY.length+'）',intakeMonth==='all');
+  fyMonths.forEach(function(m){ h+=_intakeMonTab(String(m),m+'月（'+monCnt[m]+'）',intakeMonth===String(m)); });
+  h+='</div>';
+  var list=(intakeMonth==='all')?inFY:inFY.filter(function(x){ var d=new Date(x.received_at); return !isNaN(d.getTime())&&(d.getMonth()+1)===parseInt(intakeMonth,10); });
+  if(!list.length){
+    h+='<div class="empty">この期間に送信した依頼はありません</div>';
+    document.getElementById('main').innerHTML=h; return;
+  }
   var groups={}, order=[];
-  allIntakes.forEach(function(x){
+  list.forEach(function(x){
     var key=(x.received_at||'')+'||'+(x.case_name||'');
     if(!groups[key]){ groups[key]={received_at:x.received_at,case_name:x.case_name,app_type:x.app_type,company:x.company,aidem_branch:x.aidem_branch,client_staff:x.client_staff,accept_exp:x.accept_exp,support_fee:x.support_fee,rows:[],statuses:{}}; order.push(key); }
     groups[key].rows.push(x);
