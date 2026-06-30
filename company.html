@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260630.02: ヘッダーにバージョン表示を追加 -->
 <!-- ver.20260630.01: O-Link ブランドロゴをヘッダー・ログイン画面に追加 -->
 <!-- ver.20260622.01: 企業ヒアリングフォーム＝回答済みは自己更新ボタンを出さず、回答後の変更は右下の「コメント・要望」へ誘導 -->
 <!-- ver.20260618d2: コメント・要望の送信履歴を3件分の高さ＋スクロール化（件数表示つき） -->
@@ -31,7 +32,8 @@
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
 .header{background:#0f2040;color:white;padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:200;}
 .header-logo{font-size:10px;opacity:.5;letter-spacing:.5px;}
-.header-title{font-size:15px;font-weight:800;}
+.header-title{font-size:15px;font-weight:800;white-space:nowrap;}
+.header-ver{font-size:9px;opacity:.4;letter-spacing:.3px;white-space:nowrap;flex:none;}
 .header-org{font-size:11px;opacity:.75;margin-left:auto;max-width:240px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tabs{display:flex;gap:4px;background:#fff;border-bottom:1px solid #e2e8f0;padding:0 12px;position:sticky;top:45px;z-index:150;overflow-x:auto;}
 .tab{padding:11px 14px;font-size:12px;font-weight:700;color:#64748b;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;}
@@ -268,6 +270,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
+  <span class="header-ver">ver.20260630.02</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
