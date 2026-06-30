@@ -210,7 +210,7 @@ tbody tr:hover td{background:#f8faff;}
 tr.row-notif td{background:#fffbeb !important;}
 tr.row-notif:hover td{background:#fef3c7 !important;}
 .row-notif-dot{display:inline-block;width:6px;height:6px;background:#dc2626;border-radius:99px;margin-right:5px;animation:pulse 1.5s infinite;vertical-align:middle;}
-.st-badge{font-size:9px;font-weight:600;padding:1px 5px;border-radius:10px;border:1px solid;display:inline-block;white-space:nowrap;max-width:84px;overflow:hidden;text-overflow:ellipsis;}
+.st-badge{font-size:9px;font-weight:600;padding:1px 5px;border-radius:10px;border:1px solid;display:inline-block;white-space:normal;word-break:break-word;max-width:104px;line-height:1.35;}
 .type-badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;display:inline-block;}
 /* ver.20260606.11: GPモード時の文字サイズ底上げ (グローバルパートナーズ様用) */
 body.gp-mode table td{font-size:12px;}
@@ -439,7 +439,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260630.test58</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260630.test61</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1059,7 +1059,7 @@ var PERSON_LABELS={applicant_name_en:'氏名(英)',nationality:'国籍',national
 var PERSON_FIELD_ORDER=['applicant_name_en','nationality','nationality_code','gender','birthdate','age','birth_place','spouse','occupation','residence_card','passport','passport_expiry','residence_status','expire','stay_period','stay_period_other','hoped_stay_period','entry_date','first_entry','arrival_port','visa_place','stay_years','stay_months','total_stay_year','total_stay_month','home_country_address','jp_postal_code','address','jp_detail_address','jp_address','tel_num','phone','cel_phone','email','notification_email','contract_start','contract_end','hire_date','salary','skill_eval_type','skill_exam_1','skill_exam_loc_1','skill_exam_2','skill_exam_loc_2','skill_exam_3','skill_exam_loc_3','jp_eval_type','jp_exam_1','jp_exam_loc_1','jp_exam_2','jp_exam_loc_2','jp_exam_3','jp_exam_loc_3','gijutsu_type','gijutsu_work','gijutsu_proof','edu_country','education','school_name','completion_date','major','major_detail','experience','past_entry','past_entry_count','past_entry_from','past_entry_to','past_coe','past_coe_count','past_coe_denied','deportation','deportation_count','deportation_date','temp_return','temp_return_in','temp_return_flag','temp_return_in_tbd','ccus_worker_id','kokko_jyuji_koujigyo','kokko_jisyo_salary','line_group_id','case_id','updated_at'];
 // PDF/構造化データは別セクションで扱うためグリッドから除外
 var PERSON_GRID_SKIP={application_cert_pdf_urls:1,custody_receipt_pdf_urls:1,kyoryoku_pdf_urls:1,drive_urls:1,kokko_drive_url:1,kokko_checklist:1,missing_docs:1,extra:1,
-  case_id:1,kokko_jisyo_salary:1,total_stay_year:1,total_stay_month:1}; // ver.20260615.test20: ケースID/国交自社給与/通算在留(年・月)は非表示
+  case_id:1,kokko_jisyo_salary:1,total_stay_year:1,total_stay_month:1,gijutsu_proof:1}; // ver.20260615.test20: ケースID/国交自社給与/通算在留(年・月)は非表示
 function _hasV(v){ return v!=null && v!=='' && v!=='false'; }
 function _docChecklistHtml(docMap){
   if(!docMap){ return '<div style="font-size:11px;color:#94a3b8;">書類データはありません。</div>'; }
@@ -1540,10 +1540,14 @@ function buildRow(c){
   }
   h+='<td data-col-key="company" style="min-width:110px;max-width:170px;"><div style="font-size:10px;font-weight:600;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(c.company||'—')+'</div></td>'; // ver.20260612.test05: 折り返して全文表示
   h+='<td data-col-key="requestDate" style="font-size:10px;white-space:nowrap;color:#475569;min-width:88px;">'+(c.requestDate?esc(c.requestDate):'<span style="color:#d1d5db;">—</span>')+'</td>'; // ver.20260617.test47: 案件受領日
-  h+='<td data-col-key="appType" style="width:58px;">'+typeHtml+'</td>';
+  var _zs='';
+  if(c.residenceStatus){ var _r=c.residenceStatus;
+    _zs=/特定技能2号/.test(_r)?'特定技能2号':/特定技能/.test(_r)?'特定技能1号':(/技人国/.test(_r)||/技術.*人文知識.*国際業務/.test(_r))?'技人国':/特定活動/.test(_r)?'特定活動':/技能実習/.test(_r)?'技能実習':_r;
+  }
+  h+='<td data-col-key="appType" style="width:67px;">'+typeHtml+(_zs?'<div style="margin-top:4px;font-size:9px;color:#475569;font-weight:600;white-space:normal;line-height:1.3;" title="'+esc(c.residenceStatus)+'">'+esc(_zs)+'</div>':'')+'</td>';
   // ver.20260615.test09: 「担当」列を2段表示（上=登録支援機関側 client_staff / 下=大房側 staff）
   h+='<td data-col-key="staff" style="width:120px;vertical-align:top;">'+_tantoCell2(c.clientStaff,c.staff)+'</td>';
-  h+='<td data-col-key="status" style="white-space:nowrap;">'+stHtml+'</td>';
+  h+='<td data-col-key="status" style="white-space:normal;">'+stHtml+'</td>';
   // 他機関申請（国交省）列
   h+='<td data-col-key="_mlit" style="min-width:92px;max-width:118px;">'+mlitHtml+'</td>';
   h+='<td data-col-key="expire" style="'+expStyle+'font-size:10px;white-space:nowrap;min-width:88px;">';
@@ -1557,7 +1561,10 @@ function buildRow(c){
   else{h+='<div>'+(c.expire||'—')+'</div><div style="color:#9ca3af;font-size:9px;">特例 '+tokStr+'</div>';if(days!==null&&days<=14&&days>0)h+='<div style="color:#ea580c;font-size:9px;">あと'+days+'日</div>';else if(days!==null&&days<=0&&c.expire)h+='<div style="color:#dc2626;font-size:9px;">期限切れ</div>';}
   h+='</td>';
   // 受付番号
-  h+='<td data-col-key="receiptNo" style="font-size:10px;white-space:nowrap;">'+(c.receiptNo?'<span style="color:#2563eb;font-weight:700;">'+esc(c.receiptNo)+'</span>':'<span style="color:#d1d5db;">—</span>')+'</td>';
+  var _rdm=c.deliveryMethod||'mail';
+  var _rdmL=(_rdm==='window')?'🏛 窓口受取':'📮 郵送交付';
+  var _rdmS=(_rdm==='window')?'background:#fef3c7;color:#92400e;border:1px solid #fcd34d;':'background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;';
+  h+='<td data-col-key="receiptNo" style="font-size:10px;white-space:nowrap;">'+(c.receiptNo?'<span style="color:#2563eb;font-weight:700;">'+esc(c.receiptNo)+'</span>':'<span style="color:#d1d5db;">—</span>')+'<div style="margin-top:4px;"><span style="display:inline-block;font-size:9px;padding:1px 6px;border-radius:4px;font-weight:700;'+_rdmS+'">'+_rdmL+'</span></div></td>';
   // 帰国予定
   h+='<td data-col-key="tempReturn" style="font-size:10px;white-space:nowrap;'+retStyle+'">'+(c.tempReturn||'<span style="color:#d1d5db;">—</span>')+'</td>';
   // ver.20260601.01: 受取方法（郵送交付 / 窓口受取）
@@ -1596,7 +1603,7 @@ function buildRow(c){
   // ver.20260518.16: PDFカラム（受付番号PDF + 審査完了PDF）
   h+='<td data-col-key="_downloads" style="font-size:10px;min-width:91px;">'+buildDownloadCell(c)+'</td>';
   // 大房コメント（index.htmlから入力・表示のみ）
-  h+='<td data-col-key="_comment" style="min-width:180px;max-width:220px;">';
+  h+='<td data-col-key="_comment" style="min-width:90px;max-width:110px;">';
   if(comment){
     h+='<div style="font-size:11px;color:#374151;white-space:pre-wrap;line-height:1.5;">'+esc(comment)+'</div>';
   } else {
