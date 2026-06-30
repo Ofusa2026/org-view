@@ -1182,7 +1182,7 @@ function groupCases(gid){
   // ver.20260527.16: 「担当」列(staff)ソートはアイデム担当者(clientStaff)で比較
   if(sortCol){
     base=base.slice().sort(function(a,b){
-      var sortKey = (sortCol === 'staff') ? 'clientStaff' : sortCol;
+      var sortKey = (sortCol === 'staff') ? 'clientStaff' : (sortCol === 'gpShinseiElapsed') ? 'receiptDate' : sortCol; // ver.20260619.02: 申請受付日は受付日でソート
       var av=a[sortKey]||'',bv=b[sortKey]||'';
       if(!av&&!bv)return 0; if(!av)return 1; if(!bv)return -1;
       var r=av.localeCompare?av.localeCompare(bv,'ja'):(av<bv?-1:av>bv?1:0);
@@ -1255,21 +1255,34 @@ var REQUEST_16_FIX_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSfPlaceholder
 function showGpMissing(caseId){
   var c=allCases.find(function(x){return x.id===caseId;});
   if(!c) return;
-  // ver.20260622.test54: 人材 / 企業（国交省）/ 企業（入管）の3区分で表示（prodより移植）
-  var _ps=c.gpPersonStats||{missing:[]};
-  var _cks=c.gpCoKokkoStats||{missing:[]};
-  var _cns=c.gpCoNyukanStats||{missing:[]};
+  var pS=c.gpPersonStats||{total:0,ok:0,missing:[],okList:[]};
+  var cnS=c.gpCoNyukanStats||{total:0,ok:0,missing:[],okList:[]};
+  var ckS=c.gpCoKokkoStats||{total:0,ok:0,missing:[],okList:[]};
   var body='';
-  var _sec=function(icon,title,list,hidden){
-    if(hidden||!list||!list.length) return '';
-    var h='<div style="font-weight:700;color:#dc2626;font-size:13px;margin-bottom:8px;border-bottom:1px solid #fecaca;padding-bottom:4px;">'+icon+' '+title+'（未確認 '+list.length+'件）</div><ul style="margin:0 0 16px 0;padding:0 0 0 22px;font-size:12px;color:#374151;line-height:1.7;">';
-    list.forEach(function(d){ h+='<li>'+esc(d)+'</li>'; });
-    return h+'</ul>';
+  // セクション生成関数
+  var _mkSection=function(icon,label,stats,hidden){
+    if(hidden) return '';
+    if(stats.total===0) return '';
+    var head=icon+' '+label+' '+stats.ok+'/'+stats.total;
+    if(stats.missing.length) head+=' <span style="color:#dc2626;font-weight:700;">（不足 '+stats.missing.length+'件）</span>';
+    else head+=' <span style="color:#059669;font-weight:700;">✓ 全件確認済</span>';
+    var html='<div style="font-weight:700;color:#0f2040;font-size:13px;margin-bottom:8px;border-bottom:1px solid #e2e8f0;padding-bottom:4px;">'+head+'</div>';
+    if(stats.okList.length){
+      html+='<div style="font-size:11px;color:#059669;font-weight:700;margin:8px 0 4px;">✅ 確認済（'+stats.okList.length+'件）</div><ul style="margin:0 0 12px 0;padding:0 0 0 22px;font-size:12px;color:#475569;line-height:1.7;">';
+      stats.okList.forEach(function(d){ html+='<li>'+esc(d)+'</li>'; });
+      html+='</ul>';
+    }
+    if(stats.missing.length){
+      html+='<div style="font-size:11px;color:#dc2626;font-weight:700;margin:8px 0 4px;">⏳ 不足（'+stats.missing.length+'件）</div><ul style="margin:0 0 16px 0;padding:0 0 0 22px;font-size:12px;color:#374151;line-height:1.7;">';
+      stats.missing.forEach(function(d){ html+='<li>'+esc(d)+'</li>'; });
+      html+='</ul>';
+    }
+    return html;
   };
-  body+=_sec('👤','人材書類',_ps.missing,c._hidePerson);
-  body+=_sec('🏗','企業書類（国交省）',_cks.missing,c._hideCoKokko);
-  body+=_sec('🏢','企業書類（入管）',_cns.missing,c._hideCoNyukan);
-  if(!body) body='<div style="color:#10b981;font-size:13px;font-weight:700;">不足書類はありません ✓</div>';
+  body+=_mkSection('👤','人材書類',pS,c._hidePerson);
+  body+=_mkSection('🏗','企業書類（国交省）',ckS,c._hideCoKokko);
+  body+=_mkSection('🏢','企業書類（入管）',cnS,c._hideCoNyukan);
+  if(!body) body='<div style="color:#9ca3af;font-size:13px;text-align:center;padding:20px;">案内された書類はありません</div>';
   // モーダル表示
   var modal=document.createElement('div');
   modal.setAttribute('data-gp-modal','1');
@@ -1972,7 +1985,7 @@ var COLS=[
   {key:'name',label:'案件名 / 申請者'},
   {key:'gpKumiaiDate',label:'組合受領'}, // ver.20260606.12: クリックでソート可能に
   {key:'gpIraiDate',label:'依頼日'},     // ver.20260606.12: クリックでソート可能に
-  {key:'gpShinseiElapsed',label:'申請受付日',noSort:true}, // ver.20260622.test54: 申請受付日(receipt_date)+経過日数（prodより移植）
+  {key:'gpShinseiElapsed',label:'申請受付日'}, // ver.20260622.test54: 申請受付日(receipt_date)+経過日数。ソート可(receiptDate)（prodより移植）
   {key:'company',label:'所属機関'},
   {key:'requestDate',label:'案件受領日'}, // ver.20260617.test47: 案件受領日(request_date)を一覧に表示
   {key:'appType',label:'種別'},
