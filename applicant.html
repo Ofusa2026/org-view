@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>申請人マイページ | 大房行政書士法人</title>
+<!-- ver.20260630.01: O-Link ブランドロゴをヘッダー・ログイン画面に追加 -->
 <!-- ver.20260609.04: 申請人（人材本人）向け進捗・提出書類確認ページ -->
 <!-- ver.20260615.test33: ページ名を「提出書類・進捗確認」→「マイページ」に変更（本人共有しやすく・8言語対応） -->
 <!-- ver.20260616.multidoc: 署名済み書類のリンクを複数(docs)対応（1署名でN枚） -->
@@ -160,6 +161,7 @@ body{line-height:1.45;}
 </head>
 <body>
 <div class="header">
+  <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title" id="hdrTitle">申請人マイページ</span>
   <div class="header-right">
@@ -182,6 +184,7 @@ body{line-height:1.45;}
 
 <div id="passScreen" class="pass-screen hide">
   <div class="pass-box">
+    <div class="ol-login-brand" style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:14px;"><svg width="46" height="46" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#0f2040" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#0f2040" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#0f2040" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><div style="font-size:21px;font-weight:800;letter-spacing:.3px;color:#0f2040;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</div></div>
     <div class="pass-title" id="passTitle">パスワードを入力してください</div>
     <div class="pass-org" id="passOrgName"></div>
     <input class="pass-input pin-input" id="passInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'')" onkeydown="if(event.key==='Enter')passSubmit()">

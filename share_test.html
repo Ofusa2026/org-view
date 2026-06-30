@@ -437,9 +437,10 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 <div class="header">
   <button id="sbToggleBtn" onclick="toggleSidebar()" title="サイドバーの開閉" style="background:rgba(255,255,255,.12);border:none;color:white;font-size:16px;line-height:1;padding:8px 11px;border-radius:8px;cursor:pointer;flex-shrink:0;">☰</button>
   <div>
-    <div class="header-logo">OFUSA 大房行政書士法人</div>
+    <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
+    <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">📋 登録支援機関マイページ</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260622.test54 (RPC)</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260630.test55 (RPC)</div>
   </div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
@@ -497,7 +498,8 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 </div>
 <div id="passScreen" class="pass-screen" style="display:none;">
   <div class="pass-box">
-    <div class="pass-logo">OFUSA 大房行政書士法人</div>
+    <div class="ol-login-brand" style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:14px;"><svg width="46" height="46" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#0f2040" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#0f2040" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#0f2040" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><div style="font-size:21px;font-weight:800;letter-spacing:.3px;color:#0f2040;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</div></div>
+    <div class="pass-logo">大房行政書士法人</div>
     <div class="pass-title">🔒 パスワード認証</div>
     <div class="pass-org" id="passOrgName">読み込み中...</div>
     <input class="pass-input" type="password" id="passInput" placeholder="パスワードを入力"
