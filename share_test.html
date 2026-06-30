@@ -439,7 +439,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260630.test63</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260701.test64</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1059,7 +1059,7 @@ var PERSON_LABELS={applicant_name_en:'氏名(英)',nationality:'国籍',national
 var PERSON_FIELD_ORDER=['applicant_name_en','nationality','nationality_code','gender','birthdate','age','birth_place','spouse','occupation','residence_card','passport','passport_expiry','residence_status','expire','stay_period','stay_period_other','hoped_stay_period','entry_date','first_entry','arrival_port','visa_place','stay_years','stay_months','total_stay_year','total_stay_month','home_country_address','jp_postal_code','address','jp_detail_address','jp_address','tel_num','phone','cel_phone','email','notification_email','contract_start','contract_end','hire_date','salary','skill_eval_type','skill_exam_1','skill_exam_loc_1','skill_exam_2','skill_exam_loc_2','skill_exam_3','skill_exam_loc_3','jp_eval_type','jp_exam_1','jp_exam_loc_1','jp_exam_2','jp_exam_loc_2','jp_exam_3','jp_exam_loc_3','gijutsu_type','gijutsu_work','gijutsu_proof','edu_country','education','school_name','completion_date','major','major_detail','experience','past_entry','past_entry_count','past_entry_from','past_entry_to','past_coe','past_coe_count','past_coe_denied','deportation','deportation_count','deportation_date','temp_return','temp_return_in','temp_return_flag','temp_return_in_tbd','ccus_worker_id','kokko_jyuji_koujigyo','kokko_jisyo_salary','line_group_id','case_id','updated_at'];
 // PDF/構造化データは別セクションで扱うためグリッドから除外
 var PERSON_GRID_SKIP={application_cert_pdf_urls:1,custody_receipt_pdf_urls:1,kyoryoku_pdf_urls:1,drive_urls:1,kokko_drive_url:1,kokko_checklist:1,missing_docs:1,extra:1,
-  case_id:1,kokko_jisyo_salary:1,total_stay_year:1,total_stay_month:1,gijutsu_proof:1}; // ver.20260615.test20: ケースID/国交自社給与/通算在留(年・月)は非表示
+  case_id:1,kokko_jisyo_salary:1,total_stay_year:1,total_stay_month:1,gijutsu_proof:1,gijutsu_type:1,gijutsu_work:1}; // ver.20260615.test20: ケースID/国交自社給与/通算在留(年・月)は非表示
 function _hasV(v){ return v!=null && v!=='' && v!=='false'; }
 function _docChecklistHtml(docMap){
   if(!docMap){ return '<div style="font-size:11px;color:#94a3b8;">書類データはありません。</div>'; }
@@ -1109,8 +1109,13 @@ function openPersonModal(caseId){
   var caseGrid=''; caseRows.forEach(function(r){ if(_hasV(r[1])) caseGrid+='<div style="padding:4px 0;"><span style="display:inline-block;min-width:96px;font-size:10px;color:#94a3b8;font-weight:700;">'+esc(r[0])+'</span><span style="font-size:12px;color:#1e293b;">'+esc(String(r[1]))+'</span></div>'; });
   if(caseGrid){ h+=_personSectionTitle('📌 案件情報'); h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 18px;">'+caseGrid+'</div>'; }
   // 人材情報グリッド（全項目）
-  var ordered=PERSON_FIELD_ORDER.filter(function(k){return (k in p) && !PERSON_GRID_SKIP[k];});
-  var rest=Object.keys(p).filter(function(k){return PERSON_FIELD_ORDER.indexOf(k)<0 && !PERSON_GRID_SKIP[k];});
+  // ver.20260701.test64: 在留資格で項目を出し分け（特定技能=学歴非表示／技人国=技能評価・日本語試験非表示）
+  var _rs=c.residenceStatus||'';
+  var dynSkip={};
+  if(/特定技能/.test(_rs)){ ['edu_country','education','school_name','completion_date','major','major_detail'].forEach(function(k){dynSkip[k]=1;}); }
+  if(/技人国/.test(_rs)||(/技術/.test(_rs)&&/人文知識/.test(_rs)&&/国際業務/.test(_rs))){ ['skill_eval_type','skill_exam_1','skill_exam_loc_1','skill_exam_2','skill_exam_loc_2','skill_exam_3','skill_exam_loc_3','jp_eval_type','jp_exam_1','jp_exam_loc_1','jp_exam_2','jp_exam_loc_2','jp_exam_3','jp_exam_loc_3'].forEach(function(k){dynSkip[k]=1;}); }
+  var ordered=PERSON_FIELD_ORDER.filter(function(k){return (k in p) && !PERSON_GRID_SKIP[k] && !dynSkip[k];});
+  var rest=Object.keys(p).filter(function(k){return PERSON_FIELD_ORDER.indexOf(k)<0 && !PERSON_GRID_SKIP[k] && !dynSkip[k];});
   var keys=ordered.concat(rest);
   var grid='';
   keys.forEach(function(k){ var v=p[k]; if(v==null||v===''||typeof v==='object') return; var lab=PERSON_LABELS[k]||k; grid+='<div style="padding:4px 0;"><span style="display:inline-block;min-width:96px;font-size:10px;color:#94a3b8;font-weight:700;vertical-align:top;">'+esc(lab)+'</span><span style="font-size:12px;color:#1e293b;word-break:break-word;">'+esc(String(v))+'</span></div>'; });
