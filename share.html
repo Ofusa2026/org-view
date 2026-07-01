@@ -58,8 +58,8 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
 .header{background:#0f2040;color:white;padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:200;}
-.header-logo{font-size:10px;opacity:.5;letter-spacing:.5px;}
-.header-title{font-size:15px;font-weight:800;}
+.header-logo{font-size:10px;opacity:.5;letter-spacing:.5px;white-space:nowrap;}
+.header-title{font-size:15px;font-weight:800;white-space:nowrap;}
 .header-org{font-size:11px;opacity:.7;margin-left:auto;max-width:200px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .notif-btn{position:relative;background:rgba(255,255,255,.12);border:none;color:white;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:16px;line-height:1;display:flex;align-items:center;gap:6px;}
 .notif-btn:hover{background:rgba(255,255,255,.22);}
@@ -317,9 +317,18 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 
 
 /* ===== ver.20260519.07: アイデム新規案件依頼ボタン＆モーダル ===== */
-.new-case-btn{background:linear-gradient(135deg,#16a34a,#22c55e);color:white;border:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(34,197,94,.3);margin-right:12px;margin-left:auto;}
+.new-case-btn{background:linear-gradient(135deg,#16a34a,#22c55e);color:white;border:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(34,197,94,.3);margin-right:12px;margin-left:auto;white-space:nowrap;}
 .new-case-btn:hover{background:linear-gradient(135deg,#15803d,#16a34a);box-shadow:0 3px 10px rgba(34,197,94,.4);}
 .header:has(.new-case-btn:not([style*="display:none"])) .header-org{margin-left:0;}
+/* ver.20260701.02: モバイルヘッダー最適化（縦積み解消・要素整理） */
+@media(max-width:600px){
+  .header{flex-wrap:wrap;gap:6px 8px;padding:9px 12px;}
+  .header-logo{display:none;}
+  .hdr-ver{display:none;}
+  .header-title{font-size:12.5px;}
+  .new-case-btn{padding:7px 11px;font-size:11px;margin-right:0;}
+  .header-org{max-width:120px;font-size:10px;}
+}
 .nc-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:none;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto;}
 .nc-modal-bg.open{display:flex;}
 .nc-modal{background:white;border-radius:14px;width:100%;max-width:min(1340px,96vw);box-shadow:0 20px 60px rgba(0,0,0,.4);overflow:hidden;display:flex;flex-direction:column;max-height:calc(100vh - 48px);}
@@ -439,7 +448,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260701.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260701.02</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
