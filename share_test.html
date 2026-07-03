@@ -439,7 +439,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260701.test67</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260701.test68</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -758,18 +758,38 @@ function createOrgIntake(records){return sbRpc('create_org_intake',{p_token:curr
 // ver.20260702.01: 認証つき書類配信（GAS getOrgDoc）— ファイルは非公開のまま、token+パスワード認証を通した閲覧者だけがプレビュー/ダウンロード
 var GAS_URL='https://script.google.com/macros/s/AKfycbxxBta5g1jXVzTf-s4EgaIbMc3No42aaH8guMOorQQ8HZl2SlNu-8vpu0fCFj_rjKsalQ/exec';
 var allDocsByCase={}, _olDocLabel={};
-function _olJsonp(url,cb){
-  var cbName='oljp'+Date.now()+Math.floor(Math.random()*1000), done=false;
-  var s=document.createElement('script');
-  var timer=setTimeout(function(){ if(done)return; done=true; try{delete window[cbName];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s); cb({status:'error',msg:'timeout'}); },45000);
-  window[cbName]=function(data){ if(done)return; done=true; clearTimeout(timer); try{delete window[cbName];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s); cb(data); };
-  s.onerror=function(){ if(done)return; done=true; clearTimeout(timer); try{delete window[cbName];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s); cb({status:'error',msg:'load_failed'}); };
-  s.src=url+(url.indexOf('?')>=0?'&':'?')+'callback='+cbName;
-  document.body.appendChild(s);
+// ver.20260701.test68: 案件管理システムと同じ堅牢なGAS呼び出し（fetch cors 主／JSONP・XHR フォールバック）
+function _olParseCb(text,cb){
+  var fp=text.indexOf('('); if(fp>=0){ var lp=text.lastIndexOf(')'); if(lp>fp){ try{cb(JSON.parse(text.slice(fp+1,lp)));return;}catch(e){} } }
+  try{cb(JSON.parse(text));}catch(e){cb(null);}
+}
+function _olJsonpGet(url,callback){
+  var cbName='olgc'+(Date.now()%100000)+''+Math.floor(Math.random()*100);
+  var sep=url.indexOf('?')>=0?'&':'?'; var fullUrl=url+sep+'callback='+cbName; var done=false;
+  function tryFetch(){
+    fetch(fullUrl,{redirect:'follow',mode:'cors'}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
+      .then(function(t){ if(done)return; done=true; _olParseCb(t,callback); })
+      .catch(function(){ if(done)return; tryJsonp(); });
+  }
+  function tryJsonp(){
+    var timer=setTimeout(function(){ if(done)return; done=true; try{delete window[cbName];}catch(e){} if(sc.parentNode)sc.parentNode.removeChild(sc); tryXHR(); },15000);
+    window[cbName]=function(data){ if(done)return; done=true; clearTimeout(timer); try{delete window[cbName];}catch(e){} if(sc.parentNode)sc.parentNode.removeChild(sc); callback(data); };
+    var sc=document.createElement('script'); sc.src=fullUrl;
+    sc.onerror=function(){ if(done)return; clearTimeout(timer); try{delete window[cbName];}catch(e){} if(sc.parentNode)sc.parentNode.removeChild(sc); tryXHR(); };
+    document.head.appendChild(sc);
+  }
+  function tryXHR(){
+    if(done)return; var xhr=new XMLHttpRequest(); xhr.open('GET',fullUrl,true);
+    xhr.onload=function(){ if(done)return; done=true; _olParseCb(xhr.responseText,callback); };
+    xhr.onerror=function(){ if(done)return; done=true; callback(null); };
+    xhr.timeout=20000; xhr.ontimeout=function(){ if(done)return; done=true; callback(null); };
+    xhr.send();
+  }
+  tryFetch();
 }
 function _olGetOrgDoc(fileId,mode,cb){
   var payload=encodeURIComponent(JSON.stringify({action:'getOrgDoc',data:{token:currentToken,pass:(currentPass||''),fileId:fileId,mode:mode}}));
-  _olJsonp(GAS_URL+'?jsonpPost='+payload,cb);
+  _olJsonpGet(GAS_URL+'?jsonpPost='+payload, function(d){ cb(d||{status:'error',msg:'no_response'}); });
 }
 function _olDocOverlay(){
   var ov=document.getElementById('olDocOverlay');
