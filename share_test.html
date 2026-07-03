@@ -439,7 +439,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260701.test66</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260701.test67</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -755,6 +755,70 @@ function sbRpc(fn,body){return fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'PO
 function saveOrgSetting(key,value){return sbRpc('set_org_setting',{p_token:currentToken,p_pass:(currentPass||null),p_key:key,p_value:value});}
 function confirmOrgNotifs(ids,confirmed){return sbRpc('confirm_org_notifications',{p_token:currentToken,p_pass:(currentPass||null),p_ids:ids,p_confirmed:!!confirmed});}
 function createOrgIntake(records){return sbRpc('create_org_intake',{p_token:currentToken,p_pass:(currentPass||null),p_records:records});}
+// ver.20260702.01: 認証つき書類配信（GAS getOrgDoc）— ファイルは非公開のまま、token+パスワード認証を通した閲覧者だけがプレビュー/ダウンロード
+var GAS_URL='https://script.google.com/macros/s/AKfycbxxBta5g1jXVzTf-s4EgaIbMc3No42aaH8guMOorQQ8HZl2SlNu-8vpu0fCFj_rjKsalQ/exec';
+var allDocsByCase={}, _olDocLabel={};
+function _olJsonp(url,cb){
+  var cbName='oljp'+Date.now()+Math.floor(Math.random()*1000), done=false;
+  var s=document.createElement('script');
+  var timer=setTimeout(function(){ if(done)return; done=true; try{delete window[cbName];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s); cb({status:'error',msg:'timeout'}); },45000);
+  window[cbName]=function(data){ if(done)return; done=true; clearTimeout(timer); try{delete window[cbName];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s); cb(data); };
+  s.onerror=function(){ if(done)return; done=true; clearTimeout(timer); try{delete window[cbName];}catch(e){} if(s.parentNode)s.parentNode.removeChild(s); cb({status:'error',msg:'load_failed'}); };
+  s.src=url+(url.indexOf('?')>=0?'&':'?')+'callback='+cbName;
+  document.body.appendChild(s);
+}
+function _olGetOrgDoc(fileId,mode,cb){
+  var payload=encodeURIComponent(JSON.stringify({action:'getOrgDoc',data:{token:currentToken,pass:(currentPass||''),fileId:fileId,mode:mode}}));
+  _olJsonp(GAS_URL+'?jsonpPost='+payload,cb);
+}
+function _olDocOverlay(){
+  var ov=document.getElementById('olDocOverlay');
+  if(!ov){
+    ov=document.createElement('div'); ov.id='olDocOverlay';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(15,32,64,.72);z-index:9999;display:none;align-items:center;justify-content:center;padding:16px;';
+    ov.innerHTML='<div style="background:#fff;border-radius:12px;max-width:920px;width:100%;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">'
+      +'<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid #e2e8f0;">'
+      +'<div id="olDocTitle" style="font-size:13px;font-weight:800;color:#0f2040;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">書類</div>'
+      +'<button id="olDocDl" style="background:#0f2040;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ ダウンロード</button>'
+      +'<button onclick="_olCloseDoc()" style="background:#f1f5f9;border:none;border-radius:7px;width:32px;height:32px;font-size:16px;cursor:pointer;">✕</button>'
+      +'</div><div id="olDocBody" style="flex:1;overflow:auto;background:#f8fafc;display:flex;align-items:center;justify-content:center;min-height:200px;"></div></div>';
+    ov.addEventListener('click',function(e){ if(e.target===ov) _olCloseDoc(); });
+    document.body.appendChild(ov);
+  }
+  return ov;
+}
+function _olCloseDoc(){ var ov=document.getElementById('olDocOverlay'); if(ov) ov.style.display='none'; var b=document.getElementById('olDocBody'); if(b) b.innerHTML=''; }
+function olPreviewDoc(fileId){
+  var label=_olDocLabel[fileId]||'書類';
+  var ov=_olDocOverlay(); ov.style.display='flex';
+  document.getElementById('olDocTitle').textContent=label;
+  var body=document.getElementById('olDocBody');
+  body.innerHTML='<div style="padding:40px;color:#64748b;font-size:13px;">読み込み中…</div>';
+  document.getElementById('olDocDl').onclick=function(){ olDownloadDoc(fileId); };
+  _olGetOrgDoc(fileId,'view',function(d){
+    if(!d||d.status!=='ok'||!d.base64){
+      var rmap={not_your_case:'この書類の閲覧権限がありません',invalid_pass:'認証エラーです',file_not_linked:'書類が案件に紐づいていません',denied:'閲覧できません'};
+      body.innerHTML='<div style="padding:40px;color:#dc2626;font-size:13px;text-align:center;">表示できませんでした<div style="font-size:11px;color:#94a3b8;margin-top:6px;">'+esc((d&&(rmap[d.reason]||d.reason||d.msg))||'')+'</div></div>';
+      return;
+    }
+    var mime=d.mime||'application/octet-stream', src='data:'+mime+';base64,'+d.base64;
+    if(mime.indexOf('image/')===0){ body.innerHTML='<img src="'+src+'" style="max-width:100%;max-height:88vh;display:block;">'; }
+    else if(mime.indexOf('pdf')>=0){ body.innerHTML='<iframe src="'+src+'" style="width:100%;height:86vh;border:none;background:#fff;"></iframe>'; }
+    else { body.innerHTML='<div style="padding:40px;color:#475569;font-size:13px;text-align:center;">この形式はプレビューできません。<br>「⬇ ダウンロード」から保存してください。</div>'; }
+  });
+}
+function olDownloadDoc(fileId){
+  _olGetOrgDoc(fileId,'download',function(d){
+    if(!d||d.status!=='ok'||!d.base64){ alert('ダウンロードできませんでした: '+((d&&(d.reason||d.msg))||'')); return; }
+    try{
+      var bin=atob(d.base64), len=bin.length, buf=new Uint8Array(len);
+      for(var i=0;i<len;i++) buf[i]=bin.charCodeAt(i);
+      var blob=new Blob([buf],{type:d.mime||'application/octet-stream'});
+      var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=d.name||_olDocLabel[fileId]||'document';
+      document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },1500);
+    }catch(e){ alert('ダウンロード処理でエラー: '+e); }
+  });
+}
 function getParam(k){return new URLSearchParams(location.search).get(k);}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
@@ -1148,6 +1212,22 @@ function openPersonModal(caseId){
   // PDF・リンク（ver.20260615.test19: 一覧のPDF列と同じものを表示）
   h+=_personSectionTitle('📄 書類PDF');
   h+=buildDownloadCell(c);
+  // ver.20260702.01: アップロード書類（認証つきプレビュー/ダウンロード。ファイルは非公開のまま）
+  var _docs=allDocsByCase[caseId]||[];
+  if(_docs.length){
+    h+=_personSectionTitle('📎 アップロード書類');
+    var dh='<div style="display:flex;flex-direction:column;gap:6px;">';
+    _docs.forEach(function(dc){
+      if(!dc.file_id) return;
+      dh+='<div style="display:flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;">'
+        +'<span style="flex:1;font-size:12px;color:#1e293b;word-break:break-all;">'+esc(dc.file_names||'書類')+'</span>'
+        +'<button onclick="olPreviewDoc(\''+esc(dc.file_id)+'\')" style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">👁 表示</button>'
+        +'<button onclick="olDownloadDoc(\''+esc(dc.file_id)+'\')" style="background:#0f2040;color:#fff;border:none;border-radius:6px;padding:4px 9px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇</button>'
+        +'</div>';
+    });
+    dh+='</div>';
+    h+=dh;
+  }
   // 書類チェックリスト（人材）
   h+=_personSectionTitle('✅ 書類チェックリスト（人材）');
   h+=_docChecklistHtml(personDocsAll[caseId]);
@@ -4569,6 +4649,20 @@ async function loadData(){
       return;
     }
     if(data.org){ currentOrgId=data.org.orgId||currentOrgId; }
+
+    // ver.20260702.01: アップロード書類一覧を取得（案件別・認証つきプレビュー/DL用）
+    try{
+      var docsRes=await sbRpc('get_org_docs',{p_token:currentToken,p_pass:(currentPass||null)});
+      allDocsByCase={}; _olDocLabel={};
+      if(docsRes && Array.isArray(docsRes.docs)){
+        docsRes.docs.forEach(function(dc){
+          if(!dc || !dc.case_id || !dc.file_id) return;
+          if(!allDocsByCase[dc.case_id]) allDocsByCase[dc.case_id]=[];
+          allDocsByCase[dc.case_id].push(dc);
+          _olDocLabel[dc.file_id]=dc.file_names||'書類';
+        });
+      }
+    }catch(e){ console.warn('[get_org_docs failed]',e); }
 
     gpInfoByCaseId={};
     if(isGpMode && Array.isArray(data.gpMap)){
