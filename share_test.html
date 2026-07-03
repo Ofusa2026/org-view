@@ -439,7 +439,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260701.test69</div>
+    <div style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260701.test70</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1177,33 +1177,56 @@ var PERSON_FIELD_ORDER=['applicant_name_en','nationality','nationality_code','ge
 var PERSON_GRID_SKIP={application_cert_pdf_urls:1,custody_receipt_pdf_urls:1,kyoryoku_pdf_urls:1,drive_urls:1,kokko_drive_url:1,kokko_checklist:1,missing_docs:1,extra:1,
   case_id:1,kokko_jisyo_salary:1,total_stay_year:1,total_stay_month:1,gijutsu_proof:1,gijutsu_type:1,gijutsu_work:1}; // ver.20260615.test20: ケースID/国交自社給与/通算在留(年・月)は非表示
 function _hasV(v){ return v!=null && v!=='' && v!=='false'; }
-function _docChecklistHtml(docMap){
-  if(!docMap){ return '<div style="font-size:11px;color:#94a3b8;">書類データはありません。</div>'; }
-  var names=Object.keys(docMap).sort(function(a,b){return a.localeCompare(b,'ja');});
-  if(!names.length){ return '<div style="font-size:11px;color:#94a3b8;">書類データはありません。</div>'; }
-  var nDone=0,nMiss=0;
-  var rows='';
+function _docChecklistHtml(docMap, docFiles){
+  docFiles=(docFiles&&docFiles.length)?docFiles.slice():[];
+  var usedFile={};
+  function _fbase(fn){ return String(fn||'').replace(/\.[^.]+$/,'').trim(); }
+  function _findFile(name){
+    var i,f,b;
+    for(i=0;i<docFiles.length;i++){ f=docFiles[i]; if(!f.file_id||usedFile[f.file_id]) continue; if(_fbase(f.file_names)===name){ usedFile[f.file_id]=1; return f; } }
+    for(i=0;i<docFiles.length;i++){ f=docFiles[i]; if(!f.file_id||usedFile[f.file_id]) continue; b=_fbase(f.file_names); if(b&&(b.indexOf(name)>=0||name.indexOf(b)>=0)){ usedFile[f.file_id]=1; return f; } }
+    return null;
+  }
+  function _fbtns(f){
+    if(!f||!f.file_id) return '';
+    return '<div style="flex-shrink:0;display:flex;gap:6px;align-items:center;">'
+      +'<button onclick="olPreviewDoc(\''+esc(f.file_id)+'\')" style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">👁 表示</button>'
+      +'<button onclick="olDownloadDoc(\''+esc(f.file_id)+'\')" style="background:#0f2040;color:#fff;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇</button>'
+      +'</div>';
+  }
+  var names=docMap?Object.keys(docMap).sort(function(a,b){return a.localeCompare(b,'ja');}):[];
+  var nDone=0,nMiss=0,rows='';
   names.forEach(function(name){
     var d=docMap[name]||{};
-    var skipped=_hasV(d.skip)||_hasV(d.autoskip);
-    if(skipped) return; // ver.20260615.test14: 不要にした書類は非表示
+    if(_hasV(d.skip)||_hasV(d.autoskip)) return;
     var received=_hasV(d.staff);
     var label,bg,col,bor;
     if(received){ label='受領済'; bg='#f0fdf4'; col='#16a34a'; bor='#86efac'; nDone++; }
     else { label='未受領'; bg='#fff7ed'; col='#ea580c'; bor='#fed7aa'; nMiss++; }
     var sub='';
-    if(received && d.staff) sub+='<span style="color:#16a34a;">受領 '+esc(d.staff)+'</span>';
-    if(_hasV(d.req) && d.req!=='1' && d.req!=='true'){ sub+=(sub?'　':'')+'<span style="color:#94a3b8;">案内 '+esc(d.req)+'</span>'; }
+    if(received&&d.staff) sub+='<span style="color:#16a34a;">受領 '+esc(d.staff)+'</span>';
+    if(_hasV(d.req)&&d.req!=='1'&&d.req!=='true'){ sub+=(sub?'　':'')+'<span style="color:#94a3b8;">案内 '+esc(d.req)+'</span>'; }
     var sashi='';
     if(_hasV(d.sashimodoshi)){ try{ var sj=JSON.parse(d.sashimodoshi); if(sj&&sj.text){ sashi='<div style="margin-top:3px;font-size:10px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:5px;padding:3px 7px;">⚠ 差戻し: '+esc(sj.text)+(sj.by?'（'+esc(sj.by)+'）':'')+'</div>'; } }catch(e){ sashi='<div style="margin-top:3px;font-size:10px;color:#b45309;">⚠ 差戻し: '+esc(String(d.sashimodoshi))+'</div>'; } }
-    rows+='<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 4px;border-bottom:1px solid #f1f5f9;">'
+    var f=_findFile(name);
+    rows+='<div style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid #f1f5f9;">'
       +'<span style="flex-shrink:0;font-size:10px;font-weight:800;color:'+col+';background:'+bg+';border:1px solid '+bor+';border-radius:5px;padding:2px 8px;min-width:54px;text-align:center;">'+label+'</span>'
       +'<div style="flex:1;min-width:0;"><div style="font-size:11.5px;color:#0f2040;font-weight:600;word-break:break-word;">'+esc(name)+'</div>'+(sub?'<div style="font-size:10px;margin-top:1px;">'+sub+'</div>':'')+sashi+'</div>'
+      +_fbtns(f)
       +'</div>';
   });
-  if(!rows){ return '<div style="font-size:11px;color:#94a3b8;">表示する書類はありません（不要分は非表示）。</div>'; }
+  docFiles.forEach(function(f){
+    if(!f.file_id||usedFile[f.file_id]) return;
+    rows+='<div style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid #f1f5f9;">'
+      +'<span style="flex-shrink:0;font-size:10px;font-weight:800;color:#4338ca;background:#eef2ff;border:1px solid #c7d2fe;border-radius:5px;padding:2px 8px;min-width:54px;text-align:center;">📎添付</span>'
+      +'<div style="flex:1;min-width:0;"><div style="font-size:11.5px;color:#0f2040;font-weight:600;word-break:break-word;">'+esc(f.file_names||'書類')+'</div></div>'
+      +_fbtns(f)
+      +'</div>';
+  });
+  if(!rows){ return '<div style="font-size:11px;color:#94a3b8;">書類データはありません。</div>'; }
   var summary='<div style="display:flex;gap:8px;margin-bottom:8px;font-size:10.5px;font-weight:700;">'
-    +'<span style="color:#16a34a;">受領済 '+nDone+'</span><span style="color:#ea580c;">未受領 '+nMiss+'</span></div>';
+    +'<span style="color:#16a34a;">受領済 '+nDone+'</span><span style="color:#ea580c;">未受領 '+nMiss+'</span>'
+    +(docFiles.length?'<span style="color:#4338ca;">添付 '+docFiles.length+'</span>':'')+'</div>';
   return summary+'<div>'+rows+'</div>';
 }
 function _personSectionTitle(t){ return '<div style="font-size:13px;font-weight:800;color:#0f2040;margin:16px 0 8px;padding-bottom:5px;border-bottom:2px solid #e2e8f0;">'+t+'</div>'; }
@@ -1240,25 +1263,9 @@ function openPersonModal(caseId){
   // PDF・リンク（ver.20260615.test19: 一覧のPDF列と同じものを表示）
   h+=_personSectionTitle('📄 書類PDF');
   h+=buildDownloadCell(c);
-  // ver.20260702.01: アップロード書類（認証つきプレビュー/ダウンロード。ファイルは非公開のまま）
-  var _docs=allDocsByCase[caseId]||[];
-  if(_docs.length){
-    h+=_personSectionTitle('📎 アップロード書類');
-    var dh='<div style="display:flex;flex-direction:column;gap:6px;">';
-    _docs.forEach(function(dc){
-      if(!dc.file_id) return;
-      dh+='<div style="display:flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;">'
-        +'<span style="flex:1;font-size:12px;color:#1e293b;word-break:break-all;">'+esc(dc.file_names||'書類')+'</span>'
-        +'<button onclick="olPreviewDoc(\''+esc(dc.file_id)+'\')" style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">👁 表示</button>'
-        +'<button onclick="olDownloadDoc(\''+esc(dc.file_id)+'\')" style="background:#0f2040;color:#fff;border:none;border-radius:6px;padding:4px 9px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇</button>'
-        +'</div>';
-    });
-    dh+='</div>';
-    h+=dh;
-  }
   // 書類チェックリスト（人材）
   h+=_personSectionTitle('✅ 書類チェックリスト（人材）');
-  h+=_docChecklistHtml(personDocsAll[caseId]);
+  h+=_docChecklistHtml(personDocsAll[caseId], allDocsByCase[caseId]);
   // 企業書類チェックリスト
   if(c.companyId && coDocsAll[c.companyId]){
     h+=_personSectionTitle('🏢 書類チェックリスト（企業）');
