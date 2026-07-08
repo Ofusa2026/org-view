@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260708.01: 随時届出チェッカーを新設（左サイドバー／自由文検索＋8カテゴリ43判定／参考様式ダウンロード・入管庁Q&A令和7年6月準拠・外部通信なし）。share_testから本番へ展開。 -->
 <!-- ver.20260618.test53: コメント・要望の送信履歴を3件分の高さで表示し、それ以上はスクロール（件数表示つき） -->
 <!-- ver.20260618.test52: 一覧ヘッダー直下に列ごとの絞り込み行を追加（所属機関・案件受領日・種別・担当・ステータスは値選択、他機関申請・受付番号・帰国予定はあり/なし）。クリアで一括解除 -->
 <!-- ver.20260618.test51: コメント・要望ウィジェットの絵文字が「U0001f4ac」と文字化けしていた不具合修正（無効なJSエスケープ\U…を実絵文字💬🔍に） -->
@@ -449,7 +450,61 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 .filter-row th.filter-th{padding:4px 6px;background:#1a2c4e;border-top:1px solid rgba(255,255,255,.08);}
 .filter-row select.col-filter{width:100%;max-width:140px;font-size:10px;padding:3px 4px;border:1px solid #3b4a66;border-radius:5px;background:#fff;color:#0f2040;cursor:pointer;font-family:inherit;}
 .filter-row select.col-filter.active{border-color:#7c3aed;background:#f5f3ff;font-weight:700;}
-</style>
+/* ===== 随時届出チェッカー (zc-) ver.20260708.test73 ===== */
+#zc-view{--zc-navy:#0f2040;--zc-navy2:#1F4E79;--zc-line:#e2e8f0;--zc-ink:#1e293b;--zc-sub:#64748b;--zc-need:#b91c1c;--zc-need-bg:#fef2f2;--zc-no:#047857;--zc-no-bg:#ecfdf5;--zc-ask:#1d4ed8;--zc-ask-bg:#eff6ff;--zc-card:#ffffff;max-width:860px;margin:0 auto;color:var(--zc-ink);line-height:1.7;}
+#zc-view .zc-head{background:var(--zc-navy);color:#fff;padding:18px 18px;border-radius:12px;margin-bottom:16px;}
+#zc-view .zc-head h2{margin:0;font-size:18px;letter-spacing:.5px;}
+#zc-view .zc-head p{margin:6px 0 0;font-size:12.5px;color:#c7d2e6;}
+#zc-view .zc-deadline{background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 14px;margin:0 0 16px;font-size:13px;color:#9a3412;display:flex;gap:10px;align-items:flex-start;}
+#zc-view .zc-deadline b{color:#7c2d12;}
+#zc-view .zc-search{margin:0 0 18px;}
+#zc-view .zc-search input{width:100%;padding:12px 14px;border:1px solid var(--zc-line);border-radius:10px;font-size:14px;box-sizing:border-box;}
+#zc-view .zc-search input:focus{outline:none;border-color:var(--zc-navy2);box-shadow:0 0 0 3px rgba(31,78,121,.12);}
+#zc-view .zc-search-hint{font-size:11.5px;color:var(--zc-sub);margin-top:6px;}
+#zc-view .zc-steplabel{font-size:12px;color:var(--zc-sub);font-weight:700;letter-spacing:.4px;margin:0 0 10px;}
+#zc-view .zc-cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;}
+#zc-view .zc-cat{background:var(--zc-card);border:1px solid var(--zc-line);border-radius:12px;padding:14px 15px;text-align:left;cursor:pointer;transition:.12s;font-size:14.5px;font-weight:700;color:var(--zc-navy);display:flex;flex-direction:column;gap:3px;}
+#zc-view .zc-cat:hover{border-color:var(--zc-navy2);box-shadow:0 3px 10px rgba(15,32,64,.1);transform:translateY(-1px);}
+#zc-view .zc-cat span{font-size:11.5px;font-weight:500;color:var(--zc-sub);}
+#zc-view .zc-panel{margin-top:8px;}
+#zc-view .zc-scns{display:flex;flex-direction:column;gap:8px;}
+#zc-view .zc-scn{background:var(--zc-card);border:1px solid var(--zc-line);border-radius:10px;padding:12px 14px;text-align:left;cursor:pointer;font-size:14px;transition:.12s;color:var(--zc-ink);width:100%;}
+#zc-view .zc-scn:hover{border-color:var(--zc-navy2);background:#f8fafc;}
+#zc-view .zc-scn.active{border-color:var(--zc-navy);border-width:2px;background:#f8fafc;}
+#zc-view .zc-scn .zc-scn-cat{display:block;font-size:11px;color:var(--zc-sub);font-weight:700;margin-bottom:2px;}
+#zc-view .zc-result{margin-top:18px;border-radius:12px;overflow:hidden;border:1px solid var(--zc-line);background:var(--zc-card);display:none;}
+#zc-view .zc-result.show{display:block;}
+#zc-view .zc-verdict{padding:16px 18px;display:flex;align-items:center;gap:14px;}
+#zc-view .zc-stamp{flex:0 0 auto;width:74px;height:74px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;border:3px solid;}
+#zc-view .zc-v-need .zc-stamp{color:var(--zc-need);border-color:var(--zc-need);background:var(--zc-need-bg);}
+#zc-view .zc-v-no .zc-stamp{color:var(--zc-no);border-color:var(--zc-no);background:var(--zc-no-bg);}
+#zc-view .zc-v-ask .zc-stamp{color:var(--zc-ask);border-color:var(--zc-ask);background:var(--zc-ask-bg);}
+#zc-view .zc-headline{font-size:16px;font-weight:800;}
+#zc-view .zc-v-need .zc-headline{color:var(--zc-need);}
+#zc-view .zc-v-no .zc-headline{color:var(--zc-no);}
+#zc-view .zc-v-ask .zc-headline{color:var(--zc-ask);}
+#zc-view .zc-vsub{font-size:13px;color:var(--zc-sub);margin-top:2px;}
+#zc-view .zc-detail{border-top:1px solid var(--zc-line);padding:14px 18px;font-size:13.5px;}
+#zc-view .zc-drow{display:flex;gap:10px;padding:6px 0;border-bottom:1px dashed #eef2f7;}
+#zc-view .zc-drow:last-child{border-bottom:none;}
+#zc-view .zc-k{flex:0 0 96px;color:var(--zc-sub);font-weight:700;font-size:12.5px;}
+#zc-view .zc-val{flex:1;}
+#zc-view .zc-detail ul{margin:2px 0 0;padding-left:18px;}
+#zc-view .zc-detail li{margin:2px 0;}
+#zc-view .zc-tag{display:inline-block;background:#eef2f7;color:var(--zc-navy2);border-radius:5px;padding:1px 7px;font-size:12px;font-weight:700;margin:2px 4px 2px 0;}
+#zc-view .zc-note{background:#fffbeb;border-left:3px solid #f59e0b;padding:8px 12px;border-radius:0 6px 6px 0;font-size:13px;color:#92400e;margin-top:4px;}
+#zc-view .zc-back{background:none;border:none;color:var(--zc-navy2);font-size:13px;cursor:pointer;padding:0;margin-bottom:14px;font-weight:700;}
+#zc-view .zc-back:hover{text-decoration:underline;}
+#zc-view .zc-empty{padding:16px;color:var(--zc-sub);font-size:13px;text-align:center;border:1px dashed var(--zc-line);border-radius:10px;}
+#zc-view .zc-disc{margin-top:28px;font-size:12px;color:var(--zc-sub);border-top:1px solid var(--zc-line);padding-top:14px;}
+#zc-view .zc-disc a{color:var(--zc-navy2);}
+#zc-view .zc-formrow{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:3px 0;}
+#zc-view .zc-dl{display:inline-flex;align-items:center;gap:3px;background:var(--zc-navy2);color:#fff;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;}
+#zc-view .zc-dl:hover{background:var(--zc-navy);}
+#zc-view .zc-soon{font-size:11px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:5px;padding:1px 7px;font-weight:700;}
+#zc-view .zc-detail li a.zc-dl{margin-left:4px;padding:1px 8px;}
+#zc-view .zc-hidden{display:none;}
+@media(max-width:520px){#zc-view .zc-cats{grid-template-columns:1fr;}</style>
 </head>
 <body>
 <div class="header">
@@ -457,7 +512,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260702.04</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260708.01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1012,6 +1067,17 @@ var NOTIF_LABELS={'申請済(番号待)':'📤 申請済（番号待ち）','受
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20260708.01',
+    date: '2026-07-08',
+    audience: 'all',
+    notify: true,
+    items: [
+      '📝 「随時届出チェッカー」を新設しました。左メニューから、雇用契約の変更・終了、支援計画・支援委託の変更、受入れ困難などの状況を選ぶ（または自由文で検索する）だけで、随時届出が必要か・提出様式・14日以内の期限の目安を確認できます。',
+      '⬇ 判定結果から、届出書・別紙の参考様式（Excel／Word）を直接ダウンロードできます。対応様式は順次追加します。',
+      '※ 判定はあくまで目安です。最終的な要否・様式は、大房行政書士法人担当までご相談ください。'
+    ]
+  },
   {
     version: 'ver.20260702.02',
     date: '2026-07-02',
@@ -2169,6 +2235,8 @@ function renderSidebar(){
   // 協力確認書 提出先検索
   h+='<div class="sb-divider"></div>';
   h+='<div class="sb-item'+(currentGroup==='kyoryoku'?' active':'')+'" onclick="switchGroup(\'kyoryoku\')">📋 協力確認書作成</div>';
+  h+='<div class="sb-divider"></div>';
+  h+='<div class="sb-item'+(currentGroup==='zuiji'?' active':'')+'" onclick="switchGroup(\'zuiji\')">📝 随時届出チェッカー</div>';
   if(isSidebarItemVisible('flow')){
     h+='<div class="sb-divider"></div>';
     h+='<div class="flow-sb-item" onclick="openFlowModal()">📋 申請の流れ <span style="margin-left:auto;font-size:10px;">ℹ️</span></div>';
@@ -4007,6 +4075,275 @@ async function orgEmailSave(){
   var msg=document.getElementById('orgEmailMsg');
   if(msg){ if(okMsg){ msg.style.color='#16a34a'; msg.textContent=okMsg; } else { msg.style.color='#dc2626'; msg.textContent=errMsg; } }
 }
+/* ===== 随時届出チェッカー (zc-) 移植 ver.20260708.test73 ===== */
+/* 出典：入管庁「特定技能所属機関からの随時届出Q&A」（令和7年6月）＋提出資料一覧表。判定はプロトタイプ zuiji-checker.html より忠実移植。外部通信なし・APIキー不要。 */
+(function(){
+  var V_NEED='need',V_NO='no',V_ASK='ask';
+  var DEADLINE='事由が生じた日から14日以内';
+  var DATA=[
+ {id:'keiyaku_change', label:'雇用契約の内容を変更した', hint:'賃金・就業場所・労働時間・業務など',
+  scns:[
+   {q:'基本給・基本賃金を減額した／手当の支給がなくなった', v:V_NEED,
+    forms:['特定技能雇用契約の変更に係る届出書（参考様式第3-1-1号）','雇用条件書（参考様式第1-6号）'],
+    att:['変更箇所を記載し本人が理解・署名した雇用条件書の写し'],
+    note:'賃金が増える方向の変更（昇給・手当増額）は届出不要です。'},
+   {q:'昇給した（雇用条件書の記載どおりの昇給で基本賃金が上がった）', v:V_NO,
+    note:'予定どおりの昇給・賃金増額は不要。ただし予定していた昇給が事情によりなくなった場合は要届出。'},
+   {q:'手当の増額・食事手当の新設など、賃金が増える変更', v:V_NO,
+    note:'特定技能外国人にとって利益となる（賃金が増える）変更は届出不要です。'},
+   {q:'賞与の支給がなくなった', v:V_ASK,
+    note:'雇用条件書に「業績により支給しない場合がある」等と記載があれば不要。支給額が定められていた場合は賃金の減額に当たり要届出。'},
+   {q:'就業場所（事業所）を変更した／掛け持ち勤務が増えた', v:V_NEED,
+    forms:['変更届出書（参考様式第3-1-1号）','雇用条件書（参考様式第1-6号）'],
+    att:['（介護・ビルクリーニング・宿泊・外食・工業製品製造業）新事業所の営業許可証の写し・協議会構成員証明等'],
+    note:'連絡先のみの変更は不要。派遣先を追加する場合も要届出（派遣計画書等を添付）。'},
+   {q:'事業所内で部署が変わった', v:V_ASK,
+    note:'雇用条件書「Ⅱ.就業の場所」に部署まで記載していて、その記載が変わる場合は要届出。部署まで記載していなければ不要。'},
+   {q:'同一分野内で従事する業務区分を変更した', v:V_NEED,
+    forms:['変更届出書（参考様式第3-1-1号）'],
+    att:['従事しようとする業務に必要な技能水準を有することを証明する資料'],
+    note:'介護・ビルクリーニング・宿泊・飲食料品製造業・外食業は業務区分が1つのため該当しません。'},
+   {q:'複数分野の主従関係を入れ替えた（主たる分野を変更）', v:V_NEED,
+    forms:['変更届出書（参考様式第3-1-1号）'],
+    note:'指定書に無い分野へ変える場合は在留資格変更許可申請が必要（届出では不可）。'},
+   {q:'所定労働時間が変わった／固定勤務から交代制へ変更した', v:V_NEED,
+    forms:['変更届出書（参考様式第3-1-1号）','雇用条件書（参考様式第1-6号）'],
+    note:'始業・終業時刻が変わっても所定労働時間に変更がなければ不要。'},
+   {q:'雇用契約期間を短くした（1日でも短縮）', v:V_NEED,
+    forms:['変更届出書（参考様式第3-1-1号）'],
+    note:'当初の契約期間から1日でも短縮した場合は要届出。'},
+   {q:'会社の名称・住所が変わった', v:V_NO,
+    note:'特定技能雇用契約の変更届は不要。ただし本人から「所属（契約）機関の名称・所在地変更の届出」の提出が必要。指定書の補正を希望する場合は管轄局へ。'},
+   {q:'他社と合併した／他社に吸収された', v:V_NO,
+    note:'変更届は不要ですが、別途「在留資格変更許可申請」が必要です。'},
+   {q:'退職に関する規定（雇用条件書Ⅷ）を変更した', v:V_NEED,
+    forms:['変更届出書（参考様式第3-1-1号）','雇用条件書（参考様式第1-6号）']},
+   {q:'休業手当の支給割合を引き下げた', v:V_ASK,
+    note:'割合を上げる場合は不要。60%以上と記載していた割合を下げる場合は要届出。'},
+   {q:'労使協定に基づく賃金控除を新設した', v:V_NEED,
+    forms:['変更届出書（参考様式第3-1-1号）','雇用条件書（参考様式第1-6号）'],
+    note:'控除項目・控除額が減り本人の負担増を伴わない変更なら不要。'},
+   {q:'賃金の締切日・支払日を変更した', v:V_ASK,
+    note:'原則不要。ただし変更に伴い給与の支払間隔が1か月以上空く場合は要届出。'},
+  ]},
+
+ {id:'keiyaku_end', label:'雇用契約が終了した／終了する', hint:'退職・満了・解雇・在留資格変更など',
+  scns:[
+   {q:'雇用契約が終了した（満了・解雇など）', v:V_NEED,
+    forms:['特定技能雇用契約の終了に係る届出書（参考様式第3-1-2号）'],
+    note:'終了が見込まれた時点（解雇予告等）で先に受入れ困難届（3-4号）、実際の終了で終了届。自己都合退職の場合は受入れ困難届は不要。'},
+   {q:'特定技能外国人が自己都合で退職した', v:V_NEED,
+    forms:['特定技能雇用契約の終了に係る届出書（参考様式第3-1-2号）'],
+    note:'終了届のみでOK。受入れ困難に係る届出は不要です。'},
+   {q:'他の在留資格へ変更した（雇用は継続する）', v:V_NEED,
+    forms:['特定技能雇用契約の終了に係る届出書（参考様式第3-1-2号）'],
+    note:'「特定技能」でなくなった時点で終了届が必要。変更が自己都合なら受入れ困難届は不要、自己都合でなければ要。'},
+   {q:'認定証交付後～上陸許可前に雇用契約が終了した', v:V_NO,
+    note:'終了届・受入れ困難届は不要。ただし資格該当性を失うため、認定証を発行した官署へ速やかに返納し、入国できない旨を本人に説明。'},
+  ]},
+
+ {id:'keiyaku_new', label:'新たに雇用契約を締結した', hint:'一時帰国後の再契約など',
+  scns:[
+   {q:'同じ機関・同一分野で再度契約した（一時帰国→再入国など）', v:V_NEED,
+    forms:['特定技能雇用契約に係る届出書（参考様式第3-1-2号）'],
+    att:['（建設分野）新契約に対応した建設特定技能受入計画認定証の写し'],
+    note:'終了届が出された後、同一在留期間内に同一機関・同一分野で再契約した場合に要届出。'},
+   {q:'上陸許可・在留資格変更許可を受けた際の新規締結', v:V_NO,
+    note:'許可時点の新たな契約締結の届出は不要です。'},
+   {q:'他社と新たに契約した／同一機関でも分野を変える', v:V_ASK,
+    note:'この場合は届出ではなく「在留資格変更許可申請」が必要です。'},
+  ]},
+
+ {id:'shien_plan', label:'支援計画を変更した', hint:'支援責任者・担当者・支援内容など',
+  scns:[
+   {q:'支援責任者・支援担当者を変更／追加した', v:V_NEED,
+    forms:['支援計画変更に係る届出書（参考様式第3-2号）','1号特定技能外国人支援計画書（参考様式第1-17号）'],
+    att:['支援担当者の履歴書（参考様式第2-6号）ほか'],
+    note:'支援計画書は変更箇所と末尾（機関名称・作成責任者名）のみ記載でOK。'},
+   {q:'支援担当者の人数が変わった（減少しても最終的に必要数を下回らない）', v:V_NO,
+    note:'最終的な担当者数が計画書記載の人数を下回らなければ、その都度の届出は不要です。'},
+   {q:'自社支援→登録支援機関へ全部委託／その逆に切り替えた', v:V_NEED,
+    forms:['支援計画変更に係る届出書（参考様式第3-2号）','1号支援計画書（参考様式第1-17号）'],
+    note:'あわせて支援委託契約の締結／終了の届出も必要（下の「支援委託契約」も確認）。'},
+   {q:'支援の内容（実施言語・実施方法・委託の有無など）を変更した', v:V_NEED,
+    forms:['支援計画変更に係る届出書（参考様式第3-2号）','1号支援計画書（参考様式第1-17号）']},
+  ]},
+
+ {id:'itaku', label:'支援委託契約を変更した', hint:'登録支援機関との委託契約',
+  scns:[
+   {q:'委託先の登録支援機関を変更した', v:V_NEED,
+    forms:['支援委託契約の終了又は締結に係る届出書（参考様式第3-3-2号）','支援計画変更に係る届出書（参考様式第3-2号）'],
+    att:['登録支援機関との支援委託契約に関する説明書（参考様式第1-25号）'],
+    note:'「終了」と「締結」の両方を届出。支援計画書のⅢ欄も変わるため支援計画変更届も併せて提出。'},
+   {q:'委託を終了して自社支援に切り替えた', v:V_NEED,
+    forms:['支援委託契約に係る届出書（参考様式第3-3-2号）','支援計画変更に係る届出書（参考様式第3-2号）'],
+    note:'自社の支援責任者・支援担当者を選任し、計画どおり支援を実施する必要があります。'},
+   {q:'委託料や契約期間など委託契約の内容を変更した', v:V_NEED,
+    forms:['支援委託契約に係る届出書（参考様式第3-3-1号）'],
+    att:['変更内容が分かる資料'],
+    note:'契約期間は短縮に限らず、期間自体に変更が生じた場合は要届出。'},
+   {q:'支援の「一部」だけを委託する契約に変更した', v:V_ASK,
+    note:'届出対象は「全部委託契約」のみ。一部委託契約の締結は対象外ですが、全部委託→一部委託への変更は「支援委託契約の終了」に当たり要届出。'},
+  ]},
+
+ {id:'konnan', label:'受入れが困難になった', hint:'退職・行方不明・休業・傷病など',
+  scns:[
+   {q:'解雇の予告をした（経営上の都合など）', v:V_NEED,
+    forms:['受入れ困難に係る届出書（参考様式第3-4号）'],
+    att:['受入れ困難となるに至った経緯に係る説明書（参考様式第5-11号）'],
+    note:'実際の解雇時期に関わらず「予告した時点」で提出。'},
+   {q:'特定技能外国人が行方不明になった', v:V_NEED,
+    forms:['受入れ困難に係る届出書（参考様式第3-4号）'],
+    att:['行方不明が判明した際の状況説明書（参考様式第5-15号）'],
+    note:'行方不明となった時点で提出。'},
+   {q:'1か月以上、活動ができない事情が生じた（休業・傷病等）', v:V_NEED,
+    forms:['受入れ困難に係る届出書（参考様式第3-4号）'],
+    att:['1か月以上の活動未実施期間が生じた際の状況説明書（参考様式第5-14号）'],
+    note:'就労できる状況で本人の意思による有給等の1か月以上不就労は届出不要。妊娠・出産・育児・傷病等による休業は要届出。'},
+   {q:'自己都合退職のみ（他に事由なし）', v:V_NO,
+    note:'受入れ困難に係る届出は不要。特定技能雇用契約の終了届（3-1-2号）のみで結構です。'},
+  ]},
+
+ {id:'kijun', label:'基準に適合しなくなった', hint:'税滞納・法令違反・非自発的離職など',
+  scns:[
+   {q:'税金・社会保険料の滞納が発生した', v:V_NEED,
+    forms:['基準不適合に係る届出書（参考様式第3-5号）'],
+    att:['基準不適合に係る説明書（参考様式第5-18号）']},
+   {q:'同種業務の労働者に非自発的離職を発生させた', v:V_NEED,
+    forms:['基準不適合に係る届出書（参考様式第3-5号）'],
+    att:['基準不適合に係る説明書（参考様式第5-18号）']},
+   {q:'関係法令の刑罰・出入国／労働法令違反・暴行等が発生した', v:V_NEED,
+    forms:['基準不適合に係る届出書（参考様式第3-5号）'],
+    att:['基準不適合に係る説明書（参考様式第5-18号）']},
+   {q:'一時的に基準不適合となったが14日以内に是正できた', v:V_NEED,
+    forms:['基準不適合に係る届出書（参考様式第3-5号）'],
+    att:['基準不適合に係る説明書（参考様式第5-18号）'],
+    note:'是正済みでも届出は必要。発生原因と改善の経緯を説明書に記載します。'},
+  ]},
+
+ {id:'jisshi_konnan', label:'支援計画の実施が困難になった', hint:'支援が実施できなかった・他機関相談など',
+  scns:[
+   {q:'計画に記載した支援を実施できなかった', v:V_NEED,
+    forms:['1号特定技能外国人支援計画の実施困難に係る届出書（参考様式第3-7号）'],
+    att:['支援実施困難に係る理由書（参考様式第5-13号）ほか']},
+   {q:'面談・相談を通じて問題を把握し、他機関へ相談等を実施した', v:V_NEED,
+    forms:['1号支援計画の実施困難に係る届出書（参考様式第3-7号）'],
+    note:'非自発的離職に伴うハローワークへの転職支援なども含む。生活手続の付添いは含みません。'},
+   {q:'支援の全部を登録支援機関に委託している', v:V_NO,
+    note:'所属機関による届出は不要。登録支援機関が「特異事案報告書（参考様式第4-3号）」を提出します。'},
+   {q:'本人の申出により義務的支援を実施しなかった', v:V_NO,
+    note:'届出は不要。ただし、その申出があったことは記録として保管が必要です。'},
+  ]},
+];
+  var VMAP={};
+  VMAP[V_NEED]={stamp:'要',cls:'zc-v-need',head:'届出が必要です',sub:DEADLINE+'に提出'};
+  VMAP[V_NO]={stamp:'不要',cls:'zc-v-no',head:'届出は不要です',sub:'このケースは随時届出の対象外です'};
+  VMAP[V_ASK]={stamp:'条件',cls:'zc-v-ask',head:'条件によって変わります',sub:'下の説明を確認してください'};
+  var ALL=[]; DATA.forEach(function(cat){ cat.scns.forEach(function(s){ ALL.push({cat:cat,s:s}); }); });
+  var FORM_BASE='youshiki/';
+  var ZC_FORMS={'3-1-1':{f:'3-1-1.xlsx',n:'参考様式第3-1-1号.xlsx',b:'3-1'},'3-1-2':{f:'3-1-2.xlsx',n:'参考様式第3-1-2号.xlsx',b:'3-1'},'3-2':{f:'3-2.xlsx',n:'参考様式第3-2号.xlsx',b:'3-2'},'3-3-1':{f:'3-3-1.xlsx',n:'参考様式第3-3-1号.xlsx',b:'3-3'},'3-3-2':{f:'3-3-2.xlsx',n:'参考様式第3-3-2号.xlsx',b:'3-3'},'3-4':{f:'3-4.xlsx',n:'参考様式第3-4号.xlsx',b:'3-4'},'3-5':{f:'3-5.xlsx',n:'参考様式第3-5号.xlsx',b:'3-5'},'3-7':{f:'3-7.xlsx',n:'参考様式第3-7号.xlsx',b:'3-7'},'5-4':{f:'5-4.docx',n:'参考様式第5-4号.docx'},'5-5':{f:'5-5.xlsx',n:'参考様式第5-5号.xlsx'},'5-6':{f:'5-6.xlsx',n:'参考様式第5-6号.xlsx'},'5-11':{f:'5-11.xlsx',n:'参考様式第5-11号.xlsx'},'5-12':{f:'5-12.docx',n:'参考様式第5-12号.docx'},'5-13':{f:'5-13.docx',n:'参考様式第5-13号.docx'},'5-14':{f:'5-14.xlsx',n:'参考様式第5-14号.xlsx'},'5-15':{f:'5-15.xlsx',n:'参考様式第5-15号.xlsx'},'5-18':{f:'5-18.xlsx',n:'参考様式第5-18号.xlsx'},'4-3':{f:'4-3.xlsx',n:'参考様式第4-3号.xlsx',b:'4-3'}};
+  var ZC_BESSHI={'3-1':{f:'3-1-besshi.xlsx',n:'参考様式第3-1号別紙.xlsx'},'3-2':{f:'3-2-besshi.xlsx',n:'参考様式第3-2号別紙.xlsx'},'3-3':{f:'3-3-besshi.xlsx',n:'参考様式第3-3号別紙.xlsx'},'3-4':{f:'3-4-besshi.xlsx',n:'参考様式第3-4号別紙.xlsx'},'3-5':{f:'3-5-besshi.xlsx',n:'参考様式第3-5号別紙.xlsx'},'3-7':{f:'3-7-besshi.xlsx',n:'参考様式第3-7号別紙.xlsx'},'4-3':{f:'4-3-besshi.xlsx',n:'参考様式第4-3号随時別紙.xlsx'}};
+  function zcNum(str){ var m=String(str).match(/参考様式第([0-9]+(?:-[0-9]+){0,2})号/); return m?m[1]:null; }
+  function zcDl(file,name,label){ return '<a class="zc-dl" href="'+FORM_BASE+file+'" download="'+name+'">⬇ '+label+'</a>'; }
+  function zcFormTag(str){ var num=zcNum(str); var base='<span class="zc-tag">'+E(str)+'</span>'; if(num&&ZC_FORMS[num]){ var d=ZC_FORMS[num]; var out=base+zcDl(d.f,d.n,'様式DL'); if(d.b&&ZC_BESSHI[d.b]){ var bb=ZC_BESSHI[d.b]; out+=zcDl(bb.f,bb.n,'別紙DL'); } return '<div class="zc-formrow">'+out+'</div>'; } if(num){ return '<div class="zc-formrow">'+base+'<span class="zc-soon">様式準備中</span></div>'; } return '<div class="zc-formrow">'+base+'</div>'; }
+  function zcAttItem(str){ var num=zcNum(str); if(num&&ZC_FORMS[num]){ var d=ZC_FORMS[num]; return '<li>'+E(str)+' '+zcDl(d.f,d.n,'DL')+'</li>'; } return '<li>'+E(str)+'</li>'; }
+  function zcNoteForms(note){ var nums=[],re=/参考様式第([0-9]+(?:-[0-9]+){0,2})号/g,m; while((m=re.exec(String(note)))){ if(nums.indexOf(m[1])<0)nums.push(m[1]); } var out=''; nums.forEach(function(num){ if(ZC_FORMS[num]){ var d=ZC_FORMS[num]; out+=zcDl(d.f,d.n,'様式DL'); if(d.b&&ZC_BESSHI[d.b]){ var bb=ZC_BESSHI[d.b]; out+=zcDl(bb.f,bb.n,'別紙DL'); } } }); return out?'<div class="zc-formrow" style="margin-top:8px;">'+out+'</div>':''; }
+  function E(s){ return (typeof esc==='function')?esc(s):String(s==null?'':s); }
+  var SKELETON=
+   '<div id="zc-view">'
+  +'<div class="zc-head"><h2>随時届出 要否チェッカー</h2><p>特定技能所属機関（受入れ企業）の随時届出が必要かを、状況から確認できます</p></div>'
+  +'<div class="zc-deadline"><span>⏱</span><div><b>届出が必要な場合、事由が生じた日から14日以内</b>に、所属機関の本店所在地を管轄する地方出入国在留管理局へ提出します（未来日を事由発生日とする届出は不可）。インターネット電子届出も利用できます（事前の利用者情報登録が必要）。</div></div>'
+  +'<div class="zc-search"><input id="zc-q" type="text" placeholder="自由文で検索（例：自己都合で退職した／就業場所を変更 など）" autocomplete="off"><div class="zc-search-hint">キーワードを入力すると、43項目から該当しそうな状況を絞り込みます。空欄にするとカテゴリ一覧に戻ります。</div></div>'
+  +'<div id="zc-search-results"></div>'
+  +'<section id="zc-step1"><p class="zc-steplabel">STEP 1 ／ どんな変化がありましたか？</p><div class="zc-cats" id="zc-catList"></div></section>'
+  +'<section id="zc-step2" class="zc-panel zc-hidden"><button class="zc-back" id="zc-back">← 別のカテゴリを選ぶ</button><p class="zc-steplabel" id="zc-catTitle"></p><div class="zc-scns" id="zc-scnList"></div><div class="zc-result" id="zc-result"></div></section>'
+  +'<div class="zc-disc">このツールは出入国在留管理庁「特定技能所属機関からの随時届出に関連してお問い合わせの多い事項について（Q&amp;A）」（令和7年6月）および提出資料一覧表に基づく<strong>判定の目安</strong>です。個別のケースでは例外があり得ます。最終的な要否・様式は、大房行政書士法人担当までご相談ください。<br>各種様式・記載例・運用要領：<a href="https://www.moj.go.jp/isa/publications/materials/i-ens_index.html" target="_blank" rel="noopener">出入国在留管理庁 電子届出システムポータル</a></div>'
+  +'</div>';
+
+  window.renderZuiji=function(){
+    var el=document.getElementById('main'); if(!el) return;
+    var fb=document.getElementById('filter-bar'); if(fb){ fb.innerHTML=''; fb.style.display='none'; }
+    el.innerHTML=SKELETON;
+    bindHome();
+  };
+
+  function bindHome(){
+    var catList=document.getElementById('zc-catList'); if(!catList) return; catList.innerHTML='';
+    DATA.forEach(function(cat){
+      var b=document.createElement('button'); b.className='zc-cat';
+      b.innerHTML=E(cat.label)+'<span>'+E(cat.hint)+'</span>';
+      b.addEventListener('click',function(){ openCat(cat); });
+      catList.appendChild(b);
+    });
+    var back=document.getElementById('zc-back');
+    if(back) back.addEventListener('click',function(){
+      document.getElementById('zc-step2').classList.add('zc-hidden');
+      document.getElementById('zc-step1').classList.remove('zc-hidden');
+    });
+    var q=document.getElementById('zc-q');
+    if(q) q.addEventListener('input',function(){ doSearch(q.value); });
+  }
+
+  function openCat(cat){
+    var sr=document.getElementById('zc-search-results'); if(sr) sr.innerHTML='';
+    var qEl=document.getElementById('zc-q'); if(qEl) qEl.value='';
+    document.getElementById('zc-step1').classList.add('zc-hidden');
+    var s2=document.getElementById('zc-step2'); s2.classList.remove('zc-hidden');
+    document.getElementById('zc-catTitle').textContent='STEP 2 ／ '+cat.label+'：状況を選んでください';
+    var scnList=document.getElementById('zc-scnList'); scnList.innerHTML='';
+    var resEl=document.getElementById('zc-result'); resEl.className='zc-result'; resEl.innerHTML='';
+    cat.scns.forEach(function(s){
+      var b=document.createElement('button'); b.className='zc-scn'; b.textContent=s.q;
+      b.addEventListener('click',function(){
+        Array.prototype.slice.call(scnList.children).forEach(function(c){ c.classList.remove('active'); });
+        b.classList.add('active'); showResult(s,resEl);
+      });
+      scnList.appendChild(b);
+    });
+  }
+
+  function showResult(s,target){
+    var v=VMAP[s.v];
+    var html='<div class="zc-verdict '+v.cls+'"><div class="zc-stamp">'+v.stamp+'</div><div><div class="zc-headline">'+v.head+'</div><div class="zc-vsub">'+v.sub+'</div></div></div><div class="zc-detail">';
+    if(s.v!==V_NO){ html+='<div class="zc-drow"><div class="zc-k">期限</div><div class="zc-val">'+DEADLINE+'／管轄の地方入管局へ提出</div></div>'; }
+    if(s.forms&&s.forms.length){ html+='<div class="zc-drow"><div class="zc-k">届出書様式</div><div class="zc-val">'+s.forms.map(zcFormTag).join('')+'</div></div>'; }
+    if(s.att&&s.att.length){ html+='<div class="zc-drow"><div class="zc-k">主な添付</div><div class="zc-val"><ul>'+s.att.map(zcAttItem).join('')+'</ul></div></div>'; }
+    if(s.note){ html+='<div class="zc-drow"><div class="zc-k">ポイント</div><div class="zc-val"><div class="zc-note">'+E(s.note)+'</div>'+zcNoteForms(s.note)+'</div></div>'; }
+    html+='</div>';
+    target.className='zc-result show '+v.cls;
+    target.innerHTML=html;
+    try{ target.scrollIntoView({behavior:'smooth',block:'nearest'}); }catch(e){}
+  }
+
+  function doSearch(qv){
+    qv=(qv||'').trim().toLowerCase();
+    var sr=document.getElementById('zc-search-results');
+    var s1=document.getElementById('zc-step1');
+    var s2=document.getElementById('zc-step2');
+    if(!sr||!s1||!s2) return;
+    if(!qv){ sr.innerHTML=''; s1.classList.remove('zc-hidden'); s2.classList.add('zc-hidden'); return; }
+    s2.classList.add('zc-hidden');
+    var terms=qv.split(/\s+/).filter(function(t){ return t; });
+    var hits=ALL.filter(function(o){
+      var hay=((o.cat.label||'')+' '+(o.cat.hint||'')+' '+(o.s.q||'')+' '+(o.s.note||'')).toLowerCase();
+      return terms.every(function(t){ return hay.indexOf(t)>=0; });
+    });
+    if(!hits.length){ s1.classList.remove('zc-hidden'); sr.innerHTML='<div class="zc-empty">該当する状況が見つかりませんでした。言葉を変えるか、下のカテゴリからお選びください。</div>'; return; }
+    s1.classList.add('zc-hidden');
+    var h='<p class="zc-steplabel">検索結果 '+hits.length+'件 ／ 状況を選んでください</p><div class="zc-scns">';
+    hits.forEach(function(o,i){ h+='<button class="zc-scn" data-i="'+i+'"><span class="zc-scn-cat">'+E(o.cat.label)+'</span>'+E(o.s.q)+'</button>'; });
+    h+='</div><div class="zc-result" id="zc-sr-result"></div>';
+    sr.innerHTML=h;
+    var btns=Array.prototype.slice.call(sr.querySelectorAll('.zc-scn'));
+    btns.forEach(function(b){
+      b.addEventListener('click',function(){
+        btns.forEach(function(x){ x.classList.remove('active'); });
+        b.classList.add('active');
+        showResult(hits[+b.getAttribute('data-i')].s, document.getElementById('zc-sr-result'));
+      });
+    });
+  }
+})();
 // ver.20260519.21: 現在のタブに応じた再描画（検索・フィルタ変更時に使う）
 function renderCurrent(){
   if(currentGroup==='dashboard'){renderDashboard();}
@@ -4017,6 +4354,7 @@ function renderCurrent(){
   else if(currentGroup==='orgprofile'){renderOrgProfile();}
   else if(currentGroup==='news'){renderNews();}
   else if(currentGroup==='kyoryoku'){renderKyoryoku();}
+  else if(currentGroup==='zuiji'){renderZuiji();}
   else{renderMain();}
   _mountFeedbackWidget(); // 全タブで常時表示
 }
