@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260708.test75: 参考様式ダウンロードに第5系統を追加（5-4/5-5/5-6/5-11/5-12/5-13/5-14/5-15/5-18、youshiki/配下）。5-11/5-13/5-14/5-15/5-18が各判定に自動リンク。残る準備中は1-6/1-17/2-6/1-25/4-3。 -->
+<!-- ver.20260708.test74: 随時届出チェッカーの各判定に参考様式ダウンロードを紐付け（第3系統：3-1-1/3-1-2/3-2/3-3-1/3-3-2/3-4/3-5/3-7＋各別紙、youshiki/配下）。未受領様式は「様式準備中」表示。 -->
 <!-- ver.20260708.test73: 本番share.htmlの内容でtestを同期。左サイドバーに「随時届出チェッカー」を追加（自由文検索＋8カテゴリ43判定・入管庁Q&A令和7年6月準拠・外部通信なし・APIキー不要） -->
 <!-- ver.20260618.test53: コメント・要望の送信履歴を3件分の高さで表示し、それ以上はスクロール（件数表示つき） -->
 <!-- ver.20260618.test52: 一覧ヘッダー直下に列ごとの絞り込み行を追加（所属機関・案件受領日・種別・担当・ステータスは値選択、他機関申請・受付番号・帰国予定はあり/なし）。クリアで一括解除 -->
@@ -498,6 +500,11 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 #zc-view .zc-empty{padding:16px;color:var(--zc-sub);font-size:13px;text-align:center;border:1px dashed var(--zc-line);border-radius:10px;}
 #zc-view .zc-disc{margin-top:28px;font-size:12px;color:var(--zc-sub);border-top:1px solid var(--zc-line);padding-top:14px;}
 #zc-view .zc-disc a{color:var(--zc-navy2);}
+#zc-view .zc-formrow{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:3px 0;}
+#zc-view .zc-dl{display:inline-flex;align-items:center;gap:3px;background:var(--zc-navy2);color:#fff;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;}
+#zc-view .zc-dl:hover{background:var(--zc-navy);}
+#zc-view .zc-soon{font-size:11px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:5px;padding:1px 7px;font-weight:700;}
+#zc-view .zc-detail li a.zc-dl{margin-left:4px;padding:1px 8px;}
 #zc-view .zc-hidden{display:none;}
 @media(max-width:520px){#zc-view .zc-cats{grid-template-columns:1fr;}#zc-view .zc-verdict{flex-direction:column;text-align:center;}}
 </style>
@@ -508,7 +515,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260708.test73</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260708.test75</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1063,6 +1070,16 @@ var NOTIF_LABELS={'申請済(番号待)':'📤 申請済（番号待ち）','受
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20260708.test75',
+    date: '2026-07-08',
+    audience: 'all',
+    notify: true,
+    items: [
+      '⬇ 「随時届出チェッカー」に、参考様式のダウンロードを追加しました。判定結果に表示される「⬇ 様式DL」「⬇ 別紙DL」から、届出書・別紙の様式ファイル（Excel／Word）を直接取得できます。',
+      '※ 対応様式は順次追加します。未提供の様式は「様式準備中」と表示されます。'
+    ]
+  },
   {
     version: 'ver.20260708.test73',
     date: '2026-07-08',
@@ -4235,6 +4252,13 @@ async function orgEmailSave(){
   VMAP[V_NO]={stamp:'不要',cls:'zc-v-no',head:'届出は不要です',sub:'このケースは随時届出の対象外です'};
   VMAP[V_ASK]={stamp:'条件',cls:'zc-v-ask',head:'条件によって変わります',sub:'下の説明を確認してください'};
   var ALL=[]; DATA.forEach(function(cat){ cat.scns.forEach(function(s){ ALL.push({cat:cat,s:s}); }); });
+  var FORM_BASE='youshiki/';
+  var ZC_FORMS={'3-1-1':{f:'3-1-1.xlsx',n:'参考様式第3-1-1号.xlsx',b:'3-1'},'3-1-2':{f:'3-1-2.xlsx',n:'参考様式第3-1-2号.xlsx',b:'3-1'},'3-2':{f:'3-2.xlsx',n:'参考様式第3-2号.xlsx',b:'3-2'},'3-3-1':{f:'3-3-1.xlsx',n:'参考様式第3-3-1号.xlsx',b:'3-3'},'3-3-2':{f:'3-3-2.xlsx',n:'参考様式第3-3-2号.xlsx',b:'3-3'},'3-4':{f:'3-4.xlsx',n:'参考様式第3-4号.xlsx',b:'3-4'},'3-5':{f:'3-5.xlsx',n:'参考様式第3-5号.xlsx',b:'3-5'},'3-7':{f:'3-7.xlsx',n:'参考様式第3-7号.xlsx',b:'3-7'},'5-4':{f:'5-4.docx',n:'参考様式第5-4号.docx'},'5-5':{f:'5-5.xlsx',n:'参考様式第5-5号.xlsx'},'5-6':{f:'5-6.xlsx',n:'参考様式第5-6号.xlsx'},'5-11':{f:'5-11.xlsx',n:'参考様式第5-11号.xlsx'},'5-12':{f:'5-12.docx',n:'参考様式第5-12号.docx'},'5-13':{f:'5-13.docx',n:'参考様式第5-13号.docx'},'5-14':{f:'5-14.xlsx',n:'参考様式第5-14号.xlsx'},'5-15':{f:'5-15.xlsx',n:'参考様式第5-15号.xlsx'},'5-18':{f:'5-18.xlsx',n:'参考様式第5-18号.xlsx'}};
+  var ZC_BESSHI={'3-1':{f:'3-1-besshi.xlsx',n:'参考様式第3-1号別紙.xlsx'},'3-2':{f:'3-2-besshi.xlsx',n:'参考様式第3-2号別紙.xlsx'},'3-3':{f:'3-3-besshi.xlsx',n:'参考様式第3-3号別紙.xlsx'},'3-4':{f:'3-4-besshi.xlsx',n:'参考様式第3-4号別紙.xlsx'},'3-5':{f:'3-5-besshi.xlsx',n:'参考様式第3-5号別紙.xlsx'},'3-7':{f:'3-7-besshi.xlsx',n:'参考様式第3-7号別紙.xlsx'}};
+  function zcNum(str){ var m=String(str).match(/参考様式第([0-9]+(?:-[0-9]+){0,2})号/); return m?m[1]:null; }
+  function zcDl(file,name,label){ return '<a class="zc-dl" href="'+FORM_BASE+file+'" download="'+name+'">⬇ '+label+'</a>'; }
+  function zcFormTag(str){ var num=zcNum(str); var base='<span class="zc-tag">'+E(str)+'</span>'; if(num&&ZC_FORMS[num]){ var d=ZC_FORMS[num]; var out=base+zcDl(d.f,d.n,'様式DL'); if(d.b&&ZC_BESSHI[d.b]){ var bb=ZC_BESSHI[d.b]; out+=zcDl(bb.f,bb.n,'別紙DL'); } return '<div class="zc-formrow">'+out+'</div>'; } if(num){ return '<div class="zc-formrow">'+base+'<span class="zc-soon">様式準備中</span></div>'; } return '<div class="zc-formrow">'+base+'</div>'; }
+  function zcAttItem(str){ var num=zcNum(str); if(num&&ZC_FORMS[num]){ var d=ZC_FORMS[num]; return '<li>'+E(str)+' '+zcDl(d.f,d.n,'DL')+'</li>'; } return '<li>'+E(str)+'</li>'; }
   function E(s){ return (typeof esc==='function')?esc(s):String(s==null?'':s); }
   var SKELETON=
    '<div id="zc-view">'
@@ -4293,8 +4317,8 @@ async function orgEmailSave(){
     var v=VMAP[s.v];
     var html='<div class="zc-verdict '+v.cls+'"><div class="zc-stamp">'+v.stamp+'</div><div><div class="zc-headline">'+v.head+'</div><div class="zc-vsub">'+v.sub+'</div></div></div><div class="zc-detail">';
     if(s.v!==V_NO){ html+='<div class="zc-drow"><div class="zc-k">期限</div><div class="zc-val">'+DEADLINE+'／管轄の地方入管局へ提出</div></div>'; }
-    if(s.forms&&s.forms.length){ html+='<div class="zc-drow"><div class="zc-k">届出書様式</div><div class="zc-val">'+s.forms.map(function(f){ return '<span class="zc-tag">'+E(f)+'</span>'; }).join('')+'</div></div>'; }
-    if(s.att&&s.att.length){ html+='<div class="zc-drow"><div class="zc-k">主な添付</div><div class="zc-val"><ul>'+s.att.map(function(a){ return '<li>'+E(a)+'</li>'; }).join('')+'</ul></div></div>'; }
+    if(s.forms&&s.forms.length){ html+='<div class="zc-drow"><div class="zc-k">届出書様式</div><div class="zc-val">'+s.forms.map(zcFormTag).join('')+'</div></div>'; }
+    if(s.att&&s.att.length){ html+='<div class="zc-drow"><div class="zc-k">主な添付</div><div class="zc-val"><ul>'+s.att.map(zcAttItem).join('')+'</ul></div></div>'; }
     if(s.note){ html+='<div class="zc-drow"><div class="zc-k">ポイント</div><div class="zc-val"><div class="zc-note">'+E(s.note)+'</div></div></div>'; }
     html+='</div>';
     target.className='zc-result show '+v.cls;
