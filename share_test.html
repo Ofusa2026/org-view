@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260709.test77: ニュース宛先の区分化(support/company)。本番ver.20260709.01と同内容。 -->
 <!-- ver.20260708.test76: 4-3号（特異事案報告書）＋随時別紙を追加しnote内様式もリンク化。注意書きの相談先を「大房行政書士法人担当まで」に変更。残る準備中は1-6/1-17/2-6/1-25。 -->
 <!-- ver.20260708.test75: 参考様式ダウンロードに第5系統を追加（5-4/5-5/5-6/5-11/5-12/5-13/5-14/5-15/5-18、youshiki/配下）。5-11/5-13/5-14/5-15/5-18が各判定に自動リンク。残る準備中は1-6/1-17/2-6/1-25/4-3。 -->
 <!-- ver.20260708.test74: 随時届出チェッカーの各判定に参考様式ダウンロードを紐付け（第3系統：3-1-1/3-1-2/3-2/3-3-1/3-3-2/3-4/3-5/3-7＋各別紙、youshiki/配下）。未受領様式は「様式準備中」表示。 -->
@@ -516,7 +517,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260708.test76</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260709.test77</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1904,8 +1905,9 @@ var allNews=[];
 var NEWS_SEEN_KEY='share_news_last_seen_test';
 async function loadNews(){
   try{
-    var aud=(orgName==='株式会社アイデム')?'aidem':'all';
-    var data=await sbRpc('news_list',{p_audience:aud});
+    var auds=['support'];
+    if(orgName==='株式会社アイデム') auds.push('aidem');
+    var data=await sbRpc('news_list',{p_audiences:auds});
     allNews=Array.isArray(data)?data:[];
   }catch(e){ console.warn('[news load failed]', e&&e.message); allNews=[]; }
 }
