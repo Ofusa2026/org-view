@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260716.01: 提出書類チェックリストで「未提出」が表示されない不具合を修正。依頼済み(req::依頼日)の書類をリストに表示し未提出として扱う。国交チェック(kokko::)は提出済(または不要)扱いに追加。 -->
 <!-- ver.20260709.01: ニュース配信の宛先を区分化。所属機関ページは audience=all/company(+支援機関がアイデムならaidem) を表示（news_list(text[])利用）。既存all投稿は従来どおり両方に表示。 -->
 <!-- ver.20260630.02: ヘッダーにバージョン表示を追加 -->
 <!-- ver.20260630.01: O-Link ブランドロゴをヘッダー・ログイン画面に追加 -->
@@ -271,7 +272,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20260709.01</span>
+  <span class="header-ver">ver.20260716.01</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -577,12 +578,12 @@ function _rowPdfIcons(c){
 }
 
 /* チェックリストに載せる書類か（aiエントリあり、または何らかの記入あり） */
-function docInList(d){ return ('ai' in d) || _hasVal(d.staff) || _hasVal(d.date) || _hasVal(d.skip); }
+function docInList(d){ return ('ai' in d) || _hasVal(d.staff) || _hasVal(d.date) || _hasVal(d.skip) || _hasVal(d.req) || _hasVal(d.kokko); }
 
 /* 書類ごとの状態を判定: done（提出済 または 不要）/ todo（未提出） */
 /* いずれかのチェック・記入があれば done */
 function docState(d){
-  if(_hasVal(d.ai) || _hasVal(d.staff) || _hasVal(d.date) || _hasVal(d.skip)) return 'done';
+  if(_hasVal(d.ai) || _hasVal(d.staff) || _hasVal(d.date) || _hasVal(d.skip) || _hasVal(d.kokko)) return 'done';
   return 'todo';
 }
 function docDate(d){ return _hasVal(d.date) ? d.date : ''; }
