@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>申請人マイページ | 大房行政書士法人</title>
+<!-- ver.20260716.03: ヒアリング行を常時表示に変更（未回答なら⬜＋回答ボタン。ステータス段階を過ぎても回答導線を維持）。黄色バナーの督促はヒアリング段階のみ。回答済み表示は送信済み回答の実在時のみ（16.02の厳格化は維持）。 -->
 <!-- ver.20260716.02: 「回答済み」の誤表示を修正。回答済み判定を送信済みフォーム回答の実在のみに厳格化（ステータス推定を廃止、RPCも submitted_at 必須に）。ヒアリング段階を過ぎて回答が無い案件は行を非表示にし、書類行の番号を1.に振り直し。 -->
 <!-- ver.20260716.01: 依頼事項の「ヒアリングフォーム回答」が未回答のとき、申請人ページから直接回答できる「✍️ 回答する」ボタン（8言語対応）を追加。フォーム種別は在留資格・申請種別から自動判定（index側と同ロジック）。 -->
 <!-- ver.20260630.02: ヘッダーにver表示・人材名強調・タイトル/ロゴを1段(nowrap)化 -->
@@ -170,7 +171,7 @@ body{line-height:1.45;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;flex:none;white-space:nowrap;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title" id="hdrTitle">申請人マイページ</span>
-  <span class="header-ver">ver.20260716.02</span>
+  <span class="header-ver">ver.20260716.03</span>
   <div class="header-right">
     <div id="langSwitch" class="lang-switch"></div>
     <div class="header-org" id="headerName" style="font-size:13px;font-weight:700;opacity:.95;max-width:none;">読み込み中...</div>
@@ -761,9 +762,9 @@ function render(){
 var PRE_HEARING=['','未着手','質問票作成','ヒアリングフォーム作成','★ヒアリングフォーム送付','ヒアリングフォーム回答待ち(送付済)'];
 // ver.20260716.02: 回答済み＝送信済みフォーム回答が実在する場合のみ（ステータスからの推定は廃止）
 function hearingAnswered(){ return hasHearingForm; }
-// ヒアリング行の表示可否：回答済み、またはヒアリング段階（回答をお願いする時期）のみ。
-// ヒアリング段階を過ぎてフォーム回答が無い案件（電話/書面等で実施済み）は行ごと非表示にし、誤った「回答済み」を出さない。
-function hearingRowVisible(){ return hasHearingForm || PRE_HEARING.indexOf(theCase.status||'')>=0; }
+// ver.20260716.03: 行は常に表示（未回答なら回答ボタン付き）。この関数は「あなたへのお願い」の督促ゲート専用
+//（ヒアリング段階のみ督促。段階を過ぎた案件は行に⬜未回答＋ボタンは出すが、バナーでは急かさない）。
+function hearingNagActive(){ return PRE_HEARING.indexOf(theCase.status||'')>=0; }
 function docsAllDone(){ return docDisplayList().length>0 && missingDocCount===0; }
 function _todoRow(label,done,stateTxt,actionHtml){
   return '<div class="todo-row '+(done?'done':'todo')+'">'
@@ -778,14 +779,10 @@ function renderTodo(){
   var dState=docDisplayList().length? (dDone?t('doc_submitted'):t('doc_remaining',{n:missingDocCount})) : t('doc_preparing');
   var h='<div class="section-title">'+t('todo_title')+'</div>';
   h+='<div class="todo-box">';
-  var _showHearing=hearingRowVisible();
-  if(_showHearing){
-    var _hfUrl=hAns?'':buildHearingFormUrl();
-    var _hfBtn=(!hAns&&_hfUrl)?'<a class="todo-btn" href="'+_hfUrl+'" target="_blank" rel="noopener">'+t('btn_answer_form')+'</a>':'';
-    h+=_todoRow(t('todo_hearing'),hAns,hAns?t('st_answered'):t('st_unanswered'),_hfBtn);
-  }
-  var _docLabel=t('todo_docs'); if(!_showHearing){ _docLabel=_docLabel.replace(/^2\./,'1.'); }
-  h+=_todoRow(_docLabel,dDone,dState);
+  var _hfUrl=hAns?'':buildHearingFormUrl();
+  var _hfBtn=(!hAns&&_hfUrl)?'<a class="todo-btn" href="'+_hfUrl+'" target="_blank" rel="noopener">'+t('btn_answer_form')+'</a>':'';
+  h+=_todoRow(t('todo_hearing'),hAns,hAns?t('st_answered'):t('st_unanswered'),_hfBtn);
+  h+=_todoRow(t('todo_docs'),dDone,dState);
   h+='</div>';
   return h;
 }
@@ -801,7 +798,7 @@ function renderNextAction(){
   var dDone=docsAllDone();
   var msgs=[];
   if(_isSignReturnStatus(theCase.status)) msgs.push(t('next_sign_return'));
-  if(!hAns&&hearingRowVisible()) msgs.push(t('next_hearing'));
+  if(!hAns&&hearingNagActive()) msgs.push(t('next_hearing'));
   if(dHas&&!dDone) msgs.push(t('next_docs',{n:missingDocCount}));
   if(msgs.length){
     return '<div class="next-box"><div class="next-l">'+t('next_ask_title')+'</div><div class="next-t">'+msgs.join('<br>')+'</div></div>';
