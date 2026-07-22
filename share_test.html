@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260722.test82: 送信した依頼の一覧カードに備考(other_support_note)を表示。先頭2行のみ表示しクリックで全文/折りたたみ、URL（共有ドライブ等）は自動でリンク化（新規タブ）。RPC get_org_intakes に備考を追加。 -->
 <!-- ver.20260722.test81: 所属機関/担当/ステータスの列フィルタをツールバーと状態共有に（どちらで選んでも両方に反映・二重絞り込みを解消）。 -->
 <!-- ver.20260722.test80: 列フィルタのチェックボックスパネルでラベル文字が見えない不具合を修正（テーブルヘッダーのcolor:white等をパネル側でリセット。認定/変更/更新などの選択肢名と件数が表示されるように）。 -->
 <!-- ver.20260722.test79: 絞り込みを複数選択対応（ステータス/所属機関/担当/種別/担当列などをチェックボックス式に。件数バッジは維持）。案件受領日は「から〜まで」の日付範囲で絞り込み可能に。 -->
@@ -529,6 +530,8 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 .ms-head{font-size:11px;font-weight:700;color:#64748b;padding:4px 6px;letter-spacing:normal;}
 .ms-date{display:flex;align-items:center;gap:6px;padding:4px 6px;font-size:11px;color:#475569;}
 .ms-date input{border:1px solid #e2e8f0;border-radius:6px;padding:4px 6px;font-size:12px;font-family:inherit;}
+.intake-note{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12px;color:#475569;line-height:1.6;cursor:pointer;word-break:break-word;}
+.intake-note.nt-open{display:block;-webkit-line-clamp:unset;overflow:visible;}
 </style>
 </head>
 <body>
@@ -537,7 +540,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260722.test81</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260722.test82</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -3905,6 +3908,19 @@ function _intakeStatusBadge(st){
 function _intakeDelivery(v){ if(v==='window'||v==='窓口受取') return '窓口受取'; if(v==='mail'||v==='郵送交付'||v==='郵送') return '郵送交付'; return v?esc(v):'—'; }
 function _intakeFee(v){ if(v===null||v===undefined||v==='') return '—'; var n=parseInt(String(v).replace(/[^0-9.-]/g,''),10); if(isNaN(n)) return esc(String(v)); return '¥'+n.toLocaleString('ja-JP')+'（税抜）'; }
 function _intakeRecommend(v){ return (v===true||v==='true'||v===1)?'要':'不要'; }
+// ver.20260722.test82: 依頼の備考表示（先頭2行クランプ・クリックで全文・URLは自動リンク化）
+function _linkifyEsc(s){
+  var e=esc(String(s||''));
+  return e.replace(/(https?:\/\/[^\s<]+)/g, function(u){ return '<a href="'+u+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:#1d4ed8;text-decoration:underline;word-break:break-all;">'+u+'</a>'; });
+}
+function _intakeNoteHtml(rows){
+  var notes=[]; (rows||[]).forEach(function(r){ var n=String(r.other_support_note||'').trim(); if(n && notes.indexOf(n)<0) notes.push(n); });
+  if(!notes.length) return '';
+  var body=notes.map(function(n){ return _linkifyEsc(n).replace(/\n/g,'<br>'); }).join('<hr style="border:none;border-top:1px dashed #fde68a;margin:6px 0;">');
+  return '<div style="margin-top:9px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 11px;">'
+    +'<div style="font-size:10px;color:#a16207;font-weight:800;margin-bottom:3px;">📝 備考 <span style="font-weight:500;color:#ca8a04;">（クリックで全文表示／折りたたみ）</span></div>'
+    +'<div class="intake-note" onclick="this.classList.toggle(\'nt-open\')">'+body+'</div></div>';
+}
 var intakeFY=null, intakeMonth='all';
 function _intakeFY(iso){ var d=new Date(iso); if(isNaN(d.getTime())) return null; var y=d.getFullYear(),m=d.getMonth()+1; return m>=4?y:y-1; }
 function switchIntakeFY(y){ intakeFY=y; intakeMonth='all'; renderIntakes(); }
@@ -3981,6 +3997,7 @@ function renderIntakes(){
       h+='<div style="padding:5px 6px;font-size:11.5px;color:#64748b;border-bottom:1px solid #f1f5f9;white-space:nowrap;">'+_intakeRecommend(r.recommend_letter_required)+'</div>';
     });
     h+='</div></div></div>';
+    h+=_intakeNoteHtml(g.rows);
     h+='</div>';
   });
   document.getElementById('main').innerHTML=h;
