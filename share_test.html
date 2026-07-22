@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260722.test78: 絞り込みドロップダウンに件数バッジを追加。上部ツールバー（ステータス/所属機関/担当）と列フィルタ（種別/担当/所属機関/案件受領日/ステータス/他機関申請/受付番号/帰国予定）の各選択肢にファセット件数を表示（自分以外の絞り込み＋フリーワード検索を反映）。 -->
 <!-- ver.20260709.test77: ニュース宛先の区分化(support/company)。本番ver.20260709.01と同内容。 -->
 <!-- ver.20260708.test76: 4-3号（特異事案報告書）＋随時別紙を追加しnote内様式もリンク化。注意書きの相談先を「大房行政書士法人担当まで」に変更。残る準備中は1-6/1-17/2-6/1-25。 -->
 <!-- ver.20260708.test75: 参考様式ダウンロードに第5系統を追加（5-4/5-5/5-6/5-11/5-12/5-13/5-14/5-15/5-18、youshiki/配下）。5-11/5-13/5-14/5-15/5-18が各判定に自動リンク。残る準備中は1-6/1-17/2-6/1-25/4-3。 -->
@@ -517,7 +518,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260709.test77</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260722.test78</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1412,6 +1413,39 @@ function _tantoCell2(clientStaff, ofusaStaff){
       +'<span style="display:inline-block;font-size:8px;color:#0369a1;background:#e0f2fe;border-radius:3px;padding:0 3px;margin-right:3px;vertical-align:middle;">大房</span>'+osV+'</div>'
     +'</div>';
 }
+// ver.20260722.test78: フリーワード検索の述語（groupCasesとファセット集計で共有）
+// ver.20260525.12: 受付番号は検索対象から除外（「東オン」「西オン」等の入管局頭文字で誤マッチを防ぐ）
+// ver.20260606.10: GPモード時は受注ID(gpOrderId)も検索対象に追加
+function _caseMatchesSearch(c,q){
+  return (c.name||'').toLowerCase().includes(q)||(c.applicant||'').toLowerCase().includes(q)||
+         (c.company||'').toLowerCase().includes(q)||(c.status||'').toLowerCase().includes(q)||
+         (c.staff||'').toLowerCase().includes(q)||
+         (isGpMode && (c.gpOrderId||'').toLowerCase().includes(q));
+}
+// ver.20260722.test78: ファセット集計用。skipで指定した絞り込み「以外」をすべて適用した母集合を返す
+// skip={status:true|company:true|clientStaff:true|colKey:'appType'等}
+function facetCases(gid, skip){
+  skip=skip||{};
+  var base;
+  if(gid==='madoguchi_shinsei'){ base=allCases.filter(_hasMadoguchiShinsei); }
+  else if(gid==='madoguchi_uketori'){ base=allCases.filter(_hasMadoguchiUketori); }
+  else { base = gid==='all' ? allCases : allCases.filter(function(c){return classify(c)===gid;}); }
+  if(searchQuery){ var q=searchQuery.toLowerCase(); base=base.filter(function(c){ return _caseMatchesSearch(c,q); }); }
+  if(filterStatus && !skip.status) base=base.filter(function(c){return getExternalStatus(c.status)===filterStatus;});
+  if(filterCompany && !skip.company) base=base.filter(function(c){return c.company===filterCompany;});
+  if(filterClientStaff && !skip.clientStaff) base=base.filter(function(c){return c.clientStaff===filterClientStaff;});
+  Object.keys(colFilters).forEach(function(k){
+    if(skip.colKey===k) return;
+    var v=colFilters[k]; if(v===''||v==null) return;
+    var def=FILTER_DEFS[k]; if(!def) return;
+    base=base.filter(function(c){ return def.type==='bool' ? ((def.get(c)?'1':'0')===v) : (def.get(c)===v); });
+  });
+  return base;
+}
+// ver.20260722.test78: 値→件数マップ
+function _facetCounts(list, getter){
+  var m={}; list.forEach(function(c){ var v=getter(c)||''; if(!v)return; m[v]=(m[v]||0)+1; }); return m;
+}
 function groupCases(gid){
   var base;
   // ver.20260519.17: アイデム専用 窓口申請/窓口受取グループ（日付ベース判定）
@@ -1424,14 +1458,7 @@ function groupCases(gid){
   }
   if(searchQuery){
     var q=searchQuery.toLowerCase();
-    base=base.filter(function(c){
-      // ver.20260525.12: 受付番号は検索対象から除外（「東オン」「西オン」等の入管局頭文字で誤マッチを防ぐ）
-      // ver.20260606.10: GPモード時は受注ID(gpOrderId)も検索対象に追加
-      return (c.name||'').toLowerCase().includes(q)||(c.applicant||'').toLowerCase().includes(q)||
-             (c.company||'').toLowerCase().includes(q)||(c.status||'').toLowerCase().includes(q)||
-             (c.staff||'').toLowerCase().includes(q)||
-             (isGpMode && (c.gpOrderId||'').toLowerCase().includes(q));
-    });
+    base=base.filter(function(c){ return _caseMatchesSearch(c,q); });
   }
   // ver.20260525.08: ステータスフィルタは「外部ラベル」で比較（内部ステータスは登録支援機関には見せない）
   if(filterStatus) base=base.filter(function(c){return getExternalStatus(c.status)===filterStatus;});
@@ -2352,14 +2379,18 @@ function filterThHtml(col){
   var def=FILTER_DEFS[col.key];
   if(!def) return '<th data-col-key="'+col.key+'" class="filter-th"></th>';
   var cur=colFilters[col.key]||'';
-  var opts='<option value="">（全て）</option>';
+  // ver.20260722.test78: ファセット件数（この列以外の絞り込み＋検索を反映した件数）
+  var fbase=facetCases(currentGroup,{colKey:col.key});
+  var opts='<option value="">（全て）('+fbase.length+')</option>';
   if(def.type==='bool'){
-    opts+='<option value="1"'+(cur==='1'?' selected':'')+'>あり</option>';
-    opts+='<option value="0"'+(cur==='0'?' selected':'')+'>なし</option>';
+    var yes=0; fbase.forEach(function(c){ if(def.get(c)) yes++; });
+    opts+='<option value="1"'+(cur==='1'?' selected':'')+'>あり ('+yes+')</option>';
+    opts+='<option value="0"'+(cur==='0'?' selected':'')+'>なし ('+(fbase.length-yes)+')</option>';
   }else{
+    var cnt=_facetCounts(fbase,def.get);
     var vals=Array.from(new Set((allCases||[]).map(def.get).filter(Boolean)));
     vals.sort(function(a,b){return def.desc?String(b).localeCompare(String(a),'ja'):String(a).localeCompare(String(b),'ja');});
-    vals.forEach(function(v){ opts+='<option value="'+esc(v)+'"'+(cur===v?' selected':'')+'>'+esc(v)+'</option>'; });
+    vals.forEach(function(v){ opts+='<option value="'+esc(v)+'"'+(cur===v?' selected':'')+'>'+esc(v)+' ('+(cnt[v]||0)+')</option>'; });
   }
   return '<th data-col-key="'+col.key+'" class="filter-th"><select class="col-filter'+(cur?' active':'')+'" onchange="setColFilter(\''+col.key+'\',this.value)" onclick="event.stopPropagation()">'+opts+'</select></th>';
 }
@@ -2392,20 +2423,27 @@ function renderFilterBar(){
   var _searchPh = isGpMode ? '🔍 検索...（受注ID / 案件名 / 企業名 / 申請者）' : '🔍 フリーワード検索...（Enterで実行）';
   h+='<input type="text" placeholder="'+_searchPh+'" value="'+esc(searchQuery)+'" id="ms-search-input" autocomplete="off" oninput="if(this.value===\'\' && searchQuery!==\'\'){searchQuery=\'\';renderSidebar();renderCurrent();}" onkeydown="if(event.key===\'Enter\' && !event.isComposing){event.preventDefault();searchQuery=this.value;renderSidebar();renderCurrent();}" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;font-family:inherit;min-width:200px;flex:1;">';
   // ステータスフィルター
+  // ver.20260722.test78: ファセット件数（自分以外の絞り込み＋検索を反映）
+  var _fbSt=facetCases(currentGroup,{status:true});
+  var _cntSt=_facetCounts(_fbSt,function(c){return getExternalStatus(c.status)||'';});
   h+='<select onchange="filterStatus=this.value;renderSidebar();renderCurrent()" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;background:white;cursor:pointer;">';
-  h+='<option value="">ステータス（全て）</option>';
-  statuses.forEach(function(s){h+='<option value="'+esc(s)+'"'+(filterStatus===s?' selected':'')+'>'+esc(s)+'</option>';});
+  h+='<option value="">ステータス（全て）('+_fbSt.length+')</option>';
+  statuses.forEach(function(s){h+='<option value="'+esc(s)+'"'+(filterStatus===s?' selected':'')+'>'+esc(s)+' ('+(_cntSt[s]||0)+')</option>';});
   h+='</select>';
   // 企業フィルター
+  var _fbCo=facetCases(currentGroup,{company:true});
+  var _cntCo=_facetCounts(_fbCo,function(c){return c.company||'';});
   h+='<select onchange="filterCompany=this.value;renderSidebar();renderCurrent()" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;background:white;cursor:pointer;">';
-  h+='<option value="">所属機関（全て）</option>';
-  companies.forEach(function(c){h+='<option value="'+esc(c)+'"'+(filterCompany===c?' selected':'')+'>'+esc(c)+'</option>';});
+  h+='<option value="">所属機関（全て）('+_fbCo.length+')</option>';
+  companies.forEach(function(c){h+='<option value="'+esc(c)+'"'+(filterCompany===c?' selected':'')+'>'+esc(c)+' ('+(_cntCo[c]||0)+')</option>';});
   h+='</select>';
   // ver.20260527.17: アイデム担当者フィルタ（担当者がいる案件が1件以上あるときのみ表示）
   if(clientStaffs.length){
+    var _fbCs=facetCases(currentGroup,{clientStaff:true});
+    var _cntCs=_facetCounts(_fbCs,function(c){return c.clientStaff||'';});
     h+='<select onchange="filterClientStaff=this.value;renderSidebar();renderCurrent()" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;background:white;cursor:pointer;">';
-    h+='<option value="">担当（全て）</option>';
-    clientStaffs.forEach(function(s){h+='<option value="'+esc(s)+'"'+(filterClientStaff===s?' selected':'')+'>'+esc(s)+'</option>';});
+    h+='<option value="">担当（全て）('+_fbCs.length+')</option>';
+    clientStaffs.forEach(function(s){h+='<option value="'+esc(s)+'"'+(filterClientStaff===s?' selected':'')+'>'+esc(s)+' ('+(_cntCs[s]||0)+')</option>';});
     h+='</select>';
   }
   // クリアボタン
