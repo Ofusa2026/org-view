@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260722.test79: 絞り込みを複数選択対応（ステータス/所属機関/担当/種別/担当列などをチェックボックス式に。件数バッジは維持）。案件受領日は「から〜まで」の日付範囲で絞り込み可能に。 -->
 <!-- ver.20260722.test78: 絞り込みドロップダウンに件数バッジを追加。上部ツールバー（ステータス/所属機関/担当）と列フィルタ（種別/担当/所属機関/案件受領日/ステータス/他機関申請/受付番号/帰国予定）の各選択肢にファセット件数を表示（自分以外の絞り込み＋フリーワード検索を反映）。 -->
 <!-- ver.20260709.test77: ニュース宛先の区分化(support/company)。本番ver.20260709.01と同内容。 -->
 <!-- ver.20260708.test76: 4-3号（特異事案報告書）＋随時別紙を追加しnote内様式もリンク化。注意書きの相談先を「大房行政書士法人担当まで」に変更。残る準備中は1-6/1-17/2-6/1-25。 -->
@@ -510,6 +511,22 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 #zc-view .zc-detail li a.zc-dl{margin-left:4px;padding:1px 8px;}
 #zc-view .zc-hidden{display:none;}
 @media(max-width:520px){#zc-view .zc-cats{grid-template-columns:1fr;}#zc-view .zc-verdict{flex-direction:column;text-align:center;}}
+/* ===== ver.20260722.test79: 複数選択ドロップダウン ===== */
+.ms-btnwrap{display:inline-block;}
+.ms-tbbtn{padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;background:white;cursor:pointer;font-family:inherit;color:#1e293b;white-space:nowrap;}
+.ms-tbbtn.active{border-color:#1F4E79;color:#1F4E79;font-weight:700;background:#eff6ff;}
+.ms-colbtn{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;cursor:pointer;}
+.ms-panel{display:none;background:white;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 24px rgba(15,32,64,.18);padding:6px;z-index:9999;min-width:200px;max-width:300px;max-height:300px;overflow:auto;}
+.ms-item{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap;}
+.ms-item:hover{background:#f8fafc;}
+.ms-item input{cursor:pointer;flex-shrink:0;}
+.ms-item span{overflow:hidden;text-overflow:ellipsis;}
+.ms-actions{padding:4px 6px;border-bottom:1px solid #f1f5f9;margin-bottom:4px;}
+.ms-actions button{background:#f1f5f9;border:none;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;color:#475569;font-family:inherit;}
+.ms-actions button:hover{background:#e2e8f0;}
+.ms-head{font-size:11px;font-weight:700;color:#64748b;padding:4px 6px;}
+.ms-date{display:flex;align-items:center;gap:6px;padding:4px 6px;font-size:11px;color:#475569;}
+.ms-date input{border:1px solid #e2e8f0;border-radius:6px;padding:4px 6px;font-size:12px;font-family:inherit;}
 </style>
 </head>
 <body>
@@ -518,7 +535,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260722.test78</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260722.test79</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1223,7 +1240,7 @@ var NOTIF_SHORT_LABELS={'受付番号取込':'受付番号','申請済(番号待
 var DONE_ST=['完了','審査完了'];
 // ver.20260518.13: ダッシュボードを追加、完了の表記をシンプル化
 var GROUPS=[{id:'dashboard',label:'ダッシュボード'},{id:'active',label:'進行中'},{id:'done',label:'発行済み・完了'},{id:'all',label:'すべて'}];
-var allCases=[],allReceipts=[],allShinsa=[],allCerts=[],allIntakes=[],orgProfile=null,intakeStaff=[],orgEmails=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus='',filterCompany='',filterClientStaff='',colFilters={},sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,isGpMode=false,gpInfoByCaseId={},_imeOn=false; // ver.20260606.13: allCerts追加（認定証PDF）
+var allCases=[],allReceipts=[],allShinsa=[],allCerts=[],allIntakes=[],orgProfile=null,intakeStaff=[],orgEmails=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus=[],filterCompany=[],filterClientStaff=[],colFilters={},sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,isGpMode=false,gpInfoByCaseId={},_imeOn=false; // ver.20260606.13: allCerts追加（認定証PDF）
 // ver.20260622.test54: 書類リスト用グローバル変数（settingsから取得 / 案件管理側と同期）→ 国交省/入管分離に必要
 var requiredDocs={},caseCustomDocs={},requiredDocsCo=[],requiredDocsCoField={};
 var requiredDocsCoKokko=['1. 履歴事項全部証明書','2. 建設業許可','3. 標準報酬決定通知書','4. キャリアアップID','5. 会員証明書','6. 委任状','7. 求人票','8. 同等の技能を有する日本人と同等額以上の報酬であることの説明書','9. 就業規則および賃金規程','10. 賃金台帳','11. 経歴書','12. 雇用契約書','13. 36協定','14. 年間カレンダー','15. 重要事項説明書','16. 技能者ID'];
@@ -1431,14 +1448,14 @@ function facetCases(gid, skip){
   else if(gid==='madoguchi_uketori'){ base=allCases.filter(_hasMadoguchiUketori); }
   else { base = gid==='all' ? allCases : allCases.filter(function(c){return classify(c)===gid;}); }
   if(searchQuery){ var q=searchQuery.toLowerCase(); base=base.filter(function(c){ return _caseMatchesSearch(c,q); }); }
-  if(filterStatus && !skip.status) base=base.filter(function(c){return getExternalStatus(c.status)===filterStatus;});
-  if(filterCompany && !skip.company) base=base.filter(function(c){return c.company===filterCompany;});
-  if(filterClientStaff && !skip.clientStaff) base=base.filter(function(c){return c.clientStaff===filterClientStaff;});
+  if(filterStatus.length && !skip.status) base=base.filter(function(c){return filterStatus.indexOf(getExternalStatus(c.status))>=0;});
+  if(filterCompany.length && !skip.company) base=base.filter(function(c){return filterCompany.indexOf(c.company)>=0;});
+  if(filterClientStaff.length && !skip.clientStaff) base=base.filter(function(c){return filterClientStaff.indexOf(c.clientStaff)>=0;});
   Object.keys(colFilters).forEach(function(k){
     if(skip.colKey===k) return;
-    var v=colFilters[k]; if(v===''||v==null) return;
     var def=FILTER_DEFS[k]; if(!def) return;
-    base=base.filter(function(c){ return def.type==='bool' ? ((def.get(c)?'1':'0')===v) : (def.get(c)===v); });
+    var v=colFilters[k]; if(!_colValActive(v)) return;
+    base=base.filter(function(c){ return _colValMatch(def,v,c); });
   });
   return base;
 }
@@ -1461,15 +1478,15 @@ function groupCases(gid){
     base=base.filter(function(c){ return _caseMatchesSearch(c,q); });
   }
   // ver.20260525.08: ステータスフィルタは「外部ラベル」で比較（内部ステータスは登録支援機関には見せない）
-  if(filterStatus) base=base.filter(function(c){return getExternalStatus(c.status)===filterStatus;});
-  if(filterCompany) base=base.filter(function(c){return c.company===filterCompany;});
-  // ver.20260527.17: アイデム担当者フィルタ
-  if(filterClientStaff) base=base.filter(function(c){return c.clientStaff===filterClientStaff;});
-  // ver.20260618.test52: ヘッダー列フィルタ
+  // ver.20260722.test79: 複数選択対応（配列）
+  if(filterStatus.length) base=base.filter(function(c){return filterStatus.indexOf(getExternalStatus(c.status))>=0;});
+  if(filterCompany.length) base=base.filter(function(c){return filterCompany.indexOf(c.company)>=0;});
+  if(filterClientStaff.length) base=base.filter(function(c){return filterClientStaff.indexOf(c.clientStaff)>=0;});
+  // ver.20260618.test52: ヘッダー列フィルタ（ver.20260722.test79: 複数選択・日付範囲対応）
   Object.keys(colFilters).forEach(function(k){
-    var v=colFilters[k]; if(v===''||v==null) return;
     var def=FILTER_DEFS[k]; if(!def) return;
-    base=base.filter(function(c){ return def.type==='bool' ? ((def.get(c)?'1':'0')===v) : (def.get(c)===v); });
+    var v=colFilters[k]; if(!_colValActive(v)) return;
+    base=base.filter(function(c){ return _colValMatch(def,v,c); });
   });
   // ソート
   // ver.20260525.09: デフォルトは「受付日（receiptDate）が新しい順」（申請記録と同じロジック）
@@ -2364,7 +2381,7 @@ function isSidebarItemVisible(itemId){
 // ver.20260618.test52: ヘッダー列での絞り込み
 var FILTER_DEFS={
   company:    {type:'value', get:function(c){return c.company||'';}},
-  requestDate:{type:'value', desc:true, get:function(c){return c.requestDate||'';}},
+  requestDate:{type:'daterange', get:function(c){return c.requestDate||'';}}, // ver.20260722.test79: 日付範囲絞り込み
   appType:    {type:'value', get:function(c){return c.appType||'';}},
   staff:      {type:'value', get:function(c){return c.clientStaff||'';}},
   status:     {type:'value', get:function(c){return getExternalStatus(c.status)||'';}},
@@ -2373,26 +2390,109 @@ var FILTER_DEFS={
   tempReturn: {type:'bool',  get:function(c){return !!(c.tempReturn);}}
 };
 function setColFilter(key,val){ colFilters[key]=val; renderMain(); }
-function _colFilterActive(){ return Object.keys(colFilters).some(function(k){return colFilters[k]!=='' && colFilters[k]!=null;}); }
+// ver.20260722.test79: フィルタ値の有効判定・一致判定（単一/配列/日付範囲を統一処理）
+function _colValActive(v){
+  if(v==null||v==='') return false;
+  if(Array.isArray(v)) return v.length>0;
+  if(typeof v==='object') return !!(v.from||v.to);
+  return true;
+}
+function _colValMatch(def,v,c){
+  if(def.type==='bool') return (def.get(c)?'1':'0')===v;
+  if(def.type==='daterange'){ var d=def.get(c); if(!d) return false; d=String(d).slice(0,10); return (!v.from||d>=v.from)&&(!v.to||d<=v.to); }
+  if(Array.isArray(v)) return v.indexOf(def.get(c))>=0;
+  return def.get(c)===v;
+}
+function _colFilterActive(){ return Object.keys(colFilters).some(function(k){return _colValActive(colFilters[k]);}); }
 function clearColFilters(){ colFilters={}; }
+// ===== ver.20260722.test79: 複数選択ドロップダウン（チェックボックス）＋日付範囲パネル =====
+var _msReopen='';
+function msTogglePanel(id,btn,ev){
+  if(ev){ ev.stopPropagation(); ev.preventDefault(); }
+  var p=document.getElementById(id); if(!p) return;
+  var open=(p.style.display==='block');
+  msCloseAll();
+  if(!open){ _msPosition(p,btn); p.style.display='block'; }
+}
+function _msPosition(p,btn){
+  var r=btn.getBoundingClientRect();
+  p.style.position='fixed';
+  p.style.top=Math.min(r.bottom+4, window.innerHeight-320)+'px';
+  var left=r.left;
+  if(left+240>window.innerWidth) left=Math.max(8,window.innerWidth-248);
+  p.style.left=left+'px';
+}
+function msCloseAll(){ document.querySelectorAll('.ms-panel').forEach(function(x){x.style.display='none';}); }
+document.addEventListener('click',function(ev){ if(!ev.target.closest('.ms-panel') && !ev.target.closest('.ms-btnwrap')) msCloseAll(); });
+function _msDoReopen(){
+  if(!_msReopen) return;
+  var btn=document.getElementById('msb_'+_msReopen), p=document.getElementById(_msReopen);
+  if(btn&&p){ _msPosition(p,btn); p.style.display='block'; }
+  _msReopen='';
+}
+function msCheckboxChanged(cb){
+  var kind=cb.getAttribute('data-kind'), key=cb.getAttribute('data-key'), val=cb.getAttribute('data-val');
+  if(kind==='col'){
+    var a=colFilters[key]; if(!Array.isArray(a)){ a=[]; colFilters[key]=a; }
+    var i=a.indexOf(val); if(cb.checked&&i<0)a.push(val); if(!cb.checked&&i>=0)a.splice(i,1);
+    _msReopen='ms_col_'+key; renderMain();
+  }else{
+    var arr=window[key]; if(!Array.isArray(arr)){ arr=[]; window[key]=arr; }
+    var j=arr.indexOf(val); if(cb.checked&&j<0)arr.push(val); if(!cb.checked&&j>=0)arr.splice(j,1);
+    _msReopen='ms_tb_'+key; renderSidebar(); renderCurrent();
+  }
+  setTimeout(_msDoReopen,0);
+}
+function msClearCol(key){ colFilters[key]=Array.isArray(colFilters[key])||colFilters[key]==null?[]:(typeof colFilters[key]==='object'?{from:'',to:''}:''); if(FILTER_DEFS[key]&&FILTER_DEFS[key].type==='daterange')colFilters[key]={from:'',to:''}; _msReopen='ms_col_'+key; renderMain(); setTimeout(_msDoReopen,0); }
+function msClearTb(key){ window[key]=[]; _msReopen='ms_tb_'+key; renderSidebar(); renderCurrent(); setTimeout(_msDoReopen,0); }
+function msSetDate(key,which,val){
+  var v=colFilters[key];
+  if(!v||typeof v!=='object'||Array.isArray(v)) v=colFilters[key]={from:'',to:''};
+  v[which]=val||'';
+  _msReopen='ms_col_'+key; renderMain(); setTimeout(_msDoReopen,0);
+}
+function _msDateLabel(s){ var p=String(s||'').split('-'); return p.length===3?((+p[1])+'/'+(+p[2])):s; }
+function msItemsHtml(kind,key,vals,sel,cnt){
+  var out='';
+  vals.forEach(function(v){
+    out+='<label class="ms-item"><input type="checkbox" data-kind="'+kind+'" data-key="'+key+'" data-val="'+esc(v)+'"'+(sel.indexOf(v)>=0?' checked':'')+' onchange="msCheckboxChanged(this)"><span>'+esc(v)+' ('+(cnt[v]||0)+')</span></label>';
+  });
+  return out;
+}
 function filterThHtml(col){
   var def=FILTER_DEFS[col.key];
   if(!def) return '<th data-col-key="'+col.key+'" class="filter-th"></th>';
-  var cur=colFilters[col.key]||'';
   // ver.20260722.test78: ファセット件数（この列以外の絞り込み＋検索を反映した件数）
+  // ver.20260722.test79: 複数選択（チェックボックス）＋日付範囲対応
   var fbase=facetCases(currentGroup,{colKey:col.key});
-  var opts='<option value="">（全て）('+fbase.length+')</option>';
   if(def.type==='bool'){
+    var cur=(typeof colFilters[col.key]==='string')?colFilters[col.key]:'';
     var yes=0; fbase.forEach(function(c){ if(def.get(c)) yes++; });
+    var opts='<option value="">（全て）('+fbase.length+')</option>';
     opts+='<option value="1"'+(cur==='1'?' selected':'')+'>あり ('+yes+')</option>';
     opts+='<option value="0"'+(cur==='0'?' selected':'')+'>なし ('+(fbase.length-yes)+')</option>';
-  }else{
-    var cnt=_facetCounts(fbase,def.get);
-    var vals=Array.from(new Set((allCases||[]).map(def.get).filter(Boolean)));
-    vals.sort(function(a,b){return def.desc?String(b).localeCompare(String(a),'ja'):String(a).localeCompare(String(b),'ja');});
-    vals.forEach(function(v){ opts+='<option value="'+esc(v)+'"'+(cur===v?' selected':'')+'>'+esc(v)+' ('+(cnt[v]||0)+')</option>'; });
+    return '<th data-col-key="'+col.key+'" class="filter-th"><select class="col-filter'+(cur?' active':'')+'" onchange="setColFilter(\''+col.key+'\',this.value)" onclick="event.stopPropagation()">'+opts+'</select></th>';
   }
-  return '<th data-col-key="'+col.key+'" class="filter-th"><select class="col-filter'+(cur?' active':'')+'" onchange="setColFilter(\''+col.key+'\',this.value)" onclick="event.stopPropagation()">'+opts+'</select></th>';
+  var pid='ms_col_'+col.key;
+  if(def.type==='daterange'){
+    var v=colFilters[col.key];
+    var dr=(v&&typeof v==='object'&&!Array.isArray(v))?v:{from:'',to:''};
+    var act=!!(dr.from||dr.to);
+    var lbl=act?(_msDateLabel(dr.from)+'〜'+_msDateLabel(dr.to)):('（全て）('+fbase.length+')');
+    var inner='<div class="ms-head">期間で絞り込み</div>'
+      +'<div class="ms-date"><span>から</span><input type="date" value="'+esc(dr.from)+'" onchange="msSetDate(\''+col.key+'\',\'from\',this.value)" onclick="event.stopPropagation()"></div>'
+      +'<div class="ms-date"><span>まで</span><input type="date" value="'+esc(dr.to)+'" onchange="msSetDate(\''+col.key+'\',\'to\',this.value)" onclick="event.stopPropagation()"></div>'
+      +'<div class="ms-actions"><button type="button" onclick="msClearCol(\''+col.key+'\')">クリア</button></div>';
+    return '<th data-col-key="'+col.key+'" class="filter-th"><span class="ms-btnwrap"><button type="button" id="msb_'+pid+'" class="col-filter ms-colbtn'+(act?' active':'')+'" onclick="msTogglePanel(\''+pid+'\',this,event)">'+lbl+' ▾</button></span><div class="ms-panel" id="'+pid+'" style="display:none">'+inner+'</div></th>';
+  }
+  var sel=Array.isArray(colFilters[col.key])?colFilters[col.key]:[];
+  var cnt=_facetCounts(fbase,def.get);
+  var vals=Array.from(new Set((allCases||[]).map(def.get).filter(Boolean)));
+  vals.sort(function(a,b){return def.desc?String(b).localeCompare(String(a),'ja'):String(a).localeCompare(String(b),'ja');});
+  var lbl2=sel.length?(sel.length+'件選択'):('（全て）('+fbase.length+')');
+  var inner2='<div class="ms-actions"><button type="button" onclick="msClearCol(\''+col.key+'\')">（全て）に戻す ('+fbase.length+')</button></div>'
+    +msItemsHtml('col',col.key,vals,sel,cnt);
+  return '<th data-col-key="'+col.key+'" class="filter-th"><span class="ms-btnwrap"><button type="button" id="msb_'+pid+'" class="col-filter ms-colbtn'+(sel.length?' active':'')+'" onclick="msTogglePanel(\''+pid+'\',this,event)">'+lbl2+' ▾</button></span><div class="ms-panel" id="'+pid+'" style="display:none">'+inner2+'</div></th>';
 }
 function thHtml(col){
   // ver.20260521.01: data-col-key付与
@@ -2424,30 +2524,28 @@ function renderFilterBar(){
   h+='<input type="text" placeholder="'+_searchPh+'" value="'+esc(searchQuery)+'" id="ms-search-input" autocomplete="off" oninput="if(this.value===\'\' && searchQuery!==\'\'){searchQuery=\'\';renderSidebar();renderCurrent();}" onkeydown="if(event.key===\'Enter\' && !event.isComposing){event.preventDefault();searchQuery=this.value;renderSidebar();renderCurrent();}" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;font-family:inherit;min-width:200px;flex:1;">';
   // ステータスフィルター
   // ver.20260722.test78: ファセット件数（自分以外の絞り込み＋検索を反映）
+  // ver.20260722.test79: 複数選択（チェックボックス）化
   var _fbSt=facetCases(currentGroup,{status:true});
   var _cntSt=_facetCounts(_fbSt,function(c){return getExternalStatus(c.status)||'';});
-  h+='<select onchange="filterStatus=this.value;renderSidebar();renderCurrent()" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;background:white;cursor:pointer;">';
-  h+='<option value="">ステータス（全て）('+_fbSt.length+')</option>';
-  statuses.forEach(function(s){h+='<option value="'+esc(s)+'"'+(filterStatus===s?' selected':'')+'>'+esc(s)+' ('+(_cntSt[s]||0)+')</option>';});
-  h+='</select>';
+  var _lblSt=filterStatus.length?('ステータス: '+filterStatus.length+'件'):('ステータス（全て）('+_fbSt.length+')');
+  h+='<span class="ms-btnwrap"><button type="button" id="msb_ms_tb_filterStatus" class="ms-tbbtn'+(filterStatus.length?' active':'')+'" onclick="msTogglePanel(\'ms_tb_filterStatus\',this,event)">'+_lblSt+' ▾</button></span>';
+  h+='<div class="ms-panel" id="ms_tb_filterStatus" style="display:none"><div class="ms-actions"><button type="button" onclick="msClearTb(\'filterStatus\')">（全て）に戻す ('+_fbSt.length+')</button></div>'+msItemsHtml('tb','filterStatus',statuses,filterStatus,_cntSt)+'</div>';
   // 企業フィルター
   var _fbCo=facetCases(currentGroup,{company:true});
   var _cntCo=_facetCounts(_fbCo,function(c){return c.company||'';});
-  h+='<select onchange="filterCompany=this.value;renderSidebar();renderCurrent()" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;background:white;cursor:pointer;">';
-  h+='<option value="">所属機関（全て）('+_fbCo.length+')</option>';
-  companies.forEach(function(c){h+='<option value="'+esc(c)+'"'+(filterCompany===c?' selected':'')+'>'+esc(c)+' ('+(_cntCo[c]||0)+')</option>';});
-  h+='</select>';
+  var _lblCo=filterCompany.length?('所属機関: '+filterCompany.length+'件'):('所属機関（全て）('+_fbCo.length+')');
+  h+='<span class="ms-btnwrap"><button type="button" id="msb_ms_tb_filterCompany" class="ms-tbbtn'+(filterCompany.length?' active':'')+'" onclick="msTogglePanel(\'ms_tb_filterCompany\',this,event)">'+_lblCo+' ▾</button></span>';
+  h+='<div class="ms-panel" id="ms_tb_filterCompany" style="display:none"><div class="ms-actions"><button type="button" onclick="msClearTb(\'filterCompany\')">（全て）に戻す ('+_fbCo.length+')</button></div>'+msItemsHtml('tb','filterCompany',companies,filterCompany,_cntCo)+'</div>';
   // ver.20260527.17: アイデム担当者フィルタ（担当者がいる案件が1件以上あるときのみ表示）
   if(clientStaffs.length){
     var _fbCs=facetCases(currentGroup,{clientStaff:true});
     var _cntCs=_facetCounts(_fbCs,function(c){return c.clientStaff||'';});
-    h+='<select onchange="filterClientStaff=this.value;renderSidebar();renderCurrent()" style="padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;outline:none;background:white;cursor:pointer;">';
-    h+='<option value="">担当（全て）('+_fbCs.length+')</option>';
-    clientStaffs.forEach(function(s){h+='<option value="'+esc(s)+'"'+(filterClientStaff===s?' selected':'')+'>'+esc(s)+' ('+(_cntCs[s]||0)+')</option>';});
-    h+='</select>';
+    var _lblCs=filterClientStaff.length?('担当: '+filterClientStaff.length+'件'):('担当（全て）('+_fbCs.length+')');
+    h+='<span class="ms-btnwrap"><button type="button" id="msb_ms_tb_filterClientStaff" class="ms-tbbtn'+(filterClientStaff.length?' active':'')+'" onclick="msTogglePanel(\'ms_tb_filterClientStaff\',this,event)">'+_lblCs+' ▾</button></span>';
+    h+='<div class="ms-panel" id="ms_tb_filterClientStaff" style="display:none"><div class="ms-actions"><button type="button" onclick="msClearTb(\'filterClientStaff\')">（全て）に戻す ('+_fbCs.length+')</button></div>'+msItemsHtml('tb','filterClientStaff',clientStaffs,filterClientStaff,_cntCs)+'</div>';
   }
   // クリアボタン
-  if(searchQuery||filterStatus||filterCompany||filterClientStaff||_colFilterActive()) h+='<button onclick="searchQuery=\'\';filterStatus=\'\';filterCompany=\'\';filterClientStaff=\'\';clearColFilters();renderSidebar();renderCurrent()" style="padding:7px 12px;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap;">✕ クリア</button>';
+  if(searchQuery||filterStatus.length||filterCompany.length||filterClientStaff.length||_colFilterActive()) h+='<button onclick="searchQuery=\'\';filterStatus=[];filterCompany=[];filterClientStaff=[];clearColFilters();renderSidebar();renderCurrent()" style="padding:7px 12px;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap;">✕ クリア</button>';
   h+='<span style="font-size:11px;color:#94a3b8;white-space:nowrap;">'+cases.length+'件</span>';
   // ver.20260606.05: GPモード CSV出力ボタン
   if(isGpMode){
