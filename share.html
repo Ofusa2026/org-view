@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260722.03: 送信した依頼カードに備考を表示（先頭2行・クリックで全文・URL自動リンク化）＋登録済み依頼の件名をアンシスの現在名で表示（リネーム自動追従）。share_test test82-83を本番展開。 -->
 <!-- ver.20260722.02: 所属機関/担当/ステータスの列フィルタをツールバーと状態共有に（どちらで選んでも両方に反映・二重絞り込みを解消）。test81と同一コード。 -->
 <!-- ver.20260722.01: 絞り込みを強化（share_test test78-80を本番展開）。①各ドロップダウンに件数バッジ（ファセット集計）②複数選択（チェックボックス式：ステータス/所属機関/担当/種別など）③案件受領日を「から〜まで」の日付範囲絞り込み。あわせてチェッカーCSSの@media欠け1行を修復。 -->
 <!-- ver.20260709.01: ニュース配信の宛先を区分化。登録支援機関ページは audience=all/support(+アイデムはaidem) を表示（news_list(text[])オーバーロード利用）。既存all投稿は従来どおり所属機関ページと両方に表示。 -->
@@ -524,6 +525,8 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 .ms-head{font-size:11px;font-weight:700;color:#64748b;padding:4px 6px;letter-spacing:normal;}
 .ms-date{display:flex;align-items:center;gap:6px;padding:4px 6px;font-size:11px;color:#475569;}
 .ms-date input{border:1px solid #e2e8f0;border-radius:6px;padding:4px 6px;font-size:12px;font-family:inherit;}
+.intake-note{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12px;color:#475569;line-height:1.6;cursor:pointer;word-break:break-word;}
+.intake-note.nt-open{display:block;-webkit-line-clamp:unset;overflow:visible;}
 </style>
 </head>
 <body>
@@ -532,7 +535,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260722.02</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260722.03</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1087,6 +1090,16 @@ var NOTIF_LABELS={'申請済(番号待)':'📤 申請済（番号待ち）','受
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20260722.03',
+    date: '2026-07-22',
+    audience: 'aidem',
+    notify: true,
+    items: [
+      '📝 「送信した依頼」の各カードに、依頼時にご入力いただいた備考を表示するようになりました。長い備考は先頭2行のみ表示され、クリックで全文の表示／折りたたみができます。備考内のURL（共有ドライブ等）はクリックでそのまま開けます。',
+      '🔄 登録済みの依頼は、件名が案件管理側の最新の案件名で表示されるようになりました（名称変更に自動で追従します）。'
+    ]
+  },
   {
     version: 'ver.20260708.01',
     date: '2026-07-08',
@@ -3891,6 +3904,19 @@ function _intakeStatusBadge(st){
 function _intakeDelivery(v){ if(v==='window'||v==='窓口受取') return '窓口受取'; if(v==='mail'||v==='郵送交付'||v==='郵送') return '郵送交付'; return v?esc(v):'—'; }
 function _intakeFee(v){ if(v===null||v===undefined||v==='') return '—'; var n=parseInt(String(v).replace(/[^0-9.-]/g,''),10); if(isNaN(n)) return esc(String(v)); return '¥'+n.toLocaleString('ja-JP')+'（税抜）'; }
 function _intakeRecommend(v){ return (v===true||v==='true'||v===1)?'要':'不要'; }
+// ver.20260722.test82: 依頼の備考表示（先頭2行クランプ・クリックで全文・URLは自動リンク化）
+function _linkifyEsc(s){
+  var e=esc(String(s||''));
+  return e.replace(/(https?:\/\/[^\s<]+)/g, function(u){ return '<a href="'+u+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:#1d4ed8;text-decoration:underline;word-break:break-all;">'+u+'</a>'; });
+}
+function _intakeNoteHtml(rows){
+  var notes=[]; (rows||[]).forEach(function(r){ var n=String(r.other_support_note||'').trim(); if(n && notes.indexOf(n)<0) notes.push(n); });
+  if(!notes.length) return '';
+  var body=notes.map(function(n){ return _linkifyEsc(n).replace(/\n/g,'<br>'); }).join('<hr style="border:none;border-top:1px dashed #fde68a;margin:6px 0;">');
+  return '<div style="margin-top:9px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 11px;">'
+    +'<div style="font-size:10px;color:#a16207;font-weight:800;margin-bottom:3px;">📝 備考 <span style="font-weight:500;color:#ca8a04;">（クリックで全文表示／折りたたみ）</span></div>'
+    +'<div class="intake-note" onclick="this.classList.toggle(\'nt-open\')">'+body+'</div></div>';
+}
 var intakeFY=null, intakeMonth='all';
 function _intakeFY(iso){ var d=new Date(iso); if(isNaN(d.getTime())) return null; var y=d.getFullYear(),m=d.getMonth()+1; return m>=4?y:y-1; }
 function switchIntakeFY(y){ intakeFY=y; intakeMonth='all'; renderIntakes(); }
@@ -3937,6 +3963,7 @@ function renderIntakes(){
     var key=(x.received_at||'')+'||'+(x.case_name||'');
     if(!groups[key]){ groups[key]={received_at:x.received_at,case_name:x.case_name,app_type:x.app_type,company:x.company,aidem_branch:x.aidem_branch,client_staff:x.client_staff,accept_exp:x.accept_exp,support_fee:x.support_fee,rows:[],statuses:{}}; order.push(key); }
     groups[key].rows.push(x);
+    if(x.case_name_now && !groups[key].case_name_now) groups[key].case_name_now=x.case_name_now; // ver.20260722.test83: アンシスの現在名を追従
     groups[key].statuses[x.status]=(groups[key].statuses[x.status]||0)+1;
   });
   order.sort(function(a,b){ return String(groups[b].received_at||'').localeCompare(String(groups[a].received_at||'')); });
@@ -3946,7 +3973,7 @@ function renderIntakes(){
     var badges=stKeys.map(function(s){ return _intakeStatusBadge(s)+(stKeys.length>1?'<span style="font-size:10px;color:#94a3b8;margin-left:2px;">×'+g.statuses[s]+'</span>':''); }).join(' ');
     h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin-bottom:12px;">';
     h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">';
-    h+='<div style="min-width:0;"><div style="font-size:14px;font-weight:800;color:#0f2040;">'+esc(g.case_name||'(案件名なし)')+'</div>';
+    h+='<div style="min-width:0;"><div style="font-size:14px;font-weight:800;color:#0f2040;">'+esc(g.case_name_now||g.case_name||'(案件名なし)')+'</div>';
     h+='<div style="font-size:11px;color:#64748b;margin-top:3px;">'+esc(g.company||'')+(g.app_type?'　/　'+esc(g.app_type):'')+(g.aidem_branch?'　/　拠点:'+esc(g.aidem_branch):'')+(g.client_staff?'　/　案件担当者:'+esc(g.client_staff):'')+(g.accept_exp?'　/　受入れ経験:'+esc(g.accept_exp):'')+'　/　委託費:'+_intakeFee(g.support_fee)+'</div></div>';
     h+='<div style="text-align:right;flex-shrink:0;"><div>'+badges+'</div><div style="font-size:10.5px;color:#94a3b8;margin-top:4px;">送信: '+_intakeFmtDt(g.received_at)+'</div></div>';
     h+='</div>';
@@ -3967,6 +3994,7 @@ function renderIntakes(){
       h+='<div style="padding:5px 6px;font-size:11.5px;color:#64748b;border-bottom:1px solid #f1f5f9;white-space:nowrap;">'+_intakeRecommend(r.recommend_letter_required)+'</div>';
     });
     h+='</div></div></div>';
+    h+=_intakeNoteHtml(g.rows);
     h+='</div>';
   });
   document.getElementById('main').innerHTML=h;
