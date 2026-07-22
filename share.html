@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260722.02: 所属機関/担当/ステータスの列フィルタをツールバーと状態共有に（どちらで選んでも両方に反映・二重絞り込みを解消）。test81と同一コード。 -->
 <!-- ver.20260722.01: 絞り込みを強化（share_test test78-80を本番展開）。①各ドロップダウンに件数バッジ（ファセット集計）②複数選択（チェックボックス式：ステータス/所属機関/担当/種別など）③案件受領日を「から〜まで」の日付範囲絞り込み。あわせてチェッカーCSSの@media欠け1行を修復。 -->
 <!-- ver.20260709.01: ニュース配信の宛先を区分化。登録支援機関ページは audience=all/support(+アイデムはaidem) を表示（news_list(text[])オーバーロード利用）。既存all投稿は従来どおり所属機関ページと両方に表示。 -->
 <!-- ver.20260708.01: 随時届出チェッカーを新設（左サイドバー／自由文検索＋8カテゴリ43判定／参考様式ダウンロード・入管庁Q&A令和7年6月準拠・外部通信なし）。share_testから本番へ展開。 -->
@@ -531,7 +532,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260722.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260722.02</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1440,6 +1441,7 @@ function facetCases(gid, skip){
   if(filterClientStaff.length && !skip.clientStaff) base=base.filter(function(c){return filterClientStaff.indexOf(c.clientStaff)>=0;});
   Object.keys(colFilters).forEach(function(k){
     if(skip.colKey===k) return;
+    if(TB_MAP[k]) return; // ツールバー共有次元はfilter*配列側で適用済み
     var def=FILTER_DEFS[k]; if(!def) return;
     var v=colFilters[k]; if(!_colValActive(v)) return;
     base=base.filter(function(c){ return _colValMatch(def,v,c); });
@@ -1471,6 +1473,7 @@ function groupCases(gid){
   if(filterClientStaff.length) base=base.filter(function(c){return filterClientStaff.indexOf(c.clientStaff)>=0;});
   // ver.20260618.test52: ヘッダー列フィルタ（ver.20260722.test79: 複数選択・日付範囲対応）
   Object.keys(colFilters).forEach(function(k){
+    if(TB_MAP[k]) return; // ツールバー共有次元はfilter*配列側で適用済み
     var def=FILTER_DEFS[k]; if(!def) return;
     var v=colFilters[k]; if(!_colValActive(v)) return;
     base=base.filter(function(c){ return _colValMatch(def,v,c); });
@@ -2376,6 +2379,12 @@ var FILTER_DEFS={
   receiptNo:  {type:'bool',  get:function(c){return !!(c.receiptNo);}},
   tempReturn: {type:'bool',  get:function(c){return !!(c.tempReturn);}}
 };
+// ver.20260722: 列フィルタとツールバーで同一次元（所属機関/担当/ステータス）は状態を共有する
+var TB_MAP={
+  company:{name:'filterCompany',    skip:'company'},
+  staff:  {name:'filterClientStaff',skip:'clientStaff'},
+  status: {name:'filterStatus',     skip:'status'}
+};
 function setColFilter(key,val){ colFilters[key]=val; renderMain(); }
 // ver.20260722.test79: フィルタ値の有効判定・一致判定（単一/配列/日付範囲を統一処理）
 function _colValActive(v){
@@ -2419,19 +2428,20 @@ function _msDoReopen(){
 }
 function msCheckboxChanged(cb){
   var kind=cb.getAttribute('data-kind'), key=cb.getAttribute('data-key'), val=cb.getAttribute('data-val');
+  var pnl=cb.getAttribute('data-panel')||(kind==='col'?('ms_col_'+key):('ms_tb_'+key));
   if(kind==='col'){
     var a=colFilters[key]; if(!Array.isArray(a)){ a=[]; colFilters[key]=a; }
     var i=a.indexOf(val); if(cb.checked&&i<0)a.push(val); if(!cb.checked&&i>=0)a.splice(i,1);
-    _msReopen='ms_col_'+key; renderMain();
+    _msReopen=pnl; renderMain();
   }else{
     var arr=window[key]; if(!Array.isArray(arr)){ arr=[]; window[key]=arr; }
     var j=arr.indexOf(val); if(cb.checked&&j<0)arr.push(val); if(!cb.checked&&j>=0)arr.splice(j,1);
-    _msReopen='ms_tb_'+key; renderSidebar(); renderCurrent();
+    _msReopen=pnl; renderSidebar(); renderCurrent();
   }
   setTimeout(_msDoReopen,0);
 }
 function msClearCol(key){ colFilters[key]=Array.isArray(colFilters[key])||colFilters[key]==null?[]:(typeof colFilters[key]==='object'?{from:'',to:''}:''); if(FILTER_DEFS[key]&&FILTER_DEFS[key].type==='daterange')colFilters[key]={from:'',to:''}; _msReopen='ms_col_'+key; renderMain(); setTimeout(_msDoReopen,0); }
-function msClearTb(key){ window[key]=[]; _msReopen='ms_tb_'+key; renderSidebar(); renderCurrent(); setTimeout(_msDoReopen,0); }
+function msClearTb(key,pid){ window[key]=[]; _msReopen=pid||('ms_tb_'+key); renderSidebar(); renderCurrent(); setTimeout(_msDoReopen,0); }
 function msSetDate(key,which,val){
   var v=colFilters[key];
   if(!v||typeof v!=='object'||Array.isArray(v)) v=colFilters[key]={from:'',to:''};
@@ -2439,10 +2449,10 @@ function msSetDate(key,which,val){
   _msReopen='ms_col_'+key; renderMain(); setTimeout(_msDoReopen,0);
 }
 function _msDateLabel(s){ var p=String(s||'').split('-'); return p.length===3?((+p[1])+'/'+(+p[2])):s; }
-function msItemsHtml(kind,key,vals,sel,cnt){
+function msItemsHtml(kind,key,vals,sel,cnt,pid){
   var out='';
   vals.forEach(function(v){
-    out+='<label class="ms-item"><input type="checkbox" data-kind="'+kind+'" data-key="'+key+'" data-val="'+esc(v)+'"'+(sel.indexOf(v)>=0?' checked':'')+' onchange="msCheckboxChanged(this)"><span>'+esc(v)+' ('+(cnt[v]||0)+')</span></label>';
+    out+='<label class="ms-item"><input type="checkbox" data-kind="'+kind+'" data-key="'+key+'"'+(pid?' data-panel="'+pid+'"':'')+' data-val="'+esc(v)+'"'+(sel.indexOf(v)>=0?' checked':'')+' onchange="msCheckboxChanged(this)"><span>'+esc(v)+' ('+(cnt[v]||0)+')</span></label>';
   });
   return out;
 }
@@ -2451,6 +2461,21 @@ function filterThHtml(col){
   if(!def) return '<th data-col-key="'+col.key+'" class="filter-th"></th>';
   // ver.20260722.test78: ファセット件数（この列以外の絞り込み＋検索を反映した件数）
   // ver.20260722.test79: 複数選択（チェックボックス）＋日付範囲対応
+  // ver.20260722: 所属機関/担当/ステータス列はツールバーと状態共有（TB_MAP）
+  var tb=TB_MAP[col.key];
+  if(tb){
+    var tsel=window[tb.name]||[];
+    var tskip={}; tskip[tb.skip]=true;
+    var tfb=facetCases(currentGroup,tskip);
+    var tcnt=_facetCounts(tfb,def.get);
+    var tvalsBase=(currentGroup==='all'?allCases:allCases.filter(function(c){return classify(c)===currentGroup;}));
+    var tvals=Array.from(new Set(tvalsBase.map(def.get).filter(Boolean))).sort(function(a,b){return String(a).localeCompare(String(b),'ja');});
+    var tpid='ms_col_'+col.key;
+    var tlbl=tsel.length?(tsel.length+'件選択'):('（全て）('+tfb.length+')');
+    var tinner='<div class="ms-actions"><button type="button" onclick="msClearTb(\''+tb.name+'\',\''+tpid+'\')">（全て）に戻す ('+tfb.length+')</button></div>'
+      +msItemsHtml('tb',tb.name,tvals,tsel,tcnt,tpid);
+    return '<th data-col-key="'+col.key+'" class="filter-th"><span class="ms-btnwrap"><button type="button" id="msb_'+tpid+'" class="col-filter ms-colbtn'+(tsel.length?' active':'')+'" onclick="msTogglePanel(\''+tpid+'\',this,event)">'+tlbl+' ▾</button></span><div class="ms-panel" id="'+tpid+'" style="display:none">'+tinner+'</div></th>';
+  }
   var fbase=facetCases(currentGroup,{colKey:col.key});
   if(def.type==='bool'){
     var cur=(typeof colFilters[col.key]==='string')?colFilters[col.key]:'';
