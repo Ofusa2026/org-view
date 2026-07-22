@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260722.test80: 列フィルタのチェックボックスパネルでラベル文字が見えない不具合を修正（テーブルヘッダーのcolor:white等をパネル側でリセット。認定/変更/更新などの選択肢名と件数が表示されるように）。 -->
 <!-- ver.20260722.test79: 絞り込みを複数選択対応（ステータス/所属機関/担当/種別/担当列などをチェックボックス式に。件数バッジは維持）。案件受領日は「から〜まで」の日付範囲で絞り込み可能に。 -->
 <!-- ver.20260722.test78: 絞り込みドロップダウンに件数バッジを追加。上部ツールバー（ステータス/所属機関/担当）と列フィルタ（種別/担当/所属機関/案件受領日/ステータス/他機関申請/受付番号/帰国予定）の各選択肢にファセット件数を表示（自分以外の絞り込み＋フリーワード検索を反映）。 -->
 <!-- ver.20260709.test77: ニュース宛先の区分化(support/company)。本番ver.20260709.01と同内容。 -->
@@ -516,15 +517,15 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 .ms-tbbtn{padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;background:white;cursor:pointer;font-family:inherit;color:#1e293b;white-space:nowrap;}
 .ms-tbbtn.active{border-color:#1F4E79;color:#1F4E79;font-weight:700;background:#eff6ff;}
 .ms-colbtn{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;cursor:pointer;}
-.ms-panel{display:none;background:white;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 24px rgba(15,32,64,.18);padding:6px;z-index:9999;min-width:200px;max-width:300px;max-height:300px;overflow:auto;}
-.ms-item{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap;}
+.ms-panel{display:none;background:white;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 24px rgba(15,32,64,.18);padding:6px;z-index:9999;min-width:200px;max-width:300px;max-height:300px;overflow:auto;color:#1e293b;font-weight:400;font-size:12px;letter-spacing:normal;white-space:normal;text-align:left;cursor:default;user-select:auto;}
+.ms-item{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap;color:#1e293b;font-weight:500;}
 .ms-item:hover{background:#f8fafc;}
 .ms-item input{cursor:pointer;flex-shrink:0;}
 .ms-item span{overflow:hidden;text-overflow:ellipsis;}
 .ms-actions{padding:4px 6px;border-bottom:1px solid #f1f5f9;margin-bottom:4px;}
 .ms-actions button{background:#f1f5f9;border:none;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;color:#475569;font-family:inherit;}
 .ms-actions button:hover{background:#e2e8f0;}
-.ms-head{font-size:11px;font-weight:700;color:#64748b;padding:4px 6px;}
+.ms-head{font-size:11px;font-weight:700;color:#64748b;padding:4px 6px;letter-spacing:normal;}
 .ms-date{display:flex;align-items:center;gap:6px;padding:4px 6px;font-size:11px;color:#475569;}
 .ms-date input{border:1px solid #e2e8f0;border-radius:6px;padding:4px 6px;font-size:12px;font-family:inherit;}
 </style>
@@ -535,7 +536,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260722.test79</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260722.test80</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
