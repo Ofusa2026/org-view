@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260723.test01: 「送信した依頼」一覧の各カードに「📋 LINEテキスト」ボタンを追加（登録済みバッジの左）。送信完了モーダルと同じ依頼内容テキストを、送信後でも一覧からワンクリックでコピーできるように。 -->
 <!-- ver.20260722.test83: 送信した依頼の件名を、登録済み案件はアンシス(cases)の現在の案件名で表示（リネームに自動追従）。未登録・却下は従来どおり依頼時の件名。 -->
 <!-- ver.20260722.test82: 送信した依頼の一覧カードに備考(other_support_note)を表示。先頭2行のみ表示しクリックで全文/折りたたみ、URL（共有ドライブ等）は自動でリンク化（新規タブ）。RPC get_org_intakes に備考を追加。 -->
 <!-- ver.20260722.test81: 所属機関/担当/ステータスの列フィルタをツールバーと状態共有に（どちらで選んでも両方に反映・二重絞り込みを解消）。 -->
@@ -541,7 +542,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260722.test83</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260723.test01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -3972,15 +3973,21 @@ function renderIntakes(){
     groups[key].statuses[x.status]=(groups[key].statuses[x.status]||0)+1;
   });
   order.sort(function(a,b){ return String(groups[b].received_at||'').localeCompare(String(groups[a].received_at||'')); });
-  order.forEach(function(key){
+  _intakeGroupCache={};
+  order.forEach(function(key,gi){
     var g=groups[key];
+    _intakeGroupCache[gi]=g; // ver.20260723.test01: 一覧からのLINEテキストコピー用
     var stKeys=Object.keys(g.statuses);
     var badges=stKeys.map(function(s){ return _intakeStatusBadge(s)+(stKeys.length>1?'<span style="font-size:10px;color:#94a3b8;margin-left:2px;">×'+g.statuses[s]+'</span>':''); }).join(' ');
     h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin-bottom:12px;">';
     h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">';
     h+='<div style="min-width:0;"><div style="font-size:14px;font-weight:800;color:#0f2040;">'+esc(g.case_name_now||g.case_name||'(案件名なし)')+'</div>';
     h+='<div style="font-size:11px;color:#64748b;margin-top:3px;">'+esc(g.company||'')+(g.app_type?'　/　'+esc(g.app_type):'')+(g.aidem_branch?'　/　拠点:'+esc(g.aidem_branch):'')+(g.client_staff?'　/　案件担当者:'+esc(g.client_staff):'')+(g.accept_exp?'　/　受入れ経験:'+esc(g.accept_exp):'')+'　/　委託費:'+_intakeFee(g.support_fee)+'</div></div>';
-    h+='<div style="text-align:right;flex-shrink:0;"><div>'+badges+'</div><div style="font-size:10.5px;color:#94a3b8;margin-top:4px;">送信: '+_intakeFmtDt(g.received_at)+'</div></div>';
+    h+='<div style="text-align:right;flex-shrink:0;">'
+      +'<div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;">'
+      +'<button onclick="copyIntakeLineText('+gi+',this)" title="この依頼のLINE報告用テキストをコピーします" style="padding:3px 11px;border-radius:999px;font-size:11px;font-weight:800;background:#fff;color:#15803d;border:1px solid #86efac;cursor:pointer;white-space:nowrap;line-height:1.5;">📋 LINEテキスト</button>'
+      +badges+'</div>'
+      +'<div style="font-size:10.5px;color:#94a3b8;margin-top:4px;">送信: '+_intakeFmtDt(g.received_at)+'</div></div>';
     h+='</div>';
     h+='<div style="margin-top:10px;border-top:1px dashed #e2e8f0;padding-top:8px;">';
     h+='<div style="font-size:11px;color:#475569;font-weight:700;margin-bottom:6px;">👥 人材 '+g.rows.length+'名</div>';
@@ -4004,6 +4011,79 @@ function renderIntakes(){
   });
   document.getElementById('main').innerHTML=h;
 }
+// ===== ver.20260723.test01: 「送信した依頼」一覧からLINE報告用テキストをコピー =====
+var _intakeGroupCache={};
+// DBの依頼レコード群を、送信完了時と同じ _buildLineReportText 用のペイロード形式に戻す
+function _intakeGroupToPayload(g){
+  var rows=g.rows||[];
+  // 備考（other_support_note）は全行同じ値が入る。先頭の【分野：○○】は分野として切り出す
+  var note='';
+  for(var i=0;i<rows.length;i++){ var n=String(rows[i].other_support_note||'').trim(); if(n){ note=n; break; } }
+  var field='';
+  var m=note.match(/^【分野：([^】]*)】\n?/);
+  if(m){ field=m[1]; note=note.slice(m[0].length); }
+  var fee='';
+  if(g.support_fee!==null&&g.support_fee!==undefined&&g.support_fee!==''){
+    var fn=parseInt(String(g.support_fee).replace(/[^0-9.-]/g,''),10);
+    if(!isNaN(fn)) fee=fn;
+  }
+  return {
+    company:g.company||'',
+    appType:g.app_type||'',
+    acceptExp:g.accept_exp||'',
+    supportFee:fee,
+    referralFee:'',            // 依頼時に保存していないため空欄プレースホルダーのまま
+    applicantField:field,
+    remarks:note,
+    jinzaiList:rows.map(function(r){
+      var cur=String(r.residence_status||''), cnote='';
+      var mm=cur.match(/^その他[:：]\s*(.*)$/);
+      if(mm){ cur='その他'; cnote=mm[1]; }
+      return {
+        name:r.applicant||'',
+        nationality:r.nationality||'',
+        currentStatus:cur,
+        currentStatusNote:cnote,
+        expire:r.expire||''
+      };
+    })
+  };
+}
+function copyIntakeLineText(gid,btn){
+  var g=_intakeGroupCache[gid];
+  if(!g){ return; }
+  var text=_buildLineReportText(_intakeGroupToPayload(g));
+  function _flash(ok){
+    if(!btn) return;
+    var t=btn.textContent, bg=btn.style.background, co=btn.style.color, bo=btn.style.borderColor;
+    btn.textContent = ok ? '✅ コピーしました' : '❌ コピー失敗';
+    btn.style.background = ok ? '#059669' : '#dc2626';
+    btn.style.color='#fff';
+    btn.style.borderColor = ok ? '#059669' : '#dc2626';
+    setTimeout(function(){
+      btn.textContent=t; btn.style.background=bg; btn.style.color=co; btn.style.borderColor=bo;
+    },1800);
+  }
+  function _fallback(){
+    var ta=document.createElement('textarea');
+    ta.value=text;
+    ta.setAttribute('readonly','');
+    ta.style.position='fixed'; ta.style.left='-9999px'; ta.style.top='0';
+    document.body.appendChild(ta);
+    var ok=_legacyCopyText(ta);
+    document.body.removeChild(ta);
+    return ok;
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ _flash(true); }).catch(function(e){
+      console.error('[copyIntakeLineText] clipboard error:', e);
+      _flash(_fallback());
+    });
+  }else{
+    _flash(_fallback());
+  }
+}
+
 // ver.20260612.test07: 登録支援機関情報 + 担当者リスト管理（全org）
 function _fillClientStaffDatalist(){
   var dl=document.getElementById('nc_clientStaffList'); if(!dl) return;
