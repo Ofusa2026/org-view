@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260728.02: share側の印紙代チェックを読み取り専用に変更（チェック不可・支払い元も表示対応）。 -->
 <!-- ver.20260728.01: 申請記録テーブルに「💴 印紙代」チェック列を追加。収入印紙代の支払い完了を案件ごとにチェック・DB保存（org_inshi_<token>）。 -->
 <!-- ver.20260723.02: 依頼カードのコピーボタンのラベルを「LINEテキスト」→「テキスト」に変更。 -->
 <!-- ver.20260723.01: 「送信した依頼」一覧の各カードに「📋 LINEテキスト」ボタンを追加（登録済みバッジの左）。送信完了モーダルと同じ依頼内容テキストを、送信後でも一覧からワンクリックでコピーできるように。 -->
@@ -2751,7 +2752,15 @@ function _buildReceiptTable(rows, dimmed){
     h+='<td style="text-align:center;white-space:nowrap;"><input type="checkbox" data-aid="'+esc(r.id)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)"'+(isChecked?' checked':'')+' style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;">'+(isChecked&&orgChecks[r.id]?'<div style="font-size:9px;color:#16a34a;margin-top:2px;white-space:nowrap;">'+esc((orgChecks[r.id]||'').slice(0,10))+'</div>':'')+'</td>';
     // === 💴 印紙代チェック（ver.20260728.01） ===
     var _inshiChecked=!!inshiChecks[r.id];
-    h+='<td style="text-align:center;white-space:nowrap;background:'+(_inshiChecked?'#fefce8':'')+';"><input type="checkbox" data-inshi="'+esc(r.id)+'" onchange="toggleInshiCheck(this.dataset.inshi,this.checked)"'+(_inshiChecked?' checked':'')+' style="width:18px;height:18px;cursor:pointer;accent-color:#ca8a04;">'+(_inshiChecked&&inshiChecks[r.id]?'<div data-inshi-date="'+esc(r.id)+'" style="font-size:9px;color:#ca8a04;margin-top:2px;white-space:nowrap;">'+esc((inshiChecks[r.id]||'').slice(0,10))+'</div>':'<div data-inshi-date="'+esc(r.id)+'" style="font-size:9px;"></div>')+'</td>';
+    // share側は読み取り専用（チェック不可）。チェック済みの場合は日付・支払い元を表示
+    var _inshiVal=inshiChecks[r.id]||null;
+    var _inshiDate='',_inshiPayer='';
+    if(_inshiVal&&typeof _inshiVal==='object'){ _inshiDate=(_inshiVal.date||'').slice(0,10); _inshiPayer=_inshiVal.payer||''; }
+    else if(_inshiVal&&typeof _inshiVal==='string'){ _inshiDate=_inshiVal.slice(0,10); }
+    h+='<td style="text-align:center;white-space:nowrap;background:'+(_inshiChecked?'#fefce8':'')+';"><input type="checkbox"'+(_inshiChecked?' checked':'')+' disabled style="width:18px;height:18px;cursor:not-allowed;accent-color:#ca8a04;opacity:'+((_inshiChecked)?'1':'0.35')+';">'
+      +(_inshiChecked&&_inshiDate?'<div style="font-size:9px;color:#ca8a04;margin-top:2px;white-space:nowrap;">'+esc(_inshiDate)+'</div>':'')
+      +(_inshiChecked&&_inshiPayer?'<div style="font-size:8px;color:#92400e;white-space:nowrap;">'+esc(_inshiPayer)+'</div>':'')
+      +'</td>';
     // === 受付日（固有・左端隣） ===
     if(r._isApplied){
       h+='<td style="white-space:nowrap;font-size:10px;color:#d97706;font-weight:700;">番号待ち</td>';
