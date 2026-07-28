@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260728.01: 申請記録テーブルに「💴 印紙代」チェック列を追加。収入印紙代の支払い完了を案件ごとにチェック・DB保存（org_inshi_<token>）。 -->
 <!-- ver.20260723.02: 依頼カードのコピーボタンのラベルを「LINEテキスト」→「テキスト」に変更。 -->
 <!-- ver.20260723.01: 「送信した依頼」一覧の各カードに「📋 LINEテキスト」ボタンを追加（登録済みバッジの左）。送信完了モーダルと同じ依頼内容テキストを、送信後でも一覧からワンクリックでコピーできるように。 -->
 <!-- ver.20260722.03: 送信した依頼カードに備考を表示（先頭2行・クリックで全文・URL自動リンク化）＋登録済み依頼の件名をアンシスの現在名で表示（リネーム自動追従）。share_test test82-83を本番展開。 -->
@@ -1243,7 +1244,7 @@ var NOTIF_SHORT_LABELS={'受付番号取込':'受付番号','申請済(番号待
 var DONE_ST=['完了','審査完了'];
 // ver.20260518.13: ダッシュボードを追加、完了の表記をシンプル化
 var GROUPS=[{id:'dashboard',label:'ダッシュボード'},{id:'active',label:'進行中'},{id:'done',label:'発行済み・完了'},{id:'all',label:'すべて'}];
-var allCases=[],allReceipts=[],allShinsa=[],allCerts=[],allIntakes=[],orgProfile=null,intakeStaff=[],orgEmails=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus=[],filterCompany=[],filterClientStaff=[],colFilters={},sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,isGpMode=false,gpInfoByCaseId={},_imeOn=false; // ver.20260606.13: allCerts追加（認定証PDF）
+var allCases=[],allReceipts=[],allShinsa=[],allCerts=[],allIntakes=[],orgProfile=null,intakeStaff=[],orgEmails=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},inshiChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus=[],filterCompany=[],filterClientStaff=[],colFilters={},sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,isGpMode=false,gpInfoByCaseId={},_imeOn=false; // ver.20260606.13: allCerts追加（認定証PDF）
 // ver.20260622.test54: 書類リスト用グローバル変数（settingsから取得 / 案件管理側と同期）→ 国交省/入管分離に必要
 var requiredDocs={},caseCustomDocs={},requiredDocsCo=[],requiredDocsCoField={};
 var requiredDocsCoKokko=['1. 履歴事項全部証明書','2. 建設業許可','3. 標準報酬決定通知書','4. キャリアアップID','5. 会員証明書','6. 委任状','7. 求人票','8. 同等の技能を有する日本人と同等額以上の報酬であることの説明書','9. 就業規則および賃金規程','10. 賃金台帳','11. 経歴書','12. 雇用契約書','13. 36協定','14. 年間カレンダー','15. 重要事項説明書','16. 技能者ID'];
@@ -2720,6 +2721,7 @@ function _buildReceiptTable(rows, dimmed){
   // ver.20260615.test09: 全機関で表示（2段：上=登録支援機関側 / 下=大房側）
   var _showTanto = true;
   h+='<col style="width:70px;">';     // 確認（固有・左端）
+  h+='<col style="width:72px;">';     // 💴 印紙代（ver.20260728.01）
   h+='<col style="width:90px;">';     // 受付日（固有・左端隣）
   h+='<col style="width:240px;">';    // 案件名 / 申請者
   h+='<col style="width:140px;">';    // 所属機関
@@ -2732,7 +2734,7 @@ function _buildReceiptTable(rows, dimmed){
   h+='<col style="width:140px;">';    // PDF
   h+='</colgroup>';
   h+='<thead><tr>';
-  h+='<th style="text-align:center;" title="確認したらチェック">確認</th><th>受付日</th><th>案件名 / 申請者</th><th>所属機関</th><th>種別</th>'+(_showTanto?'<th>担当</th>':'')+'<th>ステータス</th><th>在留期限 / 特例</th><th>受付番号</th><th>受取方法</th><th style="text-align:center;">PDF</th>';
+  h+='<th style="text-align:center;" title="確認したらチェック">確認</th><th style="text-align:center;" title="収入印紙代の支払いが完了したらチェック">💴<br><span style="font-size:9px;font-weight:700;">印紙代</span></th><th>受付日</th><th>案件名 / 申請者</th><th>所属機関</th><th>種別</th>'+(_showTanto?'<th>担当</th>':'')+'<th>ステータス</th><th>在留期限 / 特例</th><th>受付番号</th><th>受取方法</th><th style="text-align:center;">PDF</th>';
   h+='</tr></thead><tbody>';
   rows.forEach(function(r){
     var extLabel=getExternalStatus(r.status);
@@ -2747,6 +2749,9 @@ function _buildReceiptTable(rows, dimmed){
     h+='<tr'+rowStyle+'>';
     // === 確認チェック（固有・左端） ===
     h+='<td style="text-align:center;white-space:nowrap;"><input type="checkbox" data-aid="'+esc(r.id)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)"'+(isChecked?' checked':'')+' style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;">'+(isChecked&&orgChecks[r.id]?'<div style="font-size:9px;color:#16a34a;margin-top:2px;white-space:nowrap;">'+esc((orgChecks[r.id]||'').slice(0,10))+'</div>':'')+'</td>';
+    // === 💴 印紙代チェック（ver.20260728.01） ===
+    var _inshiChecked=!!inshiChecks[r.id];
+    h+='<td style="text-align:center;white-space:nowrap;background:'+(_inshiChecked?'#fefce8':'')+';"><input type="checkbox" data-inshi="'+esc(r.id)+'" onchange="toggleInshiCheck(this.dataset.inshi,this.checked)"'+(_inshiChecked?' checked':'')+' style="width:18px;height:18px;cursor:pointer;accent-color:#ca8a04;">'+(_inshiChecked&&inshiChecks[r.id]?'<div data-inshi-date="'+esc(r.id)+'" style="font-size:9px;color:#ca8a04;margin-top:2px;white-space:nowrap;">'+esc((inshiChecks[r.id]||'').slice(0,10))+'</div>':'<div data-inshi-date="'+esc(r.id)+'" style="font-size:9px;"></div>')+'</td>';
     // === 受付日（固有・左端隣） ===
     if(r._isApplied){
       h+='<td style="white-space:nowrap;font-size:10px;color:#d97706;font-weight:700;">番号待ち</td>';
@@ -4814,6 +4819,26 @@ async function toggleOrgCheck(archiveId, checked){
   }
 }
 
+// ver.20260728.01: 収入印紙代支払済チェック
+async function toggleInshiCheck(archiveId, checked){
+  if(!archiveId)return;
+  var cb=document.querySelector('input[type="checkbox"][data-inshi="'+archiveId+'"]');
+  if(checked){ inshiChecks[archiveId]=new Date().toISOString(); }
+  else{ delete inshiChecks[archiveId]; }
+  // 即時UI更新（印紙チェック欄の日付表示を更新）
+  var dateEl=document.querySelector('[data-inshi-date="'+archiveId+'"]');
+  if(dateEl){ dateEl.textContent=checked?(new Date().toISOString().slice(0,10)):''; }
+  var key='org_inshi_'+currentToken;
+  try{
+    await saveOrgSetting(key,JSON.stringify(inshiChecks));
+  }catch(e){
+    alert('印紙代チェック保存失敗: '+e.message);
+    if(checked){delete inshiChecks[archiveId];}else{inshiChecks[archiveId]=new Date().toISOString();}
+    if(cb)cb.checked=!checked;
+    if(dateEl) dateEl.textContent='';
+  }
+}
+
 async function saveOwnComment(caseId){
   var ta=document.getElementById('owncmt_'+caseId);
   var btn=document.getElementById('ownsavebtn_'+caseId);
@@ -5574,12 +5599,13 @@ async function loadData(){
     var _cn=data.caseNotes||{};
     Object.keys(_cn).forEach(function(cid){var note=_cn[cid];if(typeof note==='string'){try{note=JSON.parse(note);}catch(e){note={progressMemo:note};}}caseNotes[cid]=note||{};});
 
-    orgComments={};orgOwnComments={};orgWithdraws={};orgChecks={};orgChangeReqs={};
+    orgComments={};orgOwnComments={};orgWithdraws={};orgChecks={};inshiChecks={};orgChangeReqs={};
     var _cmtPrefix='org_comment_'+currentToken+'_';
     var _ownPrefix='org_own_comment_'+currentToken+'_';
     var _wdPrefix='org_withdraw_'+currentToken+'_';
     var _crPrefix='org_change_req_'+currentToken+'_';
     var _chkKey='org_checks_'+currentToken;
+    var _inshiKey='org_inshi_'+currentToken;
     (data.settings||[]).forEach(function(row){
       var k=row.key||'';
       if(k.indexOf(_ownPrefix)===0){ orgOwnComments[k.substring(_ownPrefix.length)]=row.value||''; }
@@ -5587,6 +5613,7 @@ async function loadData(){
       else if(k.indexOf(_crPrefix)===0){ var cr=row.value;if(typeof cr==='string'){try{cr=JSON.parse(cr);}catch(e){cr={text:cr};}}orgChangeReqs[k.substring(_crPrefix.length)]=cr||{}; }
       else if(k.indexOf(_wdPrefix)===0){ var v=row.value;if(typeof v==='string'){try{v=JSON.parse(v);}catch(e){v={type:v};}}orgWithdraws[k.substring(_wdPrefix.length)]=v||{}; }
       else if(k===_chkKey){ var cv=row.value;if(typeof cv==='string'){try{orgChecks=JSON.parse(cv)||{};}catch(e){orgChecks={};}}else if(cv&&typeof cv==='object'){orgChecks=cv;} }
+      else if(k===_inshiKey){ var iv=row.value;if(typeof iv==='string'){try{inshiChecks=JSON.parse(iv)||{};}catch(e){inshiChecks={};}}else if(iv&&typeof iv==='object'){inshiChecks=iv;} }
     });
 
     allReceipts=(data.receipts||[]).map(function(r){
