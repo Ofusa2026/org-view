@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260729.test03: TOも「＋ TO追加」で複数行追加できるように（TO/CCとも最大5行・✕で削除）。保存・プレフィルは複数TOにも対応。 -->
+<!-- ver.20260729.test02: 宛先欄を改良。TO/CCバッジで区別を明示、各行に担当者名欄を追加、CCは「＋ CC追加」で最大5件まで増設可（✕で削除）。保存は「担当者名 <アドレス>」形式で to_email/cc_email に格納し、同一所属機関のプレフィルも名前つきで復元。 -->
 <!-- ver.20260729.test01: 新規案件依頼の所属機関の下にTO/CCメール欄を追加。同じ所属機関名を入力すると、過去依頼のTO/CCを自動流用（未入力時のみ）。確認モーダルにも表示し、intake_requests.to_email/cc_emailに保存。 -->
 <!-- ver.20260723.test02: 依頼カードのコピーボタンのラベルを「LINEテキスト」→「テキスト」に変更。 -->
 <!-- ver.20260723.test01: 「送信した依頼」一覧の各カードに「📋 LINEテキスト」ボタンを追加（登録済みバッジの左）。送信完了モーダルと同じ依頼内容テキストを、送信後でも一覧からワンクリックでコピーできるように。 -->
@@ -536,6 +538,9 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 .ms-date input{border:1px solid #e2e8f0;border-radius:6px;padding:4px 6px;font-size:12px;font-family:inherit;}
 .intake-note{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12px;color:#475569;line-height:1.6;cursor:pointer;word-break:break-word;}
 .intake-note.nt-open{display:block;-webkit-line-clamp:unset;overflow:visible;}
+.nc-tocc-badge{flex-shrink:0;font-size:9.5px;font-weight:800;padding:2.5px 7px;border-radius:5px;letter-spacing:.5px;line-height:1;}
+.nc-tocc-to{background:#1F4E79;color:#fff;}
+.nc-tocc-cc{background:#e2e8f0;color:#475569;}
 </style>
 </head>
 <body>
@@ -544,7 +549,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260729.test01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260729.test03</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -652,7 +657,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
               <tr>
                 <th style="min-width:210px;">案件名 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:92px;">申請種別 <span style="color:#dc2626;">*</span></th>
-                <th style="min-width:200px;">所属機関（企業名）<span style="color:#dc2626;">*</span></th>
+                <th style="min-width:252px;">所属機関（企業名）<span style="color:#dc2626;">*</span></th>
                 <th style="min-width:172px;">希望在留資格 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:152px;">受入れ経験 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:128px;" title="全員同額で反映されます">支援委託費(円・税抜)</th>
@@ -674,9 +679,15 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                 <td>
                   <input type="text" class="nc-input" id="nc_company" list="nc_companyList" placeholder="例：あさ... → 浅草株式会社" autocomplete="off" onchange="_ncPrefillToCc()" onblur="_ncPrefillToCc()">
                   <datalist id="nc_companyList"></datalist>
-                  <!-- ver.20260729.test01: 所属機関ごとのメール宛先（次回同じ機関で自動流用） -->
-                  <input type="text" class="nc-input" id="nc_toEmail" placeholder="TO：メールアドレス" title="この所属機関の連絡先（TO）。次回同じ機関名を入れると前回の値が自動で入ります" style="margin-top:6px;font-size:12px;">
-                  <input type="text" class="nc-input" id="nc_ccEmail" placeholder="CC：（複数は , 区切り）" title="CC。次回同じ機関名を入れると前回の値が自動で入ります" style="margin-top:4px;font-size:12px;">
+                  <!-- ver.20260729.test02: メール宛先（TO/CCバッジ・担当者名つき・CCは＋で追加。次回同じ機関で自動流用） -->
+                  <div id="nc_toccWrap" style="margin-top:7px;" title="この所属機関のメール宛先。次回同じ機関名を入れると前回の値が自動で入ります">
+                    <div id="nc_toRows"></div>
+                    <div id="nc_ccRows"></div>
+                    <div style="display:flex;gap:6px;">
+                      <button type="button" onclick="_ncAddToRow()" style="border:1px dashed #1F4E79;background:#eff6ff;color:#1F4E79;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;font-weight:700;">＋ TO追加</button>
+                      <button type="button" onclick="_ncAddCcRow()" style="border:1px dashed #94a3b8;background:#f8fafc;color:#475569;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;font-weight:700;">＋ CC追加</button>
+                    </div>
+                  </div>
                 </td>
                 <td>
                   <select class="nc-select" id="nc_desiredStatus" onchange="_onDesiredStatusChange()">
@@ -5642,21 +5653,68 @@ init();
 var _ncJinzaiRows = 0;
 var _NC_MAX_JINZAI = 30;
 
-// ver.20260729.test01: 同じ所属機関の過去依頼からTO/CCを自動流用（未入力時のみ）
+// ver.20260729.test03: 宛先ユーティリティ（TO/CCとも複数行・「担当者名 <mail>」形式で保存・復元）
+function _ncParseAddr(s){
+  var m=String(s||'').trim().match(/^(.*?)\s*<(.+)>$/);
+  return m ? {name:m[1].trim(), email:m[2].trim()} : {name:'', email:String(s||'').trim()};
+}
+function _ncAddAddrRow(kind,name,email){
+  var wrap=document.getElementById(kind==='to'?'nc_toRows':'nc_ccRows'); if(!wrap) return;
+  if(wrap.querySelectorAll('.nc-addr-row').length>=5){ return; }
+  var isTo=(kind==='to');
+  var row=document.createElement('div');
+  row.className='nc-addr-row';
+  row.style.cssText='display:flex;gap:4px;align-items:center;margin-bottom:4px;';
+  row.innerHTML='<span class="nc-tocc-badge '+(isTo?'nc-tocc-to':'nc-tocc-cc')+'">'+(isTo?'TO':'CC')+'</span>'
+    +'<input type="text" class="nc-input nc-addr-name" placeholder="担当者名" style="width:76px;font-size:11.5px;flex-shrink:0;" value="'+esc(name||'')+'">'
+    +'<input type="text" class="nc-input nc-addr-mail" placeholder="メールアドレス" style="font-size:11.5px;min-width:0;flex:1;" value="'+esc(email||'')+'">'
+    +'<button type="button" onclick="this.parentNode.remove()" title="この行を削除" style="border:none;background:none;color:#dc2626;cursor:pointer;font-weight:800;padding:0 2px;flex-shrink:0;">✕</button>';
+  wrap.appendChild(row);
+}
+function _ncAddToRow(name,email){ _ncAddAddrRow('to',name,email); }
+function _ncAddCcRow(name,email){ _ncAddAddrRow('cc',name,email); }
+function _ncCollectAddrs(wrapId){
+  var out=[];
+  document.querySelectorAll('#'+wrapId+' .nc-addr-row').forEach(function(row){
+    var n=(row.querySelector('.nc-addr-name').value||'').trim();
+    var m=(row.querySelector('.nc-addr-mail').value||'').trim();
+    if(!n&&!m) return;
+    out.push(m ? (n ? n+' <'+m+'>' : m) : n);
+  });
+  return out.join(', ');
+}
+function _ncFillAddrs(wrapId,kind,joined){
+  var wrap=document.getElementById(wrapId); if(!wrap) return;
+  wrap.innerHTML='';
+  String(joined||'').split(',').map(function(s){return s.trim();}).filter(Boolean).forEach(function(s){
+    var a=_ncParseAddr(s); _ncAddAddrRow(kind,a.name,a.email);
+  });
+  if(!wrap.querySelectorAll('.nc-addr-row').length) _ncAddAddrRow(kind);
+}
+function _ncToccIsEmpty(){
+  var rows=document.querySelectorAll('#nc_toRows .nc-addr-row, #nc_ccRows .nc-addr-row');
+  for(var i=0;i<rows.length;i++){
+    if((rows[i].querySelector('.nc-addr-name').value||'').trim()) return false;
+    if((rows[i].querySelector('.nc-addr-mail').value||'').trim()) return false;
+  }
+  return true;
+}
+// 同じ所属機関の過去依頼からTO/CCを自動流用（未入力時のみ）
 function _ncPrefillToCc(){
   var coEl=document.getElementById('nc_company');
-  var toEl=document.getElementById('nc_toEmail'), ccEl=document.getElementById('nc_ccEmail');
-  if(!coEl||!toEl||!ccEl) return;
+  if(!coEl) return;
   var co=(coEl.value||'').trim();
   if(!co) return;
-  if((toEl.value||'').trim() || (ccEl.value||'').trim()) return; // 手入力済みなら触らない
+  if(!_ncToccIsEmpty()) return; // 手入力済みなら触らない
   var best=null;
   (allIntakes||[]).forEach(function(x){
     if((x.company||'')!==co) return;
     if(!(x.to_email||x.cc_email)) return;
     if(!best || String(x.received_at||'')>String(best.received_at||'')) best=x;
   });
-  if(best){ toEl.value=best.to_email||''; ccEl.value=best.cc_email||''; }
+  if(!best) return;
+  _ncFillAddrs('nc_toRows','to',best.to_email);
+  _ncFillAddrs('nc_ccRows','cc',best.cc_email);
 }
 function openNewCaseModal(){
   // 初期化
@@ -5687,8 +5745,8 @@ function openNewCaseModal(){
   document.getElementById('nc_caseName').value='';
   document.getElementById('nc_appType').value='認定';
   document.getElementById('nc_company').value='';
-  var _toE=document.getElementById('nc_toEmail'); if(_toE) _toE.value='';
-  var _ccE=document.getElementById('nc_ccEmail'); if(_ccE) _ccE.value='';
+  var _toW=document.getElementById('nc_toRows'); if(_toW){ _toW.innerHTML=''; _ncAddToRow(); }
+  var _ccW=document.getElementById('nc_ccRows'); if(_ccW){ _ccW.innerHTML=''; _ncAddCcRow(); }
   // ver.20260527.16: nc_currentStatus は廃止（人材別に移行）
   document.getElementById('nc_desiredStatus').value='';
   // ver.20260527.24: 希望在留資格「その他」詳細メモもリセット
@@ -5946,8 +6004,8 @@ async function submitNewCase(){
   var caseName = document.getElementById('nc_caseName').value.trim();
   var appType = document.getElementById('nc_appType').value;
   var company = document.getElementById('nc_company').value.trim();
-  var toEmail = (document.getElementById('nc_toEmail')||{value:''}).value.trim();
-  var ccEmail = (document.getElementById('nc_ccEmail')||{value:''}).value.trim();
+  var toEmail = _ncCollectAddrs('nc_toRows');
+  var ccEmail = _ncCollectAddrs('nc_ccRows');
   // ver.20260527.16: 「現在の在留資格」は人材別へ移行（案件共通欄は廃止）
   var desiredStatus = document.getElementById('nc_desiredStatus').value;
   // ver.20260527.24: 希望在留資格「その他」の詳細メモ
