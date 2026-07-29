@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260729.test01: 新規案件依頼の所属機関の下にTO/CCメール欄を追加。同じ所属機関名を入力すると、過去依頼のTO/CCを自動流用（未入力時のみ）。確認モーダルにも表示し、intake_requests.to_email/cc_emailに保存。 -->
 <!-- ver.20260723.test02: 依頼カードのコピーボタンのラベルを「LINEテキスト」→「テキスト」に変更。 -->
 <!-- ver.20260723.test01: 「送信した依頼」一覧の各カードに「📋 LINEテキスト」ボタンを追加（登録済みバッジの左）。送信完了モーダルと同じ依頼内容テキストを、送信後でも一覧からワンクリックでコピーできるように。 -->
 <!-- ver.20260722.test83: 送信した依頼の件名を、登録済み案件はアンシス(cases)の現在の案件名で表示（リネームに自動追従）。未登録・却下は従来どおり依頼時の件名。 -->
@@ -543,7 +544,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260723.test02</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260729.test01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -671,8 +672,11 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                   </select>
                 </td>
                 <td>
-                  <input type="text" class="nc-input" id="nc_company" list="nc_companyList" placeholder="例：あさ... → 浅草株式会社" autocomplete="off">
+                  <input type="text" class="nc-input" id="nc_company" list="nc_companyList" placeholder="例：あさ... → 浅草株式会社" autocomplete="off" onchange="_ncPrefillToCc()" onblur="_ncPrefillToCc()">
                   <datalist id="nc_companyList"></datalist>
+                  <!-- ver.20260729.test01: 所属機関ごとのメール宛先（次回同じ機関で自動流用） -->
+                  <input type="text" class="nc-input" id="nc_toEmail" placeholder="TO：メールアドレス" title="この所属機関の連絡先（TO）。次回同じ機関名を入れると前回の値が自動で入ります" style="margin-top:6px;font-size:12px;">
+                  <input type="text" class="nc-input" id="nc_ccEmail" placeholder="CC：（複数は , 区切り）" title="CC。次回同じ機関名を入れると前回の値が自動で入ります" style="margin-top:4px;font-size:12px;">
                 </td>
                 <td>
                   <select class="nc-select" id="nc_desiredStatus" onchange="_onDesiredStatusChange()">
@@ -5638,6 +5642,22 @@ init();
 var _ncJinzaiRows = 0;
 var _NC_MAX_JINZAI = 30;
 
+// ver.20260729.test01: 同じ所属機関の過去依頼からTO/CCを自動流用（未入力時のみ）
+function _ncPrefillToCc(){
+  var coEl=document.getElementById('nc_company');
+  var toEl=document.getElementById('nc_toEmail'), ccEl=document.getElementById('nc_ccEmail');
+  if(!coEl||!toEl||!ccEl) return;
+  var co=(coEl.value||'').trim();
+  if(!co) return;
+  if((toEl.value||'').trim() || (ccEl.value||'').trim()) return; // 手入力済みなら触らない
+  var best=null;
+  (allIntakes||[]).forEach(function(x){
+    if((x.company||'')!==co) return;
+    if(!(x.to_email||x.cc_email)) return;
+    if(!best || String(x.received_at||'')>String(best.received_at||'')) best=x;
+  });
+  if(best){ toEl.value=best.to_email||''; ccEl.value=best.cc_email||''; }
+}
 function openNewCaseModal(){
   // 初期化
   // ver.20260525.03: 「使用する支援事業所」は拠点から自動マッピングするため削除
@@ -5667,6 +5687,8 @@ function openNewCaseModal(){
   document.getElementById('nc_caseName').value='';
   document.getElementById('nc_appType').value='認定';
   document.getElementById('nc_company').value='';
+  var _toE=document.getElementById('nc_toEmail'); if(_toE) _toE.value='';
+  var _ccE=document.getElementById('nc_ccEmail'); if(_ccE) _ccE.value='';
   // ver.20260527.16: nc_currentStatus は廃止（人材別に移行）
   document.getElementById('nc_desiredStatus').value='';
   // ver.20260527.24: 希望在留資格「その他」詳細メモもリセット
@@ -5924,6 +5946,8 @@ async function submitNewCase(){
   var caseName = document.getElementById('nc_caseName').value.trim();
   var appType = document.getElementById('nc_appType').value;
   var company = document.getElementById('nc_company').value.trim();
+  var toEmail = (document.getElementById('nc_toEmail')||{value:''}).value.trim();
+  var ccEmail = (document.getElementById('nc_ccEmail')||{value:''}).value.trim();
   // ver.20260527.16: 「現在の在留資格」は人材別へ移行（案件共通欄は廃止）
   var desiredStatus = document.getElementById('nc_desiredStatus').value;
   // ver.20260527.24: 希望在留資格「その他」の詳細メモ
@@ -6033,7 +6057,8 @@ async function submitNewCase(){
     applicantField: applicantField,
     acceptExp: acceptExp,
     aidemBranch: aidemBranch, clientStaff: clientStaff, clientStaffArr: clientStaffArr,
-    supportFee: supportFee, referralFee: referralFee, remarks: remarks, jinzaiList: jinzaiList
+    supportFee: supportFee, referralFee: referralFee, remarks: remarks, jinzaiList: jinzaiList,
+    toEmail: toEmail, ccEmail: ccEmail
   };
 
   // 確認モーダル表示
@@ -6060,6 +6085,12 @@ function _renderConfirmBody(p){
   h += '<div><div class="nc-cf-label">申請種別</div><div class="nc-cf-value">' + esc(p.appType) + '</div></div>';
   h += '<div><div class="nc-cf-label">所属機関</div><div class="nc-cf-value">' + esc(p.company) + '</div></div>';
   h += '</div>';
+  if(p.toEmail || p.ccEmail){
+    h += '<div class="nc-cf-grid">';
+    h += '<div><div class="nc-cf-label">TO</div><div class="nc-cf-value">' + esc(p.toEmail||'—') + '</div></div>';
+    h += '<div><div class="nc-cf-label">CC</div><div class="nc-cf-value">' + esc(p.ccEmail||'—') + '</div></div>';
+    h += '</div>';
+  }
   // ver.20260527.16: 「現在の在留資格」は人材別に移行したため、ここでは希望在留資格のみ
   // ver.20260527.24: 「その他」のときは詳細を併記
   var desiredDisp = esc(p.desiredStatus);
@@ -6193,6 +6224,8 @@ async function executeSubmit(){
         delivery_method: dm,
         recommend_letter_required: rec,
         other_support_note: otherNote,
+        to_email: p.toEmail||'',
+        cc_email: p.ccEmail||'',
         received_at: nowIso,
         status: 'pending'
       };
