@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260805.test02: 1-17号 標準情報の各欄に記入例（薄いグレー）と補足説明を追加。各支援の実施予定・住居確保方針は項目ごとの文例をプレースホルダに表示。 -->
 <!-- ver.20260805.test01: 登録支援機関の届出情報（1-17号の記載事項）をこの画面で直接編集できるように。対応時間・相談方法・緊急時対応・支援の適正性も編集可。変更内容は support_org_edits に履歴として残り、「変更履歴」セクションと案シス側の両方で確認できる。 -->
 <!-- ver.20260729.test03: TOも「＋ TO追加」で複数行追加できるように（TO/CCとも最大5行・✕で削除）。保存・プレフィルは複数TOにも対応。 -->
 <!-- ver.20260729.test02: 宛先欄を改良。TO/CCバッジで区別を明示、各行に担当者名欄を追加、CCは「＋ CC追加」で最大5件まで増設可（✕で削除）。保存は「担当者名 <アドレス>」形式で to_email/cc_email に格納し、同一所属機関のプレフィルも名前つきで復元。 -->
@@ -4346,9 +4347,11 @@ function _orgStd17Html(){
       +'支援計画書（参考様式第1-17号）の作成に使う情報です。貴社の標準的な支援方針をご入力ください。<br>'
       +'ご入力いただくと、以降の申請書類にこの内容が反映されます。</div>';
 
+  var hint='font-size:10.5px;color:#94a3b8;line-height:1.6;margin-top:4px;';
   // 実施言語
-  s+='<div style="margin-bottom:14px;"><div style="'+lb+'">支援を実施する言語</div>'
-   +'<input type="text" value="'+esc(String(b.supportLanguages||''))+'" placeholder="例：ベトナム語、インドネシア語、英語" oninput="_s17Set(\'supportLanguages\',this.value)" style="'+iS+'"></div>';
+  s+='<div style="margin-bottom:16px;"><div style="'+lb+'">支援を実施する言語</div>'
+   +'<input type="text" value="'+esc(String(b.supportLanguages||''))+'" placeholder="ベトナム語、インドネシア語、英語" oninput="_s17Set(\'supportLanguages\',this.value)" style="'+iS+'">'
+   +'<div style="'+hint+'">記入例：ベトナム語、インドネシア語、英語　／　支援対象者が十分に理解できる言語を記入してください</div></div>';
 
   // 通訳者
   s+='<div style="margin-bottom:14px;"><div style="'+lb+'">通訳者</div>';
@@ -4360,7 +4363,8 @@ function _orgStd17Html(){
       +'<button type="button" onclick="_s17IntDel('+i+')" style="flex-shrink:0;font-size:12px;color:#dc2626;background:#fff;border:1px solid #fecaca;border-radius:6px;padding:6px 10px;cursor:pointer;">✕</button>'
       +'</div>';
   });
-  s+='<button type="button" onclick="_s17IntAdd()" style="font-size:11.5px;font-weight:700;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:6px 14px;cursor:pointer;">＋ 通訳者を追加</button></div>';
+  s+='<button type="button" onclick="_s17IntAdd()" style="font-size:11.5px;font-weight:700;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:6px 14px;cursor:pointer;">＋ 通訳者を追加</button>'
+   +'<div style="'+hint+'">記入例：ベトナム語／株式会社〇〇／グエン　タン　※自社の社員が通訳する場合は所属に貴社名をご記入ください</div></div>';
 
   // 定期面談
   var rm=b.regularMeeting||{};
@@ -4372,8 +4376,8 @@ function _orgStd17Html(){
    +  '<option value="faceOnline"'+(rm.method==='faceOnline'?' selected':'')+'>対面とオンラインの併用</option>'
    +  '<option value="radio"'+(rm.method==='radio'?' selected':'')+'>無線・船舶電話</option>'
    +'</select>'
-   +'<input type="text" value="'+esc(String(rm.schedule||''))+'" placeholder="時期（例：3か月に1回）" oninput="_s17Set(\'regularMeeting.schedule\',this.value)" style="'+iS+'flex:1.4;min-width:190px;">'
-   +'</div></div>';
+   +'<input type="text" value="'+esc(String(rm.schedule||''))+'" placeholder="3か月に1回" oninput="_s17Set(\'regularMeeting.schedule\',this.value)" style="'+iS+'flex:1.4;min-width:190px;">'
+   +'</div><div style="'+hint+'">記入例：3か月に1回　／　支援対象者と監督者それぞれに実施する時期をご記入ください</div></div>';
 
   // 実施時間
   var ih=b.implHours||{};
@@ -4385,18 +4389,25 @@ function _orgStd17Html(){
    +'<span style="font-size:12px;color:#475569;white-space:nowrap;margin-left:10px;">生活オリエンテーション</span>'
    +'<input type="text" value="'+esc(String(ih.orientation||''))+'" placeholder="8" oninput="_s17Set(\'implHours.orientation\',this.value)" style="'+iS+'width:70px;flex:none;">'
    +'<span style="font-size:12px;color:#475569;">時間</span>'
-   +'</div></div>';
+   +'</div><div style="'+hint+'">記入例：事前ガイダンス 3時間／生活オリエンテーション 8時間　（生活オリエンテーションは8時間以上が必要です）</div></div>';
 
   // 各支援の実施予定
   var sc=b.implSchedules||{};
-  var scL=[['guidance','① 事前ガイダンス'],['escort','② 出入国時の送迎'],['housing','③ 住居確保・生活契約'],
-           ['orientation','④ 生活オリエンテーション'],['procedures','⑤ 公的手続への同行'],['japanese','⑥ 日本語学習の機会提供'],
-           ['consultation','⑦ 相談・苦情への対応'],['exchange','⑧ 日本人との交流促進'],['jobchange','⑨ 転職支援']];
-  s+='<div style="margin-bottom:14px;"><div style="'+lb+'">各支援の実施予定</div>';
+  var scL=[['guidance','① 事前ガイダンス','雇用契約締結後、在留資格認定証明書交付申請前に対面またはオンラインで実施'],
+           ['escort','② 出入国時の送迎','入国時は空港から住居まで、帰国時は空港の保安検査場まで同行'],
+           ['housing','③ 住居確保・生活契約','不動産仲介事業者を紹介し、必要に応じて同行して契約を補助'],
+           ['orientation','④ 生活オリエンテーション','入国後、住居周辺の生活ルール・交通機関・医療機関等を8時間以上かけて説明'],
+           ['procedures','⑤ 公的手続への同行','住民登録・社会保険・納税等の手続に同行し、書類作成を補助'],
+           ['japanese','⑥ 日本語学習の機会提供','日本語教室や教材の情報を提供し、必要に応じて受講を支援'],
+           ['consultation','⑦ 相談・苦情への対応','支援担当者が母国語で随時対応し、必要に応じて関係機関を案内'],
+           ['exchange','⑧ 日本人との交流促進','地域の行事等の情報を提供し、参加を希望する場合は手続を補助'],
+           ['jobchange','⑨ 転職支援','人員整理等で契約解除する場合、求人情報の提供や推薦状の作成等を実施']];
+  s+='<div style="margin-bottom:16px;"><div style="'+lb+'">各支援の実施予定</div>'
+   +'<div style="'+hint+'margin-top:0;margin-bottom:7px;">貴社が標準的に行っている内容をご記入ください。灰色の文字は記入例です。</div>';
   scL.forEach(function(x){
     s+='<div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">'
       +'<span style="font-size:11.5px;color:#475569;width:170px;flex-shrink:0;">'+x[1]+'</span>'
-      +'<input type="text" value="'+esc(String(sc[x[0]]||''))+'" placeholder="実施予定・方法など" oninput="_s17Set(\'implSchedules.'+x[0]+'\',this.value)" style="'+iS+'">'
+      +'<input type="text" value="'+esc(String(sc[x[0]]||''))+'" placeholder="'+esc(x[2])+'" oninput="_s17Set(\'implSchedules.'+x[0]+'\',this.value)" style="'+iS+'">'
       +'</div>';
   });
   s+='</div>';
@@ -4404,21 +4415,24 @@ function _orgStd17Html(){
   // 住居確保方針
   var hp=b.housingPolicy||{};
   s+='<div style="margin-bottom:14px;"><div style="'+lb+'">住居の確保に係る支援の方針</div>';
-  [['a','a. 不動産仲介・賃貸人への取次'],['b','b. 自ら賃借人となり住居として提供'],['c','c. 社宅等を提供']].forEach(function(x){
+  [['a','a. 不動産仲介・賃貸人への取次','不動産仲介事業者を紹介し、必要に応じて契約に同行する'],
+    ['b','b. 自ら賃借人となり住居として提供','当社が賃貸借契約を締結し、本人の同意のうえ住居として提供する'],
+    ['c','c. 社宅等を提供','当社が所有する社宅を提供する']].forEach(function(x){
     s+='<div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">'
       +'<span style="font-size:11.5px;color:#475569;width:230px;flex-shrink:0;">'+x[1]+'</span>'
-      +'<input type="text" value="'+esc(String(hp[x[0]]||''))+'" placeholder="実施する場合の内容" oninput="_s17Set(\'housingPolicy.'+x[0]+'\',this.value)" style="'+iS+'">'
+      +'<input type="text" value="'+esc(String(hp[x[0]]||''))+'" placeholder="'+esc(x[2])+'" oninput="_s17Set(\'housingPolicy.'+x[0]+'\',this.value)" style="'+iS+'">'
       +'</div>';
   });
-  s+='<input type="text" value="'+esc(String(hp.note||''))+'" placeholder="補足があれば" oninput="_s17Set(\'housingPolicy.note\',this.value)" style="'+iS+'margin-top:4px;"></div>';
+  s+='<input type="text" value="'+esc(String(hp.note||''))+'" placeholder="補足があれば" oninput="_s17Set(\'housingPolicy.note\',this.value)" style="'+iS+'margin-top:4px;">'
+   +'<div style="'+hint+'">実施する方法のみご記入ください。行わない方法は空欄で構いません。</div></div>';
 
   // 共生施策の確認方法
   var sy=b.symbiosisCheck||{};
   s+='<div style="margin-bottom:16px;"><div style="'+lb+'">地方公共団体の共生施策の確認方法</div>'
    +'<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">'
    +'<label style="display:flex;align-items:center;gap:5px;font-size:12.5px;cursor:pointer;"><input type="checkbox"'+(sy.hp?' checked':'')+' onchange="_s17Set(\'symbiosisCheck.hp\',this.checked)">ホームページで確認</label>'
-   +'<input type="text" value="'+esc(String(sy.other||''))+'" placeholder="その他の方法" oninput="_s17Set(\'symbiosisCheck.other\',this.value)" style="'+iS+'flex:1;min-width:200px;">'
-   +'</div></div>';
+   +'<input type="text" value="'+esc(String(sy.other||''))+'" placeholder="市区町村の窓口に問い合わせて確認" oninput="_s17Set(\'symbiosisCheck.other\',this.value)" style="'+iS+'flex:1;min-width:200px;">'
+   +'</div><div style="'+hint+'">記入例：ホームページで確認　／　市区町村の窓口に問い合わせて確認</div></div>';
 
   s+='<div style="text-align:right;"><button type="button" id="orgStd17SaveBtn" onclick="saveOrgStd17()" style="font-size:12.5px;font-weight:800;color:#fff;background:#16a34a;border:none;border-radius:8px;padding:9px 22px;cursor:pointer;">この内容で保存</button></div>';
   return s;
