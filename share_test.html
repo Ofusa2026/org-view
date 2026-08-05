@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260805.test04: 登録支援機関の「📎 別紙情報」を追加。支援責任者名簿・通訳者名簿・支援担当者名簿の3種を、この画面から1名ずつ登録・編集して保存できるように。案シスの support_orgs.attachments と共通 -->
 <!-- ver.20260805.test03: 登録支援機関ページの各セクション（基本情報・所在地・連絡先・職業紹介・対応時間・1-17号標準情報・変更履歴）を既定で開いた状態に変更。 -->
 <!-- ver.20260805.test02: 1-17号 標準情報の各欄に記入例（薄いグレー）と補足説明を追加。各支援の実施予定・住居確保方針は項目ごとの文例をプレースホルダに表示。 -->
 <!-- ver.20260805.test01: 登録支援機関の届出情報（1-17号の記載事項）をこの画面で直接編集できるように。対応時間・相談方法・緊急時対応・支援の適正性も編集可。変更内容は support_org_edits に履歴として残り、「変更履歴」セクションと案シス側の両方で確認できる。 -->
@@ -552,7 +553,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260729.test03</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260805.test04</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1267,6 +1268,8 @@ var DONE_ST=['完了','審査完了'];
 // ver.20260518.13: ダッシュボードを追加、完了の表記をシンプル化
 var GROUPS=[{id:'dashboard',label:'ダッシュボード'},{id:'active',label:'進行中'},{id:'done',label:'発行済み・完了'},{id:'all',label:'すべて'}];
 var orgHours={},orgConsult={},orgEmergency={},orgProperness='',orgEdits=[],orgStd17={};   // ver.20260805.test01
+var orgAttachments={support_managers:[],interpreters:[],support_staff:[]};                // ver.20260805.test04: 別紙情報バッファ
+var _attachDirty=false;                                                                    // ver.20260805.test04: 未保存フラグ
 var allCases=[],allReceipts=[],allShinsa=[],allCerts=[],allIntakes=[],orgProfile=null,intakeStaff=[],orgEmails=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus=[],filterCompany=[],filterClientStaff=[],colFilters={},sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,isGpMode=false,gpInfoByCaseId={},_imeOn=false; // ver.20260606.13: allCerts追加（認定証PDF）
 // ver.20260622.test54: 書類リスト用グローバル変数（settingsから取得 / 案件管理側と同期）→ 国交省/入管分離に必要
 var requiredDocs={},caseCustomDocs={},requiredDocsCo=[],requiredDocsCoField={};
@@ -4222,6 +4225,128 @@ function _orgMethSet(which, field, val){
 }
 function _orgProperSet(v){ _properBuf=v; }
 
+// ===== ver.20260805.test04: 別紙情報（支援責任者・通訳者・支援担当者名簿） =====
+var _ORG_ATTACH_KINDS = [
+  {key:'support_managers', label:'支援責任者名簿', icon:'👥', color:'#0ea5e9', bg:'#f0f9ff',
+   fields:[
+     {k:'name',    l:'氏名',       ph:'向後 利明'},
+     {k:'title',   l:'役職',       ph:'マネージャー'},
+     {k:'name_en', l:'🌐 氏名(英)', ph:'Kougo Toshiaki'},
+     {k:'title_en',l:'🌐 役職(英)', ph:'Manager'}
+   ]},
+  {key:'interpreters',     label:'通訳者名簿',     icon:'🗣️', color:'#059669', bg:'#f0fdf4',
+   fields:[
+     {k:'name',        l:'氏名', ph:'SAFIRA ROSIKA'},
+     {k:'affiliation', l:'所属', ph:'（例）ラマ／自社／外部委託'}
+   ]},
+  {key:'support_staff',    label:'支援担当者名簿', icon:'👤', color:'#8b5cf6', bg:'#faf5ff',
+   fields:[
+     {k:'name',    l:'氏名',       ph:'NIKO SUNARYO'},
+     {k:'title',   l:'役職',       ph:'役職なし'},
+     {k:'name_en', l:'🌐 氏名(英)', ph:'NIKO SUNARYO'},
+     {k:'title_en',l:'🌐 役職(英)', ph:'Full-time employee'},
+     {k:'tel',     l:'📞 電話',    ph:'080-1234-5678'}
+   ]}
+];
+function _orgAttachmentsSectionHtml(){
+  var h='';
+  h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;overflow:hidden;">';
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8fafc;cursor:pointer;border-left:3px solid #64748b;" '
+   + 'onclick="var b=this.nextElementSibling;var o=b.style.display===\'none\';b.style.display=o?\'block\':\'none\';this.querySelector(\'.psa\').textContent=o?\'▼\':\'▶\';">'
+   + '<div style="font-size:13px;font-weight:800;color:#0f2040;">📎 別紙情報（1-17号の添付名簿）</div>'
+   + '<span class="psa" style="font-size:11px;color:#94a3b8;">▼</span></div>';
+  h+='<div style="display:block;padding:12px 14px;">';
+  h+='<div style="font-size:11px;color:#64748b;margin-bottom:10px;line-height:1.6;">支援計画書（1-17号）に <b>「別紙参照」</b> と書く名簿の内訳をここに登録できます。追加・修正したら下の <b>「💾 別紙を保存」</b> を押してください。</div>';
+  _ORG_ATTACH_KINDS.forEach(function(kind){
+    var list = (orgAttachments && Array.isArray(orgAttachments[kind.key])) ? orgAttachments[kind.key] : [];
+    h+='<div style="border:1px solid '+kind.bg+';border-radius:10px;padding:10px 12px;margin-bottom:10px;background:'+kind.bg+';">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+    h+='<div style="font-size:12px;font-weight:800;color:'+kind.color+';">'+kind.icon+' 別紙: '+kind.label+'（'+list.length+'名）</div>';
+    h+='<button onclick="_orgAttachAdd(\''+kind.key+'\')" style="font-size:11px;padding:4px 10px;background:'+kind.color+';color:white;border:none;border-radius:6px;cursor:pointer;font-weight:700;">＋ 追加</button>';
+    h+='</div>';
+    if(!list.length){
+      h+='<div style="padding:10px;background:#fff;border-radius:8px;text-align:center;font-size:11px;color:#94a3b8;">未登録 — 「＋ 追加」で1名ずつ登録できます</div>';
+    } else {
+      list.forEach(function(item,ai){
+        item=item||{};
+        h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;margin-bottom:6px;">';
+        h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">';
+        h+='<span style="font-size:11px;color:'+kind.color+';font-weight:800;width:22px;text-align:center;flex-shrink:0;">'+(ai+1)+'</span>';
+        h+='<span style="font-size:11.5px;font-weight:700;color:#0f2040;flex:1;">'+esc(item.name||'（未入力）')+'</span>';
+        h+='<button onclick="_orgAttachRemove(\''+kind.key+'\','+ai+')" style="font-size:10px;padding:3px 7px;background:#fff;color:#dc2626;border:1px solid #dc2626;border-radius:5px;cursor:pointer;font-weight:700;flex-shrink:0;">✕</button>';
+        h+='</div>';
+        h+='<div style="display:grid;grid-template-columns:repeat('+(kind.fields.length>=2?2:1)+',1fr);gap:6px;">';
+        kind.fields.forEach(function(f){
+          var val=String(item[f.k]||'').replace(/"/g,'&quot;');
+          h+='<div><label style="font-size:10px;font-weight:700;color:#64748b;display:block;margin-bottom:2px;">'+f.l+'</label>';
+          h+='<input type="text" value="'+val+'" placeholder="'+(f.ph||'')+'" onchange="_orgAttachSet(\''+kind.key+'\','+ai+',\''+f.k+'\',this.value)" oninput="_orgAttachSet(\''+kind.key+'\','+ai+',\''+f.k+'\',this.value,true)" style="width:100%;font-size:12px;padding:6px 8px;border:1.5px solid #e2e8f0;border-radius:6px;outline:none;box-sizing:border-box;"></div>';
+        });
+        h+='</div></div>';
+      });
+    }
+    h+='</div>';
+  });
+  h+='<div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:8px;">';
+  h+='<span id="orgAttachDirty" style="font-size:11px;color:#dc2626;font-weight:700;'+(_attachDirty?'':'display:none;')+'">● 未保存の変更があります</span>';
+  h+='<button id="orgAttachSaveBtn" onclick="saveOrgAttachments()" style="padding:8px 16px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">💾 別紙を保存</button>';
+  h+='</div>';
+  h+='</div></div>';
+  return h;
+}
+function _orgAttachEnsure(kind){
+  if(!orgAttachments || typeof orgAttachments!=='object') orgAttachments={support_managers:[],interpreters:[],support_staff:[]};
+  if(!Array.isArray(orgAttachments[kind])) orgAttachments[kind]=[];
+  return orgAttachments[kind];
+}
+function _orgAttachAdd(kind){
+  var arr=_orgAttachEnsure(kind);
+  arr.push({});
+  _attachDirty=true;
+  renderOrgProfile();
+}
+function _orgAttachRemove(kind,idx){
+  var arr=_orgAttachEnsure(kind);
+  arr.splice(idx,1);
+  _attachDirty=true;
+  renderOrgProfile();
+}
+function _orgAttachSet(kind,idx,field,val,noRerender){
+  var arr=_orgAttachEnsure(kind);
+  if(!arr[idx]) arr[idx]={};
+  arr[idx][field]=val;
+  _attachDirty=true;
+  if(noRerender){
+    // タイピング中：入力欄再描画で focus を失わないよう、ダーティ表示だけ更新
+    var d=document.getElementById('orgAttachDirty');
+    if(d) d.style.display='';
+  } else {
+    renderOrgProfile();
+  }
+}
+async function saveOrgAttachments(){
+  var btn=document.getElementById('orgAttachSaveBtn');
+  if(btn){ btn.disabled=true; btn.textContent='保存中…'; }
+  try{
+    var r = await sbRpc('save_org_attachments', {
+      p_token: currentToken,
+      p_pass: (typeof currentPass!=='undefined'?(currentPass||null):null),
+      p_attachments: {
+        support_managers: orgAttachments.support_managers||[],
+        interpreters:     orgAttachments.interpreters||[],
+        support_staff:    orgAttachments.support_staff||[]
+      }
+    });
+    if(!r || r.error) throw new Error((r&&r.error)||'保存に失敗しました');
+    _attachDirty=false;
+    if(orgProfile) orgProfile.attachments=r.attachments||orgAttachments;
+    renderOrgProfile();
+    alert('✅ 別紙情報を保存しました。');
+  }catch(e){
+    alert('保存に失敗しました。\n\n'+(e&&e.message?e.message:e));
+    if(btn){ btn.disabled=false; btn.textContent='💾 別紙を保存'; }
+  }
+}
+
 async function saveOrgHours(){
   var btn=document.getElementById('orgHoursSaveBtn');
   if(btn){ btn.disabled=true; btn.textContent='保存中…'; }
@@ -4664,6 +4789,9 @@ function renderOrgProfile(){
     });
     h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;overflow:hidden;"><div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8fafc;cursor:pointer;border-left:3px solid #8b5cf6;" onclick="var b=this.nextElementSibling;var o=b.style.display===\'none\';b.style.display=o?\'block\':\'none\';this.querySelector(\'.psa\').textContent=o?\'▼\':\'▶\';"><div style="font-size:13px;font-weight:800;color:#0f2040;">👤 支援担当者（'+ssl.length+'名）</div><span class="psa" style="font-size:11px;color:#94a3b8;">▶</span></div><div style="display:none;padding:8px 14px;">'+sh+'</div></div>';
   }
+
+  // 📎 別紙情報（1-17号の別紙）ver.20260805.test04
+  h += _orgAttachmentsSectionHtml();
 
   // メールアドレス（複数・編集可） ver.20260617.test46
   h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;overflow:hidden;">';
@@ -5766,6 +5894,14 @@ async function loadData(){
         orgProperness= prof.supportProperness || '';
         orgEdits     = Array.isArray(prof.edits) ? prof.edits : [];
         orgStd17     = (prof.std17 && typeof prof.std17==='object') ? prof.std17 : {};
+        // ver.20260805.test04: 別紙情報（支援責任者名簿・通訳者名簿・支援担当者名簿）
+        var _at = (prof.attachments && typeof prof.attachments==='object') ? prof.attachments : {};
+        orgAttachments = {
+          support_managers: Array.isArray(_at.support_managers) ? _at.support_managers.slice() : [],
+          interpreters:     Array.isArray(_at.interpreters)     ? _at.interpreters.slice()     : [],
+          support_staff:    Array.isArray(_at.support_staff)    ? _at.support_staff.slice()    : []
+        };
+        _attachDirty=false;
       }
       _fillClientStaffDatalist();
     }catch(e){ console.warn('[org profile load failed]', e); }
