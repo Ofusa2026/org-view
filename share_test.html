@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260805.test03: 登録支援機関ページの各セクション（基本情報・所在地・連絡先・職業紹介・対応時間・1-17号標準情報・変更履歴）を既定で開いた状態に変更。 -->
 <!-- ver.20260805.test02: 1-17号 標準情報の各欄に記入例（薄いグレー）と補足説明を追加。各支援の実施予定・住居確保方針は項目ごとの文例をプレースホルダに表示。 -->
 <!-- ver.20260805.test01: 登録支援機関の届出情報（1-17号の記載事項）をこの画面で直接編集できるように。対応時間・相談方法・緊急時対応・支援の適正性も編集可。変更内容は support_org_edits に履歴として残り、「変更履歴」セクションと案シス側の両方で確認できる。 -->
 <!-- ver.20260729.test03: TOも「＋ TO追加」で複数行追加できるように（TO/CCとも最大5行・✕で削除）。保存・プレフィルは複数TOにも対応。 -->
@@ -4631,7 +4632,7 @@ function renderOrgProfile(){
   j+=_pfRow('電話番号',p.jj_tel);
   j+=_pfRow('許可届出番号',p.jj_permit_no);
   j+=_pfRow('受理年月日',p.jj_permit_date);
-  h+=_pfSection('💼 職業紹介事業者','#f59e0b',false,j);
+  h+=_pfSection('💼 職業紹介事業者','#f59e0b',true,j);
 
   // 🏢 支援事業所
   var offices=(orgProfile&&Array.isArray(orgProfile.offices))?orgProfile.offices:[];
@@ -4711,14 +4712,14 @@ function renderOrgProfile(){
   }
 
   // ver.20260805.test01: 対応時間・相談方法（この画面で直接編集できる）
-  h += _pfSectionPlain('🕐 対応時間・相談方法','#0891b2',false, _orgHoursSectionHtml());
+  h += _pfSectionPlain('🕐 対応時間・相談方法','#0891b2',true, _orgHoursSectionHtml());
   // ver.20260805.test01: 1-17号 標準情報
   var _s17has = orgStd17 && (orgStd17.supportLanguages || (orgStd17.interpreters||[]).length
               || (orgStd17.regularMeeting&&orgStd17.regularMeeting.method)
               || (orgStd17.implHours&&orgStd17.implHours.guidance));
-  h += _pfSectionPlain('📖 1-17号 標準情報'+(_s17has?'':' <span style="font-size:10px;color:#dc2626;font-weight:700;">未入力</span>'),'#d97706',false, _orgStd17Html());
+  h += _pfSectionPlain('📖 1-17号 標準情報'+(_s17has?'':' <span style="font-size:10px;color:#dc2626;font-weight:700;">未入力</span>'),'#d97706',true, _orgStd17Html());
   // ver.20260805.test01: 変更履歴
-  h += _pfSectionPlain('📜 変更履歴','#7c3aed',false, _orgEditsHtml());
+  h += _pfSectionPlain('📜 変更履歴','#7c3aed',true, _orgEditsHtml());
 
   if(_orgEditMode) h += _orgEditBarHtml(true);
   h+='</div>';
