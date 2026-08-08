@@ -4,15 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
-<!-- ver.20260728.02: share側の印紙代チェックを読み取り専用に変更（チェック不可・支払い元も表示対応）。 -->
-<!-- ver.20260728.01: 申請記録テーブルに「💴 印紙代」チェック列を追加。収入印紙代の支払い完了を案件ごとにチェック・DB保存（org_inshi_<token>）。 -->
-<!-- ver.20260723.02: 依頼カードのコピーボタンのラベルを「LINEテキスト」→「テキスト」に変更。 -->
-<!-- ver.20260723.01: 「送信した依頼」一覧の各カードに「📋 LINEテキスト」ボタンを追加（登録済みバッジの左）。送信完了モーダルと同じ依頼内容テキストを、送信後でも一覧からワンクリックでコピーできるように。 -->
-<!-- ver.20260722.03: 送信した依頼カードに備考を表示（先頭2行・クリックで全文・URL自動リンク化）＋登録済み依頼の件名をアンシスの現在名で表示（リネーム自動追従）。share_test test82-83を本番展開。 -->
-<!-- ver.20260722.02: 所属機関/担当/ステータスの列フィルタをツールバーと状態共有に（どちらで選んでも両方に反映・二重絞り込みを解消）。test81と同一コード。 -->
-<!-- ver.20260722.01: 絞り込みを強化（share_test test78-80を本番展開）。①各ドロップダウンに件数バッジ（ファセット集計）②複数選択（チェックボックス式：ステータス/所属機関/担当/種別など）③案件受領日を「から〜まで」の日付範囲絞り込み。あわせてチェッカーCSSの@media欠け1行を修復。 -->
-<!-- ver.20260709.01: ニュース配信の宛先を区分化。登録支援機関ページは audience=all/support(+アイデムはaidem) を表示（news_list(text[])オーバーロード利用）。既存all投稿は従来どおり所属機関ページと両方に表示。 -->
-<!-- ver.20260708.01: 随時届出チェッカーを新設（左サイドバー／自由文検索＋8カテゴリ43判定／参考様式ダウンロード・入管庁Q&A令和7年6月準拠・外部通信なし）。share_testから本番へ展開。 -->
+<!-- ver.20260808.01: 本番同期プッシュ。share_test test06のコードを丸ごと反映（TO/CC宛先欄・届出情報 編集・別紙情報UI・🌍言語別詳細を追加）。印紙代（ver.20260728.01/02）と本番のWHATS_NEWはそのまま維持。 -->
+<!-- ver.20260808.test06: 本番share.htmlから印紙代機能（ver.20260728.01/02）を取り込み。testと本番の枝分かれを解消する準備（次段：test→本番完全同期）。 -->
+<!-- ver.20260808.test05: 登録支援機関情報に「🌍 言語別詳細」セクションを追加。案件で使う言語ごとに通訳者・相談窓口・実施予定などを機関自身が上書き設定できる（未入力は機関の既定値を使用）。RPC: get_org_langs / upsert_org_lang / delete_org_lang。案シス（anken ver.20260808.01）と同DB連動・1-17号書類生成にも反映。 -->
+<!-- ver.20260805.test04: 登録支援機関の「📎 別紙情報」を追加。支援責任者名簿・通訳者名簿・支援担当者名簿の3種を、この画面から1名ずつ登録・編集して保存できるように。案シスの support_orgs.attachments と共通 -->
+<!-- ver.20260805.test03: 登録支援機関ページの各セクション（基本情報・所在地・連絡先・職業紹介・対応時間・1-17号標準情報・変更履歴）を既定で開いた状態に変更。 -->
+<!-- ver.20260805.test02: 1-17号 標準情報の各欄に記入例（薄いグレー）と補足説明を追加。各支援の実施予定・住居確保方針は項目ごとの文例をプレースホルダに表示。 -->
+<!-- ver.20260805.test01: 登録支援機関の届出情報（1-17号の記載事項）をこの画面で直接編集できるように。対応時間・相談方法・緊急時対応・支援の適正性も編集可。変更内容は support_org_edits に履歴として残り、「変更履歴」セクションと案シス側の両方で確認できる。 -->
+<!-- ver.20260729.test03: TOも「＋ TO追加」で複数行追加できるように（TO/CCとも最大5行・✕で削除）。保存・プレフィルは複数TOにも対応。 -->
+<!-- ver.20260729.test02: 宛先欄を改良。TO/CCバッジで区別を明示、各行に担当者名欄を追加、CCは「＋ CC追加」で最大5件まで増設可（✕で削除）。保存は「担当者名 <アドレス>」形式で to_email/cc_email に格納し、同一所属機関のプレフィルも名前つきで復元。 -->
+<!-- ver.20260729.test01: 新規案件依頼の所属機関の下にTO/CCメール欄を追加。同じ所属機関名を入力すると、過去依頼のTO/CCを自動流用（未入力時のみ）。確認モーダルにも表示し、intake_requests.to_email/cc_emailに保存。 -->
+<!-- ver.20260723.test02: 依頼カードのコピーボタンのラベルを「LINEテキスト」→「テキスト」に変更。 -->
+<!-- ver.20260723.test01: 「送信した依頼」一覧の各カードに「📋 LINEテキスト」ボタンを追加（登録済みバッジの左）。送信完了モーダルと同じ依頼内容テキストを、送信後でも一覧からワンクリックでコピーできるように。 -->
+<!-- ver.20260722.test83: 送信した依頼の件名を、登録済み案件はアンシス(cases)の現在の案件名で表示（リネームに自動追従）。未登録・却下は従来どおり依頼時の件名。 -->
+<!-- ver.20260722.test82: 送信した依頼の一覧カードに備考(other_support_note)を表示。先頭2行のみ表示しクリックで全文/折りたたみ、URL（共有ドライブ等）は自動でリンク化（新規タブ）。RPC get_org_intakes に備考を追加。 -->
+<!-- ver.20260722.test81: 所属機関/担当/ステータスの列フィルタをツールバーと状態共有に（どちらで選んでも両方に反映・二重絞り込みを解消）。 -->
+<!-- ver.20260722.test80: 列フィルタのチェックボックスパネルでラベル文字が見えない不具合を修正（テーブルヘッダーのcolor:white等をパネル側でリセット。認定/変更/更新などの選択肢名と件数が表示されるように）。 -->
+<!-- ver.20260722.test79: 絞り込みを複数選択対応（ステータス/所属機関/担当/種別/担当列などをチェックボックス式に。件数バッジは維持）。案件受領日は「から〜まで」の日付範囲で絞り込み可能に。 -->
+<!-- ver.20260722.test78: 絞り込みドロップダウンに件数バッジを追加。上部ツールバー（ステータス/所属機関/担当）と列フィルタ（種別/担当/所属機関/案件受領日/ステータス/他機関申請/受付番号/帰国予定）の各選択肢にファセット件数を表示（自分以外の絞り込み＋フリーワード検索を反映）。 -->
+<!-- ver.20260709.test77: ニュース宛先の区分化(support/company)。本番ver.20260709.01と同内容。 -->
+<!-- ver.20260708.test76: 4-3号（特異事案報告書）＋随時別紙を追加しnote内様式もリンク化。注意書きの相談先を「大房行政書士法人担当まで」に変更。残る準備中は1-6/1-17/2-6/1-25。 -->
+<!-- ver.20260708.test75: 参考様式ダウンロードに第5系統を追加（5-4/5-5/5-6/5-11/5-12/5-13/5-14/5-15/5-18、youshiki/配下）。5-11/5-13/5-14/5-15/5-18が各判定に自動リンク。残る準備中は1-6/1-17/2-6/1-25/4-3。 -->
+<!-- ver.20260708.test74: 随時届出チェッカーの各判定に参考様式ダウンロードを紐付け（第3系統：3-1-1/3-1-2/3-2/3-3-1/3-3-2/3-4/3-5/3-7＋各別紙、youshiki/配下）。未受領様式は「様式準備中」表示。 -->
+<!-- ver.20260708.test73: 本番share.htmlの内容でtestを同期。左サイドバーに「随時届出チェッカー」を追加（自由文検索＋8カテゴリ43判定・入管庁Q&A令和7年6月準拠・外部通信なし・APIキー不要） -->
 <!-- ver.20260618.test53: コメント・要望の送信履歴を3件分の高さで表示し、それ以上はスクロール（件数表示つき） -->
 <!-- ver.20260618.test52: 一覧ヘッダー直下に列ごとの絞り込み行を追加（所属機関・案件受領日・種別・担当・ステータスは値選択、他機関申請・受付番号・帰国予定はあり/なし）。クリアで一括解除 -->
 <!-- ver.20260618.test51: コメント・要望ウィジェットの絵文字が「U0001f4ac」と文字化けしていた不具合修正（無効なJSエスケープ\U…を実絵文字💬🔍に） -->
@@ -531,6 +545,9 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 .ms-date input{border:1px solid #e2e8f0;border-radius:6px;padding:4px 6px;font-size:12px;font-family:inherit;}
 .intake-note{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12px;color:#475569;line-height:1.6;cursor:pointer;word-break:break-word;}
 .intake-note.nt-open{display:block;-webkit-line-clamp:unset;overflow:visible;}
+.nc-tocc-badge{flex-shrink:0;font-size:9.5px;font-weight:800;padding:2.5px 7px;border-radius:5px;letter-spacing:.5px;line-height:1;}
+.nc-tocc-to{background:#1F4E79;color:#fff;}
+.nc-tocc-cc{background:#e2e8f0;color:#475569;}
 </style>
 </head>
 <body>
@@ -539,7 +556,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260723.02</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260808.01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -647,7 +664,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
               <tr>
                 <th style="min-width:210px;">案件名 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:92px;">申請種別 <span style="color:#dc2626;">*</span></th>
-                <th style="min-width:200px;">所属機関（企業名）<span style="color:#dc2626;">*</span></th>
+                <th style="min-width:252px;">所属機関（企業名）<span style="color:#dc2626;">*</span></th>
                 <th style="min-width:172px;">希望在留資格 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:152px;">受入れ経験 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:128px;" title="全員同額で反映されます">支援委託費(円・税抜)</th>
@@ -667,8 +684,17 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                   </select>
                 </td>
                 <td>
-                  <input type="text" class="nc-input" id="nc_company" list="nc_companyList" placeholder="例：あさ... → 浅草株式会社" autocomplete="off">
+                  <input type="text" class="nc-input" id="nc_company" list="nc_companyList" placeholder="例：あさ... → 浅草株式会社" autocomplete="off" onchange="_ncPrefillToCc()" onblur="_ncPrefillToCc()">
                   <datalist id="nc_companyList"></datalist>
+                  <!-- ver.20260729.test02: メール宛先（TO/CCバッジ・担当者名つき・CCは＋で追加。次回同じ機関で自動流用） -->
+                  <div id="nc_toccWrap" style="margin-top:7px;" title="この所属機関のメール宛先。次回同じ機関名を入れると前回の値が自動で入ります">
+                    <div id="nc_toRows"></div>
+                    <div id="nc_ccRows"></div>
+                    <div style="display:flex;gap:6px;">
+                      <button type="button" onclick="_ncAddToRow()" style="border:1px dashed #1F4E79;background:#eff6ff;color:#1F4E79;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;font-weight:700;">＋ TO追加</button>
+                      <button type="button" onclick="_ncAddCcRow()" style="border:1px dashed #94a3b8;background:#f8fafc;color:#475569;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;font-weight:700;">＋ CC追加</button>
+                    </div>
+                  </div>
                 </td>
                 <td>
                   <select class="nc-select" id="nc_desiredStatus" onchange="_onDesiredStatusChange()">
@@ -1245,6 +1271,9 @@ var NOTIF_SHORT_LABELS={'受付番号取込':'受付番号','申請済(番号待
 var DONE_ST=['完了','審査完了'];
 // ver.20260518.13: ダッシュボードを追加、完了の表記をシンプル化
 var GROUPS=[{id:'dashboard',label:'ダッシュボード'},{id:'active',label:'進行中'},{id:'done',label:'発行済み・完了'},{id:'all',label:'すべて'}];
+var orgHours={},orgConsult={},orgEmergency={},orgProperness='',orgEdits=[],orgStd17={};   // ver.20260805.test01
+var orgAttachments={support_managers:[],interpreters:[],support_staff:[]};                // ver.20260805.test04: 別紙情報バッファ
+var _attachDirty=false;                                                                    // ver.20260805.test04: 未保存フラグ
 var allCases=[],allReceipts=[],allShinsa=[],allCerts=[],allIntakes=[],orgProfile=null,intakeStaff=[],orgEmails=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},inshiChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus=[],filterCompany=[],filterClientStaff=[],colFilters={},sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,isGpMode=false,gpInfoByCaseId={},_imeOn=false; // ver.20260606.13: allCerts追加（認定証PDF）
 // ver.20260622.test54: 書類リスト用グローバル変数（settingsから取得 / 案件管理側と同期）→ 国交省/入管分離に必要
 var requiredDocs={},caseCustomDocs={},requiredDocsCo=[],requiredDocsCoField={};
@@ -2750,7 +2779,8 @@ function _buildReceiptTable(rows, dimmed){
     h+='<tr'+rowStyle+'>';
     // === 確認チェック（固有・左端） ===
     h+='<td style="text-align:center;white-space:nowrap;"><input type="checkbox" data-aid="'+esc(r.id)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)"'+(isChecked?' checked':'')+' style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;">'+(isChecked&&orgChecks[r.id]?'<div style="font-size:9px;color:#16a34a;margin-top:2px;white-space:nowrap;">'+esc((orgChecks[r.id]||'').slice(0,10))+'</div>':'')+'</td>';
-    // === 💴 印紙代チェック（ver.20260728.01） ===
+
+  // === 💴 印紙代チェック（ver.20260728.01） ===
     var _inshiChecked=!!inshiChecks[r.id];
     // share側は読み取り専用（チェック不可）。チェック済みの場合は日付・支払い元を表示
     var _inshiVal=inshiChecks[r.id]||null;
@@ -3986,7 +4016,7 @@ function renderIntakes(){
   _intakeGroupCache={};
   order.forEach(function(key,gi){
     var g=groups[key];
-    _intakeGroupCache[gi]=g; // ver.20260723.01: 一覧からのLINEテキストコピー用
+    _intakeGroupCache[gi]=g; // ver.20260723.test01: 一覧からのLINEテキストコピー用
     var stKeys=Object.keys(g.statuses);
     var badges=stKeys.map(function(s){ return _intakeStatusBadge(s)+(stKeys.length>1?'<span style="font-size:10px;color:#94a3b8;margin-left:2px;">×'+g.statuses[s]+'</span>':''); }).join(' ');
     h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin-bottom:12px;">';
@@ -4021,7 +4051,7 @@ function renderIntakes(){
   });
   document.getElementById('main').innerHTML=h;
 }
-// ===== ver.20260723.01: 「送信した依頼」一覧からLINE報告用テキストをコピー =====
+// ===== ver.20260723.test01: 「送信した依頼」一覧からLINE報告用テキストをコピー =====
 var _intakeGroupCache={};
 // DBの依頼レコード群を、送信完了時と同じ _buildLineReportText 用のペイロード形式に戻す
 function _intakeGroupToPayload(g){
@@ -4114,7 +4144,700 @@ async function _autoAddIntakeStaff(names){
     await sbRpc('upsert_org_intake_staff',{p_token:currentToken,p_pass:(currentPass||null),p_staff:intakeStaff});
   }catch(e){ console.warn('[auto-add intake staff] skipped:', e); }
 }
+// ===== ver.20260805.test01: 登録支援機関情報の直接編集 =====
+//   届出情報（1-17号の記載事項）を各機関が自分で更新できるようにする。
+//   変更内容は support_org_edits に履歴として残し、案シス側でも確認できる。
+var ORG_EDITABLE = {
+  name:'登録支援機関名', name_kana:'ふりがな', name_en:'英語名',
+  corp_no:'法人番号', emp_ins_no:'雇用保険番号',
+  reg_no:'登録番号', reg_date:'登録年月日',
+  zip:'郵便番号', pref:'都道府県', city:'市区町村', address_detail:'町名丁目番地号等',
+  address_en:'英語住所', tel:'電話番号',
+  rep_name:'代表者', rep_name_kana:'代表者ふりがな', rep_name_en:'英語代表者名',
+  languages:'対応可能言語',
+  support_manager_name:'支援責任者', support_manager_kana:'支援責任者ふりがな',
+  support_manager_title:'支援責任者役職', support_manager_title_en:'支援責任者役職（英語）',
+  supporter_count:'支援を行っている1号特定技能外国人数', support_staff_count:'支援担当者数',
+  job_permit_no:'職業紹介 許可番号', job_permit_date:'職業紹介 受理年月日'
+};
+var _orgEditMode = false;
+var _orgEditBuf = {};
+
+function toggleOrgEdit(){
+  _orgEditMode = !_orgEditMode;
+  _orgEditBuf = {};
+  renderOrgProfile();
+  if(_orgEditMode){
+    setTimeout(function(){
+      var el=document.getElementById('orgEditBar');
+      if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
+    }, 60);
+  }
+}
+function _orgEditInput(key, val){ _orgEditBuf[key] = val; }
+
+async function saveOrgProfileEdits(){
+  var p = orgProfile || {};
+  var changes = [];
+  Object.keys(_orgEditBuf).forEach(function(k){
+    var nv = String(_orgEditBuf[k]==null?'':_orgEditBuf[k]).trim();
+    var ov = String(p[k]==null?'':p[k]).trim();
+    if(nv !== ov) changes.push({ key:k, label:ORG_EDITABLE[k]||k, oldVal:ov, newVal:nv });
+  });
+  if(!changes.length){ alert('変更された項目がありません。'); return; }
+
+  var lines = changes.slice(0,12).map(function(c){
+    return '・'+c.label+'：'+(c.oldVal||'（未入力）')+' → '+(c.newVal||'（空欄）');
+  }).join('\n');
+  if(changes.length>12) lines += '\n… ほか'+(changes.length-12)+'件';
+  if(!confirm('以下の内容で更新します。よろしいですか？\n\n'+lines)) return;
+
+  var btn = document.getElementById('orgEditSaveBtn');
+  if(btn){ btn.disabled = true; btn.textContent = '保存中…'; }
+
+  try{
+    var patch = {};
+    changes.forEach(function(c){ patch[c.key] = c.newVal; });
+    patch.updated_at = new Date().toISOString();
+    var up = await sb.from('support_orgs').update(patch).eq('id', p.id);
+    if(up.error) throw new Error(up.error.message);
+
+    var who = (p.name||'') + '（登録支援機関ページ）';
+    var rows = changes.map(function(c){
+      return { org_id:p.id, org_name:p.name||'', field_key:c.key, field_label:c.label,
+               old_value:c.oldVal, new_value:c.newVal, edited_by:who, source:'share_test' };
+    });
+    var lg = await sb.from('support_org_edits').insert(rows);
+    if(lg.error) console.warn('履歴の記録に失敗:', lg.error);
+
+    changes.forEach(function(c){ orgProfile[c.key] = c.newVal; });
+    // 画面の履歴にもすぐ反映
+    var nowIso = new Date().toISOString();
+    changes.forEach(function(c){
+      orgEdits.unshift({ field_label:c.label, old_value:c.oldVal, new_value:c.newVal, edited_at:nowIso, edited_by:who });
+    });
+    _orgEditMode = false; _orgEditBuf = {};
+    renderOrgProfile();
+    alert('✅ '+changes.length+'件の変更を保存しました。\nありがとうございました。');
+  }catch(e){
+    alert('保存に失敗しました。\n\n'+(e&&e.message?e.message:e));
+    if(btn){ btn.disabled = false; btn.textContent = 'この内容で保存'; }
+  }
+}
+
+// ===== 対応時間・相談方法・緊急時対応 =====
+var _ORG_DAYS=[['mon','月'],['tue','火'],['wed','水'],['thu','木'],['fri','金'],['sat','土'],['sun','日'],['hol','祝']];
+var _hoursBuf=null, _consultBuf=null, _emgBuf=null, _properBuf=null;
+function _hb(){ if(!_hoursBuf) _hoursBuf=JSON.parse(JSON.stringify(orgHours||{})); return _hoursBuf; }
+function _cb(){ if(!_consultBuf) _consultBuf=JSON.parse(JSON.stringify(orgConsult||{})); return _consultBuf; }
+function _eb(){ if(!_emgBuf) _emgBuf=JSON.parse(JSON.stringify(orgEmergency||{})); return _emgBuf; }
+function _orgHoursSet(day, side, val){
+  var h=_hb(); if(!h[day]) h[day]={};
+  if(side==='none'){ h[day].none=!!val; renderOrgProfile(); return; }
+  h[day][side]=val;
+}
+function _orgMethSet(which, field, val){
+  var m = (which==='consult') ? _cb() : _eb();
+  m[field] = val;
+}
+function _orgProperSet(v){ _properBuf=v; }
+
+// ===== ver.20260805.test04: 別紙情報（支援責任者・通訳者・支援担当者名簿） =====
+var _ORG_ATTACH_KINDS = [
+  {key:'support_managers', label:'支援責任者名簿', icon:'👥', color:'#0ea5e9', bg:'#f0f9ff',
+   fields:[
+     {k:'name',    l:'氏名',       ph:'向後 利明'},
+     {k:'title',   l:'役職',       ph:'マネージャー'},
+     {k:'name_en', l:'🌐 氏名(英)', ph:'Kougo Toshiaki'},
+     {k:'title_en',l:'🌐 役職(英)', ph:'Manager'}
+   ]},
+  {key:'interpreters',     label:'通訳者名簿',     icon:'🗣️', color:'#059669', bg:'#f0fdf4',
+   fields:[
+     {k:'name',        l:'氏名', ph:'SAFIRA ROSIKA'},
+     {k:'affiliation', l:'所属', ph:'（例）ラマ／自社／外部委託'}
+   ]},
+  {key:'support_staff',    label:'支援担当者名簿', icon:'👤', color:'#8b5cf6', bg:'#faf5ff',
+   fields:[
+     {k:'name',    l:'氏名',       ph:'NIKO SUNARYO'},
+     {k:'title',   l:'役職',       ph:'役職なし'},
+     {k:'name_en', l:'🌐 氏名(英)', ph:'NIKO SUNARYO'},
+     {k:'title_en',l:'🌐 役職(英)', ph:'Full-time employee'},
+     {k:'tel',     l:'📞 電話',    ph:'080-1234-5678'}
+   ]}
+];
+function _orgAttachmentsSectionHtml(){
+  var h='';
+  h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;overflow:hidden;">';
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8fafc;cursor:pointer;border-left:3px solid #64748b;" '
+   + 'onclick="var b=this.nextElementSibling;var o=b.style.display===\'none\';b.style.display=o?\'block\':\'none\';this.querySelector(\'.psa\').textContent=o?\'▼\':\'▶\';">'
+   + '<div style="font-size:13px;font-weight:800;color:#0f2040;">📎 別紙情報（1-17号の添付名簿）</div>'
+   + '<span class="psa" style="font-size:11px;color:#94a3b8;">▼</span></div>';
+  h+='<div style="display:block;padding:12px 14px;">';
+  h+='<div style="font-size:11px;color:#64748b;margin-bottom:10px;line-height:1.6;">支援計画書（1-17号）に <b>「別紙参照」</b> と書く名簿の内訳をここに登録できます。追加・修正したら下の <b>「💾 別紙を保存」</b> を押してください。</div>';
+  _ORG_ATTACH_KINDS.forEach(function(kind){
+    var list = (orgAttachments && Array.isArray(orgAttachments[kind.key])) ? orgAttachments[kind.key] : [];
+    h+='<div style="border:1px solid '+kind.bg+';border-radius:10px;padding:10px 12px;margin-bottom:10px;background:'+kind.bg+';">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+    h+='<div style="font-size:12px;font-weight:800;color:'+kind.color+';">'+kind.icon+' 別紙: '+kind.label+'（'+list.length+'名）</div>';
+    h+='<button onclick="_orgAttachAdd(\''+kind.key+'\')" style="font-size:11px;padding:4px 10px;background:'+kind.color+';color:white;border:none;border-radius:6px;cursor:pointer;font-weight:700;">＋ 追加</button>';
+    h+='</div>';
+    if(!list.length){
+      h+='<div style="padding:10px;background:#fff;border-radius:8px;text-align:center;font-size:11px;color:#94a3b8;">未登録 — 「＋ 追加」で1名ずつ登録できます</div>';
+    } else {
+      list.forEach(function(item,ai){
+        item=item||{};
+        h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;margin-bottom:6px;">';
+        h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">';
+        h+='<span style="font-size:11px;color:'+kind.color+';font-weight:800;width:22px;text-align:center;flex-shrink:0;">'+(ai+1)+'</span>';
+        h+='<span style="font-size:11.5px;font-weight:700;color:#0f2040;flex:1;">'+esc(item.name||'（未入力）')+'</span>';
+        h+='<button onclick="_orgAttachRemove(\''+kind.key+'\','+ai+')" style="font-size:10px;padding:3px 7px;background:#fff;color:#dc2626;border:1px solid #dc2626;border-radius:5px;cursor:pointer;font-weight:700;flex-shrink:0;">✕</button>';
+        h+='</div>';
+        h+='<div style="display:grid;grid-template-columns:repeat('+(kind.fields.length>=2?2:1)+',1fr);gap:6px;">';
+        kind.fields.forEach(function(f){
+          var val=String(item[f.k]||'').replace(/"/g,'&quot;');
+          h+='<div><label style="font-size:10px;font-weight:700;color:#64748b;display:block;margin-bottom:2px;">'+f.l+'</label>';
+          h+='<input type="text" value="'+val+'" placeholder="'+(f.ph||'')+'" onchange="_orgAttachSet(\''+kind.key+'\','+ai+',\''+f.k+'\',this.value)" oninput="_orgAttachSet(\''+kind.key+'\','+ai+',\''+f.k+'\',this.value,true)" style="width:100%;font-size:12px;padding:6px 8px;border:1.5px solid #e2e8f0;border-radius:6px;outline:none;box-sizing:border-box;"></div>';
+        });
+        h+='</div></div>';
+      });
+    }
+    h+='</div>';
+  });
+  h+='<div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:8px;">';
+  h+='<span id="orgAttachDirty" style="font-size:11px;color:#dc2626;font-weight:700;'+(_attachDirty?'':'display:none;')+'">● 未保存の変更があります</span>';
+  h+='<button id="orgAttachSaveBtn" onclick="saveOrgAttachments()" style="padding:8px 16px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">💾 別紙を保存</button>';
+  h+='</div>';
+  h+='</div></div>';
+  return h;
+}
+function _orgAttachEnsure(kind){
+  if(!orgAttachments || typeof orgAttachments!=='object') orgAttachments={support_managers:[],interpreters:[],support_staff:[]};
+  if(!Array.isArray(orgAttachments[kind])) orgAttachments[kind]=[];
+  return orgAttachments[kind];
+}
+function _orgAttachAdd(kind){
+  var arr=_orgAttachEnsure(kind);
+  arr.push({});
+  _attachDirty=true;
+  renderOrgProfile();
+}
+function _orgAttachRemove(kind,idx){
+  var arr=_orgAttachEnsure(kind);
+  arr.splice(idx,1);
+  _attachDirty=true;
+  renderOrgProfile();
+}
+function _orgAttachSet(kind,idx,field,val,noRerender){
+  var arr=_orgAttachEnsure(kind);
+  if(!arr[idx]) arr[idx]={};
+  arr[idx][field]=val;
+  _attachDirty=true;
+  if(noRerender){
+    // タイピング中：入力欄再描画で focus を失わないよう、ダーティ表示だけ更新
+    var d=document.getElementById('orgAttachDirty');
+    if(d) d.style.display='';
+  } else {
+    renderOrgProfile();
+  }
+}
+async function saveOrgAttachments(){
+  var btn=document.getElementById('orgAttachSaveBtn');
+  if(btn){ btn.disabled=true; btn.textContent='保存中…'; }
+  try{
+    var r = await sbRpc('save_org_attachments', {
+      p_token: currentToken,
+      p_pass: (typeof currentPass!=='undefined'?(currentPass||null):null),
+      p_attachments: {
+        support_managers: orgAttachments.support_managers||[],
+        interpreters:     orgAttachments.interpreters||[],
+        support_staff:    orgAttachments.support_staff||[]
+      }
+    });
+    if(!r || r.error) throw new Error((r&&r.error)||'保存に失敗しました');
+    _attachDirty=false;
+    if(orgProfile) orgProfile.attachments=r.attachments||orgAttachments;
+    renderOrgProfile();
+    alert('✅ 別紙情報を保存しました。');
+  }catch(e){
+    alert('保存に失敗しました。\n\n'+(e&&e.message?e.message:e));
+    if(btn){ btn.disabled=false; btn.textContent='💾 別紙を保存'; }
+  }
+}
+
+async function saveOrgHours(){
+  var btn=document.getElementById('orgHoursSaveBtn');
+  if(btn){ btn.disabled=true; btn.textContent='保存中…'; }
+  try{
+    var r = await sbRpc('save_org_hours', {
+      p_token: currentToken, p_pass: (typeof currentPass!=='undefined'?(currentPass||null):null),
+      p_hours:   _hoursBuf   || orgHours   || {},
+      p_consult: _consultBuf || orgConsult || {},
+      p_emg:     _emgBuf     || orgEmergency || {},
+      p_proper:  (_properBuf!=null ? _properBuf : (orgProperness||''))
+    });
+    if(!r || r.error) throw new Error((r&&r.error)||'保存に失敗しました');
+    if(_hoursBuf)   orgHours=_hoursBuf;
+    if(_consultBuf) orgConsult=_consultBuf;
+    if(_emgBuf)     orgEmergency=_emgBuf;
+    if(_properBuf!=null) orgProperness=_properBuf;
+    _hoursBuf=_consultBuf=_emgBuf=null; _properBuf=null;
+    renderOrgProfile();
+    alert('✅ 対応時間・相談方法を保存しました。');
+  }catch(e){
+    alert('保存に失敗しました。\n\n'+(e&&e.message?e.message:e));
+    if(btn){ btn.disabled=false; btn.textContent='この内容で保存'; }
+  }
+}
+
+function _orgHoursSectionHtml(){
+  var H=_hoursBuf||orgHours||{};
+  var iS='padding:5px 7px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;box-sizing:border-box;width:100%;';
+  var s='<div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:7px;">対応時間（曜日別）</div>';
+  s+='<div style="display:grid;grid-template-columns:34px 1fr 16px 1fr 62px;gap:6px 8px;align-items:center;margin-bottom:16px;">';
+  _ORG_DAYS.forEach(function(d){
+    var v=H[d[0]]||{};
+    s+='<span style="font-size:12px;font-weight:700;color:#475569;">'+d[1]+'</span>'
+      +'<input type="time" value="'+esc(String(v.from||''))+'"'+(v.none?' disabled':'')+' onchange="_orgHoursSet(\''+d[0]+'\',\'from\',this.value)" style="'+iS+(v.none?'opacity:.4;':'')+'">'
+      +'<span style="font-size:12px;color:#94a3b8;text-align:center;">〜</span>'
+      +'<input type="time" value="'+esc(String(v.to||''))+'"'+(v.none?' disabled':'')+' onchange="_orgHoursSet(\''+d[0]+'\',\'to\',this.value)" style="'+iS+(v.none?'opacity:.4;':'')+'">'
+      +'<label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94a3b8;cursor:pointer;white-space:nowrap;"><input type="checkbox"'+(v.none?' checked':'')+' onchange="_orgHoursSet(\''+d[0]+'\',\'none\',this.checked)">なし</label>';
+  });
+  s+='</div>';
+  function meth(title, which){
+    var m = (which==='consult') ? (_consultBuf||orgConsult||{}) : (_emgBuf||orgEmergency||{});
+    var t='<div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;">'+title+'</div>';
+    t+='<div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-size:12.5px;margin-bottom:7px;">';
+    [['f2f','直接面談'],['tel','電話'],['mail','メール']].forEach(function(k){
+      t+='<label style="display:flex;align-items:center;gap:5px;cursor:pointer;"><input type="checkbox"'+(m[k[0]]?' checked':'')
+        +' onchange="_orgMethSet(\''+which+'\',\''+k[0]+'\',this.checked)">'+k[1]+'</label>';
+    });
+    t+='<span style="display:flex;align-items:center;gap:5px;">その他<input type="text" value="'+esc(String(m.other||''))
+      +'" placeholder="LINE 等" onchange="_orgMethSet(\''+which+'\',\'other\',this.value)" style="padding:5px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;width:150px;"></span>';
+    t+='</div>';
+    t+='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">'
+      +'<input type="tel" value="'+esc(String(m.telNo||''))+'" placeholder="電話番号" onchange="_orgMethSet(\''+which+'\',\'telNo\',this.value)" style="flex:1;min-width:150px;padding:6px 9px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">'
+      +'<input type="email" value="'+esc(String(m.mailAddr||''))+'" placeholder="メールアドレス" onchange="_orgMethSet(\''+which+'\',\'mailAddr\',this.value)" style="flex:1;min-width:180px;padding:6px 9px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">'
+      +'</div>';
+    return t;
+  }
+  s+=meth('相談方法','consult');
+  s+=meth('緊急時対応','emg');
+  var pv=(_properBuf!=null?_properBuf:(orgProperness||''));
+  s+='<div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;">支援の適正性を確保していることの有無</div>';
+  s+='<div style="display:flex;gap:20px;align-items:center;font-size:12.5px;margin-bottom:4px;">';
+  ['有','無'].forEach(function(v){
+    s+='<label style="display:flex;align-items:center;gap:5px;cursor:pointer;"><input type="radio" name="_orgProper"'+((pv===v)?' checked':'')+' onchange="_orgProperSet(\''+v+'\')">'+v+'</label>';
+  });
+  s+='</div>';
+  s+='<div style="font-size:10.5px;color:#94a3b8;line-height:1.6;margin-bottom:12px;">'
+    +'（支援責任者が役員の配偶者、2親等以内の親族等でない／過去5年以内に役員・職員でなかった／登録拒否事由に非該当）</div>';
+  s+='<div style="text-align:right;"><button type="button" id="orgHoursSaveBtn" onclick="saveOrgHours()" style="font-size:12.5px;font-weight:800;color:#fff;background:#16a34a;border:none;border-radius:8px;padding:9px 22px;cursor:pointer;">この内容で保存</button></div>';
+  return s;
+}
+
+// ===== ver.20260805.test01: 1-17号 標準情報（支援計画書の作成に使う情報）=====
+var _std17Buf=null;
+function _sb17(){
+  if(!_std17Buf){
+    var s = orgStd17 || {};
+    _std17Buf = {
+      supportLanguages: s.supportLanguages || '',
+      interpreters: Array.isArray(s.interpreters)? JSON.parse(JSON.stringify(s.interpreters)) : [],
+      regularMeeting: Object.assign({method:'',schedule:''}, s.regularMeeting||{}),
+      implHours: Object.assign({guidance:'',orientation:''}, s.implHours||{}),
+      implSchedules: Object.assign({}, s.implSchedules||{}),
+      housingPolicy: Object.assign({a:'',b:'',c:'',note:''}, s.housingPolicy||{}),
+      symbiosisCheck: Object.assign({hp:false,other:''}, s.symbiosisCheck||{})
+    };
+  }
+  return _std17Buf;
+}
+function _s17Set(path, val){
+  var b=_sb17(), p=path.split('.');
+  if(p.length===1) b[p[0]]=val; else { if(!b[p[0]]) b[p[0]]={}; b[p[0]][p[1]]=val; }
+}
+function _s17IntAdd(){ _sb17().interpreters.push({language:'',org:'',name:''}); renderOrgProfile(); }
+function _s17IntDel(i){ _sb17().interpreters.splice(i,1); renderOrgProfile(); }
+function _s17IntSet(i,k,v){ var a=_sb17().interpreters; if(a[i]) a[i][k]=v; }
+
+async function saveOrgStd17(){
+  var btn=document.getElementById('orgStd17SaveBtn');
+  if(btn){ btn.disabled=true; btn.textContent='保存中…'; }
+  try{
+    var b=_sb17();
+    b.interpreters = (b.interpreters||[]).filter(function(x){ return (x.language||x.org||x.name); });
+    var r = await sbRpc('save_org_std17', {
+      p_token: currentToken,
+      p_pass: (typeof currentPass!=='undefined'?(currentPass||null):null),
+      p_std: b
+    });
+    if(!r || r.error) throw new Error((r&&r.error)||'保存に失敗しました');
+    orgStd17 = JSON.parse(JSON.stringify(b));
+    _std17Buf = null;
+    renderOrgProfile();
+    alert('✅ 1-17号の標準情報を保存しました。');
+  }catch(e){
+    alert('保存に失敗しました。\n\n'+(e&&e.message?e.message:e));
+    if(btn){ btn.disabled=false; btn.textContent='この内容で保存'; }
+  }
+}
+
+function _orgStd17Html(){
+  var b=_sb17();
+  var iS='padding:6px 9px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;box-sizing:border-box;width:100%;';
+  var lb='font-size:11px;font-weight:700;color:#64748b;margin-bottom:5px;';
+  var s='<div style="font-size:11px;color:#64748b;margin-bottom:12px;line-height:1.7;">'
+      +'支援計画書（参考様式第1-17号）の作成に使う情報です。貴社の標準的な支援方針をご入力ください。<br>'
+      +'ご入力いただくと、以降の申請書類にこの内容が反映されます。</div>';
+
+  var hint='font-size:10.5px;color:#94a3b8;line-height:1.6;margin-top:4px;';
+  // 実施言語
+  s+='<div style="margin-bottom:16px;"><div style="'+lb+'">支援を実施する言語</div>'
+   +'<input type="text" value="'+esc(String(b.supportLanguages||''))+'" placeholder="ベトナム語、インドネシア語、英語" oninput="_s17Set(\'supportLanguages\',this.value)" style="'+iS+'">'
+   +'<div style="'+hint+'">記入例：ベトナム語、インドネシア語、英語　／　支援対象者が十分に理解できる言語を記入してください</div></div>';
+
+  // 通訳者
+  s+='<div style="margin-bottom:14px;"><div style="'+lb+'">通訳者</div>';
+  (b.interpreters||[]).forEach(function(it,i){
+    s+='<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center;">'
+      +'<input type="text" value="'+esc(String(it.language||''))+'" placeholder="言語" oninput="_s17IntSet('+i+',\'language\',this.value)" style="'+iS+'flex:1;min-width:0;">'
+      +'<input type="text" value="'+esc(String(it.org||''))+'" placeholder="所属（会社・団体）" oninput="_s17IntSet('+i+',\'org\',this.value)" style="'+iS+'flex:1.4;min-width:0;">'
+      +'<input type="text" value="'+esc(String(it.name||''))+'" placeholder="氏名" oninput="_s17IntSet('+i+',\'name\',this.value)" style="'+iS+'flex:1;min-width:0;">'
+      +'<button type="button" onclick="_s17IntDel('+i+')" style="flex-shrink:0;font-size:12px;color:#dc2626;background:#fff;border:1px solid #fecaca;border-radius:6px;padding:6px 10px;cursor:pointer;">✕</button>'
+      +'</div>';
+  });
+  s+='<button type="button" onclick="_s17IntAdd()" style="font-size:11.5px;font-weight:700;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:6px 14px;cursor:pointer;">＋ 通訳者を追加</button>'
+   +'<div style="'+hint+'">記入例：ベトナム語／株式会社〇〇／グエン　タン　※自社の社員が通訳する場合は所属に貴社名をご記入ください</div></div>';
+
+  // 定期面談
+  var rm=b.regularMeeting||{};
+  s+='<div style="margin-bottom:14px;"><div style="'+lb+'">定期的な面談の実施方法・時期</div>'
+   +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+   +'<select onchange="_s17Set(\'regularMeeting.method\',this.value)" style="'+iS+'flex:1;min-width:170px;">'
+   +  '<option value="">実施方法を選択</option>'
+   +  '<option value="face"'+(rm.method==='face'?' selected':'')+'>対面</option>'
+   +  '<option value="faceOnline"'+(rm.method==='faceOnline'?' selected':'')+'>対面とオンラインの併用</option>'
+   +  '<option value="radio"'+(rm.method==='radio'?' selected':'')+'>無線・船舶電話</option>'
+   +'</select>'
+   +'<input type="text" value="'+esc(String(rm.schedule||''))+'" placeholder="3か月に1回" oninput="_s17Set(\'regularMeeting.schedule\',this.value)" style="'+iS+'flex:1.4;min-width:190px;">'
+   +'</div><div style="'+hint+'">記入例：3か月に1回　／　支援対象者と監督者それぞれに実施する時期をご記入ください</div></div>';
+
+  // 実施時間
+  var ih=b.implHours||{};
+  s+='<div style="margin-bottom:14px;"><div style="'+lb+'">実施時間</div>'
+   +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'
+   +'<span style="font-size:12px;color:#475569;white-space:nowrap;">事前ガイダンス</span>'
+   +'<input type="text" value="'+esc(String(ih.guidance||''))+'" placeholder="3" oninput="_s17Set(\'implHours.guidance\',this.value)" style="'+iS+'width:70px;flex:none;">'
+   +'<span style="font-size:12px;color:#475569;">時間</span>'
+   +'<span style="font-size:12px;color:#475569;white-space:nowrap;margin-left:10px;">生活オリエンテーション</span>'
+   +'<input type="text" value="'+esc(String(ih.orientation||''))+'" placeholder="8" oninput="_s17Set(\'implHours.orientation\',this.value)" style="'+iS+'width:70px;flex:none;">'
+   +'<span style="font-size:12px;color:#475569;">時間</span>'
+   +'</div><div style="'+hint+'">記入例：事前ガイダンス 3時間／生活オリエンテーション 8時間　（生活オリエンテーションは8時間以上が必要です）</div></div>';
+
+  // 各支援の実施予定
+  var sc=b.implSchedules||{};
+  var scL=[['guidance','① 事前ガイダンス','雇用契約締結後、在留資格認定証明書交付申請前に対面またはオンラインで実施'],
+           ['escort','② 出入国時の送迎','入国時は空港から住居まで、帰国時は空港の保安検査場まで同行'],
+           ['housing','③ 住居確保・生活契約','不動産仲介事業者を紹介し、必要に応じて同行して契約を補助'],
+           ['orientation','④ 生活オリエンテーション','入国後、住居周辺の生活ルール・交通機関・医療機関等を8時間以上かけて説明'],
+           ['procedures','⑤ 公的手続への同行','住民登録・社会保険・納税等の手続に同行し、書類作成を補助'],
+           ['japanese','⑥ 日本語学習の機会提供','日本語教室や教材の情報を提供し、必要に応じて受講を支援'],
+           ['consultation','⑦ 相談・苦情への対応','支援担当者が母国語で随時対応し、必要に応じて関係機関を案内'],
+           ['exchange','⑧ 日本人との交流促進','地域の行事等の情報を提供し、参加を希望する場合は手続を補助'],
+           ['jobchange','⑨ 転職支援','人員整理等で契約解除する場合、求人情報の提供や推薦状の作成等を実施']];
+  s+='<div style="margin-bottom:16px;"><div style="'+lb+'">各支援の実施予定</div>'
+   +'<div style="'+hint+'margin-top:0;margin-bottom:7px;">貴社が標準的に行っている内容をご記入ください。灰色の文字は記入例です。</div>';
+  scL.forEach(function(x){
+    s+='<div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">'
+      +'<span style="font-size:11.5px;color:#475569;width:170px;flex-shrink:0;">'+x[1]+'</span>'
+      +'<input type="text" value="'+esc(String(sc[x[0]]||''))+'" placeholder="'+esc(x[2])+'" oninput="_s17Set(\'implSchedules.'+x[0]+'\',this.value)" style="'+iS+'">'
+      +'</div>';
+  });
+  s+='</div>';
+
+  // 住居確保方針
+  var hp=b.housingPolicy||{};
+  s+='<div style="margin-bottom:14px;"><div style="'+lb+'">住居の確保に係る支援の方針</div>';
+  [['a','a. 不動産仲介・賃貸人への取次','不動産仲介事業者を紹介し、必要に応じて契約に同行する'],
+    ['b','b. 自ら賃借人となり住居として提供','当社が賃貸借契約を締結し、本人の同意のうえ住居として提供する'],
+    ['c','c. 社宅等を提供','当社が所有する社宅を提供する']].forEach(function(x){
+    s+='<div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">'
+      +'<span style="font-size:11.5px;color:#475569;width:230px;flex-shrink:0;">'+x[1]+'</span>'
+      +'<input type="text" value="'+esc(String(hp[x[0]]||''))+'" placeholder="'+esc(x[2])+'" oninput="_s17Set(\'housingPolicy.'+x[0]+'\',this.value)" style="'+iS+'">'
+      +'</div>';
+  });
+  s+='<input type="text" value="'+esc(String(hp.note||''))+'" placeholder="補足があれば" oninput="_s17Set(\'housingPolicy.note\',this.value)" style="'+iS+'margin-top:4px;">'
+   +'<div style="'+hint+'">実施する方法のみご記入ください。行わない方法は空欄で構いません。</div></div>';
+
+  // 共生施策の確認方法
+  var sy=b.symbiosisCheck||{};
+  s+='<div style="margin-bottom:16px;"><div style="'+lb+'">地方公共団体の共生施策の確認方法</div>'
+   +'<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">'
+   +'<label style="display:flex;align-items:center;gap:5px;font-size:12.5px;cursor:pointer;"><input type="checkbox"'+(sy.hp?' checked':'')+' onchange="_s17Set(\'symbiosisCheck.hp\',this.checked)">ホームページで確認</label>'
+   +'<input type="text" value="'+esc(String(sy.other||''))+'" placeholder="市区町村の窓口に問い合わせて確認" oninput="_s17Set(\'symbiosisCheck.other\',this.value)" style="'+iS+'flex:1;min-width:200px;">'
+   +'</div><div style="'+hint+'">記入例：ホームページで確認　／　市区町村の窓口に問い合わせて確認</div></div>';
+
+  s+='<div style="text-align:right;"><button type="button" id="orgStd17SaveBtn" onclick="saveOrgStd17()" style="font-size:12.5px;font-weight:800;color:#fff;background:#16a34a;border:none;border-radius:8px;padding:9px 22px;cursor:pointer;">この内容で保存</button></div>';
+  return s;
+}
+
+/** グリッドで包まないセクション（表や独自レイアウト用） */
+// ===== ver.20260808.test05: 🌍 言語別詳細（support_org_by_language / RPC: get_org_langs, upsert_org_lang, delete_org_lang）=====
+var orgLangsData={langs:[],languages_master:[],editing:{}};
+async function loadOrgLangs(){
+  var res=await sbRpc('get_org_langs',{p_token:currentToken,p_pass:(currentPass||null)});
+  if(res && !res.error){
+    orgLangsData.langs=res.langs||[];
+    orgLangsData.languages_master=res.languages_master||[];
+  }
+}
+function _olEsc(s){ return esc(s==null?'':String(s)); }
+function _olDefaultVal(key){
+  // 機関デフォルト（1-17号標準情報 / 対応時間・相談方法）から該当値を引く
+  var s=orgStd17||{}, hrs=(orgProfile&&orgProfile.hours)||{}, cm=(orgProfile&&orgProfile.consultMethods)||{}, em=(orgProfile&&orgProfile.emergencyContact)||{};
+  var m={
+    translator_name: (s.interpreters&&s.interpreters[0]&&s.interpreters[0].name)||'',
+    translator_org:  (s.interpreters&&s.interpreters[0]&&s.interpreters[0].org)||'',
+    consult_phone:   em.phone||cm.phone||'',
+    consult_email:   em.email||cm.email||'',
+    consult_methods: (cm.methods||[]).join(' / '),
+    consult_hours:   Object.keys(hrs).length ? '対応時間セクション参照' : '',
+    guidance_method: (s.implHours&&s.implHours.guidanceMethod)||'',
+    guidance_hours:  (s.implHours&&s.implHours.guidance)||'',
+    orientation_method:(s.implHours&&s.implHours.orientationMethod)||'',
+    orientation_hours: (s.implHours&&s.implHours.orientation)||'',
+    meeting_frequency:(s.regularMeeting&&s.regularMeeting.frequency)||'',
+    meeting_method:  (s.regularMeeting&&s.regularMeeting.method)||'',
+    jp_learning_method:(s.jpLearning&&s.jpLearning.method)||'',
+    transfer_support_policy:s.transferSupport||'',
+    housing_policy_a:(s.housing&&s.housing.a)||'',
+    housing_policy_b:(s.housing&&s.housing.b)||'',
+    housing_policy_c:(s.housing&&s.housing.c)||'',
+    notes:''
+  };
+  return m[key]||'';
+}
+function _orgLangsHtml(){
+  var langs=orgLangsData.langs||[], master=orgLangsData.languages_master||[];
+  var used={}; langs.forEach(function(l){ if(l.language_code) used[l.language_code]=true; });
+  var pickable=master.filter(function(m){ return !used[m.code]; });
+  var h='<div style="font-size:11px;color:#64748b;margin-bottom:10px;line-height:1.6;">案件で使う言語ごとに、通訳者・相談窓口・実施予定などを上書き設定できます。空欄の項目は機関の既定値（上の「1-17号 標準情報」や「対応時間・相談方法」）が使われます。1-17号書類の生成時に、申請人の言語に応じてこの値が反映されます。</div>';
+  if(!langs.length){
+    h+='<div style="font-size:12px;color:#94a3b8;padding:6px 0 10px;">まだ言語が登録されていません。下の「＋ 言語を追加」から追加してください。</div>';
+  }else{
+    langs.forEach(function(l){ h+=_orgLangCardHtml(l); });
+  }
+  h+='<div style="margin-top:10px;padding-top:10px;border-top:1px dashed #e2e8f0;">';
+  if(pickable.length){
+    h+='<label style="font-size:11px;color:#64748b;font-weight:700;">＋ 言語を追加：</label> ';
+    h+='<select id="olNewLangSel" style="font-size:12px;padding:5px 8px;border:1px solid #cbd5e1;border-radius:6px;">';
+    h+='<option value="">--選択--</option>';
+    pickable.forEach(function(m){ h+='<option value="'+_olEsc(m.code)+'">'+_olEsc((m.flag_emoji||'')+' '+m.name_ja)+'</option>'; });
+    h+='<option value="__custom__">その他（自由入力）</option>';
+    h+='</select> <button type="button" onclick="orgLangAddNew()" style="background:#059669;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;">追加</button>';
+  }else{
+    h+='<div style="font-size:11px;color:#94a3b8;">マスタの全言語が登録済みです。「その他」を追加したい場合は開発担当までご連絡ください。</div>';
+  }
+  h+='</div>';
+  return h;
+}
+function _orgLangCardHtml(l){
+  var key=l.language_code||('c:'+l.language_custom);
+  var editing=!!orgLangsData.editing[key];
+  var title=(l.flag_emoji||'🌐')+' '+_olEsc(l.language_label||l.language_custom||l.language_code);
+  var h='<div style="border:1px solid #d1fae5;background:#f0fdf4;border-radius:8px;padding:10px 12px;margin-bottom:8px;">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
+  h+='<div style="font-size:13px;font-weight:800;color:#065f46;">'+title+'</div>';
+  h+='<div>';
+  if(editing){
+    h+='<button type="button" onclick="orgLangSaveCard(\''+_olEsc(key)+'\')" style="background:#059669;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px;">💾 保存</button>';
+    h+='<button type="button" onclick="orgLangCancelEdit(\''+_olEsc(key)+'\')" style="background:#f1f5f9;color:#475569;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;">キャンセル</button>';
+  }else{
+    h+='<button type="button" onclick="orgLangEditCard(\''+_olEsc(key)+'\')" style="background:#fff;border:1px solid #86efac;color:#065f46;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px;">✏️ 編集</button>';
+    h+='<button type="button" onclick="orgLangDeleteCard(\''+_olEsc(key)+'\')" style="background:#fff;border:1px solid #fca5a5;color:#b91c1c;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;">🗑 削除</button>';
+  }
+  h+='</div></div>';
+  h+= editing ? _orgLangEditBody(key,l) : _orgLangViewBody(l);
+  h+='</div>';
+  return h;
+}
+function _olRow(label, val, defv){
+  var use = (val!=null && val!=='') ? _olEsc(val) : (defv? '<span style="color:#94a3b8;">'+_olEsc(defv)+' <span style="font-size:10px;">(既定)</span></span>' : '<span style="color:#cbd5e1;">—</span>');
+  return '<div style="display:flex;gap:8px;font-size:12px;padding:3px 0;"><div style="width:150px;color:#64748b;flex-shrink:0;">'+_olEsc(label)+'</div><div style="flex:1;color:#0f2040;">'+use+'</div></div>';
+}
+function _orgLangViewBody(l){
+  var h='<div>';
+  h+=_olRow('通訳者名', l.translator_name, _olDefaultVal('translator_name'));
+  h+=_olRow('通訳者所属', l.translator_org, _olDefaultVal('translator_org'));
+  h+=_olRow('相談窓口 電話', l.consult_phone, _olDefaultVal('consult_phone'));
+  h+=_olRow('相談窓口 メール', l.consult_email, _olDefaultVal('consult_email'));
+  h+=_olRow('生活オリエンテーション 方法', l.orientation_method, _olDefaultVal('orientation_method'));
+  h+=_olRow('生活オリエンテーション 時間', l.orientation_hours, _olDefaultVal('orientation_hours'));
+  h+=_olRow('生活指導 方法', l.guidance_method, _olDefaultVal('guidance_method'));
+  h+=_olRow('生活指導 時間', l.guidance_hours, _olDefaultVal('guidance_hours'));
+  h+=_olRow('定期面談 頻度', l.meeting_frequency, _olDefaultVal('meeting_frequency'));
+  h+=_olRow('定期面談 方法', l.meeting_method, _olDefaultVal('meeting_method'));
+  h+=_olRow('日本語学習支援', l.jp_learning_method, _olDefaultVal('jp_learning_method'));
+  h+=_olRow('転籍支援方針', l.transfer_support_policy, _olDefaultVal('transfer_support_policy'));
+  h+=_olRow('住居確保方針 a', l.housing_policy_a, _olDefaultVal('housing_policy_a'));
+  h+=_olRow('住居確保方針 b', l.housing_policy_b, _olDefaultVal('housing_policy_b'));
+  h+=_olRow('住居確保方針 c', l.housing_policy_c, _olDefaultVal('housing_policy_c'));
+  if(l.notes) h+=_olRow('備考', l.notes, '');
+  h+='</div>';
+  return h;
+}
+function _olInp(key,val,ph){
+  return '<input type="text" data-ol-key="'+key+'" value="'+_olEsc(val||'')+'" placeholder="'+_olEsc(ph||'')+'" style="width:100%;font-size:12px;padding:5px 7px;border:1px solid #cbd5e1;border-radius:5px;box-sizing:border-box;">';
+}
+function _olEdRow(label, k, val){
+  return '<div style="display:flex;gap:8px;font-size:12px;padding:3px 0;align-items:center;"><div style="width:150px;color:#64748b;flex-shrink:0;">'+_olEsc(label)+'</div><div style="flex:1;">'+_olInp(k,val,_olDefaultVal(k))+'</div></div>';
+}
+function _orgLangEditBody(key,l){
+  var h='<div data-ol-card="'+_olEsc(key)+'">';
+  h+='<div style="font-size:10.5px;color:#059669;background:#ecfdf5;padding:5px 8px;border-radius:5px;margin-bottom:6px;">空欄にすると機関の既定値（薄字表示）が使われます。</div>';
+  h+=_olEdRow('通訳者名','translator_name',l.translator_name);
+  h+=_olEdRow('通訳者所属','translator_org',l.translator_org);
+  h+=_olEdRow('相談窓口 電話','consult_phone',l.consult_phone);
+  h+=_olEdRow('相談窓口 メール','consult_email',l.consult_email);
+  h+=_olEdRow('生活オリエンテーション 方法','orientation_method',l.orientation_method);
+  h+=_olEdRow('生活オリエンテーション 時間','orientation_hours',l.orientation_hours);
+  h+=_olEdRow('生活指導 方法','guidance_method',l.guidance_method);
+  h+=_olEdRow('生活指導 時間','guidance_hours',l.guidance_hours);
+  h+=_olEdRow('定期面談 頻度','meeting_frequency',l.meeting_frequency);
+  h+=_olEdRow('定期面談 方法','meeting_method',l.meeting_method);
+  h+=_olEdRow('日本語学習支援','jp_learning_method',l.jp_learning_method);
+  h+=_olEdRow('転籍支援方針','transfer_support_policy',l.transfer_support_policy);
+  h+=_olEdRow('住居確保方針 a','housing_policy_a',l.housing_policy_a);
+  h+=_olEdRow('住居確保方針 b','housing_policy_b',l.housing_policy_b);
+  h+=_olEdRow('住居確保方針 c','housing_policy_c',l.housing_policy_c);
+  h+=_olEdRow('備考','notes',l.notes);
+  h+='</div>';
+  return h;
+}
+function orgLangEditCard(key){ orgLangsData.editing[key]=true; renderOrgProfile(); }
+function orgLangCancelEdit(key){ delete orgLangsData.editing[key]; renderOrgProfile(); }
+async function orgLangSaveCard(key){
+  var card=document.querySelector('[data-ol-card="'+key.replace(/"/g,'\\"')+'"]'); if(!card) return;
+  var l=(orgLangsData.langs||[]).find(function(x){ var k=x.language_code||('c:'+x.language_custom); return k===key; });
+  if(!l) return;
+  var data={};
+  card.querySelectorAll('input[data-ol-key]').forEach(function(inp){ data[inp.getAttribute('data-ol-key')]=(inp.value||'').trim(); });
+  var params={p_token:currentToken,p_pass:(currentPass||null),p_data:data};
+  if(l.language_code) params.p_language_code=l.language_code; else params.p_language_custom=l.language_custom;
+  var res=await sbRpc('upsert_org_lang',params);
+  if(res && res.ok){ delete orgLangsData.editing[key]; await loadOrgLangs(); renderOrgProfile(); }
+  else { alert('保存に失敗しました: '+((res&&res.error)||'unknown')); }
+}
+async function orgLangDeleteCard(key){
+  var l=(orgLangsData.langs||[]).find(function(x){ var k=x.language_code||('c:'+x.language_custom); return k===key; });
+  if(!l) return;
+  if(!confirm('この言語の設定を削除します。よろしいですか？（機関の既定値に戻ります）')) return;
+  var params={p_token:currentToken,p_pass:(currentPass||null)};
+  if(l.language_code) params.p_language_code=l.language_code; else params.p_language_custom=l.language_custom;
+  var res=await sbRpc('delete_org_lang',params);
+  if(res && res.ok){ delete orgLangsData.editing[key]; await loadOrgLangs(); renderOrgProfile(); }
+  else { alert('削除に失敗しました: '+((res&&res.error)||'unknown')); }
+}
+async function orgLangAddNew(){
+  var sel=document.getElementById('olNewLangSel'); if(!sel) return;
+  var v=sel.value; if(!v){ alert('言語を選択してください'); return; }
+  var params={p_token:currentToken,p_pass:(currentPass||null),p_data:{}};
+  if(v==='__custom__'){
+    var custom=prompt('言語名を入力してください（例：モンゴル語）'); if(!custom) return;
+    params.p_language_custom=custom.trim();
+  }else{
+    params.p_language_code=v;
+  }
+  var res=await sbRpc('upsert_org_lang',params);
+  if(res && res.ok){
+    await loadOrgLangs();
+    var newKey=params.p_language_code||('c:'+params.p_language_custom);
+    orgLangsData.editing[newKey]=true; // 追加直後に編集モードで開く
+    renderOrgProfile();
+  }else{
+    alert('追加に失敗しました: '+((res&&res.error)||'unknown'));
+  }
+}
+function _pfSectionPlain(title,color,open,body){
+  if(!body) return '';
+  var arrow=open?'▼':'▶';
+  return '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;overflow:hidden;">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8fafc;cursor:pointer;border-left:3px solid '+color+';" onclick="var b=this.nextElementSibling;var o=b.style.display===\'none\';b.style.display=o?\'block\':\'none\';this.querySelector(\'.psa\').textContent=o?\'▼\':\'▶\';">'
+    +'<div style="font-size:13px;font-weight:800;color:#0f2040;">'+title+'</div><span class="psa" style="font-size:11px;color:#94a3b8;">'+arrow+'</span></div>'
+    +'<div style="display:'+(open?'block':'none')+';padding:12px 14px;">'+body+'</div></div>';
+}
+
+/** 変更履歴 */
+function _orgEditsHtml(){
+  var rows = orgEdits || [];
+  if(!rows.length) return '<div style="font-size:12px;color:#94a3b8;padding:6px 0;">まだ変更履歴はありません。</div>';
+  function fa(s){ try{var d=new Date(s);return d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}catch(e){return s;} }
+  var s='<div style="font-size:11px;color:#64748b;margin-bottom:8px;line-height:1.6;">この画面から更新された内容の記録です。当法人にも同じ内容が反映されています。</div>';
+  s+='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">'
+    +'<tr style="background:#f1f5f9;color:#475569;">'
+    +'<th style="text-align:left;padding:6px 8px;white-space:nowrap;">日時</th>'
+    +'<th style="text-align:left;padding:6px 8px;">項目</th>'
+    +'<th style="text-align:left;padding:6px 8px;">変更前</th>'
+    +'<th style="text-align:left;padding:6px 8px;">変更後</th></tr>';
+  rows.forEach(function(r){
+    s+='<tr style="border-bottom:1px solid #f1f5f9;">'
+      +'<td style="padding:6px 8px;color:#64748b;white-space:nowrap;">'+esc(fa(r.edited_at))+'</td>'
+      +'<td style="padding:6px 8px;color:#0f172a;font-weight:700;">'+esc(r.field_label||'')+'</td>'
+      +'<td style="padding:6px 8px;color:#94a3b8;word-break:break-all;">'+esc(r.old_value||'（未入力）')+'</td>'
+      +'<td style="padding:6px 8px;color:#166534;font-weight:600;word-break:break-all;">'+esc(r.new_value||'（空欄）')+'</td>'
+      +'</tr>';
+  });
+  s+='</table></div>';
+  return s;
+}
+
+/** 届出情報の編集バー */
+function _orgEditBarHtml(isBottom){
+  if(!_orgEditMode){
+    if(isBottom) return '';
+    return '<div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 15px;margin-bottom:12px;">'
+      + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
+      +   '<div style="flex:1;min-width:230px;">'
+      +     '<div style="font-size:13px;font-weight:800;color:#1e3a5f;">届出情報の確認・更新</div>'
+      +     '<div style="font-size:11px;color:#475569;margin-top:3px;line-height:1.6;">'
+      +       '登録支援機関の届出内容（参考様式第1-17号の記載事項）です。<br>'
+      +       '変更がある場合は、この画面で直接ご入力ください。内容はそのまま当法人に反映されます。</div>'
+      +   '</div>'
+      +   '<button type="button" onclick="toggleOrgEdit()" style="flex-shrink:0;font-size:12.5px;font-weight:800;color:#fff;background:#2563eb;border:none;border-radius:8px;padding:9px 20px;cursor:pointer;">内容を修正する</button>'
+      + '</div></div>';
+  }
+  return '<div id="orgEditBar" style="background:#fffbeb;border:1.5px solid #fcd34d;border-radius:10px;padding:12px 15px;margin:'+(isBottom?'12px 0 0':'0 0 12px')+';">'
+    + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
+    +   '<div style="flex:1;min-width:220px;">'
+    +     '<div style="font-size:13px;font-weight:800;color:#78350f;">修正モードです</div>'
+    +     '<div style="font-size:11px;color:#78350f;margin-top:3px;line-height:1.6;">'
+    +       '変更したい欄を直接ご入力ください。入力後、「この内容で保存」を押すと反映されます。</div>'
+    +   '</div>'
+    +   '<button type="button" onclick="toggleOrgEdit()" style="flex-shrink:0;font-size:12px;font-weight:700;color:#78350f;background:#fff;border:1px solid #fcd34d;border-radius:8px;padding:8px 16px;cursor:pointer;">キャンセル</button>'
+    +   '<button type="button" id="orgEditSaveBtn'+(isBottom?'B':'')+'" onclick="saveOrgProfileEdits()" style="flex-shrink:0;font-size:12.5px;font-weight:800;color:#fff;background:#16a34a;border:none;border-radius:8px;padding:9px 22px;cursor:pointer;">この内容で保存</button>'
+    + '</div></div>';
+}
+/** 表示ラベルから列名を逆引きする */
+function _pfKeyOf(label){
+  var keys = Object.keys(ORG_EDITABLE);
+  for(var i=0;i<keys.length;i++){ if(ORG_EDITABLE[keys[i]] === label) return keys[i]; }
+  return '';
+}
+
 function _pfRow(label,val,wide){
+  // 編集モード中で、編集できる項目なら入力欄にする
+  if(_orgEditMode){
+    var key = _pfKeyOf(label);
+    if(key){
+      var cur = (_orgEditBuf[key]!==undefined) ? _orgEditBuf[key]
+              : ((orgProfile&&orgProfile[key]!=null) ? orgProfile[key] : '');
+      return '<div style="'+(wide?'grid-column:span 2;':'')+'">'
+        + '<div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:3px;">'+esc(label)+'</div>'
+        + '<input type="text" value="'+esc(String(cur))+'" oninput="_orgEditInput(\''+key+'\',this.value)" '
+        + 'style="width:100%;font-size:12.5px;padding:6px 9px;border:1px solid #cbd5e1;border-radius:6px;box-sizing:border-box;">'
+        + '</div>';
+    }
+  }
   if(val===null||val===undefined||String(val)==='') return '';
   return '<div style="'+(wide?'grid-column:span 2;':'')+'"><div style="font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:2px;">'+esc(label)+'</div><div style="font-size:12.5px;color:#1e293b;word-break:break-word;line-height:1.5;">'+esc(String(val))+'</div></div>';
 }
@@ -4167,6 +4890,7 @@ function renderOrgProfile(){
   var fb=document.getElementById('filter-bar'); if(fb) fb.innerHTML='';
   var p=orgProfile||{};
   var h='<div style="max-width:880px;">';
+  h += _orgEditBarHtml();   // ver.20260805.test01
   // ヘッダー
   h+='<div style="padding:4px 2px 14px;">';
   if(p.display_name) h+='<div style="font-size:20px;font-weight:900;color:#0f2040;">'+esc(p.display_name)+'</div>';
@@ -4226,7 +4950,7 @@ function renderOrgProfile(){
   j+=_pfRow('電話番号',p.jj_tel);
   j+=_pfRow('許可届出番号',p.jj_permit_no);
   j+=_pfRow('受理年月日',p.jj_permit_date);
-  h+=_pfSection('💼 職業紹介事業者','#f59e0b',false,j);
+  h+=_pfSection('💼 職業紹介事業者','#f59e0b',true,j);
 
   // 🏢 支援事業所
   var offices=(orgProfile&&Array.isArray(orgProfile.offices))?orgProfile.offices:[];
@@ -4258,6 +4982,9 @@ function renderOrgProfile(){
     });
     h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;overflow:hidden;"><div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8fafc;cursor:pointer;border-left:3px solid #8b5cf6;" onclick="var b=this.nextElementSibling;var o=b.style.display===\'none\';b.style.display=o?\'block\':\'none\';this.querySelector(\'.psa\').textContent=o?\'▼\':\'▶\';"><div style="font-size:13px;font-weight:800;color:#0f2040;">👤 支援担当者（'+ssl.length+'名）</div><span class="psa" style="font-size:11px;color:#94a3b8;">▶</span></div><div style="display:none;padding:8px 14px;">'+sh+'</div></div>';
   }
+
+  // 📎 別紙情報（1-17号の別紙）ver.20260805.test04
+  h += _orgAttachmentsSectionHtml();
 
   // メールアドレス（複数・編集可） ver.20260617.test46
   h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;overflow:hidden;">';
@@ -4295,14 +5022,30 @@ function renderOrgProfile(){
   h+='</div><div id="orgStaffMsg" style="font-size:11.5px;margin-top:8px;"></div>';
   h+='</div></div>';
 
-  // ✏️ ver.20260615.test16: 登録支援機関情報の変更依頼（閲覧専用情報の修正を大房に依頼）
+  // ✏️ 登録支援機関情報の変更依頼（自分で直せない項目の相談用）
+  if(!_orgEditMode){
   h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:10px;overflow:hidden;">';
   h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8fafc;cursor:pointer;border-left:3px solid #2563eb;" onclick="var b=this.nextElementSibling;var o=b.style.display===\'none\';b.style.display=o?\'block\':\'none\';this.querySelector(\'.psa\').textContent=o?\'▼\':\'▶\';"><div style="font-size:13px;font-weight:800;color:#0f2040;">✏️ 登録情報の変更を依頼</div><span class="psa" style="font-size:11px;color:#94a3b8;">▼</span></div>';
   h+='<div style="display:block;padding:14px 16px;">';
   h+='<div style="font-size:11px;color:#64748b;margin-bottom:10px;line-height:1.6;">上記の登録支援機関情報（基本情報・所在地・連絡先・支援担当者など）に変更・修正が必要な場合は、内容を記入して送信してください。大房側で確認のうえ更新します。</div>';
   h+='<div id="orgInfoChangeReqArea">'+_orgInfoChangeReqHtml()+'</div>';
   h+='</div></div>';
+  }
 
+  // ver.20260805.test01: 対応時間・相談方法（この画面で直接編集できる）
+  h += _pfSectionPlain('🕐 対応時間・相談方法','#0891b2',true, _orgHoursSectionHtml());
+  // ver.20260805.test01: 1-17号 標準情報
+  var _s17has = orgStd17 && (orgStd17.supportLanguages || (orgStd17.interpreters||[]).length
+              || (orgStd17.regularMeeting&&orgStd17.regularMeeting.method)
+              || (orgStd17.implHours&&orgStd17.implHours.guidance));
+  h += _pfSectionPlain('📖 1-17号 標準情報'+(_s17has?'':' <span style="font-size:10px;color:#dc2626;font-weight:700;">未入力</span>'),'#d97706',true, _orgStd17Html());
+  // ver.20260808.test05: 🌍 言語別詳細
+  var _langCnt = (orgLangsData.langs||[]).length;
+  h += _pfSectionPlain('🌍 言語別詳細'+(_langCnt?' <span style="font-size:10px;color:#059669;font-weight:700;">'+_langCnt+'言語</span>':' <span style="font-size:10px;color:#94a3b8;font-weight:700;">未登録</span>'),'#059669',true, _orgLangsHtml());
+  // ver.20260805.test01: 変更履歴
+  h += _pfSectionPlain('📜 変更履歴','#7c3aed',true, _orgEditsHtml());
+
+  if(_orgEditMode) h += _orgEditBarHtml(true);
   h+='</div>';
   document.getElementById('main').innerHTML=h;
 }
@@ -4630,6 +5373,7 @@ async function orgEmailSave(){
     });
   }
 })();
+
 // ver.20260519.21: 現在のタブに応じた再描画（検索・フィルタ変更時に使う）
 function renderCurrent(){
   if(currentGroup==='dashboard'){renderDashboard();}
@@ -5357,8 +6101,24 @@ async function loadData(){
         // ver.20260615.test17: offices/supportStaffList は profile と同階層で返るため統合（支援事業所・支援担当者が表示されない不具合修正）
         orgProfile.offices=Array.isArray(prof.offices)?prof.offices:[];
         orgProfile.supportStaffList=Array.isArray(prof.supportStaffList)?prof.supportStaffList:[];
+        await loadOrgLangs(); // ver.20260808.test05: 言語別詳細をロード
         intakeStaff=Array.isArray(prof.intakeStaff)?prof.intakeStaff:[];
         orgEmails=Array.isArray(prof.emails)?prof.emails:[];
+        // ver.20260805.test01: 対応時間・相談方法・緊急時対応・適正性・変更履歴
+        orgHours     = (prof.hours && typeof prof.hours==='object') ? prof.hours : {};
+        orgConsult   = (prof.consultMethods && typeof prof.consultMethods==='object') ? prof.consultMethods : {};
+        orgEmergency = (prof.emergencyContact && typeof prof.emergencyContact==='object') ? prof.emergencyContact : {};
+        orgProperness= prof.supportProperness || '';
+        orgEdits     = Array.isArray(prof.edits) ? prof.edits : [];
+        orgStd17     = (prof.std17 && typeof prof.std17==='object') ? prof.std17 : {};
+        // ver.20260805.test04: 別紙情報（支援責任者名簿・通訳者名簿・支援担当者名簿）
+        var _at = (prof.attachments && typeof prof.attachments==='object') ? prof.attachments : {};
+        orgAttachments = {
+          support_managers: Array.isArray(_at.support_managers) ? _at.support_managers.slice() : [],
+          interpreters:     Array.isArray(_at.interpreters)     ? _at.interpreters.slice()     : [],
+          support_staff:    Array.isArray(_at.support_staff)    ? _at.support_staff.slice()    : []
+        };
+        _attachDirty=false;
       }
       _fillClientStaffDatalist();
     }catch(e){ console.warn('[org profile load failed]', e); }
@@ -5614,7 +6374,7 @@ async function loadData(){
     var _wdPrefix='org_withdraw_'+currentToken+'_';
     var _crPrefix='org_change_req_'+currentToken+'_';
     var _chkKey='org_checks_'+currentToken;
-    var _inshiKey='org_inshi_'+currentToken;
+  var _inshiKey='org_inshi_'+currentToken;
     (data.settings||[]).forEach(function(row){
       var k=row.key||'';
       if(k.indexOf(_ownPrefix)===0){ orgOwnComments[k.substring(_ownPrefix.length)]=row.value||''; }
@@ -5622,7 +6382,7 @@ async function loadData(){
       else if(k.indexOf(_crPrefix)===0){ var cr=row.value;if(typeof cr==='string'){try{cr=JSON.parse(cr);}catch(e){cr={text:cr};}}orgChangeReqs[k.substring(_crPrefix.length)]=cr||{}; }
       else if(k.indexOf(_wdPrefix)===0){ var v=row.value;if(typeof v==='string'){try{v=JSON.parse(v);}catch(e){v={type:v};}}orgWithdraws[k.substring(_wdPrefix.length)]=v||{}; }
       else if(k===_chkKey){ var cv=row.value;if(typeof cv==='string'){try{orgChecks=JSON.parse(cv)||{};}catch(e){orgChecks={};}}else if(cv&&typeof cv==='object'){orgChecks=cv;} }
-      else if(k===_inshiKey){ var iv=row.value;if(typeof iv==='string'){try{inshiChecks=JSON.parse(iv)||{};}catch(e){inshiChecks={};}}else if(iv&&typeof iv==='object'){inshiChecks=iv;} }
+  else if(k===_inshiKey){ var iv=row.value;if(typeof iv==='string'){try{inshiChecks=JSON.parse(iv)||{};}catch(e){inshiChecks={};}}else if(iv&&typeof iv==='object'){inshiChecks=iv;} }
     });
 
     allReceipts=(data.receipts||[]).map(function(r){
@@ -5668,6 +6428,69 @@ init();
 var _ncJinzaiRows = 0;
 var _NC_MAX_JINZAI = 30;
 
+// ver.20260729.test03: 宛先ユーティリティ（TO/CCとも複数行・「担当者名 <mail>」形式で保存・復元）
+function _ncParseAddr(s){
+  var m=String(s||'').trim().match(/^(.*?)\s*<(.+)>$/);
+  return m ? {name:m[1].trim(), email:m[2].trim()} : {name:'', email:String(s||'').trim()};
+}
+function _ncAddAddrRow(kind,name,email){
+  var wrap=document.getElementById(kind==='to'?'nc_toRows':'nc_ccRows'); if(!wrap) return;
+  if(wrap.querySelectorAll('.nc-addr-row').length>=5){ return; }
+  var isTo=(kind==='to');
+  var row=document.createElement('div');
+  row.className='nc-addr-row';
+  row.style.cssText='display:flex;gap:4px;align-items:center;margin-bottom:4px;';
+  row.innerHTML='<span class="nc-tocc-badge '+(isTo?'nc-tocc-to':'nc-tocc-cc')+'">'+(isTo?'TO':'CC')+'</span>'
+    +'<input type="text" class="nc-input nc-addr-name" placeholder="担当者名" style="width:76px;font-size:11.5px;flex-shrink:0;" value="'+esc(name||'')+'">'
+    +'<input type="text" class="nc-input nc-addr-mail" placeholder="メールアドレス" style="font-size:11.5px;min-width:0;flex:1;" value="'+esc(email||'')+'">'
+    +'<button type="button" onclick="this.parentNode.remove()" title="この行を削除" style="border:none;background:none;color:#dc2626;cursor:pointer;font-weight:800;padding:0 2px;flex-shrink:0;">✕</button>';
+  wrap.appendChild(row);
+}
+function _ncAddToRow(name,email){ _ncAddAddrRow('to',name,email); }
+function _ncAddCcRow(name,email){ _ncAddAddrRow('cc',name,email); }
+function _ncCollectAddrs(wrapId){
+  var out=[];
+  document.querySelectorAll('#'+wrapId+' .nc-addr-row').forEach(function(row){
+    var n=(row.querySelector('.nc-addr-name').value||'').trim();
+    var m=(row.querySelector('.nc-addr-mail').value||'').trim();
+    if(!n&&!m) return;
+    out.push(m ? (n ? n+' <'+m+'>' : m) : n);
+  });
+  return out.join(', ');
+}
+function _ncFillAddrs(wrapId,kind,joined){
+  var wrap=document.getElementById(wrapId); if(!wrap) return;
+  wrap.innerHTML='';
+  String(joined||'').split(',').map(function(s){return s.trim();}).filter(Boolean).forEach(function(s){
+    var a=_ncParseAddr(s); _ncAddAddrRow(kind,a.name,a.email);
+  });
+  if(!wrap.querySelectorAll('.nc-addr-row').length) _ncAddAddrRow(kind);
+}
+function _ncToccIsEmpty(){
+  var rows=document.querySelectorAll('#nc_toRows .nc-addr-row, #nc_ccRows .nc-addr-row');
+  for(var i=0;i<rows.length;i++){
+    if((rows[i].querySelector('.nc-addr-name').value||'').trim()) return false;
+    if((rows[i].querySelector('.nc-addr-mail').value||'').trim()) return false;
+  }
+  return true;
+}
+// 同じ所属機関の過去依頼からTO/CCを自動流用（未入力時のみ）
+function _ncPrefillToCc(){
+  var coEl=document.getElementById('nc_company');
+  if(!coEl) return;
+  var co=(coEl.value||'').trim();
+  if(!co) return;
+  if(!_ncToccIsEmpty()) return; // 手入力済みなら触らない
+  var best=null;
+  (allIntakes||[]).forEach(function(x){
+    if((x.company||'')!==co) return;
+    if(!(x.to_email||x.cc_email)) return;
+    if(!best || String(x.received_at||'')>String(best.received_at||'')) best=x;
+  });
+  if(!best) return;
+  _ncFillAddrs('nc_toRows','to',best.to_email);
+  _ncFillAddrs('nc_ccRows','cc',best.cc_email);
+}
 function openNewCaseModal(){
   // 初期化
   // ver.20260525.03: 「使用する支援事業所」は拠点から自動マッピングするため削除
@@ -5697,6 +6520,8 @@ function openNewCaseModal(){
   document.getElementById('nc_caseName').value='';
   document.getElementById('nc_appType').value='認定';
   document.getElementById('nc_company').value='';
+  var _toW=document.getElementById('nc_toRows'); if(_toW){ _toW.innerHTML=''; _ncAddToRow(); }
+  var _ccW=document.getElementById('nc_ccRows'); if(_ccW){ _ccW.innerHTML=''; _ncAddCcRow(); }
   // ver.20260527.16: nc_currentStatus は廃止（人材別に移行）
   document.getElementById('nc_desiredStatus').value='';
   // ver.20260527.24: 希望在留資格「その他」詳細メモもリセット
@@ -5954,6 +6779,8 @@ async function submitNewCase(){
   var caseName = document.getElementById('nc_caseName').value.trim();
   var appType = document.getElementById('nc_appType').value;
   var company = document.getElementById('nc_company').value.trim();
+  var toEmail = _ncCollectAddrs('nc_toRows');
+  var ccEmail = _ncCollectAddrs('nc_ccRows');
   // ver.20260527.16: 「現在の在留資格」は人材別へ移行（案件共通欄は廃止）
   var desiredStatus = document.getElementById('nc_desiredStatus').value;
   // ver.20260527.24: 希望在留資格「その他」の詳細メモ
@@ -6063,7 +6890,8 @@ async function submitNewCase(){
     applicantField: applicantField,
     acceptExp: acceptExp,
     aidemBranch: aidemBranch, clientStaff: clientStaff, clientStaffArr: clientStaffArr,
-    supportFee: supportFee, referralFee: referralFee, remarks: remarks, jinzaiList: jinzaiList
+    supportFee: supportFee, referralFee: referralFee, remarks: remarks, jinzaiList: jinzaiList,
+    toEmail: toEmail, ccEmail: ccEmail
   };
 
   // 確認モーダル表示
@@ -6090,6 +6918,12 @@ function _renderConfirmBody(p){
   h += '<div><div class="nc-cf-label">申請種別</div><div class="nc-cf-value">' + esc(p.appType) + '</div></div>';
   h += '<div><div class="nc-cf-label">所属機関</div><div class="nc-cf-value">' + esc(p.company) + '</div></div>';
   h += '</div>';
+  if(p.toEmail || p.ccEmail){
+    h += '<div class="nc-cf-grid">';
+    h += '<div><div class="nc-cf-label">TO</div><div class="nc-cf-value">' + esc(p.toEmail||'—') + '</div></div>';
+    h += '<div><div class="nc-cf-label">CC</div><div class="nc-cf-value">' + esc(p.ccEmail||'—') + '</div></div>';
+    h += '</div>';
+  }
   // ver.20260527.16: 「現在の在留資格」は人材別に移行したため、ここでは希望在留資格のみ
   // ver.20260527.24: 「その他」のときは詳細を併記
   var desiredDisp = esc(p.desiredStatus);
@@ -6223,6 +7057,8 @@ async function executeSubmit(){
         delivery_method: dm,
         recommend_letter_required: rec,
         other_support_note: otherNote,
+        to_email: p.toEmail||'',
+        cc_email: p.ccEmail||'',
         received_at: nowIso,
         status: 'pending'
       };
