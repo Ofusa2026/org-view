@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260808.test07: 本番20260808.02と同期。別紙情報のカードをグリッドで2〜3列並びに、言語別詳細RPCも修正済み。 -->
 <!-- ver.20260808.test06: 本番share.htmlから印紙代機能（ver.20260728.01/02）を取り込み。testと本番の枝分かれを解消する準備（次段：test→本番完全同期）。 -->
 <!-- ver.20260808.test05: 登録支援機関情報に「🌍 言語別詳細」セクションを追加。案件で使う言語ごとに通訳者・相談窓口・実施予定などを機関自身が上書き設定できる（未入力は機関の既定値を使用）。RPC: get_org_langs / upsert_org_lang / delete_org_lang。案シス（anken ver.20260808.01）と同DB連動・1-17号書類生成にも反映。 -->
 <!-- ver.20260805.test04: 登録支援機関の「📎 別紙情報」を追加。支援責任者名簿・通訳者名簿・支援担当者名簿の3種を、この画面から1名ずつ登録・編集して保存できるように。案シスの support_orgs.attachments と共通 -->
@@ -555,7 +556,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260808.test06</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260808.test07</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -4282,9 +4283,11 @@ function _orgAttachmentsSectionHtml(){
     if(!list.length){
       h+='<div style="padding:10px;background:#fff;border-radius:8px;text-align:center;font-size:11px;color:#94a3b8;">未登録 — 「＋ 追加」で1名ずつ登録できます</div>';
     } else {
+      // ver.20260808.02: 名簿カードを画面幅に応じて2〜3列で並べる（縦長で右側の余白が余っていた）
+      h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;">';
       list.forEach(function(item,ai){
         item=item||{};
-        h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;margin-bottom:6px;">';
+        h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;">';
         h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">';
         h+='<span style="font-size:11px;color:'+kind.color+';font-weight:800;width:22px;text-align:center;flex-shrink:0;">'+(ai+1)+'</span>';
         h+='<span style="font-size:11.5px;font-weight:700;color:#0f2040;flex:1;">'+esc(item.name||'（未入力）')+'</span>';
@@ -4298,6 +4301,7 @@ function _orgAttachmentsSectionHtml(){
         });
         h+='</div></div>';
       });
+      h+='</div>';
     }
     h+='</div>';
   });
