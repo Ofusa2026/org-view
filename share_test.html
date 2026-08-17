@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260817.test02: 本番20260817.02と同期。1-17号標準情報整理・実施予定を案b化・住居確保方針/共生施策確認を削除。 -->
 <!-- ver.20260817.test01: 本番20260817.01と同期。支援担当者ブロック非表示・対応時間クイックコピー・別紙備考欄追加。 -->
 <!-- ver.20260812.test01: 本番20260812.01と同期。通訳者名簿の対応言語ピッカー化。 -->
 <!-- ver.20260808.test07: 本番20260808.02と同期。別紙情報のカードをグリッドで2〜3列並びに、言語別詳細RPCも修正済み。 -->
@@ -558,7 +559,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260817.test01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260817.test02</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -4623,48 +4624,42 @@ function _orgStd17Html(){
    +'<span style="font-size:12px;color:#475569;">時間</span>'
    +'</div><div style="'+hint+'">記入例：事前ガイダンス 3時間／生活オリエンテーション 8時間　（生活オリエンテーションは8時間以上が必要です）</div></div>';
 
-  // 各支援の実施予定
+  // 各支援の実施予定（ver.20260817.02:
+  //   ①②④⑤⑥⑧⑨は全機関共通の既定文言をプリセット（案b・オーバーライド可）／⑦は削除／③のみ機関ごとに自由入力）
   var sc=b.implSchedules||{};
-  var scL=[['guidance','① 事前ガイダンス','雇用契約締結後、在留資格認定証明書交付申請前に対面またはオンラインで実施'],
-           ['escort','② 出入国時の送迎','入国時は空港から住居まで、帰国時は空港の保安検査場まで同行'],
-           ['housing','③ 住居確保・生活契約','不動産仲介事業者を紹介し、必要に応じて同行して契約を補助'],
-           ['orientation','④ 生活オリエンテーション','入国後、住居周辺の生活ルール・交通機関・医療機関等を8時間以上かけて説明'],
-           ['procedures','⑤ 公的手続への同行','住民登録・社会保険・納税等の手続に同行し、書類作成を補助'],
-           ['japanese','⑥ 日本語学習の機会提供','日本語教室や教材の情報を提供し、必要に応じて受講を支援'],
-           ['consultation','⑦ 相談・苦情への対応','支援担当者が母国語で随時対応し、必要に応じて関係機関を案内'],
-           ['exchange','⑧ 日本人との交流促進','地域の行事等の情報を提供し、参加を希望する場合は手続を補助'],
-           ['jobchange','⑨ 転職支援','人員整理等で契約解除する場合、求人情報の提供や推薦状の作成等を実施']];
+  var scPresets={
+    guidance:     '有',
+    escort:       '有',
+    orientation:  '有（適宜実施）',
+    procedures:   '有（必要に応じ同行し、書類作成を補助）',
+    japanese:     '有（日本語教室案内・自主学習教材/オンライン講座情報提供、いずれも適宜実施）',
+    exchange:     '有（適宜実施）',
+    jobchange:    'a〜g すべて「有（非自発的離職時に実施）」'
+  };
+  var scL=[['guidance','① 事前ガイダンス','',true],
+           ['escort','② 出入国時の送迎','',true],
+           ['housing','③ 住居確保・生活契約','不動産仲介事業者を紹介し、必要に応じて同行して契約を補助',false],
+           ['orientation','④ 生活オリエンテーション','',true],
+           ['procedures','⑤ 公的手続への同行','',true],
+           ['japanese','⑥ 日本語学習の機会提供','',true],
+           ['exchange','⑧ 日本人との交流促進','',true],
+           ['jobchange','⑨ 転職支援','',true]];
   s+='<div style="margin-bottom:16px;"><div style="'+lb+'">各支援の実施予定</div>'
-   +'<div style="'+hint+'margin-top:0;margin-bottom:7px;">貴社が標準的に行っている内容をご記入ください。灰色の文字は記入例です。</div>';
+   +'<div style="'+hint+'margin-top:0;margin-bottom:7px;">③のみ機関ごとに異なる可能性があるためご入力ください。他は全機関共通の内容（灰色）で表示されます。書類生成時にも既定文言が使用されます。</div>';
   scL.forEach(function(x){
+    var isPreset=x[3];
+    var curVal=String(sc[x[0]]||'');
+    var ph=isPreset ? (scPresets[x[0]]||'') : x[2];
     s+='<div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">'
       +'<span style="font-size:11.5px;color:#475569;width:170px;flex-shrink:0;">'+x[1]+'</span>'
-      +'<input type="text" value="'+esc(String(sc[x[0]]||''))+'" placeholder="'+esc(x[2])+'" oninput="_s17Set(\'implSchedules.'+x[0]+'\',this.value)" style="'+iS+'">'
+      +'<input type="text" value="'+esc(curVal)+'" placeholder="'+esc(ph)+'" oninput="_s17Set(\'implSchedules.'+x[0]+'\',this.value)" style="'+iS+(isPreset?'background:#fafafa;':'')+'"'
+      +(isPreset?' title="全機関共通の既定文言です。変更したい場合のみ入力してください。"':'')
+      +'>'
       +'</div>';
   });
   s+='</div>';
 
-  // 住居確保方針
-  var hp=b.housingPolicy||{};
-  s+='<div style="margin-bottom:14px;"><div style="'+lb+'">住居の確保に係る支援の方針</div>';
-  [['a','a. 不動産仲介・賃貸人への取次','不動産仲介事業者を紹介し、必要に応じて契約に同行する'],
-    ['b','b. 自ら賃借人となり住居として提供','当社が賃貸借契約を締結し、本人の同意のうえ住居として提供する'],
-    ['c','c. 社宅等を提供','当社が所有する社宅を提供する']].forEach(function(x){
-    s+='<div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">'
-      +'<span style="font-size:11.5px;color:#475569;width:230px;flex-shrink:0;">'+x[1]+'</span>'
-      +'<input type="text" value="'+esc(String(hp[x[0]]||''))+'" placeholder="'+esc(x[2])+'" oninput="_s17Set(\'housingPolicy.'+x[0]+'\',this.value)" style="'+iS+'">'
-      +'</div>';
-  });
-  s+='<input type="text" value="'+esc(String(hp.note||''))+'" placeholder="補足があれば" oninput="_s17Set(\'housingPolicy.note\',this.value)" style="'+iS+'margin-top:4px;">'
-   +'<div style="'+hint+'">実施する方法のみご記入ください。行わない方法は空欄で構いません。</div></div>';
-
-  // 共生施策の確認方法
-  var sy=b.symbiosisCheck||{};
-  s+='<div style="margin-bottom:16px;"><div style="'+lb+'">地方公共団体の共生施策の確認方法</div>'
-   +'<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">'
-   +'<label style="display:flex;align-items:center;gap:5px;font-size:12.5px;cursor:pointer;"><input type="checkbox"'+(sy.hp?' checked':'')+' onchange="_s17Set(\'symbiosisCheck.hp\',this.checked)">ホームページで確認</label>'
-   +'<input type="text" value="'+esc(String(sy.other||''))+'" placeholder="市区町村の窓口に問い合わせて確認" oninput="_s17Set(\'symbiosisCheck.other\',this.value)" style="'+iS+'flex:1;min-width:200px;">'
-   +'</div><div style="'+hint+'">記入例：ホームページで確認　／　市区町村の窓口に問い合わせて確認</div></div>';
+  // 住居の確保に係る支援の方針・地方公共団体の共生施策の確認方法は ver.20260817.02 で削除（③のみ運用）
 
   s+='<div style="text-align:right;"><button type="button" id="orgStd17SaveBtn" onclick="saveOrgStd17()" style="font-size:12.5px;font-weight:800;color:#fff;background:#16a34a;border:none;border-radius:8px;padding:9px 22px;cursor:pointer;">この内容で保存</button></div>';
   return s;
