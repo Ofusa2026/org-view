@@ -4199,19 +4199,21 @@ async function saveOrgProfileEdits(){
   if(btn){ btn.disabled = true; btn.textContent = '保存中…'; }
 
   try{
+    // ver.20260818.02: 未定義の sb.from(...) を token認証つきRPC経由に変更（share.htmlと同修正）
     var patch = {};
     changes.forEach(function(c){ patch[c.key] = c.newVal; });
-    patch.updated_at = new Date().toISOString();
-    var up = await sb.from('support_orgs').update(patch).eq('id', p.id);
-    if(up.error) throw new Error(up.error.message);
 
     var who = (p.name||'') + '（登録支援機関ページ）';
-    var rows = changes.map(function(c){
-      return { org_id:p.id, org_name:p.name||'', field_key:c.key, field_label:c.label,
+    var edits = changes.map(function(c){
+      return { field_key:c.key, field_label:c.label,
                old_value:c.oldVal, new_value:c.newVal, edited_by:who, source:'share_test' };
     });
-    var lg = await sb.from('support_org_edits').insert(rows);
-    if(lg.error) console.warn('履歴の記録に失敗:', lg.error);
+
+    var up = await sbRpc('save_org_profile_edits', {
+      p_token: currentToken, p_pass: (currentPass||null),
+      p_patch: patch, p_edits: edits
+    });
+    if(!up || up.error) throw new Error((up&&up.error) || '保存に失敗しました');
 
     changes.forEach(function(c){ orgProfile[c.key] = c.newVal; });
     // 画面の履歴にもすぐ反映

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260818.02: 【不具合修正】登録支援機関情報の保存が「sb is not defined」で失敗していたのを修正。未定義のsb.from(...)呼び出しを、token認証つきRPC save_org_profile_edits 経由の更新＋履歴記録に変更（他の保存処理と同じ方式に統一）。 -->
 <!-- ver.20260818.01: (1)支援事業所を編集・追加・削除できるように（別紙情報と同じUX）。(2)別紙通訳者名簿にふりがな欄追加。(3)対応時間セクションの「相談方法・緊急時対応」その他欄を広く（LINE等をたくさん書けるように）＋🌍言語別詳細を対応時間の直後に移動（相談方法と近い場所で扱いやすく）。 -->
 <!-- ver.20260817.02: 1-17号標準情報を整理。実施予定の①②④⑤⑥⑧⑨は全機関共通の既定文言をプリセット（案b）、⑦相談・苦情への対応は削除、③住居確保・生活契約のみ機関ごと自由入力。「住居の確保に係る支援の方針」「地方公共団体の共生施策の確認方法」ブロックは削除。 -->
 <!-- ver.20260817.01: (1)「👤 支援担当者」ブロックを非表示化（別紙「支援担当者名簿」に一元化）。(2)対応時間にクイックコピー（月→火〜金/土→日祝/月→全曜日）追加。(3)別紙情報に「📝 備考（自由記入欄）」を追加（attachments.remarksに保存）。 -->
@@ -4201,19 +4202,22 @@ async function saveOrgProfileEdits(){
   if(btn){ btn.disabled = true; btn.textContent = '保存中…'; }
 
   try{
+    // ver.20260818.01: 未定義の sb.from(...) を使っていたため「sb is not defined」で保存失敗していた。
+    // 他の書き込みと同様、token認証つきRPC（save_org_profile_edits）経由で更新＋履歴記録する。
     var patch = {};
     changes.forEach(function(c){ patch[c.key] = c.newVal; });
-    patch.updated_at = new Date().toISOString();
-    var up = await sb.from('support_orgs').update(patch).eq('id', p.id);
-    if(up.error) throw new Error(up.error.message);
 
     var who = (p.name||'') + '（登録支援機関ページ）';
-    var rows = changes.map(function(c){
-      return { org_id:p.id, org_name:p.name||'', field_key:c.key, field_label:c.label,
-               old_value:c.oldVal, new_value:c.newVal, edited_by:who, source:'share_test' };
+    var edits = changes.map(function(c){
+      return { field_key:c.key, field_label:c.label,
+               old_value:c.oldVal, new_value:c.newVal, edited_by:who, source:'share' };
     });
-    var lg = await sb.from('support_org_edits').insert(rows);
-    if(lg.error) console.warn('履歴の記録に失敗:', lg.error);
+
+    var up = await sbRpc('save_org_profile_edits', {
+      p_token: currentToken, p_pass: (currentPass||null),
+      p_patch: patch, p_edits: edits
+    });
+    if(!up || up.error) throw new Error((up&&up.error) || '保存に失敗しました');
 
     changes.forEach(function(c){ orgProfile[c.key] = c.newVal; });
     // 画面の履歴にもすぐ反映
