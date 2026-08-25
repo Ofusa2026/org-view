@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260825.test01: 新規案件依頼に「希望在留期間」(テキスト)と「収入印紙負担先」(企業/人材プルダウン)を追加。案件共通情報テーブルに列追加、リセット/収集/確認モーダル/依頼テキスト/other_support_noteタグ保存(分野と同じパターン)まで反映。 -->
 <!-- ver.20260821.test01: 本番20260821.01と同期。職業紹介事業者の全項目を編集可能化。 -->
 <!-- ver.20260819.test01: 本番20260819.01と同期。支援者数の編集可能化。 -->
 <!-- ver.20260818.test01: 本番20260818.01と同期。支援事業所編集/通訳者ふりがな/相談方法その他欄拡幅/🌍言語別詳細移動。 -->
@@ -562,7 +563,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260821.test01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260825.test01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -672,9 +673,11 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                 <th style="min-width:92px;">申請種別 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:252px;">所属機関（企業名）<span style="color:#dc2626;">*</span></th>
                 <th style="min-width:172px;">希望在留資格 <span style="color:#dc2626;">*</span></th>
+                <th style="min-width:132px;" title="登録支援機関に、人材・企業とアライメントを取っていただいたうえで入力してください">希望在留期間</th>
                 <th style="min-width:152px;">受入れ経験 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:128px;" title="全員同額で反映されます">支援委託費(円・税抜)</th>
                 <th style="min-width:140px;" title="依頼テキストに反映されます">人材紹介手数料(円・税抜)</th>
+                <th style="min-width:120px;" title="収入印紙代を企業と人材のどちらが負担するかを選択してください">収入印紙負担先</th>
                 <th style="min-width:112px;" id="nc_branchTh">アイデム拠点 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:180px;">案件担当者 <span class="req" id="nc_clientStaffReq" style="display:none;color:#dc2626;">*</span></th>
               </tr>
@@ -714,6 +717,10 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                   </select>
                 </td>
                 <td>
+                  <input type="text" class="nc-input" id="nc_desiredPeriod" placeholder="例：1年 / 3年 / 5年" autocomplete="off">
+                  <div style="font-size:9.5px;color:#94a3b8;margin-top:3px;line-height:1.4;">※ 登録支援機関で人材・企業とすり合わせ後に入力</div>
+                </td>
+                <td>
                   <div class="nc-radio-group">
                     <label class="nc-radio-btn"><input type="radio" name="nc_acceptExp" value="有"> 受入れ有</label>
                     <label class="nc-radio-btn"><input type="radio" name="nc_acceptExp" value="無"> 受入れ無</label>
@@ -721,6 +728,13 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                 </td>
                 <td><input type="text" class="nc-input" id="nc_supportFee" placeholder="例：30000" inputmode="numeric"></td>
                 <td><input type="text" class="nc-input" id="nc_referralFee" placeholder="例：100000" inputmode="numeric"></td>
+                <td>
+                  <select class="nc-select" id="nc_stampBearer">
+                    <option value="">-- 選択 --</option>
+                    <option value="企業">企業</option>
+                    <option value="人材">人材</option>
+                  </select>
+                </td>
                 <td id="nc_branchTd">
                   <select class="nc-select" id="nc_aidemBranch" onchange="_onAidemBranchChange()">
                     <option value="">-- 選択 --</option>
@@ -6704,6 +6718,11 @@ function openNewCaseModal(){
   if(feeEl) feeEl.value='';
   var refEl=document.getElementById('nc_referralFee');
   if(refEl) refEl.value='';
+  // ver.20260825.test01: 希望在留期間・収入印紙負担先もリセット
+  var dpEl=document.getElementById('nc_desiredPeriod');
+  if(dpEl) dpEl.value='';
+  var sbEl=document.getElementById('nc_stampBearer');
+  if(sbEl) sbEl.value='';
   var rmEl=document.getElementById('nc_remarks');
   if(rmEl) rmEl.value='';
   document.getElementById('ncError').style.display='none';
@@ -6964,6 +6983,9 @@ async function submitNewCase(){
   var supportFee = supportFeeRaw.replace(/[,，円\s]/g,'').trim();
   var referralFeeRaw = (document.getElementById('nc_referralFee')||{}).value || '';
   var referralFee = referralFeeRaw.replace(/[,，円\s]/g,'').trim();
+  // ver.20260825.test01: 希望在留期間(任意・テキスト)・収入印紙負担先(任意・企業/人材)
+  var desiredPeriod = ((document.getElementById('nc_desiredPeriod')||{}).value || '').trim();
+  var stampBearer = ((document.getElementById('nc_stampBearer')||{}).value || '').trim();
   var remarks = ((document.getElementById('nc_remarks')||{}).value || '').trim();
   var aidemBranch = (document.getElementById('nc_aidemBranch')||{}).value || '';
   var clientStaff1 = ((document.getElementById('nc_clientStaff')||{}).value || '').trim();
@@ -7060,6 +7082,8 @@ async function submitNewCase(){
     acceptExp: acceptExp,
     aidemBranch: aidemBranch, clientStaff: clientStaff, clientStaffArr: clientStaffArr,
     supportFee: supportFee, referralFee: referralFee, remarks: remarks, jinzaiList: jinzaiList,
+    // ver.20260825.test01: 希望在留期間・収入印紙負担先
+    desiredPeriod: desiredPeriod, stampBearer: stampBearer,
     toEmail: toEmail, ccEmail: ccEmail
   };
 
@@ -7099,7 +7123,11 @@ function _renderConfirmBody(p){
   if(p.desiredStatus === 'その他' && p.desiredStatusNote){
     desiredDisp = 'その他: ' + esc(p.desiredStatusNote);
   }
-  h += '<div class="nc-cf-label">希望在留資格</div><div class="nc-cf-value">' + desiredDisp + '</div>';
+  h += '<div class="nc-cf-grid">';
+  h += '<div><div class="nc-cf-label">希望在留資格</div><div class="nc-cf-value">' + desiredDisp + '</div></div>';
+  // ver.20260825.test01: 希望在留期間
+  h += '<div><div class="nc-cf-label">希望在留期間</div><div class="nc-cf-value">' + (p.desiredPeriod ? esc(p.desiredPeriod) : '（未入力）') + '</div></div>';
+  h += '</div>';
   // ver.20260701.test66: 分野（特定技能時のみ・選択時のみ表示）
   if(p.applicantField){
     h += '<div class="nc-cf-label">分野</div><div class="nc-cf-value">' + esc(p.applicantField) + '</div>';
@@ -7108,7 +7136,11 @@ function _renderConfirmBody(p){
   h += '<div><div class="nc-cf-label">受入れ経験</div><div class="nc-cf-value">' + esc(p.acceptExp) + '</div></div>';
   h += '<div><div class="nc-cf-label">支援委託費（税抜・全員に同額適用）</div><div class="nc-cf-value">' + (p.supportFee ? '¥ ' + Number(p.supportFee).toLocaleString() : '（未入力）') + '</div></div>';
   h += '</div>';
-  h += '<div class="nc-cf-label">人材紹介手数料（税抜）</div><div class="nc-cf-value">' + (p.referralFee ? '¥ ' + Number(p.referralFee).toLocaleString() : '（未入力）') + '</div>';
+  h += '<div class="nc-cf-grid">';
+  h += '<div><div class="nc-cf-label">人材紹介手数料（税抜）</div><div class="nc-cf-value">' + (p.referralFee ? '¥ ' + Number(p.referralFee).toLocaleString() : '（未入力）') + '</div></div>';
+  // ver.20260825.test01: 収入印紙負担先
+  h += '<div><div class="nc-cf-label">収入印紙負担先</div><div class="nc-cf-value">' + (p.stampBearer ? esc(p.stampBearer) : '（未入力）') + '</div></div>';
+  h += '</div>';
   if(p.remarks){
     h += '<div class="nc-cf-label">備考</div><div class="nc-cf-value" style="white-space:pre-wrap;">' + esc(p.remarks) + '</div>';
   }
@@ -7203,8 +7235,13 @@ async function executeSubmit(){
       }
       var otherNote = noteParts.join(' / ');
       // ver.20260701.test66: 分野は案シスに受け皿カラムが無いため、備考(other_support_note)の先頭に「【分野：○○】」として合成する
-      if(p.applicantField){
-        otherNote = '【分野：' + p.applicantField + '】' + (otherNote ? '\n' + otherNote : '');
+      // ver.20260825.test01: 希望在留期間・収入印紙負担先も同パターンで先頭にタグ合成（受け皿カラム無し前提）
+      var _tagParts = [];
+      if(p.applicantField){ _tagParts.push('【分野：' + p.applicantField + '】'); }
+      if(p.desiredPeriod){ _tagParts.push('【希望在留期間：' + p.desiredPeriod + '】'); }
+      if(p.stampBearer){ _tagParts.push('【印紙負担：' + p.stampBearer + '】'); }
+      if(_tagParts.length){
+        otherNote = _tagParts.join('') + (otherNote ? '\n' + otherNote : '');
       }
       return {
         applicant: j.name,
@@ -7325,6 +7362,16 @@ function _buildLineReportText(p){
     lines.push('　¥' + Number(p.supportFee).toLocaleString());
   } else {
     lines.push('　（　　）');
+  }
+  // ver.20260825.test01: 希望在留期間（入力があれば反映）
+  if(p.desiredPeriod){
+    lines.push('■希望在留期間');
+    lines.push('　' + p.desiredPeriod);
+  }
+  // ver.20260825.test01: 収入印紙負担先（入力があれば反映）
+  if(p.stampBearer){
+    lines.push('■収入印紙負担先');
+    lines.push('　' + p.stampBearer);
   }
   // 備考（入力があれば末尾に追加）
   // ver.20260701.test66: 分野（特定技能時のみ・選択時のみ）
