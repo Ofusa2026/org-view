@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260825.test02: 新規案件依頼の微修正。①希望在留期間を年+月プルダウン化(0〜5年 / 0〜11ヶ月)、②収入印紙負担先の選択肢を「企業」→「所属機関」に変更、③申請種別と所属機関の列順入れ替え(所属機関を左)、④TO/CC行のplaceholder「担当者名」→「所属機関担当者」(幅も76→110px)。 -->
 <!-- ver.20260825.test01: 新規案件依頼に「希望在留期間」(テキスト)と「収入印紙負担先」(企業/人材プルダウン)を追加。案件共通情報テーブルに列追加、リセット/収集/確認モーダル/依頼テキスト/other_support_noteタグ保存(分野と同じパターン)まで反映。 -->
 <!-- ver.20260821.test01: 本番20260821.01と同期。職業紹介事業者の全項目を編集可能化。 -->
 <!-- ver.20260819.test01: 本番20260819.01と同期。支援者数の編集可能化。 -->
@@ -563,7 +564,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260825.test01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260825.test02</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -670,14 +671,14 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
             <thead>
               <tr>
                 <th style="min-width:210px;">案件名 <span style="color:#dc2626;">*</span></th>
-                <th style="min-width:92px;">申請種別 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:252px;">所属機関（企業名）<span style="color:#dc2626;">*</span></th>
+                <th style="min-width:92px;">申請種別 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:172px;">希望在留資格 <span style="color:#dc2626;">*</span></th>
-                <th style="min-width:132px;" title="登録支援機関に、人材・企業とアライメントを取っていただいたうえで入力してください">希望在留期間</th>
+                <th style="min-width:172px;" title="登録支援機関に、人材・企業とアライメントを取っていただいたうえで入力してください">希望在留期間</th>
                 <th style="min-width:152px;">受入れ経験 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:128px;" title="全員同額で反映されます">支援委託費(円・税抜)</th>
                 <th style="min-width:140px;" title="依頼テキストに反映されます">人材紹介手数料(円・税抜)</th>
-                <th style="min-width:120px;" title="収入印紙代を企業と人材のどちらが負担するかを選択してください">収入印紙負担先</th>
+                <th style="min-width:120px;" title="収入印紙代を所属機関と人材のどちらが負担するかを選択してください">収入印紙負担先</th>
                 <th style="min-width:112px;" id="nc_branchTh">アイデム拠点 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:180px;">案件担当者 <span class="req" id="nc_clientStaffReq" style="display:none;color:#dc2626;">*</span></th>
               </tr>
@@ -685,13 +686,6 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
             <tbody>
               <tr>
                 <td><input type="text" class="nc-input" id="nc_caseName" placeholder="例：特定技能（食品製造）認定"></td>
-                <td>
-                  <select class="nc-select" id="nc_appType">
-                    <option value="認定">認定</option>
-                    <option value="変更">変更</option>
-                    <option value="更新">更新</option>
-                  </select>
-                </td>
                 <td>
                   <input type="text" class="nc-input" id="nc_company" list="nc_companyList" placeholder="例：あさ... → 浅草株式会社" autocomplete="off" onchange="_ncPrefillToCc()" onblur="_ncPrefillToCc()">
                   <datalist id="nc_companyList"></datalist>
@@ -706,6 +700,13 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                   </div>
                 </td>
                 <td>
+                  <select class="nc-select" id="nc_appType">
+                    <option value="認定">認定</option>
+                    <option value="変更">変更</option>
+                    <option value="更新">更新</option>
+                  </select>
+                </td>
+                <td>
                   <select class="nc-select" id="nc_desiredStatus" onchange="_onDesiredStatusChange()">
                     <option value="">-- 選択 --</option>
                     <option value="特定技能1号">特定技能1号</option>
@@ -717,7 +718,32 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                   </select>
                 </td>
                 <td>
-                  <input type="text" class="nc-input" id="nc_desiredPeriod" placeholder="例：1年 / 3年 / 5年" autocomplete="off">
+                  <div style="display:flex;gap:4px;align-items:center;">
+                    <select class="nc-select" id="nc_desiredPeriodYear" style="min-width:64px;flex:1;">
+                      <option value="">--</option>
+                      <option value="0">0年</option>
+                      <option value="1">1年</option>
+                      <option value="2">2年</option>
+                      <option value="3">3年</option>
+                      <option value="4">4年</option>
+                      <option value="5">5年</option>
+                    </select>
+                    <select class="nc-select" id="nc_desiredPeriodMonth" style="min-width:76px;flex:1;">
+                      <option value="">--</option>
+                      <option value="0">0ヶ月</option>
+                      <option value="1">1ヶ月</option>
+                      <option value="2">2ヶ月</option>
+                      <option value="3">3ヶ月</option>
+                      <option value="4">4ヶ月</option>
+                      <option value="5">5ヶ月</option>
+                      <option value="6">6ヶ月</option>
+                      <option value="7">7ヶ月</option>
+                      <option value="8">8ヶ月</option>
+                      <option value="9">9ヶ月</option>
+                      <option value="10">10ヶ月</option>
+                      <option value="11">11ヶ月</option>
+                    </select>
+                  </div>
                   <div style="font-size:9.5px;color:#94a3b8;margin-top:3px;line-height:1.4;">※ 登録支援機関で人材・企業とすり合わせ後に入力</div>
                 </td>
                 <td>
@@ -731,7 +757,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                 <td>
                   <select class="nc-select" id="nc_stampBearer">
                     <option value="">-- 選択 --</option>
-                    <option value="企業">企業</option>
+                    <option value="所属機関">所属機関</option>
                     <option value="人材">人材</option>
                   </select>
                 </td>
@@ -6624,7 +6650,7 @@ function _ncAddAddrRow(kind,name,email){
   row.className='nc-addr-row';
   row.style.cssText='display:flex;gap:4px;align-items:center;margin-bottom:4px;';
   row.innerHTML='<span class="nc-tocc-badge '+(isTo?'nc-tocc-to':'nc-tocc-cc')+'">'+(isTo?'TO':'CC')+'</span>'
-    +'<input type="text" class="nc-input nc-addr-name" placeholder="担当者名" style="width:76px;font-size:11.5px;flex-shrink:0;" value="'+esc(name||'')+'">'
+    +'<input type="text" class="nc-input nc-addr-name" placeholder="所属機関担当者" style="width:110px;font-size:11.5px;flex-shrink:0;" value="'+esc(name||'')+'">'
     +'<input type="text" class="nc-input nc-addr-mail" placeholder="メールアドレス" style="font-size:11.5px;min-width:0;flex:1;" value="'+esc(email||'')+'">'
     +'<button type="button" onclick="this.parentNode.remove()" title="この行を削除" style="border:none;background:none;color:#dc2626;cursor:pointer;font-weight:800;padding:0 2px;flex-shrink:0;">✕</button>';
   wrap.appendChild(row);
@@ -6718,9 +6744,11 @@ function openNewCaseModal(){
   if(feeEl) feeEl.value='';
   var refEl=document.getElementById('nc_referralFee');
   if(refEl) refEl.value='';
-  // ver.20260825.test01: 希望在留期間・収入印紙負担先もリセット
-  var dpEl=document.getElementById('nc_desiredPeriod');
-  if(dpEl) dpEl.value='';
+  // ver.20260825.test01→test02: 希望在留期間(年+月プルダウン)・収入印紙負担先もリセット
+  var dpyEl=document.getElementById('nc_desiredPeriodYear');
+  if(dpyEl) dpyEl.value='';
+  var dpmEl=document.getElementById('nc_desiredPeriodMonth');
+  if(dpmEl) dpmEl.value='';
   var sbEl=document.getElementById('nc_stampBearer');
   if(sbEl) sbEl.value='';
   var rmEl=document.getElementById('nc_remarks');
@@ -6983,8 +7011,17 @@ async function submitNewCase(){
   var supportFee = supportFeeRaw.replace(/[,，円\s]/g,'').trim();
   var referralFeeRaw = (document.getElementById('nc_referralFee')||{}).value || '';
   var referralFee = referralFeeRaw.replace(/[,，円\s]/g,'').trim();
-  // ver.20260825.test01: 希望在留期間(任意・テキスト)・収入印紙負担先(任意・企業/人材)
-  var desiredPeriod = ((document.getElementById('nc_desiredPeriod')||{}).value || '').trim();
+  // ver.20260825.test02: 希望在留期間は「年」+「月」プルダウンから合成（例：「1年6ヶ月」「3年」「6ヶ月」「」）
+  var dpYear = ((document.getElementById('nc_desiredPeriodYear')||{}).value || '').trim();
+  var dpMonth = ((document.getElementById('nc_desiredPeriodMonth')||{}).value || '').trim();
+  var desiredPeriod = '';
+  if(dpYear !== '' && dpMonth !== ''){
+    desiredPeriod = dpYear + '年' + dpMonth + 'ヶ月';
+  } else if(dpYear !== ''){
+    desiredPeriod = dpYear + '年';
+  } else if(dpMonth !== ''){
+    desiredPeriod = dpMonth + 'ヶ月';
+  }
   var stampBearer = ((document.getElementById('nc_stampBearer')||{}).value || '').trim();
   var remarks = ((document.getElementById('nc_remarks')||{}).value || '').trim();
   var aidemBranch = (document.getElementById('nc_aidemBranch')||{}).value || '';
