@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260827.test01: 本番20260827.01と同期。職業紹介事業者に「基本情報からコピー」ボタン追加。 -->
 <!-- ver.20260827.01: 修正モードでも未入力欄を黄色ハイライト＋「未入力」バッジ表示。入力すると白に戻る（どこを入れてほしいか一目でわかるように） -->
 <!-- ver.20260826.test02: 本番20260826.02と同期。表示名/住所を編集可能に。 -->
 <!-- ver.20260826.test01: 本番20260826.01と同期。未入力欄の黄色ハイライトとセクション常時展開。 -->
@@ -567,7 +568,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260826.test02</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260827.test01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -5126,6 +5127,63 @@ function _orgOfficesSectionHtml(){
   h+='</div></div>';
   return h;
 }
+// ver.20260827.01: 基本情報→職業紹介事業者へ一括コピー（未入力欄のみ・確認あり）
+async function _copyFromBaseToJj(){
+  if(!orgProfile) return;
+  var p = orgProfile;
+  // マッピング：[基本情報キー, 職業紹介キー, ラベル]
+  var mapping = [
+    ['corp_no',        'jj_corp_no',          '法人番号'],
+    ['emp_ins_no',     'jj_emp_ins_no',       '雇用保険番号'],
+    ['zip',            'jj_zip',              '郵便番号'],
+    ['pref',           'jj_pref',             '都道府県'],
+    ['city',           'jj_city',             '市区町村'],
+    ['address_detail', 'jj_address_detail',   '町名丁目番地号等'],
+    ['tel',            'jj_tel',              '電話番号']
+  ];
+  // コピー対象（jj側が空・基本側に値あり）を集計
+  var targets=[], skipped_filled=[], skipped_empty=[];
+  mapping.forEach(function(m){
+    var base=p[m[0]], jj=p[m[1]];
+    var baseEmpty=(base==null||String(base).trim()===''), jjEmpty=(jj==null||String(jj).trim()==='');
+    if(baseEmpty){ skipped_empty.push(m[2]); return; }
+    if(!jjEmpty){ skipped_filled.push(m[2]+'（現在: '+String(jj).slice(0,20)+'）'); return; }
+    targets.push({from:m[0], to:m[1], label:m[2], value:String(base)});
+  });
+  if(!targets.length){
+    var msg='コピーできる項目がありませんでした。\n';
+    if(skipped_filled.length) msg += '\n【既に入力済み・スキップ】\n・' + skipped_filled.join('\n・');
+    if(skipped_empty.length) msg += '\n\n【基本情報側も未入力・スキップ】\n・' + skipped_empty.join('\n・');
+    alert(msg);
+    return;
+  }
+  var confirmMsg = '以下の項目を基本情報から職業紹介事業者にコピーします。よろしいですか？\n\n'
+    + targets.map(function(t){ return '・'+t.label+': '+t.value; }).join('\n');
+  if(skipped_filled.length) confirmMsg += '\n\n※ 以下は既に入力済みのため上書きしません：\n・' + skipped_filled.join('\n・');
+  if(!confirm(confirmMsg)) return;
+  // RPCで一括保存
+  var patch={}, edits=[];
+  targets.forEach(function(t){
+    patch[t.to] = t.value;
+    edits.push({field_key:t.to, field_label:t.label, old_value:'', new_value:t.value, edited_by:(currentProfile&&currentProfile.name||'')+'（基本情報からコピー）'});
+  });
+  try{
+    var res = await sbRpc('save_org_profile_edits', {
+      p_token:currentToken, p_pass:(currentPass||null),
+      p_patch:patch, p_edits:edits
+    });
+    if(res && res.ok){
+      // 現在のorgProfileにも反映して再描画
+      targets.forEach(function(t){ orgProfile[t.to] = t.value; });
+      alert('✅ '+targets.length+'項目を基本情報からコピーしました。');
+      renderOrgProfile();
+    } else {
+      alert('❌ 保存に失敗しました: '+((res&&res.error)||'unknown'));
+    }
+  } catch(e){
+    alert('❌ 保存に失敗しました: '+e.message);
+  }
+}
 function renderOrgProfile(){
   var fb=document.getElementById('filter-bar'); if(fb) fb.innerHTML='';
   var p=orgProfile||{};
@@ -5177,6 +5235,13 @@ function renderOrgProfile(){
 
   // 💼 職業紹介事業者
   var j='';
+  // ver.20260827.01: 基本情報からコピーするボタン（同一事業者が多いため入力の手間を減らす）
+  j+='<div style="grid-column:span 2;margin-bottom:6px;padding:8px 10px;background:#fef3c7;border:1px dashed #f59e0b;border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">'
+    +'<div style="font-size:11.5px;color:#78350f;line-height:1.5;">'
+    +'💡 職業紹介事業者が登録支援機関と同じ場合は、基本情報の内容を一括コピーできます。'
+    +'</div>'
+    +'<button type="button" onclick="_copyFromBaseToJj()" title="法人番号・雇用保険番号・郵便番号・住所・電話番号を基本情報からコピーします（既に値が入っている欄は上書きしません）" style="background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;">📋 基本情報からコピー</button>'
+    +'</div>';
   j+=_pfRow('許可番号（機関自身）',p.job_permit_no);
   j+=_pfRow('受理年月日（機関自身）',p.job_permit_date);
   j+=_pfRow('事業者名称',p.jj_name,true);
