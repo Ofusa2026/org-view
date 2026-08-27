@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260827.01: 修正モードでも未入力欄を黄色ハイライト＋「未入力」バッジ表示。入力すると白に戻る（どこを入れてほしいか一目でわかるように） -->
 <!-- ver.20260826.02: 「表示名(display_name)」「住所(address)」を編集可能項目に追加。これで登録支援機関情報の全38項目が編集可能・未入力ハイライト対象になった。 -->
 <!-- ver.20260826.01: (1)未入力の項目を黄色ハイライトで表示し「未入力」バッジ＋「入力してください」プレースホルダを追加（編集可能な項目のみ）。(2)登録支援機関情報の各セクション(基本情報・所在地・連絡先など)の折り畳みボタンを廃止して常時展開表示に。 -->
 <!-- ver.20260821.01: 職業紹介事業者セクションの全項目（事業者名称・法人番号・雇用保険番号・住所・電話・許可届出番号・受理年月日など11項目）を編集可能に。ORG_EDITABLE辞書に不足していたため事業者名称等が編集できず「変更できない」不具合になっていた。 -->
@@ -4934,10 +4935,12 @@ function _pfRow(label,val,wide){
     if(key){
       var cur = (_orgEditBuf[key]!==undefined) ? _orgEditBuf[key]
               : ((orgProfile&&orgProfile[key]!=null) ? orgProfile[key] : '');
+      // ver.20260827.01: 修正モードでも未入力欄を黄色ハイライト（入力すると白に戻る）
+      var _mtE = String(cur==null?'':cur).trim()==='';
       return '<div style="'+(wide?'grid-column:span 2;':'')+'">'
-        + '<div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:3px;">'+esc(label)+'</div>'
-        + '<input type="text" value="'+esc(String(cur))+'" oninput="_orgEditInput(\''+key+'\',this.value)" '
-        + 'style="width:100%;font-size:12.5px;padding:6px 9px;border:1px solid #cbd5e1;border-radius:6px;box-sizing:border-box;">'
+        + '<div style="font-size:10px;font-weight:700;color:'+(_mtE?'#854d0e':'#64748b')+';margin-bottom:3px;">'+esc(label)+(_mtE?' <span style="font-size:9px;background:#fde047;color:#713f12;border-radius:4px;padding:1px 5px;font-weight:800;">未入力</span>':'')+'</div>'
+        + '<input type="text" value="'+esc(String(cur))+'" oninput="_orgEditInput(\''+key+'\',this.value);var _e=this.value.trim()===\'\';this.style.background=_e?\'#fef9c3\':\'#fff\';this.style.borderColor=_e?\'#eab308\':\'#cbd5e1\';" '
+        + 'style="width:100%;font-size:12.5px;padding:6px 9px;border:1px solid '+(_mtE?'#eab308':'#cbd5e1')+';border-radius:6px;box-sizing:border-box;background:'+(_mtE?'#fef9c3':'#fff')+';">'
         + '</div>';
     }
   }

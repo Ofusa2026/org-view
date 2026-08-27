@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260827.01: 修正モードでも未入力欄を黄色ハイライト＋「未入力」バッジ表示。入力すると白に戻る（どこを入れてほしいか一目でわかるように） -->
 <!-- ver.20260826.test02: 本番20260826.02と同期。表示名/住所を編集可能に。 -->
 <!-- ver.20260826.test01: 本番20260826.01と同期。未入力欄の黄色ハイライトとセクション常時展開。 -->
 <!-- ver.20260825.test02: 新規案件依頼の微修正。①希望在留期間を年+月プルダウン化(0〜5年 / 0〜11ヶ月)、②収入印紙負担先の選択肢を「企業」→「所属機関」に変更、③申請種別と所属機関の列順入れ替え(所属機関を左)、④TO/CC行のplaceholder「担当者名」→「所属機関担当者」(幅も76→110px)。 -->
@@ -4968,10 +4969,12 @@ function _pfRow(label,val,wide){
     if(key){
       var cur = (_orgEditBuf[key]!==undefined) ? _orgEditBuf[key]
               : ((orgProfile&&orgProfile[key]!=null) ? orgProfile[key] : '');
+      // ver.20260827.01: 修正モードでも未入力欄を黄色ハイライト（入力すると白に戻る）
+      var _mtE = String(cur==null?'':cur).trim()==='';
       return '<div style="'+(wide?'grid-column:span 2;':'')+'">'
-        + '<div style="font-size:10px;font-weight:700;color:#64748b;margin-bottom:3px;">'+esc(label)+'</div>'
-        + '<input type="text" value="'+esc(String(cur))+'" oninput="_orgEditInput(\''+key+'\',this.value)" '
-        + 'style="width:100%;font-size:12.5px;padding:6px 9px;border:1px solid #cbd5e1;border-radius:6px;box-sizing:border-box;">'
+        + '<div style="font-size:10px;font-weight:700;color:'+(_mtE?'#854d0e':'#64748b')+';margin-bottom:3px;">'+esc(label)+(_mtE?' <span style="font-size:9px;background:#fde047;color:#713f12;border-radius:4px;padding:1px 5px;font-weight:800;">未入力</span>':'')+'</div>'
+        + '<input type="text" value="'+esc(String(cur))+'" oninput="_orgEditInput(\''+key+'\',this.value);var _e=this.value.trim()===\'\';this.style.background=_e?\'#fef9c3\':\'#fff\';this.style.borderColor=_e?\'#eab308\':\'#cbd5e1\';" '
+        + 'style="width:100%;font-size:12.5px;padding:6px 9px;border:1px solid '+(_mtE?'#eab308':'#cbd5e1')+';border-radius:6px;box-sizing:border-box;background:'+(_mtE?'#fef9c3':'#fff')+';">'
         + '</div>';
     }
   }
