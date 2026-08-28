@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260828.02: 新規案件依頼の人材リストに「希望在留期間」プルダウンを追加（3ヶ月/4ヶ月/6ヶ月/1年/2年/3年から選択・任意）。intake_requests.hoped_stay_period カラム追加、create_org_intake/get_org_intakes RPCも対応済み。 -->
 <!-- ver.20260828.01: 新規案件依頼の「🏷️ 分野（特定技能）」を任意→必須に変更。特定技能を選んだときのみ表示・チェック対象。 -->
 <!-- ver.20260827.02: 【変更】右下フローティング「💬 コメント・要望」ウィジェットを撤去（新規送信不可）。過去分はDB(org_feedback)に残し、関数群も温存（将来の復活・アンシス側での過去分閲覧のため）。 -->
 <!-- ver.20260827.01: 職業紹介事業者セクションに「📋 基本情報からコピー」ボタンを追加。登録支援機関と同じ会社の場合、法人番号・雇用保険番号・郵便番号・住所・電話番号を一括コピーできる（未入力欄のみコピー・確認ダイアログあり・履歴も記録）。 -->
@@ -570,7 +571,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260828.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260828.02</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -792,6 +793,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
               <th style="width:120px;">国籍 <span style="color:#dc2626;">*</span></th>
               <th style="width:155px;">現在の在留資格</th>
               <th style="width:140px;">在留期限</th>
+              <th style="width:130px;">希望在留期間</th>
               <th style="width:120px;">受取方法 <span style="color:#dc2626;">*</span></th>
               <th style="width:80px;text-align:center;">推薦票</th>
               <th class="nc-row-del"></th>
@@ -6869,6 +6871,18 @@ function addJinzaiRow(){
       '</select>' +
     '</td>' +
     '<td><input type="date" class="nc-input nc-j-expire"></td>' +
+    // ver.20260828.02: 希望在留期間（3ヶ月〜3年）
+    '<td>' +
+      '<select class="nc-select nc-j-hoped">' +
+        '<option value="">-- 選択 --</option>' +
+        '<option value="3ヶ月">3ヶ月</option>' +
+        '<option value="4ヶ月">4ヶ月</option>' +
+        '<option value="6ヶ月">6ヶ月</option>' +
+        '<option value="1年">1年</option>' +
+        '<option value="2年">2年</option>' +
+        '<option value="3年">3年</option>' +
+      '</select>' +
+    '</td>' +
     '<td>' +
       '<select class="nc-select nc-j-uke">' +
         '<option value="郵送交付" selected>郵送交付</option>' +
@@ -6889,7 +6903,7 @@ function addJinzaiRow(){
   noteTr.style.display = 'none';
   noteTr.innerHTML =
     '<td></td>' +
-    '<td colspan="7" style="padding:6px 4px 10px 4px;">' +
+    '<td colspan="8" style="padding:6px 4px 10px 4px;">' +
       '<div style="display:flex;align-items:center;gap:8px;background:#fff7ed;border-left:3px solid #fb923c;border-radius:4px;padding:6px 10px;">' +
         '<span style="font-size:10.5px;color:#9a3412;font-weight:700;white-space:nowrap;">📝 現在の在留資格 (詳細)</span>' +
         '<input type="text" class="nc-input nc-j-current-note" placeholder="例：在留資格申請中、留学（語学）、永住者の配偶者等" style="flex:1;padding:5px 8px;font-size:11.5px;">' +
@@ -7122,6 +7136,9 @@ async function submitNewCase(){
       }
     }
     var exp = rowEl.querySelector('.nc-j-expire').value;
+    // ver.20260828.02: 希望在留期間
+    var _hopedEl = rowEl.querySelector('.nc-j-hoped');
+    var hopedStayPeriod = _hopedEl ? _hopedEl.value : '';
     var uke = rowEl.querySelector('.nc-j-uke').value;
     // ver.20260525.01: 推薦票要否チェック
     var recEl = rowEl.querySelector('.nc-j-recommend');
@@ -7136,7 +7153,8 @@ async function submitNewCase(){
     }
     jinzaiList.push({
       name: nm, nationality: nat, expire: exp, ukeMethod: uke, recommendLetter: rec,
-      currentStatus: cur, currentStatusNote: curNote
+      currentStatus: cur, currentStatusNote: curNote,
+      hopedStayPeriod: hopedStayPeriod
     });
   }
   if(jinzaiList.length === 0){
@@ -7320,6 +7338,7 @@ async function executeSubmit(){
         client_staff: p.clientStaff || '',
         nationality: j.nationality,
         expire: j.expire || null,
+        hoped_stay_period: j.hopedStayPeriod || '',
         support_staff: '別紙参照',
         support_fee: feeStr,
         delivery_method: dm,
