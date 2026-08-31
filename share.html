@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260830.03: 【補完】「＋ 人材を追加」で新規行を増やした際も、5年オプションの表示/非表示が即座に正しくなるように修正（追加直後に _updateHopedOptions を呼ぶ）。 -->
 <!-- ver.20260830.02: 希望在留資格プルダウンに「特定活動46号」を追加。希望在留期間の選択肢に「5年」を追加し、資格が「技術・人文知識・国際業務」または「特定活動46号」のときのみ選択可能に。 -->
 <!-- ver.20260830.01: 新規案件依頼のTO/CC宛先欄に「過去の宛先サジェスト」を追加。(A)入力欄にフォーカスすると同一所属機関で過去使ったアドレスがdatalist候補に出る (B)「🕐 過去の宛先から選ぶ」ボタンで過去アドレス一覧→TO/CCに挿入。表示は自機関×該当所属機関の履歴のみ（他機関の情報は見えない）。 -->
 <!-- ver.20260828.03: 希望在留期間を必須化＋登録前に「所属機関・人材への希望在留期間の確認（発行手数料が期間で変わる旨）」ポップアップを表示。 -->
@@ -574,7 +575,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260830.02</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260830.03</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -7001,6 +7002,7 @@ function addJinzaiRow(){
     '</td>';
   document.getElementById('ncJinzaiBody').appendChild(noteTr);
   updateJinzaiCount();
+  _updateHopedOptions(); // ver.20260830.03: 追加行にも5年オプション制御を反映
 }
 
 // ver.20260527.16: 「その他」選択時、メモ展開行を表示/非表示
