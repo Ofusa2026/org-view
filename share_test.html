@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260828.test03: 本番20260828.03と同期。希望在留期間必須化＋確認ダイアログ追加。 -->
 <!-- ver.20260828.test02: 本番20260828.02と同期。希望在留期間プルダウン追加。 -->
 <!-- ver.20260828.test01: 本番20260828.01と同期。分野を必須化。 -->
 <!-- ver.20260827.test02: 本番20260827.02と同期。コメント・要望ウィジェット撤去。 -->
@@ -571,7 +572,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260828.test02</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260828.test03</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -831,7 +832,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
               <th style="width:120px;">国籍 <span style="color:#dc2626;">*</span></th>
               <th style="width:155px;">現在の在留資格</th>
               <th style="width:140px;">在留期限</th>
-              <th style="width:130px;">希望在留期間</th>
+              <th style="width:130px;">希望在留期間 <span style="color:#dc2626;">*</span></th>
               <th style="width:120px;">受取方法 <span style="color:#dc2626;">*</span></th>
               <th style="width:80px;text-align:center;">推薦票</th>
               <th class="nc-row-del"></th>
@@ -7199,6 +7200,8 @@ async function submitNewCase(){
     if(!nm && !nat && !uke){ continue; }
     if(!nm){ showNcError((i+1) + '人目の氏名を入力してください'); return; }
     if(!nat){ showNcError((i+1) + '人目の国籍を選択してください'); return; }
+    // ver.20260828.03: 希望在留期間を必須化
+    if(!hopedStayPeriod){ showNcError((i+1) + '人目の希望在留期間を選択してください'); return; }
     if(!uke){ showNcError((i+1) + '人目の受取方法を選択してください'); return; }
     if(cur === 'その他' && !curNote){
       showNcError((i+1) + '人目の現在の在留資格（その他）の詳細を入力してください');
@@ -7235,6 +7238,12 @@ async function submitNewCase(){
     toEmail: toEmail, ccEmail: ccEmail
   };
 
+  // ver.20260828.03: 登録前に希望在留期間の確認ダイアログを表示
+  var _confirmMsg = '📋 希望在留期間の確認\n\n'
+    + '所属機関様・人材の方に「希望在留期間」についてご確認いただけましたか？\n\n'
+    + '⚠️ 発行手数料は在留期間によって変わりますのでご注意ください。\n\n'
+    + '確認が済んでいれば「OK」を押して登録に進みます。';
+  if(!confirm(_confirmMsg)) return;
   // 確認モーダル表示
   _renderConfirmBody(_ncPendingPayload);
   document.getElementById('ncConfirmModalBg').classList.add('open');
