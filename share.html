@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260901.02: 希望在留期間確認モーダルの表示調整。モーダル幅を560px→660px（画面幅の96%まで）に拡張、手数料列の幅を90px固定＋white-space:nowrap で金額が見切れないように、ヘッダ余白を詰めて説明文が切れないように調整。 -->
 <!-- ver.20260901.01: 希望在留期間の確認ダイアログをカスタムモーダル化。①今回選択された期間ごとに発行手数料を計算し合計を表示（人材別・申請方法別）、②全期間の手数料表（2026-10-01改定）を折りたたみで表示、③入管庁ページ https://www.moj.go.jp/isa/01_00644.html へのリンク、④同意チェック2つ入るまで「登録に進む」ボタンはグレーアウト。ブラウザ標準confirmから差し替え。 -->
 <!-- ver.20260830.03: 【補完】「＋ 人材を追加」で新規行を増やした際も、5年オプションの表示/非表示が即座に正しくなるように修正（追加直後に _updateHopedOptions を呼ぶ）。 -->
 <!-- ver.20260830.02: 希望在留資格プルダウンに「特定活動46号」を追加。希望在留期間の選択肢に「5年」を追加し、資格が「技術・人文知識・国際業務」または「特定活動46号」のときのみ選択可能に。 -->
@@ -576,7 +577,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260901.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260901.02</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -6891,7 +6892,7 @@ function _openHopedFeeConfirm(payload, onOK){
       + '<td style="padding:4px 8px;border:1px solid #e5e7eb;font-size:11.5px;">'+esc(j.name||'')+'</td>'
       + '<td style="text-align:center;padding:4px 6px;border:1px solid #e5e7eb;font-weight:700;">'+esc(j.hopedStayPeriod||'-')+'</td>'
       + '<td style="text-align:center;padding:4px 6px;border:1px solid #e5e7eb;font-size:10.5px;color:#64748b;">'+applyMethod+'</td>'
-      + '<td style="text-align:right;padding:4px 8px;border:1px solid #e5e7eb;font-weight:800;color:#1e40af;">'+(fee?amount.toLocaleString()+'円':'—')+'</td>'
+      + '<td style="text-align:right;padding:4px 8px;border:1px solid #e5e7eb;font-weight:800;color:#1e40af;white-space:nowrap;">'+(fee?amount.toLocaleString()+'円':'—')+'</td>'
       + '</tr>';
   });
   
@@ -6915,32 +6916,32 @@ function _openHopedFeeConfirm(payload, onOK){
   box.id='_hopedFeeConfirm';
   box.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:100010;display:flex;align-items:center;justify-content:center;padding:20px;';
   box.innerHTML =
-    '<div style="background:#fff;border-radius:14px;width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden;">'
+    '<div style="background:#fff;border-radius:14px;width:min(660px, 96vw);max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden;">'
     // ヘッダ
-    + '<div style="padding:14px 18px;background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff;">'
+    + '<div style="padding:10px 18px;background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff;flex-shrink:0;">'
     +   '<div style="font-size:15px;font-weight:800;">📋 希望在留期間の確認</div>'
     +   '<div style="font-size:11px;opacity:.9;margin-top:2px;">2026年10月1日改定の発行手数料が適用されます</div>'
     + '</div>'
     // ボディ
-    + '<div style="padding:14px 18px;overflow-y:auto;flex:1;">'
+    + '<div style="padding:12px 18px;overflow-y:auto;flex:1;">'
     +   '<div style="font-size:12.5px;color:#334155;margin-bottom:10px;line-height:1.7;">'
     +     '所属機関様・人材の方に、下記の<b>「希望在留期間」と「発行手数料」</b>についてご確認いただけましたか？'
     +   '</div>'
     // 選択された期間・料金
     +   '<div style="background:linear-gradient(135deg,#dbeafe,#e0f2fe);border:2px solid #3b82f6;border-radius:10px;padding:12px;margin-bottom:12px;">'
     +     '<div style="font-size:10.5px;color:#1e40af;font-weight:800;text-align:center;margin-bottom:6px;">📊 今回の希望在留期間と発行手数料</div>'
-    +     '<table style="width:100%;border-collapse:collapse;background:#fff;">'
+    +     '<table style="width:100%;border-collapse:collapse;background:#fff;table-layout:auto;">'
     +       '<thead><tr>'
-    +         '<th style="padding:4px 6px;font-size:10px;background:#334155;color:#fff;border:1px solid #334155;">#</th>'
+    +         '<th style="padding:4px 6px;font-size:10px;background:#334155;color:#fff;border:1px solid #334155;width:28px;">#</th>'
     +         '<th style="padding:4px 6px;font-size:10px;background:#334155;color:#fff;border:1px solid #334155;">氏名</th>'
-    +         '<th style="padding:4px 6px;font-size:10px;background:#334155;color:#fff;border:1px solid #334155;">希望期間</th>'
-    +         '<th style="padding:4px 6px;font-size:10px;background:#334155;color:#fff;border:1px solid #334155;">申請方法</th>'
-    +         '<th style="padding:4px 6px;font-size:10px;background:#334155;color:#fff;border:1px solid #334155;">手数料</th>'
+    +         '<th style="padding:4px 6px;font-size:10px;background:#334155;color:#fff;border:1px solid #334155;width:70px;">希望期間</th>'
+    +         '<th style="padding:4px 6px;font-size:10px;background:#334155;color:#fff;border:1px solid #334155;width:72px;">申請方法</th>'
+    +         '<th style="padding:4px 6px;font-size:10px;background:#334155;color:#fff;border:1px solid #334155;width:90px;white-space:nowrap;">手数料</th>'
     +       '</tr></thead>'
     +       '<tbody>'+rowsHtml+'</tbody>'
     +       '<tfoot><tr>'
     +         '<td colspan="4" style="text-align:right;padding:6px 10px;border:1px solid #e5e7eb;background:#fef3c7;font-weight:800;font-size:12px;">合計（'+((payload.jinzaiList||[]).length)+'名）</td>'
-    +         '<td style="text-align:right;padding:6px 10px;border:1px solid #e5e7eb;background:#fef3c7;font-weight:900;color:#dc2626;font-size:14px;">'+totalFee.toLocaleString()+'円</td>'
+    +         '<td style="text-align:right;padding:6px 10px;border:1px solid #e5e7eb;background:#fef3c7;font-weight:900;color:#dc2626;font-size:14px;white-space:nowrap;">'+totalFee.toLocaleString()+'円</td>'
     +       '</tr></tfoot>'
     +     '</table>'
     +     '<div style="font-size:9.5px;color:#475569;text-align:center;margin-top:6px;line-height:1.5;">'
