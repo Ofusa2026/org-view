@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260901.01: 希望在留期間の確認ダイアログをカスタムモーダル化。①今回選択された期間ごとに発行手数料を計算し合計を表示（人材別・申請方法別）、②全期間の手数料表（2026-10-01改定）を折りたたみで表示、③入管庁ページ https://www.moj.go.jp/isa/01_00644.html へのリンク、④同意チェック2つ入るまで「登録に進む」ボタンはグレーアウト。ブラウザ標準confirmから差し替え。 -->
 <!-- ver.20260830.03: 【補完】「＋ 人材を追加」で新規行を増やした際も、5年オプションの表示/非表示が即座に正しくなるように修正（追加直後に _updateHopedOptions を呼ぶ）。 -->
 <!-- ver.20260830.02: 希望在留資格プルダウンに「特定活動46号」を追加。希望在留期間の選択肢に「5年」を追加し、資格が「技術・人文知識・国際業務」または「特定活動46号」のときのみ選択可能に。 -->
 <!-- ver.20260830.01: 新規案件依頼のTO/CC宛先欄に「過去の宛先サジェスト」を追加。(A)入力欄にフォーカスすると同一所属機関で過去使ったアドレスがdatalist候補に出る (B)「🕐 過去の宛先から選ぶ」ボタンで過去アドレス一覧→TO/CCに挿入。表示は自機関×該当所属機関の履歴のみ（他機関の情報は見えない）。 -->
@@ -575,7 +576,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260830.03</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260901.01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -6843,6 +6844,169 @@ function _ncPrefillToCc(){
   _ncFillAddrs('nc_ccRows','cc',best.cc_email);
   _ncUpdateAddrDatalist(); // ver.20260830.01
 }
+// ver.20260901.01: 希望在留期間の確認ダイアログ（金額強調＋全期間表＋同意チェック2つ）
+// 手数料表（2026-10-01改定・入管庁 https://www.moj.go.jp/isa/01_00644.html）
+var _FEE_TABLE_2026 = [
+  { period:'3ヶ月以下',        window:10000, online:10000 },
+  { period:'3ヶ月超6ヶ月以下', window:18000, online:15000 },
+  { period:'6ヶ月超1年未満',   window:25000, online:21000 },
+  { period:'1年',              window:33000, online:27000 },
+  { period:'1年超3年未満',     window:48000, online:42000 },
+  { period:'3年以上5年未満',   window:64000, online:56000 },
+  { period:'5年以上',          window:75000, online:65000 }
+];
+function _feeForPeriod(hopedStayPeriod){
+  // 選択肢のvalue(「3ヶ月」「4ヶ月」「6ヶ月」「1年」「2年」「3年」「5年」)から表の該当行を選ぶ
+  var v = String(hopedStayPeriod||'');
+  var idx = -1;
+  if(v==='3ヶ月')      idx = 0;  // 3ヶ月以下
+  else if(v==='4ヶ月') idx = 1;  // 3ヶ月超6ヶ月以下
+  else if(v==='6ヶ月') idx = 1;  // 3ヶ月超6ヶ月以下
+  else if(v==='1年')   idx = 3;  // 1年
+  else if(v==='2年')   idx = 4;  // 1年超3年未満
+  else if(v==='3年')   idx = 5;  // 3年以上5年未満（3年ちょうどは「以上」に含まれる）
+  else if(v==='5年')   idx = 6;  // 5年以上
+  return idx>=0 ? _FEE_TABLE_2026[idx] : null;
+}
+function _openHopedFeeConfirm(payload, onOK){
+  // 既存モーダルがあれば消す
+  var ex=document.getElementById('_hopedFeeConfirm'); if(ex) ex.remove();
+  
+  // 各人材の期間と受取方法から金額を集計
+  var rowsHtml = '';
+  var totalFee = 0;
+  var missingFee = false;
+  (payload.jinzaiList||[]).forEach(function(j, i){
+    var fee = _feeForPeriod(j.hopedStayPeriod);
+    var isOnline = (j.ukeMethod||'').indexOf('郵送')<0 && (j.ukeMethod||'').indexOf('窓口')<0
+      ? false : (j.ukeMethod==='郵送交付'); // 郵送交付＝オンライン系(申請コスト同)扱いにするか？現状は「窓口/オンライン」の区別で計上
+    // 現行UIは受取方法=郵送交付/窓口受取。手数料表は申請時の「窓口/オンライン」区分なので
+    // 「窓口受取＝窓口申請」「郵送交付＝オンライン申請」とみなす（大房の実運用）
+    var applyMethod = (j.ukeMethod==='窓口受取') ? '窓口' : 'オンライン';
+    var amount = fee ? (applyMethod==='窓口' ? fee.window : fee.online) : 0;
+    if(!fee) missingFee = true;
+    totalFee += amount;
+    rowsHtml += '<tr>'
+      + '<td style="text-align:center;padding:4px 6px;border:1px solid #e5e7eb;background:#f8fafc;font-weight:700;color:#475569;">'+(i+1)+'</td>'
+      + '<td style="padding:4px 8px;border:1px solid #e5e7eb;font-size:11.5px;">'+esc(j.name||'')+'</td>'
+      + '<td style="text-align:center;padding:4px 6px;border:1px solid #e5e7eb;font-weight:700;">'+esc(j.hopedStayPeriod||'-')+'</td>'
+      + '<td style="text-align:center;padding:4px 6px;border:1px solid #e5e7eb;font-size:10.5px;color:#64748b;">'+applyMethod+'</td>'
+      + '<td style="text-align:right;padding:4px 8px;border:1px solid #e5e7eb;font-weight:800;color:#1e40af;">'+(fee?amount.toLocaleString()+'円':'—')+'</td>'
+      + '</tr>';
+  });
+  
+  // 全期間表（選択された期間をハイライト）
+  var uniqPeriods = {};
+  (payload.jinzaiList||[]).forEach(function(j){ if(j.hopedStayPeriod) uniqPeriods[j.hopedStayPeriod]=1; });
+  var allTable = _FEE_TABLE_2026.map(function(r,i){
+    var isSelected = false;
+    var vs = ['3ヶ月','4ヶ月','6ヶ月','1年','2年','3年','5年'];
+    vs.forEach(function(v){
+      if(uniqPeriods[v] && _feeForPeriod(v)===r) isSelected = true;
+    });
+    return '<tr'+(isSelected?' style="background:#fef3c7;font-weight:800;"':'')+'>'
+      + '<td style="padding:3px 6px;border:1px solid #e5e7eb;font-size:10.5px;">'+r.period+(isSelected?' <span style="color:#dc2626;">←</span>':'')+'</td>'
+      + '<td style="text-align:right;padding:3px 8px;border:1px solid #e5e7eb;font-size:10.5px;background:#fafafa;">'+r.window.toLocaleString()+'円</td>'
+      + '<td style="text-align:right;padding:3px 8px;border:1px solid #e5e7eb;font-size:10.5px;">'+r.online.toLocaleString()+'円</td>'
+      + '</tr>';
+  }).join('');
+  
+  var box=document.createElement('div');
+  box.id='_hopedFeeConfirm';
+  box.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:100010;display:flex;align-items:center;justify-content:center;padding:20px;';
+  box.innerHTML =
+    '<div style="background:#fff;border-radius:14px;width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden;">'
+    // ヘッダ
+    + '<div style="padding:14px 18px;background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff;">'
+    +   '<div style="font-size:15px;font-weight:800;">📋 希望在留期間の確認</div>'
+    +   '<div style="font-size:11px;opacity:.9;margin-top:2px;">2026年10月1日改定の発行手数料が適用されます</div>'
+    + '</div>'
+    // ボディ
+    + '<div style="padding:14px 18px;overflow-y:auto;flex:1;">'
+    +   '<div style="font-size:12.5px;color:#334155;margin-bottom:10px;line-height:1.7;">'
+    +     '所属機関様・人材の方に、下記の<b>「希望在留期間」と「発行手数料」</b>についてご確認いただけましたか？'
+    +   '</div>'
+    // 選択された期間・料金
+    +   '<div style="background:linear-gradient(135deg,#dbeafe,#e0f2fe);border:2px solid #3b82f6;border-radius:10px;padding:12px;margin-bottom:12px;">'
+    +     '<div style="font-size:10.5px;color:#1e40af;font-weight:800;text-align:center;margin-bottom:6px;">📊 今回の希望在留期間と発行手数料</div>'
+    +     '<table style="width:100%;border-collapse:collapse;background:#fff;">'
+    +       '<thead><tr>'
+    +         '<th style="padding:4px 6px;font-size:10px;background:#334155;color:#fff;border:1px solid #334155;">#</th>'
+    +         '<th style="padding:4px 6px;font-size:10px;background:#334155;color:#fff;border:1px solid #334155;">氏名</th>'
+    +         '<th style="padding:4px 6px;font-size:10px;background:#334155;color:#fff;border:1px solid #334155;">希望期間</th>'
+    +         '<th style="padding:4px 6px;font-size:10px;background:#334155;color:#fff;border:1px solid #334155;">申請方法</th>'
+    +         '<th style="padding:4px 6px;font-size:10px;background:#334155;color:#fff;border:1px solid #334155;">手数料</th>'
+    +       '</tr></thead>'
+    +       '<tbody>'+rowsHtml+'</tbody>'
+    +       '<tfoot><tr>'
+    +         '<td colspan="4" style="text-align:right;padding:6px 10px;border:1px solid #e5e7eb;background:#fef3c7;font-weight:800;font-size:12px;">合計（'+((payload.jinzaiList||[]).length)+'名）</td>'
+    +         '<td style="text-align:right;padding:6px 10px;border:1px solid #e5e7eb;background:#fef3c7;font-weight:900;color:#dc2626;font-size:14px;">'+totalFee.toLocaleString()+'円</td>'
+    +       '</tr></tfoot>'
+    +     '</table>'
+    +     '<div style="font-size:9.5px;color:#475569;text-align:center;margin-top:6px;line-height:1.5;">'
+    +       '※ オンライン申請の場合、別途決済手数料330円/件が必要です'
+    +     '</div>'
+    +   '</div>'
+    // 全期間表
+    +   '<details style="margin-bottom:12px;"><summary style="cursor:pointer;font-size:11px;color:#475569;font-weight:700;padding:6px 8px;background:#f1f5f9;border-radius:6px;">📊 全期間の手数料表を見る</summary>'
+    +     '<table style="width:100%;border-collapse:collapse;margin-top:8px;">'
+    +       '<thead><tr>'
+    +         '<th style="padding:4px 6px;font-size:10px;background:#334155;color:#fff;border:1px solid #334155;">許可期間</th>'
+    +         '<th style="padding:4px 6px;font-size:10px;background:#475569;color:#fff;border:1px solid #334155;">窓口</th>'
+    +         '<th style="padding:4px 6px;font-size:10px;background:#334155;color:#fff;border:1px solid #334155;">オンライン</th>'
+    +       '</tr></thead>'
+    +       '<tbody>'+allTable+'</tbody>'
+    +     '</table>'
+    +   '</details>'
+    // 入管庁リンク
+    +   '<a href="https://www.moj.go.jp/isa/01_00644.html" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:#1e40af;text-decoration:none;padding:6px 12px;border:1px solid #bfdbfe;border-radius:6px;background:#eff6ff;margin-bottom:14px;font-weight:700;">'
+    +     '📄 詳細を入管庁ページで確認する（別タブで開く）'
+    +   '</a>'
+    // 同意チェック
+    +   '<div style="border-top:1px dashed #cbd5e1;padding-top:12px;">'
+    +     '<label id="_hfChkLbl1" style="display:flex;align-items:flex-start;gap:8px;padding:9px 12px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;margin-bottom:6px;cursor:pointer;">'
+    +       '<input type="checkbox" id="_hfChk1" onchange="_hfUpdateBtn()" style="margin-top:3px;cursor:pointer;">'
+    +       '<span style="font-size:11.5px;color:#334155;line-height:1.5;">所属機関・人材の方に<b>希望在留期間を確認しました</b></span>'
+    +     '</label>'
+    +     '<label id="_hfChkLbl2" style="display:flex;align-items:flex-start;gap:8px;padding:9px 12px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;cursor:pointer;">'
+    +       '<input type="checkbox" id="_hfChk2" onchange="_hfUpdateBtn()" style="margin-top:3px;cursor:pointer;">'
+    +       '<span style="font-size:11.5px;color:#334155;line-height:1.5;"><b>発行手数料</b>が在留期間により変わることを認識しています</span>'
+    +     '</label>'
+    +   '</div>'
+    + '</div>'
+    // フッタ
+    + '<div style="padding:12px 18px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:8px;background:#f8fafc;">'
+    +   '<button type="button" onclick="_hfClose()" style="padding:8px 20px;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;">キャンセル</button>'
+    +   '<button type="button" id="_hfOKBtn" onclick="_hfConfirm()" disabled style="padding:8px 20px;background:#e2e8f0;color:#94a3b8;border:none;border-radius:8px;font-size:12.5px;font-weight:800;cursor:not-allowed;">確認しました → 登録に進む</button>'
+    + '</div>'
+    + '</div>';
+  document.body.appendChild(box);
+  window._hfOnOK = onOK;
+}
+function _hfUpdateBtn(){
+  var c1=document.getElementById('_hfChk1'), c2=document.getElementById('_hfChk2'), btn=document.getElementById('_hfOKBtn');
+  if(!c1||!c2||!btn) return;
+  var ok = c1.checked && c2.checked;
+  btn.disabled = !ok;
+  btn.style.cssText = ok
+    ? 'padding:8px 20px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:800;cursor:pointer;'
+    : 'padding:8px 20px;background:#e2e8f0;color:#94a3b8;border:none;border-radius:8px;font-size:12.5px;font-weight:800;cursor:not-allowed;';
+  // チェック済ラベルは緑背景に
+  ['1','2'].forEach(function(n){
+    var lbl=document.getElementById('_hfChkLbl'+n), c=document.getElementById('_hfChk'+n);
+    if(lbl && c) lbl.style.background = c.checked ? '#ecfdf5' : '#f8fafc';
+    if(lbl && c) lbl.style.borderColor = c.checked ? '#22c55e' : '#cbd5e1';
+  });
+}
+function _hfClose(){
+  var ex=document.getElementById('_hopedFeeConfirm'); if(ex) ex.remove();
+  window._hfOnOK = null;
+}
+function _hfConfirm(){
+  var cb = window._hfOnOK;
+  _hfClose();
+  if(typeof cb==='function') cb();
+}
 function openNewCaseModal(){
   // 初期化
   // ver.20260525.03: 「使用する支援事業所」は拠点から自動マッピングするため削除
@@ -7289,15 +7453,11 @@ async function submitNewCase(){
     toEmail: toEmail, ccEmail: ccEmail
   };
 
-  // ver.20260828.03: 登録前に希望在留期間の確認ダイアログを表示
-  var _confirmMsg = '📋 希望在留期間の確認\n\n'
-    + '所属機関様・人材の方に「希望在留期間」についてご確認いただけましたか？\n\n'
-    + '⚠️ 発行手数料は在留期間によって変わりますのでご注意ください。\n\n'
-    + '確認が済んでいれば「OK」を押して登録に進みます。';
-  if(!confirm(_confirmMsg)) return;
-  // 確認モーダル表示
-  _renderConfirmBody(_ncPendingPayload);
-  document.getElementById('ncConfirmModalBg').classList.add('open');
+  // ver.20260901.01: カスタム確認モーダル（金額強調＋全期間表＋同意チェック2つ）
+  _openHopedFeeConfirm(_ncPendingPayload, function(){
+    _renderConfirmBody(_ncPendingPayload);
+    document.getElementById('ncConfirmModalBg').classList.add('open');
+  });
 }
 
 function closeConfirmModal(){
