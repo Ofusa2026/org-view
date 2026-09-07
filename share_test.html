@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260907.test01: 本番20260907.01と同期。オープンケア専用「パートナー」列追加。 -->
 <!-- ver.20260902.test01: 本番20260902.01と同期。書類チェックリストの内部フラグ（mailauto::ok等）誤表示を除外。 -->
 <!-- ver.20260901.test10: 本番20260901.10と同期。O-Link添付PDFボタン対応。 -->
 <!-- ver.20260901.test09: 本番20260901.09と同期。5年オプション表示バグ修正。 -->
@@ -586,7 +587,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260902.test01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260907.test01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -702,6 +703,8 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                 <th style="min-width:140px;" title="依頼テキストに反映されます">人材紹介手数料(円・税抜)</th>
                 <th style="min-width:120px;" title="収入印紙代を所属機関と人材のどちらが負担するかを選択してください">収入印紙負担先</th>
                 <th style="min-width:112px;" id="nc_branchTh">アイデム拠点 <span style="color:#dc2626;">*</span></th>
+                <!-- ver.20260907.test01: オープンケア専用「パートナー」列 -->
+                <th style="min-width:150px;display:none;" id="nc_partnerTh">パートナー <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:180px;">案件担当者 <span class="req" id="nc_clientStaffReq" style="display:none;color:#dc2626;">*</span></th>
               </tr>
             </thead>
@@ -786,6 +789,19 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                     <option value="">-- 選択 --</option>
                     <option value="所属機関">所属機関</option>
                     <option value="人材">人材</option>
+                  </select>
+                </td>
+                <!-- ver.20260907.test01: オープンケア専用「パートナー」欄 -->
+                <td id="nc_partnerTd" style="display:none;">
+                  <select class="nc-select" id="nc_salesPartner">
+                    <option value="">-- 選択 --</option>
+                    <option value="グローバルパートナーズ">グローバルパートナーズ</option>
+                    <option value="アライズ">アライズ</option>
+                    <option value="キャリアブランディング">キャリアブランディング</option>
+                    <option value="イノビジョン">イノビジョン</option>
+                    <option value="アイコム">アイコム</option>
+                    <option value="プロスパー">プロスパー</option>
+                    <option value="自社">自社</option>
                   </select>
                 </td>
                 <td id="nc_branchTd">
@@ -7098,6 +7114,12 @@ function openNewCaseModal(){
   // ver.20260612.test07: アイデムのみ拠点を表示。非アイデムは拠点を隠し担当者を常時表示
   // ver.20260615.test10: アイデムでも担当者欄を常時表示（一覧から選択可）。必須は拠点=東のときのみ
   var _isAidemOrg=(orgName==='株式会社アイデム');
+  // ver.20260907.test01: オープンケア専用「パートナー」欄の表示制御
+  var _isOpencare=(orgName && orgName.indexOf('オープンケア')>=0);
+  var _partnerTh=document.getElementById('nc_partnerTh'), _partnerTd=document.getElementById('nc_partnerTd');
+  if(_partnerTh) _partnerTh.style.display = _isOpencare ? '' : 'none';
+  if(_partnerTd) _partnerTd.style.display = _isOpencare ? '' : 'none';
+  var _spSel=document.getElementById('nc_salesPartner'); if(_spSel) _spSel.value='';
   var brTh=document.getElementById('nc_branchTh'), brTd=document.getElementById('nc_branchTd');
   if(_isAidemOrg){
     if(brTh) brTh.style.display=''; if(brTd) brTd.style.display='';
@@ -7435,6 +7457,9 @@ async function submitNewCase(){
   var stampBearer = ((document.getElementById('nc_stampBearer')||{}).value || '').trim();
   var remarks = ((document.getElementById('nc_remarks')||{}).value || '').trim();
   var aidemBranch = (document.getElementById('nc_aidemBranch')||{}).value || '';
+  // ver.20260907.test01: オープンケア専用「パートナー」
+  var _isOpencareForSend = (orgName && orgName.indexOf('オープンケア')>=0);
+  var salesPartner = _isOpencareForSend ? ((document.getElementById('nc_salesPartner')||{}).value || '') : '';
   var clientStaff1 = ((document.getElementById('nc_clientStaff')||{}).value || '').trim();
   var clientStaff2 = ((document.getElementById('nc_clientStaff2')||{}).value || '').trim();
   // ver.20260617: 案件担当者は最大2名。重複・空を除いて「、」で結合（index受け皿は「、」で分割）
@@ -7544,7 +7569,8 @@ async function submitNewCase(){
     supportFee: supportFee, referralFee: referralFee, remarks: remarks, jinzaiList: jinzaiList,
     // ver.20260825.test01: 希望在留期間・収入印紙負担先
     desiredPeriod: desiredPeriod, stampBearer: stampBearer,
-    toEmail: toEmail, ccEmail: ccEmail
+    toEmail: toEmail, ccEmail: ccEmail,
+    salesPartner: salesPartner
   };
 
   // ver.20260901.01: カスタム確認モーダル（金額強調＋全期間表＋同意チェック2つ）
@@ -7717,6 +7743,7 @@ async function executeSubmit(){
         desired_status: desiredStatusWithNote,
         accept_exp: p.acceptExp,
         aidem_branch: p.aidemBranch || '',
+        sales_partner: p.salesPartner || '',
         client_staff: p.clientStaff || '',
         nationality: j.nationality,
         expire: j.expire || null,
