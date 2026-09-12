@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260912.01: 新規案件依頼の受取方法に「メール交付（電子在留資格認定証明書）」を追加。申請種別が認定のときは全行をメール交付に固定（認定以外では選べない）。貼り付け解析・保存(email)・表示も対応 -->
 <!-- ver.20260908.02: 【B案】書類チェックリスト（企業・入管）で「特定活動」かつ国交省ステータスが申請前の場合、「⏸ この書類はまだ収集不要です」バナー＋グレーアウト表示。国交省ステータスは get_org_share RPCで kokko_cases.linked_case_ids 経由で取得。 -->
 <!-- ver.20260908.01: 企業書類チェックリスト（人材詳細モーダル）を「国交省」「入管」で分割表示。requiredDocsCoKokko に載る書類を国交省、それ以外を入管として表示。 -->
 <!-- ver.20260907.01: 【オープンケア専用】新規案件依頼フォームに「パートナー」列を追加（オープンケア協同組合限定表示）。選択肢7つ（グローバルパートナーズ/アライズ/キャリアブランディング/イノビジョン/アイコム/プロスパー/自社）。intake_requests.sales_partner カラム追加、create_org_intake/get_org_intakes RPC対応済み。 -->
@@ -589,7 +590,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260909.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260912.01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -712,7 +713,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
               <tr>
                 <td><input type="text" class="nc-input" id="nc_caseName" placeholder="例：特定技能（食品製造）認定"></td>
                 <td>
-                  <select class="nc-select" id="nc_appType">
+                  <select class="nc-select" id="nc_appType" onchange="_ncApplyUkeRule()">
                     <option value="認定">認定</option>
                     <option value="変更">変更</option>
                     <option value="更新">更新</option>
@@ -4085,7 +4086,7 @@ function _intakeStatusBadge(st){
   var s=m[st]||{t:esc(st||'—'),bg:'#f1f5f9',col:'#475569',bor:'#e2e8f0'};
   return '<span style="display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:800;background:'+s.bg+';color:'+s.col+';border:1px solid '+s.bor+';white-space:nowrap;">'+s.t+'</span>';
 }
-function _intakeDelivery(v){ if(v==='window'||v==='窓口受取') return '窓口受取'; if(v==='mail'||v==='郵送交付'||v==='郵送') return '郵送交付'; return v?esc(v):'—'; }
+function _intakeDelivery(v){ if(v==='window'||v==='窓口受取') return '窓口受取'; if(v==='email'||v==='メール交付') return 'メール交付'; if(v==='mail'||v==='郵送交付'||v==='郵送') return '郵送交付'; return v?esc(v):'—'; }
 function _intakeFee(v){ if(v===null||v===undefined||v==='') return '—'; var n=parseInt(String(v).replace(/[^0-9.-]/g,''),10); if(isNaN(n)) return esc(String(v)); return '¥'+n.toLocaleString('ja-JP')+'（税抜）'; }
 function _intakeRecommend(v){ return (v===true||v==='true'||v===1)?'要':'不要'; }
 // ver.20260722.test82: 依頼の備考表示（先頭2行クランプ・クリックで全文・URLは自動リンク化）
@@ -7269,6 +7270,7 @@ function addJinzaiRow(){
       '<select class="nc-select nc-j-uke">' +
         '<option value="郵送交付" selected>郵送交付</option>' +
         '<option value="窓口受取">窓口受取</option>' +
+        '<option value="メール交付">メール交付（電子在留資格認定証明書）</option>' +   // ver.20260912.01: 認定用
       '</select>' +
     '</td>' +
     '<td style="text-align:center;">' +
@@ -7294,6 +7296,18 @@ function addJinzaiRow(){
   document.getElementById('ncJinzaiBody').appendChild(noteTr);
   updateJinzaiCount();
   _updateHopedOptions(); // ver.20260830.03: 追加行にも5年オプション制御を反映
+  _ncApplyUkeRule();     // ver.20260912.01: 認定なら受取方法をメール交付に固定
+}
+// ver.20260912.01: 申請種別と受取方法の連動。認定＝電子在留資格認定証明書がメールで交付されるため「メール交付」に固定。
+//   認定以外では「メール交付」は選べない（選ばれていたら郵送交付に戻す）。
+function _ncApplyUkeRule(){
+  var at=(document.getElementById('nc_appType')||{}).value||'';
+  var isNintei=(at==='認定');
+  document.querySelectorAll('#ncJinzaiBody .nc-j-uke').forEach(function(sel){
+    var optMail=sel.querySelector('option[value="メール交付"]');
+    if(isNintei){ sel.value='メール交付'; sel.disabled=true; sel.title='認定は電子在留資格認定証明書がメールで交付されるため、受取方法はメール交付になります'; if(optMail) optMail.hidden=false; }
+    else { sel.disabled=false; sel.title=''; if(sel.value==='メール交付') sel.value='郵送交付'; if(optMail) optMail.hidden=true; }
+  });
 }
 
 // ver.20260527.16: 「その他」選択時、メモ展開行を表示/非表示
@@ -7707,7 +7721,7 @@ async function executeSubmit(){
     var feeStr = p.supportFee ? p.supportFee : '';
     var records = p.jinzaiList.map(function(j, idx){
       // ver.20260521.09: 受取方法を delivery_method 列に保存（mail/window）
-      var dm = (j.ukeMethod === '窓口受取') ? 'window' : 'mail';
+      var dm = (j.ukeMethod === '窓口受取') ? 'window' : ((j.ukeMethod === 'メール交付') ? 'email' : 'mail');   // ver.20260912.01: 認定はメール交付(email)
       // ver.20260525.01: 推薦票要否
       var rec = !!j.recommendLetter;
       // ver.20260527.16: 現在の在留資格を個人別に。「その他」の場合は詳細メモを含めて保存
@@ -7982,6 +7996,7 @@ function _normalizeUkeMethod(s){
   if(!s) return '';
   if(s.indexOf('郵送') >= 0) return '郵送交付';
   if(s.indexOf('窓口') >= 0) return '窓口受取';
+  if(s.indexOf('メール') >= 0 || /mail/i.test(s)) return 'メール交付';   // ver.20260912.01
   return '';
 }
 
@@ -8042,7 +8057,7 @@ function previewPasteData(){
 
     var nameOk = name.length > 0;
     var natOk = _NC_NATIONALITY_LIST.indexOf(nat) >= 0;
-    var ukeOk = uke === '郵送交付' || uke === '窓口受取';
+    var ukeOk = uke === '郵送交付' || uke === '窓口受取' || uke === 'メール交付';   // ver.20260912.01
     var expOk = !exp || /^\d{4}-\d{2}-\d{2}$/.test(exp);
 
     if(!nameOk || !natOk || !ukeOk || !expOk) errors++;
