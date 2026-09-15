@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260915.01: 【不具合修正】新規案件依頼の「希望在留期間」が依頼テキスト（本人ステータス）に出力されていなかったのを修正。_buildLineReportText の本人ブロックに「希望在留期間」行を追加し、過去依頼の再コピー経路（_intakeGroupToPayload）でも hoped_stay_period をマップするようにした。 -->
 <!-- ver.20260914.01: 新規案件依頼の受取方法：申請種別が「認定」のとき、郵送交付/窓口受取の選択肢自体を非表示にして「メール交付」のみに。まとめて貼り付けで入った受取方法も認定なら上書き固定 -->
 <!-- ver.20260912.01: 新規案件依頼の受取方法に「メール交付（電子在留資格認定証明書）」を追加。申請種別が認定のときは全行をメール交付に固定（認定以外では選べない）。貼り付け解析・保存(email)・表示も対応 -->
 <!-- ver.20260908.02: 【B案】書類チェックリスト（企業・入管）で「特定活動」かつ国交省ステータスが申請前の場合、「⏸ この書類はまだ収集不要です」バナー＋グレーアウト表示。国交省ステータスは get_org_share RPCで kokko_cases.linked_case_ids 経由で取得。 -->
@@ -591,7 +592,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260914.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260915.01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -4224,7 +4225,8 @@ function _intakeGroupToPayload(g){
         nationality:r.nationality||'',
         currentStatus:cur,
         currentStatusNote:cnote,
-        expire:r.expire||''
+        expire:r.expire||'',
+        hopedStayPeriod:r.hoped_stay_period||''   // ver.20260915.01: 過去依頼の再コピー時も希望在留期間をテキストに反映
       };
     })
   };
@@ -7858,6 +7860,8 @@ function _buildLineReportText(p){
     lines.push('　 国籍：' + (j.nationality || ''));
     lines.push('　 在留資格：' + (cur || '（　　）'));
     lines.push('　 在留期限：' + (j.expire || '（　　）'));
+    // ver.20260915.01: 希望在留期間を依頼テキストにも反映（フォームで必須なのに未出力だった不具合を修正）
+    lines.push('　 希望在留期間：' + (j.hopedStayPeriod || '（　　）'));
   });
   // アイデムの案件のみ ■雇用条件（空欄プレースホルダー）を依頼テキストに表示（6/16に勤務地とともに削除されたものをアイデム限定で復活）
   if(_isAidemViewer()){
