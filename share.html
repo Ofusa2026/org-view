@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260916.01: 希望在留期間確認モーダルの決済手数料注記を動的化。3年以上(3年/5年)を選ぶと550円/件、それ以外330円/件、混在時は両方明示。 -->
 <!-- ver.20260915.01: 【不具合修正】新規案件依頼の「希望在留期間」が依頼テキスト（本人ステータス）に出力されていなかったのを修正。_buildLineReportText の本人ブロックに「希望在留期間」行を追加し、過去依頼の再コピー経路（_intakeGroupToPayload）でも hoped_stay_period をマップするようにした。 -->
 <!-- ver.20260914.01: 新規案件依頼の受取方法：申請種別が「認定」のとき、郵送交付/窓口受取の選択肢自体を非表示にして「メール交付」のみに。まとめて貼り付けで入った受取方法も認定なら上書き固定 -->
 <!-- ver.20260912.01: 新規案件依頼の受取方法に「メール交付（電子在留資格認定証明書）」を追加。申請種別が認定のときは全行をメール交付に固定（認定以外では選べない）。貼り付け解析・保存(email)・表示も対応 -->
@@ -592,7 +593,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260915.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260916.01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -7051,7 +7052,18 @@ function _openHopedFeeConfirm(payload, onOK){
     +       '<span style="font-weight:900;color:#dc2626;font-size:14px;white-space:nowrap;">'+totalFee.toLocaleString()+'円</span>'
     +     '</div>'
     +     '<div style="font-size:9.5px;color:#475569;text-align:center;margin-top:4px;line-height:1.4;">'
-    +       '※ オンライン申請の場合、別途決済手数料330円/件が必要です'
+    +       (function(){
+              // ver.20260908.03: 3年以上(=3年/5年)を選んだ人材がいれば550円、それ以外は330円、混在時は両方明示
+              var _hasY3plus = (payload.jinzaiList||[]).some(function(j){ return j.hopedStayPeriod==='3年' || j.hopedStayPeriod==='5年'; });
+              var _hasUnder3 = (payload.jinzaiList||[]).some(function(j){ return j.hopedStayPeriod && j.hopedStayPeriod!=='3年' && j.hopedStayPeriod!=='5年'; });
+              if(_hasY3plus && _hasUnder3){
+                return '※ オンライン申請の場合、別途決済手数料が必要です<br>（許可期間3年未満：330円/件、3年以上：<b style="color:#dc2626;">550円/件</b>）';
+              } else if(_hasY3plus){
+                return '※ オンライン申請の場合、別途決済手数料<b style="color:#dc2626;">550円/件</b>が必要です（許可期間3年以上のため）';
+              } else {
+                return '※ オンライン申請の場合、別途決済手数料330円/件が必要です';
+              }
+            })()
     +     '</div>'
     +   '</div>'
     // 全期間表
