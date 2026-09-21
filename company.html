@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260921.16: 右下の「💬コメント・要望」フローティングウィジェットを非表示化（マウント呼び出しをコメントアウト。機能コード自体は残置、再表示は1行で復帰可能）。タイムラインの⏸バナーから人材書類（税書類・健康診断票）の記載を削除し、企業書類（登記事項証明書・住民票・納税証明書）のみに修正。 -->
 <!-- ver.20260921.15: ①国交省書類は各行タップで説明・見本（アップロードページと同一メタ・★時間がかかる書類マーク付き）を表示。②タイムラインを横型ステップラインに刷新——受領→条件書確認→サイン→押印→申請→審査完了→カード交付の各工程に標準期限を表示し、遅れ工程は🔴⚠遅れ・完了🟢・現在🔵で色分け。③ご依頼事項に残り日数チップ（あとn日／n日超過・至急）を追加、期限超過時はカード赤枠＋🚨バナーで強調。 -->
 <!-- ver.20260921.14: 提出書類の国交省セクションを16点フル表示（未提出も一覧）。6委任状・8同等報酬説明書・12雇用契約書・15重要事項説明書は「📝大房行政書士法人が作成」バッジとし、提出済/未提出の対象外・ご依頼事項の不足リストからも除外。 -->
 <!-- ver.20260921.13: ①ご依頼事項に🏗国交省申請書類（16点の未受領＋受領日から45日の提出期限・国交省申請前のみ）／🛂入管提出書類（オープン時のみ・特定技能1号申請1ヶ月前の期限付き）を表示（期限超過は⚠赤）。②📅タイムライン先頭に「⏱進み具合」バッジ——標準スケジュール（受領日→約16日で申請予定）比で🟢オンタイム/🟡要注意/🔴遅延n日、審査中は経過日数（45日超は入管都合と明記）、完了後・特定技能1号案件は書類提出期限基準。 -->
@@ -279,7 +280,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20260921.15</span>
+  <span class="header-ver">ver.20260921.16</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -760,7 +761,7 @@ function _cksSchedule(c){
     h+=row('特定技能1号書類 提出期限','<b>'+_cksFmt(_cksAddM(t1dl,-1))+'</b>（特定技能1号申請の1ヶ月前）');
     h+=row('特定技能1号 申請期限','<b>'+_cksFmt(t1dl)+'</b>（特定活動の在留期限の前日）');
   } else if(!kokkoApplied && !_t1){
-    h+='<div style="background:#fef9e8;border:1px solid #f0d060;border-radius:8px;padding:8px 12px;margin-top:6px;font-size:11.5px;color:#6b4e0a;line-height:1.6;">⏸ 特定技能1号用の書類（税書類・健康診断票・登記事項証明書など）は<b>まだ取得しないでください</b>。発行から3ヶ月以内でないと使えず、期限切れで再提出になります。国交省申請後にご案内します。</div>';
+    h+='<div style="background:#fef9e8;border:1px solid #f0d060;border-radius:8px;padding:8px 12px;margin-top:6px;font-size:11.5px;color:#6b4e0a;line-height:1.6;">⏸ 特定技能1号用の企業書類（登記事項証明書・住民票・納税証明書など）は<b>まだ取得しないでください</b>。発行から3ヶ月以内でないと使えず、期限切れで再提出になります。国交省申請後にご案内します。</div>';
   } else if(_t1 && expire){
     var t1dl2=_cksAdd(expire,-1);
     h+=row('特定技能1号書類 提出期限','<b>'+_cksFmt(_cksAddM(t1dl2,-1))+'</b>（特定技能1号申請の1ヶ月前）');
@@ -850,7 +851,8 @@ function render(){
   else if(currentTab==='orginfo') m.innerHTML=renderOrgInfo();
   else if(currentTab==='office') m.innerHTML=renderOffice();
   else m.innerHTML=renderDashboard();
-  _mountFeedbackWidget(); // 全タブで常時表示
+  // ver.20260921.16: コメント・要望ウィジェットは非表示（ユーザー要望により削除）
+  // _mountFeedbackWidget();
 }
 
 function _caseDeadline(c){
