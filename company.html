@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260921.20: ダッシュボードの進捗カードに🛂入管書類の軸も追加（クローズ中はグレー・タイトルを「書類・申請の進捗」に）。国交省書類軸の下に最終提出期限の注記——「特定活動の在留カードが発行されるまでにすべての書類のご提出が必要（標準は受領日から45日以内）」を追加（国交省申請前のみ表示）。入管軸を共通関数化。 -->
 <!-- ver.20260921.19: ①国交省の進捗軸をダッシュボードにもカード表示（案件詳細に埋もれない・提出書類を開くボタン付き）。②国交省軸に「事前補正のご対応（依頼から5日以内）」ステップを追加。③最終デッドライン注意文を追加——特定活動の在留期限の5ヶ月前までに全書類、間に合わない場合は特定活動の更新申請＝工程1回増＋在留カード発行費用が追加発生する旨（特活交付後は日付入り）。軸描画を共通関数化。 -->
 <!-- ver.20260921.18: 受入実績「有」（companies.kokko_experience=有）の企業対応——ご依頼事項は国交省書類一式の代わりに🖥就労管理システムのID・パスワード提供依頼（kokko_id/kokko_pw両方入力で自動非表示）。提出書類ビューの国交省セクションはID/PW状態のみ表示（16点は不足にしない）。タイムライン🏗軸もID提供→申請→許可の3ステップに切替。RPC company_view_getにkokko_exp/has_kokko_idpw追加（値は渡さない）。 -->
 <!-- ver.20260921.17: タイムラインに🏗国交省書類（収集着手7日→全書類45日→国交省申請→許可・受領数x/12付き）と🛂入管書類（収集開始→全書類そろう→特定技能1号申請・期限付き）の別軸ステップラインを追加。入管軸はクローズ中グレーアウト（⏸国交省申請後にオープン）。遅れは同様に🔴⚠表示。 -->
@@ -283,7 +284,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20260921.19</span>
+  <span class="header-ver">ver.20260921.20</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -715,13 +716,30 @@ function _cksKokkoAxisHtml(reqD, kokko, kokkoApplied){
   }
   var need=0,recv=0;
   _CKS_K16.forEach(function(n){ if(_isOfusaMade(n)) return; need++; var v=coDocs[n]||{}; if(_hasVal(v.staff)||_hasVal(v.skip)||_hasVal(v.autoskip)) recv++; });
-  return _cksAxis('🏗 国交省書類（'+recv+'/'+need+' 受領）',[
+  var ax=_cksAxis('🏗 国交省書類（'+recv+'/'+need+' 受領）',[
     {nm:'収集着手', d:(reqD&&!kokkoApplied)?_cksAdd(reqD,7):null, done:recv>0||kokkoApplied},
     {nm:'全書類そろう', d:(reqD&&!kokkoApplied)?_cksAdd(reqD,45):null, done:recv>=need||kokkoApplied},
     {nm:'事前補正のご対応', dt:'依頼から5日以内', done:kokkoApplied},
     {nm:'国交省申請', dt:'弊社にて申請', done:kokkoApplied},
     {nm:'許可', dt:'審査1〜2ヶ月', done:kyoka}
   ], false, kokko?('現在：'+esc(kokko)):'');
+  if(!kokkoApplied){
+    ax+='<div style="font-size:11px;font-weight:800;color:#92400e;background:#fef9e8;border:1px solid #f0d060;border-radius:8px;padding:6px 10px;margin:2px 0 6px;">📌 国交省書類の最終提出期限：<b>特定活動の在留カードが発行されるまで</b>に、すべての書類のご提出が必要です（標準は受領日から45日以内）。</div>';
+  }
+  return ax;
+}
+// 入管書類軸（ダッシュボード・人材詳細で共用）
+function _cksNyukanAxisHtml(expireD, t1Applied){
+  var gateClosed=_nyukanGateClosed();
+  var nyu=Object.keys(coDocs).filter(function(n){ return docInList(coDocs[n]) && !_isKokkoDocName(n); });
+  var nyuDone=nyu.length>0 && nyu.every(function(n){ return docState(coDocs[n])==='done'; });
+  var due=expireD?_cksAddM(_cksAdd(expireD,-1),-1):null;
+  var dl=expireD?_cksAdd(expireD,-1):null;
+  return _cksAxis('🛂 入管書類（特定技能1号申請用）',[
+    {nm:'収集開始', dt:gateClosed?'国交省申請後':'オープン中', done:!gateClosed},
+    {nm:'全書類そろう', d:gateClosed?null:due, dt:gateClosed?'⏸':'', done:!gateClosed&&nyuDone},
+    {nm:'特定技能1号申請', d:gateClosed?null:dl, dt:gateClosed?'⏸':'', done:t1Applied}
+  ], gateClosed, gateClosed?'⏸ 国交省申請が完了するとオープンします':'');
 }
 // 最終デッドラインの注意文（特活交付後は日付入り）
 function _cksFinalDlNote(finalD){
@@ -804,17 +822,8 @@ function _cksSchedule(c){
     var axis=_cksAxis;
     // 🏗 国交省の軸（共通ビルダー・事前補正ステップ入り）
     h+=_cksKokkoAxisHtml(reqD, kokko, kokkoApplied);
-    // 🛂 入管書類の軸
-    var _gateClosed=_nyukanGateClosed();
-    var _nyu=Object.keys(coDocs).filter(function(n){ return docInList(coDocs[n]) && !_isKokkoDocName(n); });
-    var _nyuDone=_nyu.length>0 && _nyu.every(function(n){ return docState(coDocs[n])==='done'; });
-    var _t1due=expire?_cksAddM(_cksAdd(expire,-1),-1):null;
-    var _t1dl=expire?_cksAdd(expire,-1):null;
-    h+=axis('🛂 入管書類（特定技能1号申請用）',[
-      {nm:'収集開始', dt:_gateClosed?'国交省申請後':'オープン中', done:!_gateClosed},
-      {nm:'全書類そろう', d:_gateClosed?null:_t1due, dt:_gateClosed?'⏸':'', done:!_gateClosed&&_nyuDone},
-      {nm:'特定技能1号申請', d:_gateClosed?null:_t1dl, dt:_gateClosed?'⏸':'', done:_t1&&applied}
-    ], _gateClosed, _gateClosed?'⏸ 国交省申請が完了するとオープンします':'');
+    // 🛂 入管書類の軸（共通ビルダー）
+    h+=_cksNyukanAxisHtml(expire, _t1&&applied);
     // ver.20260921.19: 最終デッドライン注意（特活交付後は特活期限−5ヶ月の日付入り）
     var _postTk=(_t1||stage>=5);
     h+=_cksFinalDlNote((_postTk&&expire)?_cksAddM(expire,-5):null);
@@ -1013,9 +1022,20 @@ function _kokkoDashCard(){
     if(rs==='特定技能1号'||stg>=5){ var exd=_cksParse(c.expire); if(exd&&(!postExpire||exd<postExpire)) postExpire=exd; }
   });
   if(!hasKs) return '';
+  var minExpire=null, anyT1App=false;
+  allCases.forEach(function(c){
+    var rs=(c.residence_status||'');
+    if((rs!=='特定活動'&&rs!=='特定技能1号')||String(c.applicant_field||'').indexOf('建設')<0) return;
+    var exd2=_cksParse(c.expire); if(exd2&&(!minExpire||exd2<minExpire)) minExpire=exd2;
+    if(rs==='特定技能1号'){
+      var stg2=-1; for(var i=0;i<_CKS_COLS.length;i++){ if(_CKS_COLS[i].statuses.indexOf(c.status)>=0){ stg2=i; break; } }
+      if(c.receipt_date||stg2>=3) anyT1App=true;
+    }
+  });
   var h='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin:0 0 14px;">';
-  h+='<div style="font-size:13.5px;font-weight:900;color:#0f2040;margin-bottom:4px;">🏗 国交省申請の進捗（建設特定技能）</div>';
+  h+='<div style="font-size:13.5px;font-weight:900;color:#0f2040;margin-bottom:4px;">🏗🛂 書類・申請の進捗（建設特定技能）</div>';
   h+=_cksKokkoAxisHtml(minReqD, kokkoSt, anyApplied);
+  h+=_cksNyukanAxisHtml(minExpire, anyT1App);  // ver.20260921.20: 入管書類の軸もダッシュボードに
   h+=_cksFinalDlNote(postExpire?_cksAddM(postExpire,-5):null);
   h+='<button class="req-btn" onclick="switchGroup(\'docs\')">提出書類を開く</button>';
   h+='</div>';
