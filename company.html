@@ -8,6 +8,8 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260921.19: ①国交省の進捗軸をダッシュボードにもカード表示（案件詳細に埋もれない・提出書類を開くボタン付き）。②国交省軸に「事前補正のご対応（依頼から5日以内）」ステップを追加。③最終デッドライン注意文を追加——特定活動の在留期限の5ヶ月前までに全書類、間に合わない場合は特定活動の更新申請＝工程1回増＋在留カード発行費用が追加発生する旨（特活交付後は日付入り）。軸描画を共通関数化。 -->
+<!-- ver.20260921.18: 受入実績「有」（companies.kokko_experience=有）の企業対応——ご依頼事項は国交省書類一式の代わりに🖥就労管理システムのID・パスワード提供依頼（kokko_id/kokko_pw両方入力で自動非表示）。提出書類ビューの国交省セクションはID/PW状態のみ表示（16点は不足にしない）。タイムライン🏗軸もID提供→申請→許可の3ステップに切替。RPC company_view_getにkokko_exp/has_kokko_idpw追加（値は渡さない）。 -->
 <!-- ver.20260921.17: タイムラインに🏗国交省書類（収集着手7日→全書類45日→国交省申請→許可・受領数x/12付き）と🛂入管書類（収集開始→全書類そろう→特定技能1号申請・期限付き）の別軸ステップラインを追加。入管軸はクローズ中グレーアウト（⏸国交省申請後にオープン）。遅れは同様に🔴⚠表示。 -->
 <!-- ver.20260921.16: 右下の「💬コメント・要望」フローティングウィジェットを非表示化（マウント呼び出しをコメントアウト。機能コード自体は残置、再表示は1行で復帰可能）。タイムラインの⏸バナーから人材書類（税書類・健康診断票）の記載を削除し、企業書類（登記事項証明書・住民票・納税証明書）のみに修正。 -->
 <!-- ver.20260921.15: ①国交省書類は各行タップで説明・見本（アップロードページと同一メタ・★時間がかかる書類マーク付き）を表示。②タイムラインを横型ステップラインに刷新——受領→条件書確認→サイン→押印→申請→審査完了→カード交付の各工程に標準期限を表示し、遅れ工程は🔴⚠遅れ・完了🟢・現在🔵で色分け。③ご依頼事項に残り日数チップ（あとn日／n日超過・至急）を追加、期限超過時はカード赤枠＋🚨バナーで強調。 -->
@@ -281,7 +283,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20260921.17</span>
+  <span class="header-ver">ver.20260921.19</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -470,7 +472,7 @@ function _tokureiDate(c){
   return null;
 }
 
-var companyId='', companyName='', companyDrive='', companyOfusaStaff='', companyShowMlit=false, currentToken='', _correctPass='', _passMode='enter', companyProfile=null, companyChangeReq=null, companyHearingDone=false, companyHearingExists=false, companyHearingShow=null;
+var companyId='', companyName='', companyDrive='', companyOfusaStaff='', companyShowMlit=false, _coUkeireAri=false, _coHasIdpw=false, currentToken='', _correctPass='', _passMode='enter', companyProfile=null, companyChangeReq=null, companyHearingDone=false, companyHearingExists=false, companyHearingShow=null;
 var allCases=[], coDocs={}, personsByCase={}, receiptByCase={}, shinsaByCase={}, missingDocCount=0, currentTab='dashboard', supportOrgName='';
 
 function _showPassScreen(){
@@ -586,6 +588,7 @@ async function loadData(pass){
     if(res.company_id) companyId=res.company_id;
     var co=res.company||{};
     companyName=co.name||companyName; companyDrive=co.drive_url||''; companyOfusaStaff=co.ofusa_staff||''; companyShowMlit=!!co.show_mlit;
+    _coUkeireAri=(co.kokko_exp==='有'); _coHasIdpw=!!co.has_kokko_idpw;  // ver.20260921.18: 受入実績と就労管理システムID/PW有無
     companyProfile=res.company_profile||null;
     companyChangeReq=res.change_req||null;
     companyHearingDone=!!res.company_hearing_done;
@@ -675,6 +678,58 @@ function _cksParse(s){ if(!s) return null; var m=String(s).match(/^(\d{4})[-\/](
 function _cksFmt(d){ return d?(d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()):'—'; }
 function _cksAdd(d,n){ var r=new Date(d); r.setDate(r.getDate()+n); return r; }
 function _cksAddM(d,n){ var r=new Date(d); var dd=r.getDate(); r.setMonth(r.getMonth()+n); if(r.getDate()!==dd) r.setDate(0); return r; }
+// ver.20260921.19: 軸描画をグローバル化（人材詳細とダッシュボードで共用）
+function _cksAxis(title, steps2, dim, note){
+  var today=new Date(); today.setHours(0,0,0,0);
+  var cur=-1;
+  for(var k=0;k<steps2.length;k++){ if(!steps2[k].done){ cur=k; break; } }
+  var a='<div style="font-size:11px;font-weight:900;color:'+(dim?'#94a3b8':'#334155')+';margin:8px 0 2px;">'+title+(note?' <span style="font-weight:700;color:#94a3b8;">'+note+'</span>':'')+'</div>';
+  a+='<div style="overflow-x:auto;"><div style="display:flex;align-items:flex-start;min-width:'+(steps2.length*96+16)+'px;'+(dim?'opacity:.45;filter:grayscale(50%);':'')+'">';
+  steps2.forEach(function(s3,k){
+    var late=!dim && !s3.done && s3.d && s3.d<today;
+    var isCur=!dim && (k===cur);
+    var col = s3.done?'#16a34a' : late?'#dc2626' : isCur?'#2563eb':'#cbd5e1';
+    var mark = s3.done?'✓' : late?'!' : '';
+    var txtCol = s3.done?'#166534' : late?'#b91c1c' : isCur?'#1d4ed8':'#94a3b8';
+    a+='<div style="display:flex;flex-direction:column;align-items:center;width:96px;flex:none;">'
+      +'<div style="width:16px;height:16px;border-radius:50%;background:'+(s3.done||late?col:'#fff')+';border:2.5px solid '+col+';color:#fff;font-size:9.5px;font-weight:900;display:flex;align-items:center;justify-content:center;'+(isCur&&!late?'box-shadow:0 0 0 3px #dbeafe;':'')+'">'+mark+'</div>'
+      +'<div style="font-size:10px;font-weight:'+(isCur||late?'900':'700')+';color:'+txtCol+';margin-top:3px;text-align:center;line-height:1.3;">'+s3.nm+'</div>'
+      +'<div style="font-size:9.5px;color:'+(late?'#b91c1c':'#94a3b8')+';font-weight:'+(late?'800':'600')+';">'+(s3.d?('〜'+_cksFmt(s3.d)):(s3.dt||'—'))+(late?'<br>⚠遅れ':'')+'</div>'
+      +'</div>';
+    if(k<steps2.length-1){
+      a+='<div style="flex:1;min-width:10px;height:2.5px;background:'+(s3.done?'#16a34a':'#e2e8f0')+';margin-top:7px;"></div>';
+    }
+  });
+  a+='</div></div>';
+  return a;
+}
+// 国交省軸（事前補正ステップ入り）。ダッシュボード・人材詳細の両方から呼ぶ
+function _cksKokkoAxisHtml(reqD, kokko, kokkoApplied){
+  var kyoka=(kokko==='完了(許可済)');
+  if(_coUkeireAri){
+    return _cksAxis('🏗 国交省申請（受入実績あり）',[
+      {nm:'ID・パスワード提供', d:(reqD&&!kokkoApplied&&!_coHasIdpw)?_cksAdd(reqD,7):null, dt:_coHasIdpw?'':'就労管理システム', done:_coHasIdpw||kokkoApplied},
+      {nm:'国交省申請', dt:'弊社にて申請', done:kokkoApplied},
+      {nm:'許可', dt:'審査1〜2ヶ月', done:kyoka}
+    ], false, kokko?('現在：'+esc(kokko)):'');
+  }
+  var need=0,recv=0;
+  _CKS_K16.forEach(function(n){ if(_isOfusaMade(n)) return; need++; var v=coDocs[n]||{}; if(_hasVal(v.staff)||_hasVal(v.skip)||_hasVal(v.autoskip)) recv++; });
+  return _cksAxis('🏗 国交省書類（'+recv+'/'+need+' 受領）',[
+    {nm:'収集着手', d:(reqD&&!kokkoApplied)?_cksAdd(reqD,7):null, done:recv>0||kokkoApplied},
+    {nm:'全書類そろう', d:(reqD&&!kokkoApplied)?_cksAdd(reqD,45):null, done:recv>=need||kokkoApplied},
+    {nm:'事前補正のご対応', dt:'依頼から5日以内', done:kokkoApplied},
+    {nm:'国交省申請', dt:'弊社にて申請', done:kokkoApplied},
+    {nm:'許可', dt:'審査1〜2ヶ月', done:kyoka}
+  ], false, kokko?('現在：'+esc(kokko)):'');
+}
+// 最終デッドラインの注意文（特活交付後は日付入り）
+function _cksFinalDlNote(finalD){
+  var dtx=finalD?('（'+finalD.getFullYear()+'/'+(finalD.getMonth()+1)+'/'+finalD.getDate()+'）'):'';
+  return '<div style="background:#fdeeee;border:1px solid #e5a3a3;border-radius:10px;padding:10px 14px;margin:8px 0;font-size:12px;color:#7a1f1f;line-height:1.7;">'
+    +'<b>⚠ 最終デッドライン：特定活動の在留期限の5ヶ月前'+dtx+'までに、すべての書類が揃っている必要があります。</b><br>'
+    +'各期限に間に合わない場合は<b>特定活動の更新申請</b>が必要となり、申請工程が1回増えるため、その分の<b>在留カードの発行に係る費用が追加で発生</b>してしまいます。あらかじめご理解ください。</div>';
+}
 function _cksSchedule(c){
   // ver.20260921.12: 特定技能1号（特活からの継続・複製案件）も表示対象に
   var _t1=((c.residence_status||'')==='特定技能1号');
@@ -745,45 +800,10 @@ function _cksSchedule(c){
     sh+='</div></div>';
     sh+='<div style="font-size:10px;color:#94a3b8;margin:-4px 0 8px;">🟢完了　🔵現在の工程　🔴期限に遅れています（各期限は案件受領日からの標準スケジュール）</div>';
     h+=sh;
-    // ver.20260921.17: 国交省書類・入管書類の別軸タイムライン
-    function axis(title, steps2, dim, note){
-      var cur=-1;
-      for(var k=0;k<steps2.length;k++){ if(!steps2[k].done){ cur=k; break; } }
-      var a='<div style="font-size:11px;font-weight:900;color:'+(dim?'#94a3b8':'#334155')+';margin:8px 0 2px;">'+title+(note?' <span style="font-weight:700;color:#94a3b8;">'+note+'</span>':'')+'</div>';
-      a+='<div style="overflow-x:auto;"><div style="display:flex;align-items:flex-start;min-width:420px;'+(dim?'opacity:.45;filter:grayscale(50%);':'')+'">';
-      steps2.forEach(function(s3,k){
-        var late=!dim && !s3.done && s3.d && s3.d<today;
-        var isCur=!dim && (k===cur);
-        var col = s3.done?'#16a34a' : late?'#dc2626' : isCur?'#2563eb':'#cbd5e1';
-        var mark = s3.done?'✓' : late?'!' : '';
-        var txtCol = s3.done?'#166534' : late?'#b91c1c' : isCur?'#1d4ed8':'#94a3b8';
-        a+='<div style="display:flex;flex-direction:column;align-items:center;width:96px;flex:none;">'
-          +'<div style="width:16px;height:16px;border-radius:50%;background:'+(s3.done||late?col:'#fff')+';border:2.5px solid '+col+';color:#fff;font-size:9.5px;font-weight:900;display:flex;align-items:center;justify-content:center;'+(isCur&&!late?'box-shadow:0 0 0 3px #dbeafe;':'')+'">'+mark+'</div>'
-          +'<div style="font-size:10px;font-weight:'+(isCur||late?'900':'700')+';color:'+txtCol+';margin-top:3px;text-align:center;line-height:1.3;">'+s3.nm+'</div>'
-          +'<div style="font-size:9.5px;color:'+(late?'#b91c1c':'#94a3b8')+';font-weight:'+(late?'800':'600')+';">'+(s3.d?('〜'+_cksFmt(s3.d)):(s3.dt||'—'))+(late?'<br>⚠遅れ':'')+'</div>'
-          +'</div>';
-        if(k<steps2.length-1){
-          a+='<div style="flex:1;min-width:10px;height:2.5px;background:'+(s3.done?'#16a34a':'#e2e8f0')+';margin-top:7px;"></div>';
-        }
-      });
-      a+='</div></div>';
-      return a;
-    }
-    // 🏗 国交省書類の軸
-    var _need=0,_recv=0;
-    _CKS_K16.forEach(function(n){
-      if(_isOfusaMade(n)) return;
-      _need++;
-      var v=coDocs[n]||{};
-      if(_hasVal(v.staff)||_hasVal(v.skip)||_hasVal(v.autoskip)) _recv++;
-    });
-    var _kokkoKyoka=(kokko==='完了(許可済)');
-    h+=axis('🏗 国交省書類（'+_recv+'/'+_need+' 受領）',[
-      {nm:'収集着手', d:(reqD&&!kokkoApplied)?_cksAdd(reqD,7):null, dt:'', done:_recv>0||kokkoApplied},
-      {nm:'全書類そろう', d:(reqD&&!kokkoApplied)?_cksAdd(reqD,45):null, dt:'', done:_recv>=_need||kokkoApplied},
-      {nm:'国交省申請', dt:'弊社にて申請', done:kokkoApplied},
-      {nm:'許可', dt:'審査1〜2ヶ月', done:_kokkoKyoka}
-    ], false, kokko?('現在：'+esc(kokko)):'');
+    // ver.20260921.19: 軸描画は共通関数（_cksAxis/_cksKokkoAxisHtml）を使用
+    var axis=_cksAxis;
+    // 🏗 国交省の軸（共通ビルダー・事前補正ステップ入り）
+    h+=_cksKokkoAxisHtml(reqD, kokko, kokkoApplied);
     // 🛂 入管書類の軸
     var _gateClosed=_nyukanGateClosed();
     var _nyu=Object.keys(coDocs).filter(function(n){ return docInList(coDocs[n]) && !_isKokkoDocName(n); });
@@ -795,6 +815,9 @@ function _cksSchedule(c){
       {nm:'全書類そろう', d:_gateClosed?null:_t1due, dt:_gateClosed?'⏸':'', done:!_gateClosed&&_nyuDone},
       {nm:'特定技能1号申請', d:_gateClosed?null:_t1dl, dt:_gateClosed?'⏸':'', done:_t1&&applied}
     ], _gateClosed, _gateClosed?'⏸ 国交省申請が完了するとオープンします':'');
+    // ver.20260921.19: 最終デッドライン注意（特活交付後は特活期限−5ヶ月の日付入り）
+    var _postTk=(_t1||stage>=5);
+    h+=_cksFinalDlNote((_postTk&&expire)?_cksAddM(expire,-5):null);
   })();
   // 期限表
   function row(l,v){ return '<div class="dt-row"><span class="dt-l">'+l+'</span><span class="dt-v">'+v+'</span></div>'; }
@@ -974,6 +997,30 @@ function _reqRow(c, extra){
   return '<div class="req-row"><span class="req-nm">'+esc(c.applicant||c.name||'')+' 様</span>'
     +'<span class="req-as">'+_asOf(c.status_date)+'</span>'+(extra||'')+'</div>';
 }
+// ver.20260921.19: ダッシュボード用 国交省進捗カード（企業単位）
+function _kokkoDashCard(){
+  var hasKs=false, anyApplied=false, minReqD=null, kokkoSt='', postExpire=null;
+  var APPLIED=['申請済み','補正未着手','補正可能','補正完了','完了(許可済)'];
+  allCases.forEach(function(c){
+    var rs=(c.residence_status||'');
+    if((rs!=='特定活動'&&rs!=='特定技能1号')||String(c.applicant_field||'').indexOf('建設')<0) return;
+    hasKs=true;
+    var k=getKokkoStatus(c)||((_extraByCase[c.id]||{}).kokko_status||'');
+    if(k&&!kokkoSt) kokkoSt=k;
+    if(APPLIED.indexOf(k)>=0) anyApplied=true;
+    var rd=_cksParse((_extraByCase[c.id]||{}).request_date); if(rd&&(!minReqD||rd<minReqD)) minReqD=rd;
+    var stg=-1; for(var i=0;i<_CKS_COLS.length;i++){ if(_CKS_COLS[i].statuses.indexOf(c.status)>=0){ stg=i; break; } }
+    if(rs==='特定技能1号'||stg>=5){ var exd=_cksParse(c.expire); if(exd&&(!postExpire||exd<postExpire)) postExpire=exd; }
+  });
+  if(!hasKs) return '';
+  var h='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin:0 0 14px;">';
+  h+='<div style="font-size:13.5px;font-weight:900;color:#0f2040;margin-bottom:4px;">🏗 国交省申請の進捗（建設特定技能）</div>';
+  h+=_cksKokkoAxisHtml(minReqD, kokkoSt, anyApplied);
+  h+=_cksFinalDlNote(postExpire?_cksAddM(postExpire,-5):null);
+  h+='<button class="req-btn" onclick="switchGroup(\'docs\')">提出書類を開く</button>';
+  h+='</div>';
+  return h;
+}
 function renderRequests(){
   var secs=[];
   // ver.20260921.13: 建設案件がある企業は 国交省／入管 に分けて期限付きで表示
@@ -1005,7 +1052,15 @@ function renderRequests(){
   }
   var missing=[];
   Object.keys(coDocs).forEach(function(name){ if(docInList(coDocs[name]) && docState(coDocs[name])==='todo') missing.push(name); });
-  if(hasKensetsu){
+  if(hasKensetsu && _coUkeireAri){
+    // ver.20260921.18: 受入実績「有」の企業＝国交省書類一式は不要。就労管理システムのID・パスワードのみ依頼（提供済みなら非表示）
+    if(!_coHasIdpw && !kokkoAppliedAny){
+      secs.push(_reqSection('🖥','外国人就労管理システムのID・パスワードのご提供', 1,
+        '<div class="req-row"><span class="req-nm">就労管理システムの ログインID と パスワード</span></div>',
+        '受入実績のある企業様は、国交省書類一式に代わり就労管理システムのID・パスワードが必要です。担当者までご連絡ください。ご提供いただくと本依頼は自動で消えます。'));
+    }
+  }
+  if(hasKensetsu && !_coUkeireAri){
     // 🏗 国交省：16点のうち未受領（国交省申請前のみ）
     if(!kokkoAppliedAny){
       var kokkoMissing=[];
@@ -1017,6 +1072,8 @@ function renderRequests(){
         secs.push(_reqSection('🏗','国交省申請書類のご提出', kokkoMissing.length, kb));
       }
     }
+  }
+  if(hasKensetsu){
     // 🛂 入管：オープン時のみ（クローズ中は依頼として出さない）
     var nyukanMissing=missing.filter(function(n){ return !_isKokkoDocName(n); });
     if(!_nyukanGateClosed() && nyukanMissing.length){
@@ -1502,6 +1559,7 @@ function renderDashboard(){
   var expired=allCases.filter(function(c){if(!_expireTracked(c))return false;var i=expInfo(c.expire);return i.days!=null&&i.days<0;}).length;
   var h='';
   h+=renderRequests();
+  h+=_kokkoDashCard();  // ver.20260921.19: 国交省書類の進捗を案件に埋もれさせずダッシュボードへ
   h+=_companyHearingCard();
   h+=_dashAlertList();
   h+=_dashHero(total,soon,expired);
@@ -1646,7 +1704,16 @@ function renderDocs(){
   var upUrl=buildCompanyUploadUrl();
   // ── 国交省書類 ──
   var showK16=gateExists||kokkoNames.length;  // 建設案件がある企業は16点フル表示
-  if(showK16 || kokkoUrl){
+  if(gateExists && _coUkeireAri){
+    // ver.20260921.18: 受入実績「有」＝国交省書類一式は不要・就労管理システムID/PWの状態のみ表示
+    h+='<div class="section-title" style="margin-top:14px;font-size:14px;">🏗 国交省申請（受入計画）</div>';
+    h+='<div style="font-size:11.5px;color:#64748b;margin:2px 0 6px;">受入実績のある企業様のため、国交省書類一式のご提出は<b>不要</b>です。就労管理システムのID・パスワードのみご提供ください。</div>';
+    h+='<div class="doc-co"><div class="doc-row">'
+      +'<span class="doc-ico">'+(_coHasIdpw?'✅':'⬜')+'</span>'
+      +'<div class="doc-name">外国人就労管理システム ID・パスワード</div>'
+      +'<span class="doc-state '+(_coHasIdpw?'s-done':'s-todo')+'">'+(_coHasIdpw?'ご提供済み':'未提供')+'</span>'
+      +'</div></div>';
+  } else if(showK16 || kokkoUrl){
     h+='<div class="section-title" style="margin-top:14px;font-size:14px;">🏗 国交省申請書類（受入計画）</div>';
     h+='<div style="font-size:11px;color:#64748b;margin:2px 0 6px;">📝＝大房行政書士法人が作成する書類のため、御社でのご準備は不要です。<b>各書類をタップすると説明と見本が見られます。</b></div>';
     if(kokkoUrl){ h+='<div><a class="upload-btn" href="'+esc(kokkoUrl)+'" target="_blank" rel="noopener">📤 国交省書類をアップロード</a></div>'; }
