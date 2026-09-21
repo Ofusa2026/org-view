@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
 <!-- ver.20260922.01: 【不具合修正】希望在留期間確認モーダルのカード表示で、受取方法が「窓口受取」なのに「窓口申請」と誤表示されていたのを修正。実際の受取方法（窓口受取/郵送交付/メール交付）をそのまま表示。 -->
+<!-- ver.20260921.08: 支援企業リストにPIN列を追加（専属企業のみ表示・複数機関を跨ぐ企業は「共有企業」表示でPIN非表示）。「開く」と人材詳細の企業マイページリンクを機関スコープリンク（&ot/&op）に変更——その機関が支援する案件のみサーバー側で絞り込み表示・企業PIN不要。 -->
 <!-- ver.20260921.07: グローバルパートナーズ専用「🏢 支援企業リスト」ビューを追加（サイドバー）。企業ごとに：貴社担当者（タップで編集・org_set_gp_staff RPCでcompanies.extra.gp_staffに保存）／Ofusa担当（案件担当者を集約）／案件数（進行中/完了）／国交省書類の受領数x/16と45日提出期限バッジ（企業単位のため表示・人材書類は載せない）／企業マイページを開くボタン。 -->
 <!-- ver.20260921.06: グローバルパートナーズ機関のO-Linkに「🏢 企業マイページを開く」ボタンを追加（人材詳細モーダルの企業書類セクション上・org_company_links RPCでトークン取得・PIN有無バッジ付き）。 -->
 <!-- ver.20260921.05: 企業・国交省書類の提出期限を「案件受領日から着手7日以内・提出45日以内」に変更（request_date基準・全ステージ共通表示）。 -->
@@ -1534,7 +1535,7 @@ function renderGpCompanies(){
   var linkByCo={}; (linksReady?_gpCoLinks:[]).forEach(function(m){ linkByCo[m.company_id]=m; });
   var today=new Date(); today.setHours(0,0,0,0);
   var h='<div style="font-size:16px;font-weight:900;margin-bottom:4px;">🏢 支援企業リスト（'+ids.length+'社）</div>';
-  h+='<div style="font-size:11.5px;color:#64748b;margin-bottom:12px;">貴社の担当者はセルをタップして編集できます。国交省書類は企業単位の受領状況です（人材ごとの書類は各人材の詳細をご覧ください）。</div>';
+  h+='<div style="font-size:11.5px;color:#64748b;margin-bottom:12px;">貴社の担当者はセルをタップして編集できます。国交省書類は企業単位の受領状況です（人材ごとの書類は各人材の詳細をご覧ください）。「開く」は貴社が支援している案件のみが表示される専用リンクです。PINは企業様にお伝えいただく企業ログイン用です。</div>';
   if(!ids.length){ main.innerHTML=h+'<div class="empty" style="padding:24px;color:#94a3b8;">対象の企業がありません。</div>'; return; }
   h+='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e2e8f0;border-radius:10px;font-size:12.5px;">';
   h+='<thead><tr style="background:#0f2040;color:#fff;font-size:11.5px;">'
@@ -1543,6 +1544,7 @@ function renderGpCompanies(){
     +'<th style="padding:9px 12px;text-align:left;">Ofusa担当</th>'
     +'<th style="padding:9px 12px;text-align:center;">案件</th>'
     +'<th style="padding:9px 12px;text-align:left;">国交省書類</th>'
+    +'<th style="padding:9px 12px;text-align:center;">PIN</th>'
     +'<th style="padding:9px 12px;text-align:center;">企業マイページ</th>'
     +'</tr></thead><tbody>';
   ids.sort(function(a,b){ return (byCo[a].name||'').localeCompare(byCo[b].name||'','ja'); });
@@ -1562,15 +1564,25 @@ function renderGpCompanies(){
     var gpCell=linksReady
       ? '<span style="cursor:pointer;border-bottom:1px dashed #94a3b8;" onclick="_gpEditStaff(\''+esc(cid)+'\')" id="gpst_'+esc(cid)+'">'+(gpStaff?esc(gpStaff):'<span style="color:#94a3b8;">未設定 ✎</span>')+'</span>'
       : '<span style="color:#cbd5e1;">読込中…</span>';
+    // ver.20260921.08: 開く＝機関スコープリンク（&ot/&op付き・貴社案件のみ表示・PIN不要）
+    var _otq='&ot='+encodeURIComponent(currentToken)+(currentPass?('&op='+encodeURIComponent(currentPass)):'');
     var pageCell=(m&&m.token)
-      ? '<a href="https://ofusa2026.github.io/org-view/company.html?token='+encodeURIComponent(m.token)+'" target="_blank" rel="noopener" style="display:inline-block;background:#0f2040;color:#fff;font-size:11px;font-weight:800;border-radius:6px;padding:6px 12px;text-decoration:none;">開く'+(m.has_pass?' 🔒':'')+'</a>'
+      ? '<a href="https://ofusa2026.github.io/org-view/company.html?token='+encodeURIComponent(m.token)+_otq+'" target="_blank" rel="noopener" style="display:inline-block;background:#0f2040;color:#fff;font-size:11px;font-weight:800;border-radius:6px;padding:6px 12px;text-decoration:none;">開く</a>'
       : (linksReady?'<span style="color:#94a3b8;font-size:11px;">未発行</span>':'<span style="color:#cbd5e1;">…</span>');
+    var pinCell='<span style="color:#cbd5e1;">…</span>';
+    if(linksReady){
+      if(!m) pinCell='<span style="color:#94a3b8;font-size:11px;">—</span>';
+      else if(m.shared) pinCell='<span style="font-size:10px;color:#64748b;background:#f1f5f9;border-radius:4px;padding:3px 6px;" title="他の登録支援機関の案件もある企業のためPINは表示されません">共有企業</span>';
+      else if(m.pin) pinCell='<span style="font-family:monospace;font-weight:800;font-size:13px;letter-spacing:1px;">'+esc(m.pin)+'</span>';
+      else pinCell='<span style="color:#94a3b8;font-size:11px;">未設定</span>';
+    }
     h+='<tr style="border-top:1px solid #eef1f5;'+(i%2?'background:#f8fafc;':'')+'">'
       +'<td style="padding:9px 12px;font-weight:800;">'+esc(e.name||cid)+'</td>'
       +'<td style="padding:9px 12px;">'+gpCell+'</td>'
       +'<td style="padding:9px 12px;">'+esc(Object.keys(e.staff).join('・')||'—')+'</td>'
       +'<td style="padding:9px 12px;text-align:center;white-space:nowrap;">進行中 <b>'+e.active+'</b>／完了 '+e.done+'</td>'
       +'<td style="padding:9px 12px;white-space:nowrap;">'+kokkoTxt+kokkoBadge+'</td>'
+      +'<td style="padding:9px 12px;text-align:center;">'+pinCell+'</td>'
       +'<td style="padding:9px 12px;text-align:center;">'+pageCell+'</td>'
       +'</tr>';
   });
@@ -1593,7 +1605,8 @@ function _gpFillCoLink(companyId){
   _gpLoadCoLinks().then(function(list){
     var m=null; for(var i=0;i<list.length;i++){ if(list[i].company_id===companyId){ m=list[i]; break; } }
     var el=document.getElementById('gpCoLinkSlot'); if(!el||!m) return;
-    el.innerHTML='<a href="https://ofusa2026.github.io/org-view/company.html?token='+encodeURIComponent(m.token)+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#0f2040;color:#fff;font-size:12.5px;font-weight:800;border-radius:8px;padding:9px 16px;text-decoration:none;margin:4px 0 10px;">🏢 企業マイページを開く<span style="font-weight:500;opacity:.85;">（'+esc(m.company_name||'')+'）</span>'+(m.has_pass?'<span style="font-size:10px;background:#f0b429;color:#3d2c07;border-radius:4px;padding:2px 6px;">🔒 PINあり</span>':'')+'</a>';
+    var _otq2='&ot='+encodeURIComponent(currentToken)+(currentPass?('&op='+encodeURIComponent(currentPass)):'');
+    el.innerHTML='<a href="https://ofusa2026.github.io/org-view/company.html?token='+encodeURIComponent(m.token)+_otq2+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#0f2040;color:#fff;font-size:12.5px;font-weight:800;border-radius:8px;padding:9px 16px;text-decoration:none;margin:4px 0 10px;">🏢 企業マイページを開く<span style="font-weight:500;opacity:.85;">（'+esc(m.company_name||'')+'）</span>'+(m.has_pass?'<span style="font-size:10px;background:#f0b429;color:#3d2c07;border-radius:4px;padding:2px 6px;">🔒 PINあり</span>':'')+'</a>';
   });
 }
 var _KS_HOLIDAYS=['2026-01-01','2026-01-12','2026-02-11','2026-02-23','2026-03-20','2026-04-29','2026-05-03','2026-05-04','2026-05-05','2026-05-06','2026-07-20','2026-08-11','2026-09-21','2026-09-22','2026-09-23','2026-10-12','2026-11-03','2026-11-23','2027-01-01','2027-01-11','2027-02-11','2027-02-23','2027-03-21','2027-03-22','2027-04-29','2027-05-03','2027-05-04','2027-05-05','2027-07-19','2027-08-11','2027-09-20','2027-09-23','2027-10-11','2027-11-03','2027-11-23'];

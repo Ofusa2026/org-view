@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260921.11: &ot=（機関トークン）&op=（機関パス）で機関スコープ表示——company_view_get/extraがサーバー側でその機関の案件のみ返却・企業PIN不要・上部に機関向け表示バナー。複数の登録支援機関を跨ぐ企業でも他機関の案件は見えない。 -->
 <!-- ver.20260921.10: ①&pass=パラメータで自動ログイン（案シスからPINなしアクセス用）②PIN変更機能（現PIN＋新PIN→company_view_change_pass RPC・案シスに自動反映）③人材詳細に📅建設特定技能スケジュール（特活×建設のみ：デッドライン・進捗・国交省着手7日/提出45日・特1期限・⏸税書類早取り注意。company_view_extra RPCで受領日/国交省ステータス取得） -->
 <!-- ver.20260716.01: 提出書類チェックリストで「未提出」が表示されない不具合を修正。依頼済み(req::依頼日)の書類をリストに表示し未提出として扱う。国交チェック(kokko::)は提出済(または不要)扱いに追加。 -->
 <!-- ver.20260709.01: ニュース配信の宛先を区分化。所属機関ページは audience=all/company(+支援機関がアイデムならaidem) を表示（news_list(text[])利用）。既存all投稿は従来どおり両方に表示。 -->
@@ -543,6 +544,14 @@ async function init(){
     document.getElementById('headerOrg').textContent=companyName+' 様';
     document.title=companyName+' 様 | 所属機関マイページ';
     // ver.20260616.04: パスワード必須。未設定なら初回設定(setup)、設定済みなら入力(enter)。
+    // ver.20260921.11: &ot=（機関トークン）付きは機関スコープ表示（その機関の案件のみ・企業PIN不要）
+    _orgToken=(getParam('ot')||'').trim(); _orgPass=(getParam('op')||'').trim();
+    if(_orgToken){
+      var lrO=await loadData(null);
+      if(lrO&&lrO.ok){ return; }
+      document.getElementById('main').innerHTML='<div class="error-box">機関用リンクが無効です。担当者にお問い合わせください。</div>';
+      return;
+    }
     // ver.20260921.10: &pass= パラメータで自動ログイン（案シスの企業マイページモーダルから直接アクセス用）
     var urlPass=(getParam('pass')||'').trim();
     if(urlPass){
@@ -560,7 +569,9 @@ async function init(){
 
 async function loadData(pass){
   try{
-    var res=await callRpc('company_view_get',{p_token:currentToken,p_pass:pass||''});
+    var _pl={p_token:currentToken,p_pass:pass||''};
+    if(_orgToken){ _pl.p_org_token=_orgToken; _pl.p_org_pass=_orgPass||null; }
+    var res=await callRpc('company_view_get',_pl);
     if(!res||!res.ok){
       if(res&&res.error==='pass'){ return {passErr:true}; }
       document.getElementById('main').innerHTML='<div class="error-box">対象の情報が見つかりません。</div>'; return {ok:false};
@@ -591,10 +602,18 @@ async function loadData(pass){
     (res.shinsa||[]).forEach(function(x){ if(x.case_id&&x.drive_url&&!shinsaByCase[x.case_id]) shinsaByCase[x.case_id]=x.drive_url; });
     // ver.20260921.10: 建設スケジュール用の追加データ（受領日・国交省ステータス）
     try{
-      var ex=await callRpc('company_view_extra',{p_token:currentToken,p_pass:pass||''});
+      var _pe={p_token:currentToken,p_pass:pass||''};
+      if(_orgToken){ _pe.p_org_token=_orgToken; _pe.p_org_pass=_orgPass||null; }
+      var ex=await callRpc('company_view_extra',_pe);
       _extraByCase={};
       if(ex&&ex.ok&&Array.isArray(ex.cases)) ex.cases.forEach(function(r){ _extraByCase[r.id]=r; });
     }catch(e){ _extraByCase={}; }
+    _orgScope=res.org_scope||'';
+    if(_orgScope && !document.getElementById('orgScopeBanner')){
+      var _mainEl=document.getElementById('main');
+      if(_mainEl) _mainEl.insertAdjacentHTML('beforebegin',
+        '<div id="orgScopeBanner" style="background:#eef4fd;border-bottom:1px solid #b9d0ee;padding:8px 16px;font-size:12px;color:#1c3d6e;font-weight:700;">🔗 '+esc(_orgScope)+' 様向け表示：この画面には '+esc(_orgScope)+' 様が支援している案件のみが表示されています。</div>');
+    }
     await loadNews();
     renderSidebar();
     render();
@@ -602,7 +621,7 @@ async function loadData(pass){
   }catch(e){ document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+esc(e.message)+'</div>'; return {ok:false}; }
 }
 
-var _extraByCase={};
+var _extraByCase={}; var _orgToken='', _orgPass='', _orgScope='';
 // ===== ver.20260921.10: 建設特定技能スケジュール（特活×建設の案件詳細に表示） =====
 var _CKS_COLS=[
  {label:'雇用条件書',statuses:['未着手','★ヒアリングフォーム送付','ヒアリングフォーム回答待ち(送付済)','ヒアリングフォーム回答待ち (送付済)','雇用条件待ち','1-6作成','★1-6企業送付','1-6企業確認待ち(送付済)','1-6企業確認待ち (送付済)','1-6修正','★1-6修正送付']},
