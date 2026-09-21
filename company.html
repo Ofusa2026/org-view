@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260921.10: ①&pass=パラメータで自動ログイン（案シスからPINなしアクセス用）②PIN変更機能（現PIN＋新PIN→company_view_change_pass RPC・案シスに自動反映）③人材詳細に📅建設特定技能スケジュール（特活×建設のみ：デッドライン・進捗・国交省着手7日/提出45日・特1期限・⏸税書類早取り注意。company_view_extra RPCで受領日/国交省ステータス取得） -->
 <!-- ver.20260716.01: 提出書類チェックリストで「未提出」が表示されない不具合を修正。依頼済み(req::依頼日)の書類をリストに表示し未提出として扱う。国交チェック(kokko::)は提出済(または不要)扱いに追加。 -->
 <!-- ver.20260709.01: ニュース配信の宛先を区分化。所属機関ページは audience=all/company(+支援機関がアイデムならaidem) を表示（news_list(text[])利用）。既存all投稿は従来どおり両方に表示。 -->
 <!-- ver.20260630.02: ヘッダーにバージョン表示を追加 -->
@@ -294,6 +295,7 @@ tr:hover td{background:#fcfcfd;}
       onkeydown="if(event.key==='Enter')passSubmit()">
     <button class="pass-btn" id="passBtn" onclick="passSubmit()">ログイン</button>
     <div class="pass-err" id="passErr"></div>
+    <div id="passChangeLink" class="hide" style="margin-top:12px;font-size:12px;color:#64748b;text-align:center;cursor:pointer;text-decoration:underline;" onclick="_passMode='change';_showPassScreen();">PIN（パスワード）を変更する</div>
   </div>
 </div>
 
@@ -472,12 +474,23 @@ function _showPassScreen(){
     pd.textContent='このページを開ける合言葉（パスワード）を設定します。次回以降は同じパスワードでログインします。4文字以上。';
     pi2.classList.remove('hide');
     pb.textContent='設定してログイン';
+  } else if(_passMode==='change'){
+    pt.textContent='PIN（パスワード）の変更';
+    pd.textContent='現在のPINと、新しいPIN（4文字以上）を入力してください。変更内容は担当行政書士側にも自動で反映されます。';
+    pi2.classList.remove('hide');
+    document.getElementById('passInput').placeholder='現在のPIN';
+    pi2.placeholder='新しいPIN（4文字以上）';
+    pb.textContent='変更してログイン';
   } else {
     pt.textContent='パスワードを入力してください';
     pd.textContent='';
     pi2.classList.add('hide');
+    document.getElementById('passInput').placeholder='パスワード';
+    pi2.placeholder='もう一度（確認）';
     pb.textContent='ログイン';
   }
+  var _chLk=document.getElementById('passChangeLink');
+  if(_chLk) _chLk.classList.toggle('hide', _passMode!=='enter');
   document.getElementById('passScreen').classList.remove('hide');
   setTimeout(function(){document.getElementById('passInput').focus();},100);
 }
@@ -485,6 +498,21 @@ function _showPassScreen(){
 async function passSubmit(){
   var v=document.getElementById('passInput').value.trim();
   var err=document.getElementById('passErr');
+  if(_passMode==='change'){
+    var vn=document.getElementById('passInput2').value.trim();
+    if(v.length<1){ err.textContent='現在のPINを入力してください'; return; }
+    if(vn.length<4){ err.textContent='新しいPINは4文字以上で設定してください'; return; }
+    err.textContent='変更中...';
+    var cr=await callRpc('company_view_change_pass',{p_token:currentToken,p_old:v,p_new:vn});
+    if(!cr||!cr.ok){
+      err.textContent=(cr&&cr.error==='wrongpass')?'現在のPINが違います':((cr&&cr.error==='nopass')?'PINが未設定です。初回設定を行ってください。':'変更に失敗しました。もう一度お試しください。');
+      return;
+    }
+    err.textContent='確認中...';
+    var lrc=await loadData(vn);
+    if(lrc&&lrc.ok){ _correctPass=vn; document.getElementById('passScreen').classList.add('hide'); }
+    return;
+  }
   if(_passMode==='setup'){
     var v2=document.getElementById('passInput2').value.trim();
     if(v.length<4){ err.textContent='パスワードは4文字以上で設定してください'; return; }
@@ -515,6 +543,16 @@ async function init(){
     document.getElementById('headerOrg').textContent=companyName+' 様';
     document.title=companyName+' 様 | 所属機関マイページ';
     // ver.20260616.04: パスワード必須。未設定なら初回設定(setup)、設定済みなら入力(enter)。
+    // ver.20260921.10: &pass= パラメータで自動ログイン（案シスの企業マイページモーダルから直接アクセス用）
+    var urlPass=(getParam('pass')||'').trim();
+    if(urlPass){
+      var lr0=await loadData(urlPass);
+      if(lr0&&lr0.ok){
+        _correctPass=urlPass;
+        try{ history.replaceState(null,'',location.pathname+'?token='+encodeURIComponent(token)); }catch(e){}
+        return;
+      }
+    }
     _passMode = meta.has_pass ? 'enter' : 'setup';
     _showPassScreen();
   }catch(e){ document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+esc(e.message)+'</div>'; }
@@ -551,6 +589,12 @@ async function loadData(pass){
     receiptByCase={}; shinsaByCase={};
     (res.receipt||[]).forEach(function(x){ if(x.case_id&&x.drive_url&&!receiptByCase[x.case_id]) receiptByCase[x.case_id]=x.drive_url; });
     (res.shinsa||[]).forEach(function(x){ if(x.case_id&&x.drive_url&&!shinsaByCase[x.case_id]) shinsaByCase[x.case_id]=x.drive_url; });
+    // ver.20260921.10: 建設スケジュール用の追加データ（受領日・国交省ステータス）
+    try{
+      var ex=await callRpc('company_view_extra',{p_token:currentToken,p_pass:pass||''});
+      _extraByCase={};
+      if(ex&&ex.ok&&Array.isArray(ex.cases)) ex.cases.forEach(function(r){ _extraByCase[r.id]=r; });
+    }catch(e){ _extraByCase={}; }
     await loadNews();
     renderSidebar();
     render();
@@ -558,6 +602,76 @@ async function loadData(pass){
   }catch(e){ document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+esc(e.message)+'</div>'; return {ok:false}; }
 }
 
+var _extraByCase={};
+// ===== ver.20260921.10: 建設特定技能スケジュール（特活×建設の案件詳細に表示） =====
+var _CKS_COLS=[
+ {label:'雇用条件書',statuses:['未着手','★ヒアリングフォーム送付','ヒアリングフォーム回答待ち(送付済)','ヒアリングフォーム回答待ち (送付済)','雇用条件待ち','1-6作成','★1-6企業送付','1-6企業確認待ち(送付済)','1-6企業確認待ち (送付済)','1-6修正','★1-6修正送付']},
+ {label:'サイン・押印',statuses:['サイン書類作成','★サイン書類送付','サイン書類返送待ち(送付済)','サイン書類返送待ち (送付済)','企業書類作成','★企業押印送付','企業押印返送待ち(送付済)','企業押印返送待ち (送付済)']},
+ {label:'書類・申請準備',statuses:['人材書類待ち','企業書類待ち','スキャン書類作成','★申請']},
+ {label:'審査中',statuses:['申請済(番号待)','審査中','申請ステイ','★追完対応','追完対応中']},
+ {label:'カード交付',statuses:['★窓口受取','窓口受取待ち','★郵送交付','郵送交付待ち','交付済']},
+ {label:'完了',statuses:['完了','審査完了']}
+];
+function _cksParse(s){ if(!s) return null; var m=String(s).match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/); if(!m) return null; return new Date(+m[1],+m[2]-1,+m[3]); }
+function _cksFmt(d){ return d?(d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()):'—'; }
+function _cksAdd(d,n){ var r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function _cksAddM(d,n){ var r=new Date(d); var dd=r.getDate(); r.setMonth(r.getMonth()+n); if(r.getDate()!==dd) r.setDate(0); return r; }
+function _cksSchedule(c){
+  if((c.residence_status||'')!=='特定活動') return '';
+  if(String(c.applicant_field||'').indexOf('建設')<0) return '';
+  var ex=_extraByCase[c.id]||{};
+  var reqD=_cksParse(ex.request_date);
+  var kokko=getKokkoStatus(c)||ex.kokko_status||'';
+  var kokkoApplied=['申請済み','補正可能','補正完了','補正未着手','完了(許可済)'].indexOf(kokko)>=0;
+  var stage=-1;
+  for(var i=0;i<_CKS_COLS.length;i++){ if(_CKS_COLS[i].statuses.indexOf(c.status)>=0){ stage=i; break; } }
+  var expire=_cksParse(c.expire), trip=_cksParse(c.temp_return);
+  var dl=null, dlSrc='';
+  if(expire){ dl=_cksAdd(expire,-1); dlSrc='在留期限の前日'; }
+  if(trip){ var e2=_cksAdd(trip,-1); if(!dl||e2<dl){ dl=e2; dlSrc='一時帰国の出発日の前日'; } }
+  var today=new Date(); today.setHours(0,0,0,0);
+  var applied=!!c.receipt_date || stage>=3;
+  var h='<div class="dt-sec">📅 申請スケジュール（建設特定技能）</div>';
+  // デッドラインバナー（未申請時のみ）
+  if(!applied && dl){
+    var days=Math.round((dl-today)/86400000);
+    var urgent=days<=14;
+    h+='<div style="background:'+(urgent?'#fdeeee':'#eef4fd')+';border:1px solid '+(urgent?'#e5a3a3':'#b9d0ee')+';border-radius:10px;padding:10px 14px;margin:6px 0 8px;font-size:12.5px;line-height:1.6;color:'+(urgent?'#7a1f1f':'#1c3d6e')+';">'
+      +'<b>⛔ 特定活動申請の期限：'+_cksFmt(dl)+' まで</b>（'+dlSrc+'）'
+      +(days>=0?'　残り <b>'+days+'日</b>':'　<b>期限超過</b>')
+      +'<br>この日までにサイン・押印・書類提出のすべてが必要です（日本にいない期間は申請できません）。</div>';
+  }
+  // 進捗ドット
+  h+='<div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin:4px 0 8px;">';
+  for(var j=0;j<_CKS_COLS.length;j++){
+    var st=(stage<0)?'':(j<stage?'done':(j===stage?'now':''));
+    var col=st==='done'?'#16a34a':(st==='now'?'#2563eb':'#cbd5e1');
+    var w=st==='now'?'800':'600';
+    h+='<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:'+w+';color:'+(st?'#1c2430':'#94a3b8')+';">'
+      +'<span style="width:9px;height:9px;border-radius:50%;background:'+col+';display:inline-block;"></span>'+_CKS_COLS[j].label+'</span>'
+      +(j<_CKS_COLS.length-1?'<span style="color:#cbd5e1;">›</span>':'');
+  }
+  h+='</div>';
+  // 期限表
+  function row(l,v){ return '<div class="dt-row"><span class="dt-l">'+l+'</span><span class="dt-v">'+v+'</span></div>'; }
+  if(reqD){
+    h+=row('案件受領日',_cksFmt(reqD));
+    if(!kokkoApplied){
+      h+=row('国交省書類 着手期限','<b>'+_cksFmt(_cksAdd(reqD,7))+'</b>（受領日から7日以内）');
+      h+=row('国交省書類 提出期限','<b>'+_cksFmt(_cksAdd(reqD,45))+'</b>（受領日から45日以内）');
+    }
+  }
+  if(c.receipt_date) h+=row('特定活動 申請日',esc(String(c.receipt_date).slice(0,10)));
+  if(kokko) h+=row('国交省 受入計画',esc(kokko));
+  if(kokkoApplied && expire){
+    var t1dl=_cksAdd(expire,-1);
+    h+=row('特1書類 提出期限','<b>'+_cksFmt(_cksAddM(t1dl,-1))+'</b>（特1申請の1ヶ月前）');
+    h+=row('特定技能1号 申請期限','<b>'+_cksFmt(t1dl)+'</b>（特定活動の在留期限の前日）');
+  } else if(!kokkoApplied){
+    h+='<div style="background:#fef9e8;border:1px solid #f0d060;border-radius:8px;padding:8px 12px;margin-top:6px;font-size:11.5px;color:#6b4e0a;line-height:1.6;">⏸ 特1用の書類（税書類・健康診断票・登記事項証明書など）は<b>まだ取得しないでください</b>。発行から3ヶ月以内でないと使えず、期限切れで再提出になります。国交省申請後にご案内します。</div>';
+  }
+  return h;
+}
 function _hasVal(v){ return v!=null && v!=='' && v!=='false'; }
 function _lastPdfUrl(arr){ if(Array.isArray(arr)&&arr.length){ var l=arr[arr.length-1]; if(l&&l.url) return l.url; } return ''; }
 function _pdfChip(label,url,color,icon){
@@ -1417,6 +1531,7 @@ function renderDetail(c,p){
   var ti=_tokureiTracked(c)?expInfo(_tokureiDate(c)):null;
   var h='<div class="dt-name">'+esc(nm)+'</div>';
   h+='<div class="dt-sub">'+_dv(p.applicant_name_en)+' / '+_dv(p.nationality||c.nationality)+'</div>';
+  h+=_cksSchedule(c);  // ver.20260921.10
   h+='<div class="dt-sec">基本情報</div>';
   h+=row('生年月日',_dv(p.birthdate));
   h+=row('性別',_dv(p.gender));

@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
 <!-- ver.20260922.01: 【不具合修正】希望在留期間確認モーダルのカード表示で、受取方法が「窓口受取」なのに「窓口申請」と誤表示されていたのを修正。実際の受取方法（窓口受取/郵送交付/メール交付）をそのまま表示。 -->
+<!-- ver.20260921.07: グローバルパートナーズ専用「🏢 支援企業リスト」ビューを追加（サイドバー）。企業ごとに：貴社担当者（タップで編集・org_set_gp_staff RPCでcompanies.extra.gp_staffに保存）／Ofusa担当（案件担当者を集約）／案件数（進行中/完了）／国交省書類の受領数x/16と45日提出期限バッジ（企業単位のため表示・人材書類は載せない）／企業マイページを開くボタン。 -->
+<!-- ver.20260921.06: グローバルパートナーズ機関のO-Linkに「🏢 企業マイページを開く」ボタンを追加（人材詳細モーダルの企業書類セクション上・org_company_links RPCでトークン取得・PIN有無バッジ付き）。 -->
 <!-- ver.20260921.05: 企業・国交省書類の提出期限を「案件受領日から着手7日以内・提出45日以内」に変更（request_date基準・全ステージ共通表示）。 -->
 <!-- ver.20260921.04: 書類チェックリスト（人材）を「人材・特定活動」（パスポート/顔写真/在留カード/合格証/専門級）と「人材・特定技能1号」（税書類・健康診断票等）に分割表示（対象3機関×特活×建設のみ）。特1分は国交省申請前は⏸グレーアウト。国交省申請済み判定を人材/企業で共通化。 -->
 <!-- ver.20260921.03: 書類チェックリスト（人材/企業・国交省/企業・入管）の各見出しに提出期限バッジを追加（対象3機関×特活×建設のみ。特活中=特活申請まで、特活完了後=特1申請1ヶ月前・国交省は審査3ヶ月逆算の目安）。既存の受領済/未受領表示・⏸グレーアウト仕様は変更なし。 -->\n<!-- ver.20260921.02: 申請スケジュール（建設特定技能）の起点日の呼称を「依頼日」→「案件受領日」に統一（使用フィールドは request_date のまま）。 -->
@@ -1498,6 +1500,102 @@ function _personSectionTitle(t){ return '<div style="font-size:13px;font-weight:
 // 書類チェックリスト（doc_check / co_doc_check）の受領数と連動した進捗チップを出す。
 var _KS_ORGS=['オープンケア協同組合','REMONTADA','グローバルパートナーズ'];
 function _ksOrgAllowed(){ var n=orgName||''; return _KS_ORGS.some(function(k){ return n.indexOf(k)===0; }); }
+// ver.20260921.06: グローバルパートナーズ向け 企業マイページリンク
+var _gpCoLinks=null;
+function _gpIsGpOrg(){ return (orgName||'').indexOf('グローバルパートナーズ')===0; }
+function _gpLoadCoLinks(){
+  if(_gpCoLinks!==null) return Promise.resolve(_gpCoLinks);
+  return sbRpc('org_company_links',{p_token:currentToken,p_pass:(currentPass||null)}).then(function(r){
+    _gpCoLinks=(r&&r.ok&&Array.isArray(r.companies))?r.companies:[]; return _gpCoLinks;
+  }).catch(function(){ _gpCoLinks=[]; return _gpCoLinks; });
+}
+// ver.20260921.07: 支援企業リスト（GP専用ビュー）
+function renderGpCompanies(){
+  var fb=document.getElementById('filter-bar'); if(fb) fb.innerHTML='';
+  var main=document.getElementById('main');
+  if(!main) return;
+  var byCo={};
+  allCases.forEach(function(c){
+    if(!c.companyId) return;
+    var e=byCo[c.companyId]||(byCo[c.companyId]={id:c.companyId,name:c.company||'',active:0,done:0,staff:{},minKokkoDl:null});
+    if(!e.name && c.company) e.name=c.company;
+    var isDone=(c.status==='完了'||c.status==='審査完了');
+    if(isDone) e.done++; else e.active++;
+    if(c.staff) String(c.staff).split(/[、,・\/]/).forEach(function(s){ s=s.trim(); if(s) e.staff[s]=1; });
+    // 国交省45日期限（進行中×特活×建設×受領日あり×国交省未申請）
+    if(!isDone && (c.residenceStatus==='特定活動') && String(c.applicantField||'').indexOf('建設')>=0 && c.requestDate){
+      var applied=_KS_KOKKO_APPLIED_G.indexOf(c.kokkoStatus||'')>=0;
+      if(!applied){ var d=_ksParse(c.requestDate); if(d){ var dl=_ksAdd(d,45); if(!e.minKokkoDl||dl<e.minKokkoDl) e.minKokkoDl=dl; } }
+    }
+  });
+  var ids=Object.keys(byCo);
+  var linksReady=(_gpCoLinks!==null);
+  if(!linksReady){ _gpLoadCoLinks().then(function(){ if(currentGroup==='gpcompanies') renderMain(); }); }
+  var linkByCo={}; (linksReady?_gpCoLinks:[]).forEach(function(m){ linkByCo[m.company_id]=m; });
+  var today=new Date(); today.setHours(0,0,0,0);
+  var h='<div style="font-size:16px;font-weight:900;margin-bottom:4px;">🏢 支援企業リスト（'+ids.length+'社）</div>';
+  h+='<div style="font-size:11.5px;color:#64748b;margin-bottom:12px;">貴社の担当者はセルをタップして編集できます。国交省書類は企業単位の受領状況です（人材ごとの書類は各人材の詳細をご覧ください）。</div>';
+  if(!ids.length){ main.innerHTML=h+'<div class="empty" style="padding:24px;color:#94a3b8;">対象の企業がありません。</div>'; return; }
+  h+='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e2e8f0;border-radius:10px;font-size:12.5px;">';
+  h+='<thead><tr style="background:#0f2040;color:#fff;font-size:11.5px;">'
+    +'<th style="padding:9px 12px;text-align:left;">企業名</th>'
+    +'<th style="padding:9px 12px;text-align:left;">貴社担当者</th>'
+    +'<th style="padding:9px 12px;text-align:left;">Ofusa担当</th>'
+    +'<th style="padding:9px 12px;text-align:center;">案件</th>'
+    +'<th style="padding:9px 12px;text-align:left;">国交省書類</th>'
+    +'<th style="padding:9px 12px;text-align:center;">企業マイページ</th>'
+    +'</tr></thead><tbody>';
+  ids.sort(function(a,b){ return (byCo[a].name||'').localeCompare(byCo[b].name||'','ja'); });
+  ids.forEach(function(cid,i){
+    var e=byCo[cid], m=linkByCo[cid];
+    var kokkoMap=(coDocsAll[cid]||{});
+    var recv=0; requiredDocsCoKokko.forEach(function(d){ var v=kokkoMap[d]; if(v&&v.staff&&v.staff!=='false'&&v.staff!=='') recv++; });
+    var kokkoTxt=recv+' / '+requiredDocsCoKokko.length+' 受領';
+    var kokkoBadge='';
+    if(recv<requiredDocsCoKokko.length && e.minKokkoDl){
+      var days=Math.round((e.minKokkoDl-today)/86400000);
+      if(days<0) kokkoBadge='<div style="font-size:10px;font-weight:800;color:#b91c1c;">⚠ 提出期限超過（〜'+_ksFmt(e.minKokkoDl)+'）</div>';
+      else if(days<=14) kokkoBadge='<div style="font-size:10px;font-weight:800;color:#b45309;">⚡ 提出期限 〜'+_ksFmt(e.minKokkoDl)+'</div>';
+      else kokkoBadge='<div style="font-size:10px;color:#64748b;">提出期限 〜'+_ksFmt(e.minKokkoDl)+'</div>';
+    }
+    var gpStaff=m?(m.gp_staff||''):'';
+    var gpCell=linksReady
+      ? '<span style="cursor:pointer;border-bottom:1px dashed #94a3b8;" onclick="_gpEditStaff(\''+esc(cid)+'\')" id="gpst_'+esc(cid)+'">'+(gpStaff?esc(gpStaff):'<span style="color:#94a3b8;">未設定 ✎</span>')+'</span>'
+      : '<span style="color:#cbd5e1;">読込中…</span>';
+    var pageCell=(m&&m.token)
+      ? '<a href="https://ofusa2026.github.io/org-view/company.html?token='+encodeURIComponent(m.token)+'" target="_blank" rel="noopener" style="display:inline-block;background:#0f2040;color:#fff;font-size:11px;font-weight:800;border-radius:6px;padding:6px 12px;text-decoration:none;">開く'+(m.has_pass?' 🔒':'')+'</a>'
+      : (linksReady?'<span style="color:#94a3b8;font-size:11px;">未発行</span>':'<span style="color:#cbd5e1;">…</span>');
+    h+='<tr style="border-top:1px solid #eef1f5;'+(i%2?'background:#f8fafc;':'')+'">'
+      +'<td style="padding:9px 12px;font-weight:800;">'+esc(e.name||cid)+'</td>'
+      +'<td style="padding:9px 12px;">'+gpCell+'</td>'
+      +'<td style="padding:9px 12px;">'+esc(Object.keys(e.staff).join('・')||'—')+'</td>'
+      +'<td style="padding:9px 12px;text-align:center;white-space:nowrap;">進行中 <b>'+e.active+'</b>／完了 '+e.done+'</td>'
+      +'<td style="padding:9px 12px;white-space:nowrap;">'+kokkoTxt+kokkoBadge+'</td>'
+      +'<td style="padding:9px 12px;text-align:center;">'+pageCell+'</td>'
+      +'</tr>';
+  });
+  h+='</tbody></table></div>';
+  main.innerHTML=h;
+}
+var _KS_KOKKO_APPLIED_G=['申請済み','補正可能','補正完了','補正未着手','完了(許可済)'];
+function _gpEditStaff(companyId){
+  var m=(_gpCoLinks||[]).find(function(x){return x.company_id===companyId;});
+  var cur=m?(m.gp_staff||''):'';
+  var v=prompt('この企業の貴社（グローバルパートナーズ）担当者名を入力してください（空欄で削除）', cur);
+  if(v===null) return;
+  sbRpc('org_set_gp_staff',{p_token:currentToken,p_pass:(currentPass||null),p_company_id:companyId,p_staff:v}).then(function(r){
+    if(r&&r.ok){ if(m) m.gp_staff=r.gp_staff||''; if(currentGroup==='gpcompanies') renderMain(); }
+    else alert('保存に失敗しました。');
+  }).catch(function(){ alert('保存に失敗しました。'); });
+}
+function _gpFillCoLink(companyId){
+  if(!_gpIsGpOrg()||!companyId) return;
+  _gpLoadCoLinks().then(function(list){
+    var m=null; for(var i=0;i<list.length;i++){ if(list[i].company_id===companyId){ m=list[i]; break; } }
+    var el=document.getElementById('gpCoLinkSlot'); if(!el||!m) return;
+    el.innerHTML='<a href="https://ofusa2026.github.io/org-view/company.html?token='+encodeURIComponent(m.token)+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#0f2040;color:#fff;font-size:12.5px;font-weight:800;border-radius:8px;padding:9px 16px;text-decoration:none;margin:4px 0 10px;">🏢 企業マイページを開く<span style="font-weight:500;opacity:.85;">（'+esc(m.company_name||'')+'）</span>'+(m.has_pass?'<span style="font-size:10px;background:#f0b429;color:#3d2c07;border-radius:4px;padding:2px 6px;">🔒 PINあり</span>':'')+'</a>';
+  });
+}
 var _KS_HOLIDAYS=['2026-01-01','2026-01-12','2026-02-11','2026-02-23','2026-03-20','2026-04-29','2026-05-03','2026-05-04','2026-05-05','2026-05-06','2026-07-20','2026-08-11','2026-09-21','2026-09-22','2026-09-23','2026-10-12','2026-11-03','2026-11-23','2027-01-01','2027-01-11','2027-02-11','2027-02-23','2027-03-21','2027-03-22','2027-04-29','2027-05-03','2027-05-04','2027-05-05','2027-07-19','2027-08-11','2027-09-20','2027-09-23','2027-10-11','2027-11-03','2027-11-23'];
 function _ksParse(s){ if(!s) return null; var m=String(s).match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/); if(!m) return null; return new Date(+m[1],+m[2]-1,+m[3]); }
 function _ksYmd(d){ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
@@ -1726,6 +1824,7 @@ function openPersonModal(caseId){
   }
   // 企業書類チェックリスト（ver.20260908.01: 国交省／入管で分割表示）
   // ver.20260908.02: 特定活動かつ国交省未申請の場合、入管書類はまだ収集不要としてバナー＋グレーアウト表示
+  if(c.companyId && _gpIsGpOrg()) h+='<div id="gpCoLinkSlot"></div>';
   if(c.companyId && coDocsAll[c.companyId]){
     var _coMap=coDocsAll[c.companyId]||{};
     var _kokkoList=(Array.isArray(requiredDocsCoKokko)?requiredDocsCoKokko:[]);
@@ -1770,6 +1869,7 @@ function openPersonModal(caseId){
     }
   }
   document.getElementById('personModalBody').innerHTML=h;
+  _gpFillCoLink(c.companyId);  // ver.20260921.06
   document.getElementById('personModalBg').classList.add('open');
 }
 function closePersonModal(){ var el=document.getElementById('personModalBg'); if(el) el.classList.remove('open'); }
@@ -2674,6 +2774,12 @@ function renderSidebar(){
   {
     var _nu=newsUnreadCount();
     h+='<div class="sb-item'+(currentGroup==='news'?' active':'')+'" onclick="switchGroup(\'news\')"><span>📰 ニュース等</span>'+(_nu>0?'<span class="sb-badge-new">'+_nu+'</span>':'')+'</div>';
+  }
+  // ver.20260921.07: グローバルパートナーズ専用 支援企業リスト
+  if(_gpIsGpOrg()){
+    var _gpCoN={}; allCases.forEach(function(c){ if(c.companyId) _gpCoN[c.companyId]=1; });
+    h+='<div class="sb-divider"></div>';
+    h+='<div class="sb-item'+(currentGroup==='gpcompanies'?' active':'')+'" onclick="switchGroup(\'gpcompanies\')">🏢 支援企業リスト <span class="sb-badge">'+Object.keys(_gpCoN).length+'</span></div>';
   }
   // 協力確認書 提出先検索
   h+='<div class="sb-divider"></div>';
@@ -3828,6 +3934,7 @@ function renderMain(){
   _renderMainPending=false;
   // ver.20260611.10: 送信した依頼ビュー（アイデム専用）
   if(currentGroup==='intakes'){ renderIntakes(); return; }
+  if(currentGroup==='gpcompanies'){ renderGpCompanies(); return; }  // ver.20260921.07
   if(currentGroup==='orgprofile'){ renderOrgProfile(); return; }
   // ver.20260519.17: アイデム専用 窓口申請/窓口受取は専用テーブル描画
   if(currentGroup==='madoguchi_shinsei' || currentGroup==='madoguchi_uketori'){
