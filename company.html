@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260921.13: ①ご依頼事項に🏗国交省申請書類（16点の未受領＋受領日から45日の提出期限・国交省申請前のみ）／🛂入管提出書類（オープン時のみ・特定技能1号申請1ヶ月前の期限付き）を表示（期限超過は⚠赤）。②📅タイムライン先頭に「⏱進み具合」バッジ——標準スケジュール（受領日→約16日で申請予定）比で🟢オンタイム/🟡要注意/🔴遅延n日、審査中は経過日数（45日超は入管都合と明記）、完了後・特定技能1号案件は書類提出期限基準。 -->
 <!-- ver.20260921.12: 提出書類ビューを🏗国交省／🛂入管に分割。国交省書類は専用アップロードページ（kokko_dataup.html）へのボタンを追加。建設×特活で国交省未申請の間は入管書類をクローズ（⏸バナー＋グレーアウト・アップロードボタン非表示）、オープン条件＝入管書類のいずれかに依頼日(req)が入る、または国交省ステータスが補正未着手/補正可能/補正完了/完了(許可済)（「申請済み」段階ではまだ開かない）。画面表示バージョンラベルも更新。📅スケジュールを特定技能1号（継続・複製案件）でも表示（ラベル自動切替・特定技能1号書類期限表示・⏸税書類バナーは特活のみ）。 -->
 <!-- ver.20260921.11: &ot=（機関トークン）&op=（機関パス）で機関スコープ表示——company_view_get/extraがサーバー側でその機関の案件のみ返却・企業PIN不要・上部に機関向け表示バナー。複数の登録支援機関を跨ぐ企業でも他機関の案件は見えない。 -->
 <!-- ver.20260921.10: ①&pass=パラメータで自動ログイン（案シスからPINなしアクセス用）②PIN変更機能（現PIN＋新PIN→company_view_change_pass RPC・案シスに自動反映）③人材詳細に📅建設特定技能スケジュール（特活×建設のみ：デッドライン・進捗・国交省着手7日/提出45日・特定技能1号期限・⏸税書類早取り注意。company_view_extra RPCで受領日/国交省ステータス取得） -->
@@ -275,7 +276,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20260921.12</span>
+  <span class="header-ver">ver.20260921.13</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -632,6 +633,39 @@ var _CKS_COLS=[
  {label:'カード交付',statuses:['★窓口受取','窓口受取待ち','★郵送交付','郵送交付待ち','交付済']},
  {label:'完了',statuses:['完了','審査完了']}
 ];
+var _CKS_HOLIDAYS=['2026-01-01','2026-01-12','2026-02-11','2026-02-23','2026-03-20','2026-04-29','2026-05-03','2026-05-04','2026-05-05','2026-05-06','2026-07-20','2026-08-11','2026-09-21','2026-09-22','2026-09-23','2026-10-12','2026-11-03','2026-11-23','2027-01-01','2027-01-11','2027-02-11','2027-02-23','2027-03-21','2027-03-22','2027-04-29','2027-05-03','2027-05-04','2027-05-05','2027-07-19','2027-08-11','2027-09-20','2027-09-23','2027-10-11','2027-11-03','2027-11-23'];
+function _cksYmd(d){ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+function _cksIsBiz(d){ var w=d.getDay(); return w!==0&&w!==6&&_CKS_HOLIDAYS.indexOf(_cksYmd(d))<0; }
+function _cksAddBiz(d,n){ var r=new Date(d),c=0; while(c<n){ r=_cksAdd(r,1); if(_cksIsBiz(r)) c++; } return r; }
+function _cksPill(color,bg,bor,icon,main,sub){
+  return '<div style="display:flex;align-items:center;gap:8px;background:'+bg+';border:1px solid '+bor+';border-radius:8px;padding:8px 12px;margin:4px 0 8px;">'
+    +'<span style="font-size:15px;">'+icon+'</span>'
+    +'<div><div style="font-size:12px;font-weight:900;color:'+color+';">'+main+'</div>'
+    +(sub?'<div style="font-size:10.5px;color:'+color+';opacity:.85;margin-top:1px;">'+sub+'</div>':'')+'</div></div>';
+}
+function _cksPaceBadge(isT1, stage, applied, appActualStr, reqD, expire){
+  var today=new Date(); today.setHours(0,0,0,0);
+  var D=function(a,b){ return Math.round((a-b)/86400000); };
+  var appActual=_cksParse(appActualStr);
+  if(applied && stage<5){
+    var days=appActual?D(today,appActual):null;
+    if(days!=null && days>45) return _cksPill('#92400e','#fef9c3','#f0d060','🟡','審査中（申請から'+days+'日経過）','審査の目安30〜45日を超えています。入管の審査状況によるもので、御社の遅れではありません。');
+    return _cksPill('#1c3d6e','#eef4fd','#b9d0ee','🔵','審査中'+(days!=null?'（申請から'+days+'日経過・目安30〜45日）':''),'');
+  }
+  if(isT1 || stage>=5){
+    if(!expire) return '';
+    var due=_cksAddM(_cksAdd(expire,-1),-1); var d1=D(due,today);
+    if(d1<0) return _cksPill('#7a1f1f','#fdeeee','#e5a3a3','🔴','書類の提出期限を '+(-d1)+'日 超過しています','至急のご提出をお願いします（提出期限 '+_cksFmt(due)+'・特定技能1号申請の1ヶ月前）');
+    if(d1<=7) return _cksPill('#92400e','#fef9c3','#f0d060','🟡','書類の提出期限まで あと'+d1+'日','提出期限 '+_cksFmt(due)+'（特定技能1号申請の1ヶ月前）');
+    return _cksPill('#14532d','#f0fdf4','#a7d7b4','🟢','オンタイムで進んでいます','書類の提出期限 '+_cksFmt(due)+'（あと'+d1+'日）');
+  }
+  if(!reqD) return '';
+  var plan=_cksAdd(_cksAdd(_cksAdd(_cksAdd(_cksAddBiz(reqD,3),3),3),4),3);
+  var d=D(plan,today);
+  if(d<0) return _cksPill('#7a1f1f','#fdeeee','#e5a3a3','🔴','標準スケジュールより '+(-d)+'日 遅れています','標準の申請予定日 '+_cksFmt(plan)+' を超過。未対応の確認・サイン・押印・書類のご対応で解消できます');
+  if(d<3) return _cksPill('#92400e','#fef9c3','#f0d060','🟡','標準の申請予定日まで あと'+d+'日','申請予定 '+_cksFmt(plan)+'。未対応のものがあれば本日中のご対応をお願いします');
+  return _cksPill('#14532d','#f0fdf4','#a7d7b4','🟢','オンタイムで進んでいます','標準の申請予定日 '+_cksFmt(plan)+'（あと'+d+'日）');
+}
 function _cksParse(s){ if(!s) return null; var m=String(s).match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/); if(!m) return null; return new Date(+m[1],+m[2]-1,+m[3]); }
 function _cksFmt(d){ return d?(d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()):'—'; }
 function _cksAdd(d,n){ var r=new Date(d); r.setDate(r.getDate()+n); return r; }
@@ -655,6 +689,7 @@ function _cksSchedule(c){
   var today=new Date(); today.setHours(0,0,0,0);
   var applied=!!c.receipt_date || stage>=3;
   var h='<div class="dt-sec">📅 申請スケジュール（建設特定技能）</div>';
+  h+=_cksPaceBadge(_t1, stage, applied, c.receipt_date, reqD, expire);  // ver.20260921.13
   // デッドラインバナー（未申請時のみ）
   if(!applied && dl){
     var days=Math.round((dl-today)/86400000);
@@ -854,10 +889,50 @@ function _reqRow(c, extra){
 }
 function renderRequests(){
   var secs=[];
-  // 未提出書類
+  // ver.20260921.13: 建設案件がある企業は 国交省／入管 に分けて期限付きで表示
+  var hasKensetsu=false, kokkoAppliedAny=false, minReqD=null, minT1Due=null;
+  var KOKKO_APPLIED_ALL=['申請済み','補正未着手','補正可能','補正完了','完了(許可済)'];
+  allCases.forEach(function(c){
+    if(String(c.applicant_field||'').indexOf('建設')<0) return;
+    var rs=(c.residence_status||'');
+    if(rs!=='特定活動'&&rs!=='特定技能1号') return;
+    hasKensetsu=true;
+    var k=getKokkoStatus(c)||((_extraByCase[c.id]||{}).kokko_status||'');
+    if(KOKKO_APPLIED_ALL.indexOf(k)>=0) kokkoAppliedAny=true;
+    if(rs==='特定活動'){ var rd=_cksParse((_extraByCase[c.id]||{}).request_date); if(rd&&(!minReqD||rd<minReqD)) minReqD=rd; }
+    var ex=_cksParse(c.expire);
+    if(ex){ var due=_cksAddM(_cksAdd(ex,-1),-1); if(!minT1Due||due<minT1Due) minT1Due=due; }
+  });
+  var today=new Date(); today.setHours(0,0,0,0);
+  function dlLine(due,label){
+    if(!due) return '';
+    var over=due<today;
+    return '<div style="font-size:11px;font-weight:800;color:'+(over?'#b91c1c':'#b45309')+';margin:2px 0 6px;">📄 提出期限 〜'+_cksFmt(due)+'（'+label+'）'+(over?'　⚠ 期限超過':'')+'</div>';
+  }
   var missing=[];
   Object.keys(coDocs).forEach(function(name){ if(docInList(coDocs[name]) && docState(coDocs[name])==='todo') missing.push(name); });
-  if(missing.length){
+  if(hasKensetsu){
+    // 🏗 国交省：16点のうち未受領（国交省申請前のみ）
+    if(!kokkoAppliedAny){
+      var kokkoMissing=[];
+      var K16=['1. 履歴事項全部証明書','2. 建設業許可','3. 標準報酬決定通知書','4. キャリアアップID','5. 会員証明書','6. 委任状','7. 求人票','8. 同等の技能を有する日本人と同等額以上の報酬であることの説明書','9. 就業規則および賃金規程','10. 賃金台帳','11. 経歴書','12. 雇用契約書','13. 36協定','14. 年間カレンダー','15. 重要事項説明書','16. 技能者ID'];
+      K16.forEach(function(n){ var v=coDocs[n]||{}; if(!_hasVal(v.staff)&&!_hasVal(v.skip)&&!_hasVal(v.autoskip)) kokkoMissing.push(n); });
+      if(kokkoMissing.length){
+        var kb=dlLine(minReqD?_cksAdd(minReqD,45):null,'案件受領日から45日以内')
+          +kokkoMissing.map(function(n){ return '<div class="req-row"><span class="req-nm">'+esc(n)+'</span></div>'; }).join('')
+          +'<button class="req-btn" onclick="switchGroup(\'docs\')">提出書類を開く</button>';
+        secs.push(_reqSection('🏗','国交省申請書類のご提出', kokkoMissing.length, kb));
+      }
+    }
+    // 🛂 入管：オープン時のみ（クローズ中は依頼として出さない）
+    var nyukanMissing=missing.filter(function(n){ return !_isKokkoDocName(n); });
+    if(!_nyukanGateClosed() && nyukanMissing.length){
+      var nb=dlLine(minT1Due,'特定技能1号申請の1ヶ月前')
+        +nyukanMissing.map(function(n){ return '<div class="req-row"><span class="req-nm">'+esc(n)+'</span></div>'; }).join('')
+        +'<button class="req-btn" onclick="switchGroup(\'docs\')">提出書類を開く</button>';
+      secs.push(_reqSection('🛂','入管提出書類のご提出', nyukanMissing.length, nb));
+    }
+  } else if(missing.length){
     var dbody=missing.map(function(n){ return '<div class="req-row"><span class="req-nm">'+esc(n)+'</span></div>'; }).join('')
       +'<button class="req-btn" onclick="switchGroup(\'docs\')">提出書類を開く</button>';
     secs.push(_reqSection('📄','未提出の書類', missing.length, dbody));

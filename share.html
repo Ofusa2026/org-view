@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
 <!-- ver.20260922.01: 【不具合修正】希望在留期間確認モーダルのカード表示で、受取方法が「窓口受取」なのに「窓口申請」と誤表示されていたのを修正。実際の受取方法（窓口受取/郵送交付/メール交付）をそのまま表示。 -->
+<!-- ver.20260921.10: 📅スケジュール先頭に「⏱進み具合」バッジを追加——標準スケジュール（受領日から約16日で申請）との比較で🟢オンタイム/🟡要注意/🔴遅延n日を表示。審査中は経過日数（45日超は入管都合と明記）、特活完了後・特定技能1号案件は書類提出期限基準で判定。 -->
 <!-- ver.20260921.09: 📅スケジュール・📄期限バッジを特定技能1号（特活からの継続・複製案件）でも表示。デッドライン表記は在留資格で自動切替（特定技能1号案件＝特定技能1号申請のデッドライン・書類期限は申請1ヶ月前）。特定技能1号案件の人材書類は特活/特定技能1号の固定振り分けをせず、複製案件に登録された必要書類（doc_check）をそのまま1本で表示。⏸表示は従来どおり特活×国交省未申請のみ。 -->
 <!-- ver.20260921.08: 支援企業リストにPIN列を追加（専属企業のみ表示・複数機関を跨ぐ企業は「共有企業」表示でPIN非表示）。「開く」と人材詳細の企業マイページリンクを機関スコープリンク（&ot/&op）に変更——その機関が支援する案件のみサーバー側で絞り込み表示・企業PIN不要。 -->
 <!-- ver.20260921.07: グローバルパートナーズ専用「🏢 支援企業リスト」ビューを追加（サイドバー）。企業ごとに：貴社担当者（タップで編集・org_set_gp_staff RPCでcompanies.extra.gp_staffに保存）／Ofusa担当（案件担当者を集約）／案件数（進行中/完了）／国交省書類の受領数x/16と45日提出期限バッジ（企業単位のため表示・人材書類は載せない）／企業マイページを開くボタン。 -->
@@ -1652,6 +1653,50 @@ function _ksRow(mark,name,rule,dateHtml,extra){
       +(extra||'')
     +'</div></div>';
 }
+// ver.20260921.10: ⏱ 進み具合バッジ。標準スケジュール（受領日→約16日で申請）と実績を比較して色分け表示
+function _ksPill(color,bg,bor,icon,main,sub){
+  return '<div style="display:flex;align-items:center;gap:8px;background:'+bg+';border:1px solid '+bor+';border-radius:8px;padding:8px 12px;margin-bottom:8px;">'
+    +'<span style="font-size:15px;">'+icon+'</span>'
+    +'<div><div style="font-size:12px;font-weight:900;color:'+color+';">'+main+'</div>'
+    +(sub?'<div style="font-size:10.5px;color:'+color+';opacity:.85;margin-top:1px;">'+sub+'</div>':'')+'</div></div>';
+}
+function _ksPaceBadge(c, isT1, stage, N, appActual, expire){
+  var today=new Date(); today.setHours(0,0,0,0);
+  var D=function(a,b){ return Math.round((a-b)/86400000); };
+  var applied = !!appActual || stage>=3;
+  // 審査中〜交付
+  if(applied && stage<5){
+    var days=appActual?D(today,appActual):null;
+    if(days!=null && days>45) return _ksPill('#92400e','#fef9c3','#f0d060','🟡','審査中（申請から'+days+'日経過）','審査の目安30〜45日を超えています。入管の審査状況によるもので、所属機関様の遅れではありません。');
+    return _ksPill('#1c3d6e','#eef4fd','#b9d0ee','🔵','審査中'+(days!=null?'（申請から'+days+'日経過・目安30〜45日）':''),'');
+  }
+  if(!isT1){
+    if(stage>=5){
+      // 特活完了：特定技能1号書類の提出期限で判定
+      if(expire){
+        var due=_ksAddM(_ksAdd(expire,-1),-1); var d1=D(due,today);
+        if(d1<0) return _ksPill('#7a1f1f','#fdeeee','#e5a3a3','🔴','特定技能1号用書類の提出期限を '+(-d1)+'日 超過しています','至急のご提出をお願いします（提出期限 '+_ksFmt(due)+'）');
+        if(d1<=7) return _ksPill('#92400e','#fef9c3','#f0d060','🟡','特定技能1号用書類の提出期限まで あと'+d1+'日','提出期限 '+_ksFmt(due));
+        return _ksPill('#14532d','#f0fdf4','#a7d7b4','🟢','オンタイムで進んでいます','特定技能1号用書類の提出期限 '+_ksFmt(due));
+      }
+      return '';
+    }
+    if(!N) return '';
+    // 未申請：標準チェーン（受領日→約16日で申請予定）と比較
+    var plan=_ksAdd(_ksAdd(_ksAdd(_ksAdd(_ksAddBiz(N,3),3),3),4),3);
+    var d=D(plan,today);
+    if(d<0) return _ksPill('#7a1f1f','#fdeeee','#e5a3a3','🔴','標準スケジュールより '+(-d)+'日 遅れています','標準の申請予定日 '+_ksFmt(plan)+' を超過。未対応の確認・サイン・押印・書類のご対応で解消できます');
+    if(d<3) return _ksPill('#92400e','#fef9c3','#f0d060','🟡','標準の申請予定日まで あと'+d+'日','申請予定 '+_ksFmt(plan)+'。未対応のものがあれば本日中のご対応をお願いします');
+    return _ksPill('#14532d','#f0fdf4','#a7d7b4','🟢','オンタイムで進んでいます','標準の申請予定日 '+_ksFmt(plan)+'（あと'+d+'日）');
+  } else {
+    // 特定技能1号案件：書類提出期限（特定技能1号申請の1ヶ月前）で判定
+    if(!expire) return '';
+    var due2=_ksAddM(_ksAdd(expire,-1),-1); var d2=D(due2,today);
+    if(d2<0) return _ksPill('#7a1f1f','#fdeeee','#e5a3a3','🔴','書類の提出期限を '+(-d2)+'日 超過しています','至急のご提出をお願いします（提出期限 '+_ksFmt(due2)+'・特定技能1号申請の1ヶ月前）');
+    if(d2<=7) return _ksPill('#92400e','#fef9c3','#f0d060','🟡','書類の提出期限まで あと'+d2+'日','提出期限 '+_ksFmt(due2)+'（特定技能1号申請の1ヶ月前）');
+    return _ksPill('#14532d','#f0fdf4','#a7d7b4','🟢','オンタイムで進んでいます','書類の提出期限 '+_ksFmt(due2)+'（あと'+d2+'日）');
+  }
+}
 function _ksScheduleHtml(c,p,caseId){
   if(!_ksOrgAllowed()) return '';
   // ver.20260921.09: 特定技能1号（特活からの継続・複製案件）も表示対象に
@@ -1681,6 +1726,8 @@ function _ksScheduleHtml(c,p,caseId){
   var c1=s2?_ksAdd(s2,10):null, c2=s2?_ksAdd(s2,14):null;
   var h='';
   h+=_personSectionTitle('📅 申請スケジュール（建設特定技能）');
+  // ver.20260921.10: ⏱ 進み具合（標準スケジュール比のオンタイム/遅延を見える化）
+  h+=_ksPaceBadge(c, _ksT1, stage, N, appActual, expire);
   // デッドラインバナー
   if(dl){
     var dlNote='';
