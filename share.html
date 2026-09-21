@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
-<!-- ver.20260921.02: 申請スケジュール（建設特定技能）の起点日の呼称を「依頼日」→「案件受領日」に統一（使用フィールドは request_date のまま）。 -->
+<!-- ver.20260921.05: 企業・国交省書類の提出期限を「案件受領日から着手7日以内・提出45日以内」に変更（request_date基準・全ステージ共通表示）。 -->
+<!-- ver.20260921.04: 書類チェックリスト（人材）を「人材・特定活動」（パスポート/顔写真/在留カード/合格証/専門級）と「人材・特定技能1号」（税書類・健康診断票等）に分割表示（対象3機関×特活×建設のみ）。特1分は国交省申請前は⏸グレーアウト。国交省申請済み判定を人材/企業で共通化。 -->
+<!-- ver.20260921.03: 書類チェックリスト（人材/企業・国交省/企業・入管）の各見出しに提出期限バッジを追加（対象3機関×特活×建設のみ。特活中=特活申請まで、特活完了後=特1申請1ヶ月前・国交省は審査3ヶ月逆算の目安）。既存の受領済/未受領表示・⏸グレーアウト仕様は変更なし。 -->\n<!-- ver.20260921.02: 申請スケジュール（建設特定技能）の起点日の呼称を「依頼日」→「案件受領日」に統一（使用フィールドは request_date のまま）。 -->
 <!-- ver.20260921.01: 人材詳細モーダルに「申請スケジュール（建設特定技能）」セクションを追加。希望在留資格「特定活動」×建設分野の案件で、案件受領日・受付日・在留期限・一時帰国・ステータス・国交省ステータスから各工程の期限/実績/現在地を自動表示し、書類チェックリスト（doc_check/co_doc_check）の受領状況と連動した進捗チップを表示。申請デッドライン（在留期限前日/出国日前日）バナー付き。表示対象はオープンケア協同組合・REMONTADA株式会社・グローバルパートナーズ様の3機関のみ（orgName前方一致。アライズ様は対象外）。WHATS_NEWにorgs指定（機関名リスト）によるaudience制御を追加。 -->
 <!-- ver.20260916.01: 希望在留期間確認モーダルの決済手数料注記を動的化。3年以上(3年/5年)を選ぶと550円/件、それ以外330円/件、混在時は両方明示。 -->
 <!-- ver.20260915.01: 【不具合修正】新規案件依頼の「希望在留期間」が依頼テキスト（本人ステータス）に出力されていなかったのを修正。_buildLineReportText の本人ブロックに「希望在留期間」行を追加し、過去依頼の再コピー経路（_intakeGroupToPayload）でも hoped_stay_period をマップするようにした。 -->
@@ -1623,6 +1625,39 @@ function _ksScheduleHtml(c,p,caseId){
     +'</div>';
   return h;
 }
+// ver.20260921.03: 書類チェックリスト各セクションの提出期限（対象3機関×特活×建設のみ）
+function _ksDlBadge(txt){ return ' <span style="font-size:10px;font-weight:800;color:#b45309;background:#fef9c3;border:1px solid #f59e0b;border-radius:5px;padding:2px 8px;vertical-align:middle;">📄 '+txt+'</span>'; }
+function _ksDocDl(c,p){
+  if(!_ksOrgAllowed()) return null;
+  if((c.residenceStatus||'')!=='特定活動') return null;
+  if(String(c.applicantField||'').indexOf('建設')<0) return null;
+  var stage=-1;
+  for(var i=0;i<STATUS_COLS.length;i++){ if(STATUS_COLS[i].statuses.indexOf(c.status)>=0){ stage=i; break; } }
+  var expire=_ksParse(c.expire||(p&&p.expire));
+  var tripOut=_ksParse(p&&p.temp_return);
+  var N=_ksParse(c.requestDate);
+  var kokkoTxt = N ? ('着手 〜'+_ksFmt(_ksAdd(N,7))+'／提出 〜'+_ksFmt(_ksAdd(N,45))+'（案件受領日から45日以内）')
+                   : '案件受領日から7日以内に着手・45日以内にご提出ください';
+  var dl1=null;
+  if(expire) dl1=_ksAdd(expire,-1);
+  if(tripOut){ var e2=_ksAdd(tripOut,-1); if(!dl1||e2<dl1) dl1=e2; }
+  var r={person:'',person2:'',kokko:'',nyukan:''};
+  if(stage>=5){
+    // 特活完了後：expire＝特定活動の在留期限。特1申請デッドライン＝その前日
+    var t1dl=expire?_ksAdd(expire,-1):null;
+    var t1txt = t1dl ? ('提出期限 〜'+_ksFmt(_ksAddM(t1dl,-1))+'（特1申請の1ヶ月前）') : '特1申請の1ヶ月前までにご提出ください';
+    r.person = '特定活動申請時に提出済み';
+    r.person2 = t1txt;
+    r.kokko  = kokkoTxt;
+    r.nyukan = t1txt;
+  } else {
+    r.person = dl1 ? ('提出期限 特定活動申請まで（〜'+_ksFmt(dl1)+'）') : '特定活動申請までにご提出ください';
+    r.person2 = '国交省「申請済み」以降に収集開始（提出期限は特1申請の1ヶ月前）';
+    r.kokko  = kokkoTxt;
+    r.nyukan = '国交省「申請済み」以降に収集開始（提出期限は特1申請の1ヶ月前）';
+  }
+  return r;
+}
 // ===== /建設特定技能 申請スケジュール =====
 function openPersonModal(caseId){
   var c=allCases.find(function(x){return x.id===caseId;})||{};
@@ -1660,8 +1695,34 @@ function openPersonModal(caseId){
   h+=_personSectionTitle('📄 書類PDF');
   h+=buildDownloadCell(c);
   // 書類チェックリスト（人材）
-  h+=_personSectionTitle('✅ 書類チェックリスト（人材）');
-  h+=_docChecklistHtml(personDocsAll[caseId], allDocsByCase[caseId]);
+  // ver.20260921.03: 提出期限バッジ／ver.20260921.04: 人材書類を特活分・特1分に分割（対象3機関×特活×建設のみ）
+  var _dlInfo=_ksDocDl(c,p);
+  var _KS_KOKKO_APPLIED=['申請済み','補正可能','補正完了','補正未着手','完了(許可済)'];
+  var _notYetPhase2=(c.residenceStatus==='特定活動') && _KS_KOKKO_APPLIED.indexOf(c.kokkoStatus||'')<0;
+  if(_dlInfo){
+    var _pm=personDocsAll[caseId]||{};
+    var _tkMap={}, _t1Map={};
+    var _KS_TK_NAMES=['パスポート','顔写真','在留カード（表）','在留カード（裏）','在留カード','合格証（技能）','合格証（日本語）','専門級','合格証（技能・日本語）／専門級','技能者ID'];  // 案シスの特活5点セット＋建設の技能者ID（旧案件の個別合格証名も含む）
+    Object.keys(_pm).forEach(function(nm){ if(_KS_TK_NAMES.indexOf(nm)>=0) _tkMap[nm]=_pm[nm]; else _t1Map[nm]=_pm[nm]; });
+    h+=_personSectionTitle('✅ 書類チェックリスト（人材・特定活動）'+(_dlInfo.person?_ksDlBadge(_dlInfo.person):''));
+    h+=_docChecklistHtml(_tkMap, allDocsByCase[caseId]);
+    h+=_personSectionTitle('✅ 書類チェックリスト（人材・特定技能1号）'+(_dlInfo.person2?_ksDlBadge(_dlInfo.person2):''));
+    if(_notYetPhase2 && Object.keys(_t1Map).length){
+      h+='<div style="background:#fef9c3;border:1px solid #f59e0b;border-radius:8px;padding:10px 14px;margin-bottom:8px;">'
+        +'<div style="font-size:12.5px;font-weight:800;color:#78350f;line-height:1.6;">⏸ この書類は最初には出さないでください</div>'
+        +'<div style="font-size:11.5px;color:#78350f;margin-top:4px;line-height:1.6;">課税・納税証明書・源泉徴収票・健康診断票は<b>発行/受診から3ヶ月以内</b>でないと申請に使えないため、先に取得・提出されると<b>期限切れで再提出</b>をお願いすることになります。<b>国交省ステータスが「申請済み」以降、弊社からご案内した時点</b>で取得・提出をお願いします。</div>'
+        +'</div>'
+        +'<div style="position:relative;opacity:.45;pointer-events:none;filter:grayscale(60%);">'
+        +_docChecklistHtml(_t1Map)
+        +'<div style="position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(148,163,184,0.08) 0,rgba(148,163,184,0.08) 8px,rgba(148,163,184,0.02) 8px,rgba(148,163,184,0.02) 16px);pointer-events:none;"></div>'
+        +'</div>';
+    } else {
+      h+=_docChecklistHtml(_t1Map);
+    }
+  } else {
+    h+=_personSectionTitle('✅ 書類チェックリスト（人材）');
+    h+=_docChecklistHtml(personDocsAll[caseId], allDocsByCase[caseId]);
+  }
   // 企業書類チェックリスト（ver.20260908.01: 国交省／入管で分割表示）
   // ver.20260908.02: 特定活動かつ国交省未申請の場合、入管書類はまだ収集不要としてバナー＋グレーアウト表示
   if(c.companyId && coDocsAll[c.companyId]){
@@ -1676,23 +1737,21 @@ function openPersonModal(caseId){
     var _hasNy=Object.keys(_nyMap).length>0;
     // ver.20260908.02: 入管書類「まだ集めない」判定
     // 条件：希望在留資格が「特定活動」(46号等は含まない厳密一致) かつ 国交省ステータスが申請前
-    var _KOKKO_APPLIED_STATUSES=['申請済み','補正可能','補正完了','補正未着手','完了(許可済)'];
-    var _isTokkatsu = (c.residenceStatus==='特定活動');
-    var _kokkoApplied = _KOKKO_APPLIED_STATUSES.indexOf(c.kokkoStatus||'')>=0;
-    var _nyukanNotYet = _isTokkatsu && !_kokkoApplied;
+    // ver.20260921.04: 判定は人材セクションと共通の _notYetPhase2 を使用
+    var _nyukanNotYet = _notYetPhase2;
     if(_hasKo || _hasNy){
       if(_hasKo){
-        h+=_personSectionTitle('🏗 書類チェックリスト（企業・国交省）');
+        h+=_personSectionTitle('🏗 書類チェックリスト（企業・国交省）'+(_dlInfo&&_dlInfo.kokko?_ksDlBadge(_dlInfo.kokko):''));
         h+=_docChecklistHtml(_koMap);
       }
       if(_hasNy){
-        h+=_personSectionTitle('🛂 書類チェックリスト（企業・入管）');
+        h+=_personSectionTitle('🛂 書類チェックリスト（企業・入管）'+(_dlInfo&&_dlInfo.nyukan?_ksDlBadge(_dlInfo.nyukan):''));
         if(_nyukanNotYet){
           // まだ集めない状態：バナー＋グレーアウトで包む
           h+='<div style="background:#fef9c3;border:1px solid #f59e0b;border-radius:8px;padding:10px 14px;margin-bottom:8px;">'
-            +'<div style="font-size:12.5px;font-weight:800;color:#78350f;line-height:1.6;">⏸ この書類はまだ収集不要です</div>'
+            +'<div style="font-size:12.5px;font-weight:800;color:#78350f;line-height:1.6;">⏸ この書類は最初には出さないでください</div>'
             +'<div style="font-size:11.5px;color:#78350f;margin-top:4px;line-height:1.6;">'
-            +'希望在留資格が<b>「特定活動」</b>のため、入管書類は<b>国交省ステータスが「申請済み」以降</b>になってから収集を開始します。'
+            +'登記・納税証明書等は<b>発行から3ヶ月以内</b>でないと申請に使えないため、先に取得・提出されると<b>期限切れで再提出</b>をお願いすることになります。入管書類は<b>国交省ステータスが「申請済み」以降</b>になってから収集を開始します。'
             +(c.kokkoStatus?'<br><span style="opacity:.85;">現在の国交省ステータス：'+esc(c.kokkoStatus)+'</span>':'<br><span style="opacity:.85;">現在の国交省ステータス：未登録</span>')
             +'</div>'
             +'</div>'
