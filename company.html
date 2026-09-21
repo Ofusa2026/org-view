@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260922.02: 「対応が必要なタスク」システム——タスク数＝未提出書類＋就労管理ID/PW未提供＋ボールが企業側の案件（雇用条件待ち・1-6確認待ち・サイン/押印返送待ち・人材/企業書類待ち）＋ヒアリング未回答。全タブ共通の赤タスクバー（sticky・タップでご依頼事項へスクロール）、PCサイドバー/モバイル🏠に赤バッジ、ご依頼事項タイトルを🚨対応が必要なタスク(n件)に動的化＋⚽ご対応待ち案件セクション＋📝ヒアリングセクション、ブラウザタブ名に(n件のタスク)。0件なら全て消えて✅表示。 -->
 <!-- ver.20260922.01: モバイル（560px以下）をアプリ型UIに刷新——①ヘッダーをスリム化（縦書き崩れ修正・企業名バーは1行化）②画面下部に固定ナビ（🏠ホーム/👥人材/📄書類/📰ニュース/☰メニュー・バッジ付き・セーフエリア対応）③「メニュー」はボトムシートで発行済み/すべて/申請の流れ/所属機関情報/協力確認書/事務所情報へ移動④タブ切替時に画面トップへ自動スクロール。デスクトップ表示は変更なし。 -->
 <!-- ver.20260921.21: 最終デッドライン注意文を「最終提出期限＝特定活動の在留カードが発行されるまで」基準に変更（5ヶ月前表記を廃止）。 -->
 <!-- ver.20260921.20: ダッシュボードの進捗カードに🛂入管書類の軸も追加（クローズ中はグレー・タイトルを「書類・申請の進捗」に）。国交省書類軸の下に最終提出期限の注記——「特定活動の在留カードが発行されるまでにすべての書類のご提出が必要（標準は受領日から45日以内）」を追加（国交省申請前のみ表示）。入管軸を共通関数化。 -->
@@ -268,6 +269,13 @@ tr:hover td{background:#fcfcfd;}
 .sb-divider{height:1px;background:rgba(255,255,255,.08);margin:8px 12px;}
 .main-wrap{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
 .main{flex:1;padding:18px 20px;overflow:auto;min-width:0;}
+/* ver.20260922.02: 対応が必要なタスクバー（全タブ共通・sticky） */
+.task-bar{display:none;background:linear-gradient(90deg,#dc2626,#ea580c);color:#fff;font-size:12.5px;font-weight:900;padding:9px 16px;cursor:pointer;align-items:center;gap:8px;position:sticky;top:0;z-index:140;box-shadow:0 2px 10px rgba(220,38,38,.3);}
+.task-bar.show{display:flex;}
+.task-bar:active{opacity:.85;}
+.task-bar .tb-n{background:#fff;color:#dc2626;border-radius:99px;padding:1px 9px;font-size:12px;}
+.task-bar .tb-go{margin-left:auto;font-size:11px;font-weight:800;opacity:.9;white-space:nowrap;}
+@media(max-width:560px){ .task-bar{top:0;} }
 /* ver.20260922.01: モバイルをアプリ型UIに刷新（下部固定ナビ＋シート） */
 #mobileNav{display:none;}
 #mobileSheet{display:none;}
@@ -312,13 +320,13 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20260922.01</span>
+  <span class="header-ver">ver.20260922.02</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
 <div class="layout" id="layout">
   <div class="sidebar" id="sidebar"></div>
-  <div class="main-wrap"><div class="main" id="main"><div class="loading">⏳ 読み込み中...</div></div></div>
+  <div class="main-wrap"><div class="task-bar" id="taskBar" onclick="_taskGo()"></div><div class="main" id="main"><div class="loading">⏳ 読み込み中...</div></div></div>
 </div>
 
 <!-- ver.20260922.01: モバイル下部ナビ＋その他シート -->
@@ -920,9 +928,64 @@ function computeMissing(){
   });
 }
 
+// ver.20260922.02: 「対応が必要なタスク」集計——未提出書類＋ボールが企業にある案件＋ヒアリング未回答
+var _CKS_BALL=['雇用条件待ち','ヒアリングフォーム回答待ち(送付済)','ヒアリングフォーム回答待ち (送付済)','1-6企業確認待ち(送付済)','1-6企業確認待ち (送付済)','サイン書類返送待ち(送付済)','サイン書類返送待ち (送付済)','企業押印返送待ち(送付済)','企業押印返送待ち (送付済)','人材書類待ち','企業書類待ち'];
+function _companyTasks(){
+  var t={docs:0, idpw:0, ball:0, ballCases:[], hearing:0, total:0};
+  // 未提出書類（ご依頼事項と同じロジック）
+  var hasKensetsu=false, kokkoAppliedAny=false;
+  var APPLIED=['申請済み','補正未着手','補正可能','補正完了','完了(許可済)'];
+  allCases.forEach(function(c){
+    var rs=(c.residence_status||'');
+    if((rs==='特定活動'||rs==='特定技能1号') && String(c.applicant_field||'').indexOf('建設')>=0){
+      hasKensetsu=true;
+      var k=getKokkoStatus(c)||((_extraByCase[c.id]||{}).kokko_status||'');
+      if(APPLIED.indexOf(k)>=0) kokkoAppliedAny=true;
+    }
+  });
+  var missing=[];
+  Object.keys(coDocs).forEach(function(name){ if(docInList(coDocs[name]) && docState(coDocs[name])==='todo') missing.push(name); });
+  if(hasKensetsu && _coUkeireAri){
+    if(!_coHasIdpw && !kokkoAppliedAny) t.idpw=1;
+  } else if(hasKensetsu){
+    if(!kokkoAppliedAny){
+      _CKS_K16.forEach(function(n){ if(_isOfusaMade(n)) return; var v=coDocs[n]||{}; if(!_hasVal(v.staff)&&!_hasVal(v.skip)&&!_hasVal(v.autoskip)) t.docs++; });
+    }
+  }
+  if(hasKensetsu){
+    if(!_nyukanGateClosed()) t.docs+=missing.filter(function(n){ return !_isKokkoDocName(n); }).length;
+  } else {
+    t.docs+=missing.length;
+  }
+  // ボールが企業側にある案件（確認・サイン・押印・書類の返送待ちなど）
+  allCases.forEach(function(c){
+    if(c.status==='完了'||c.status==='審査完了') return;
+    if(_CKS_BALL.indexOf(c.status)>=0){ t.ball++; t.ballCases.push({id:c.id, applicant:c.applicant||c.name||'', status:c.status}); }
+  });
+  // 企業情報ヒアリング未回答
+  if(companyHearingExists && !companyHearingDone && companyHearingShow!==false) t.hearing=1;
+  t.total=t.docs+t.idpw+t.ball+t.hearing;
+  return t;
+}
+function _renderTaskBar(t){
+  var bar=document.getElementById('taskBar');
+  if(!bar) return;
+  if(t.total>0){
+    bar.className='task-bar show';
+    bar.innerHTML='⚠ 対応が必要なタスク <span class="tb-n">'+t.total+'件</span><span class="tb-go">タップして確認 ›</span>';
+  } else {
+    bar.className='task-bar';
+    bar.innerHTML='';
+  }
+  try{ document.title=(t.total>0?('('+t.total+'件のタスク) '):'')+ '所属機関マイページ | O-Link'; }catch(e){}
+}
+function _taskGo(){
+  if(currentTab!=='dashboard'){ switchGroup('dashboard'); }
+  setTimeout(function(){ var el=document.getElementById('reqCard'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); },150);
+}
 // ver.20260922.01: モバイル下部ナビ（🏠ホーム/👥人材/📄書類/📰ニュース/☰メニュー）
 var _MNAV_MORE=['done','all','flow','orginfo','kyoryoku','office'];
-function _renderMobileNav(nActive, nMissing, nNews){
+function _renderMobileNav(nActive, nMissing, nNews, nTasks){
   var nav=document.getElementById('mobileNav');
   if(!nav) return;
   function it(id,ico,label,badge,warn,extraActive){
@@ -932,7 +995,7 @@ function _renderMobileNav(nActive, nMissing, nNews){
     return '<button class="mnav-item'+(act?' active':'')+'" onclick="'+on+'">'+b+'<span class="mnav-ico">'+ico+'</span><span>'+label+'</span></button>';
   }
   nav.innerHTML=
-    it('dashboard','🏠','ホーム')
+    it('dashboard','🏠','ホーム',nTasks,true)
     +it('active','👥','人材',nActive,false)
     +it('docs','📄','書類',nMissing,true)
     +it('news','📰','ニュース',nNews,true)
@@ -968,9 +1031,11 @@ function renderSidebar(){
     var b=(badge==null)?'':'<span class="sb-badge'+(warn?' warn':'')+'">'+badge+'</span>';
     return '<div class="sb-item'+(currentTab===id?' active':'')+'" onclick="switchGroup(\''+id+'\')"><span>'+label+'</span>'+b+'</div>';
   }
+  var _tasks=_companyTasks();
+  _renderTaskBar(_tasks);
   var h='<div class="sb-head"><div class="sb-head-co">🏢 '+esc(companyName||'')+' 様</div>'
     +(supportOrgName?'<div class="sb-head-org">登録支援機関<b>'+esc(supportOrgName)+'</b></div>':'')+'</div>';
-  h+=item('dashboard','ダッシュボード',null);
+  h+=item('dashboard','ダッシュボード',(_tasks.total>0?_tasks.total:null),_tasks.total>0);
   h+='<div class="sb-divider"></div>';
   h+=item('active','進行中',nActive);
   h+=item('done','発行済み・完了',nDone);
@@ -984,7 +1049,7 @@ function renderSidebar(){
   var _nu=(typeof newsUnreadCount==='function')?newsUnreadCount():0;
   h+=item('news','📰 ニュース等',(_nu>0?_nu:null),_nu>0);
   document.getElementById('sidebar').innerHTML=h;
-  _renderMobileNav(nActive, missingDocCount, _nu);  // ver.20260922.01
+  _renderMobileNav(nActive, missingDocCount, _nu, _tasks.total);  // ver.20260922.02: 🏠にタスクバッジ
 }
 
 function expInfo(dateStr){
@@ -1201,12 +1266,28 @@ function renderRequests(){
       _companyHearingRow(),
       '貴社の情報に関するヒアリングフォームにご回答をお願いします。'));
   }
+
+  // ver.20260922.02: ボールが企業側にある案件（確認・サイン・押印・返送待ち）もタスクとして表示
+  var _tk=_companyTasks();
+  if(_tk.ball>0){
+    var bb=_tk.ballCases.map(function(x){
+      return '<div class="req-row"><span class="req-nm">'+esc(x.applicant)+'</span><span style="font-size:10.5px;font-weight:800;color:#1c3d6e;background:#eef4fd;border-radius:5px;padding:2px 8px;white-space:nowrap;">'+esc(x.status)+'</span></div>';
+    }).join('')
+    +'<div style="font-size:11px;color:#64748b;margin-top:4px;">お送りしている書類のご確認・サイン・押印・ご返送をお願いいたします。ご不明点は担当者まで。</div>';
+    secs.push(_reqSection('⚽','御社のご対応待ちの案件', _tk.ball, bb));
+  }
+  if(_tk.hearing>0){
+    secs.push(_reqSection('📝','企業情報ヒアリングのご回答', 1,
+      '<div class="req-row"><span class="req-nm">企業情報ヒアリングフォームが未回答です</span></div>'
+      +'<button class="req-btn" onclick="switchGroup(\'orginfo\')">所属機関情報を開く</button>'));
+  }
+  var _title=(_tk.total>0)?('🚨 対応が必要なタスク（'+_tk.total+'件）'):'📌 ご依頼事項';
+  var urgentBar=_overdueAny?'<div style="background:#dc2626;color:#fff;font-size:12px;font-weight:900;border-radius:8px;padding:8px 12px;margin:4px 0 10px;">🚨 期限を過ぎたご依頼があります。申請スケジュール全体に影響しますので、至急のご対応をお願いいたします。</div>':'';
   if(!secs.length){
-    return '<div class="req-card ok"><div class="req-head">📌 ご依頼事項</div>'
+    return '<div class="req-card ok" id="reqCard"><div class="req-head">📌 ご依頼事項</div>'
       +'<div class="req-clear">✅ 現在ご対応いただく依頼事項はありません。</div></div>';
   }
-  var urgentBar=_overdueAny?'<div style="background:#dc2626;color:#fff;font-size:12px;font-weight:900;border-radius:8px;padding:8px 12px;margin:4px 0 10px;">🚨 期限を過ぎたご依頼があります。申請スケジュール全体に影響しますので、至急のご対応をお願いいたします。</div>':'';
-  return '<div class="req-card"'+(_overdueAny?' style="border:2px solid #dc2626;"':'')+'><div class="req-head">📌 ご依頼事項</div>'+urgentBar+secs.join('')+'</div>';
+  return '<div class="req-card" id="reqCard"'+(_overdueAny?' style="border:2px solid #dc2626;"':(_tk.total>0?' style="border:2px solid #ea580c;"':''))+'><div class="req-head">'+_title+'</div>'+urgentBar+secs.join('')+'</div>';
 }
 /* ステータス変更日を「（M月D日時点）」表記にする（DBはJST=+09:00シリアライズなので日付部をそのまま使用） */
 function _asOf(v){ if(!v) return ''; var m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/); if(!m) return ''; return '（'+(+m[2])+'月'+(+m[3])+'日時点）'; }
