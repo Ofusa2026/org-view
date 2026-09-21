@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260922.01: モバイル（560px以下）をアプリ型UIに刷新——①ヘッダーをスリム化（縦書き崩れ修正・企業名バーは1行化）②画面下部に固定ナビ（🏠ホーム/👥人材/📄書類/📰ニュース/☰メニュー・バッジ付き・セーフエリア対応）③「メニュー」はボトムシートで発行済み/すべて/申請の流れ/所属機関情報/協力確認書/事務所情報へ移動④タブ切替時に画面トップへ自動スクロール。デスクトップ表示は変更なし。 -->
 <!-- ver.20260921.21: 最終デッドライン注意文を「最終提出期限＝特定活動の在留カードが発行されるまで」基準に変更（5ヶ月前表記を廃止）。 -->
 <!-- ver.20260921.20: ダッシュボードの進捗カードに🛂入管書類の軸も追加（クローズ中はグレー・タイトルを「書類・申請の進捗」に）。国交省書類軸の下に最終提出期限の注記——「特定活動の在留カードが発行されるまでにすべての書類のご提出が必要（標準は受領日から45日以内）」を追加（国交省申請前のみ表示）。入管軸を共通関数化。 -->
 <!-- ver.20260921.19: ①国交省の進捗軸をダッシュボードにもカード表示（案件詳細に埋もれない・提出書類を開くボタン付き）。②国交省軸に「事前補正のご対応（依頼から5日以内）」ステップを追加。③最終デッドライン注意文を追加——特定活動の在留期限の5ヶ月前までに全書類、間に合わない場合は特定活動の更新申請＝工程1回増＋在留カード発行費用が追加発生する旨（特活交付後は日付入り）。軸描画を共通関数化。 -->
@@ -45,7 +46,7 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh;font-size:12px;}
 .header{background:#0f2040;color:white;padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:200;}
-.header-logo{font-size:10px;opacity:.5;letter-spacing:.5px;}
+.header-logo{font-size:10px;opacity:.5;letter-spacing:.5px;white-space:nowrap;}
 .header-title{font-size:15px;font-weight:800;white-space:nowrap;}
 .header-ver{font-size:9px;opacity:.4;letter-spacing:.3px;white-space:nowrap;flex:none;}
 .header-org{font-size:11px;opacity:.75;margin-left:auto;max-width:240px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -267,16 +268,42 @@ tr:hover td{background:#fcfcfd;}
 .sb-divider{height:1px;background:rgba(255,255,255,.08);margin:8px 12px;}
 .main-wrap{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
 .main{flex:1;padding:18px 20px;overflow:auto;min-width:0;}
+/* ver.20260922.01: モバイルをアプリ型UIに刷新（下部固定ナビ＋シート） */
+#mobileNav{display:none;}
+#mobileSheet{display:none;}
 @media(max-width:560px){
   .layout{flex-direction:column;height:auto;}
-  .sidebar{width:auto;height:auto;position:sticky;top:48px;z-index:120;display:flex;align-items:stretch;overflow-x:auto;padding:0;}
-  .sb-head{flex-shrink:0;min-width:140px;padding:6px 12px;margin:0;border-bottom:none;border-right:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;justify-content:center;}
-  .sb-head-org{margin-top:2px;}
-  .sb-item{flex-direction:column;gap:2px;padding:8px 12px;font-size:10px;border-left:none;border-bottom:3px solid transparent;white-space:nowrap;flex-shrink:0;justify-content:center;text-align:center;}
-  .sb-item.active{border-bottom-color:#6366f1;border-left:none;}
-  .sb-divider{display:none;}
+  .header{padding:9px 12px;gap:8px;}
+  .header-logo,.header-ver,.header-org{display:none;}
+  .header-title{font-size:14px;}
+  /* サイドバー→企業名バーのみ（ナビは下部へ） */
+  .sidebar{width:auto;height:auto;position:sticky;top:42px;z-index:120;display:block;padding:0;}
+  .sidebar .sb-item,.sidebar .sb-divider{display:none;}
+  .sb-head{padding:8px 14px;margin:0;border-bottom:none;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+  .sb-head-co{font-size:13px;}
+  .sb-head-org{margin-top:0;font-size:10px;}
   .main-wrap{overflow:visible;}
-  .main{overflow:visible;padding:14px 14px 30px;}
+  .main{overflow:visible;padding:14px 12px calc(84px + env(safe-area-inset-bottom));}
+  /* 下部固定ナビ */
+  #mobileNav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:400;background:#0f2040;border-top:1px solid rgba(255,255,255,.12);padding:6px 4px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -4px 16px rgba(15,32,64,.25);}
+  .mnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 2px;border:none;background:none;color:rgba(255,255,255,.55);font-weight:700;font-size:9.5px;cursor:pointer;position:relative;-webkit-tap-highlight-color:transparent;}
+  .mnav-item:active{opacity:.6;}
+  .mnav-item.active{color:#a5b4fc;}
+  .mnav-ico{font-size:19px;line-height:1;}
+  .mnav-badge{position:absolute;top:0;right:calc(50% - 22px);background:#dc2626;color:#fff;border-radius:99px;font-size:8.5px;font-weight:800;padding:1px 5px;min-width:14px;text-align:center;}
+  .mnav-badge.info{background:#6366f1;}
+  /* その他シート */
+  #mobileSheet{display:block;position:fixed;inset:0;z-index:500;pointer-events:none;}
+  #mobileSheet .msheet-bg{position:absolute;inset:0;background:rgba(15,32,64,.5);opacity:0;transition:.2s;}
+  #mobileSheet .msheet-panel{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:16px 16px 0 0;padding:10px 14px calc(16px + env(safe-area-inset-bottom));transform:translateY(105%);transition:.22s;max-height:70vh;overflow-y:auto;}
+  #mobileSheet.open{pointer-events:auto;}
+  #mobileSheet.open .msheet-bg{opacity:1;}
+  #mobileSheet.open .msheet-panel{transform:translateY(0);}
+  .msheet-grip{width:38px;height:4px;border-radius:99px;background:#e2e8f0;margin:0 auto 10px;}
+  .msheet-item{display:flex;align-items:center;gap:12px;width:100%;padding:13px 8px;border:none;background:none;font-size:13.5px;font-weight:700;color:#1c2430;border-bottom:1px solid #f1f5f9;cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent;}
+  .msheet-item:active{background:#f8fafc;}
+  .msheet-item .mi-ico{font-size:17px;width:24px;text-align:center;}
+  .msheet-item.cur{color:#4f46e5;}
 }
 </style>
 </head>
@@ -285,7 +312,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20260921.21</span>
+  <span class="header-ver">ver.20260922.01</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -293,6 +320,10 @@ tr:hover td{background:#fcfcfd;}
   <div class="sidebar" id="sidebar"></div>
   <div class="main-wrap"><div class="main" id="main"><div class="loading">⏳ 読み込み中...</div></div></div>
 </div>
+
+<!-- ver.20260922.01: モバイル下部ナビ＋その他シート -->
+<div id="mobileNav"></div>
+<div id="mobileSheet"><div class="msheet-bg" onclick="_mnavSheet(false)"></div><div class="msheet-panel" id="msheetPanel"></div></div>
 
 <!-- パスワード画面 -->
 <div id="passScreen" class="pass-screen hide">
@@ -889,7 +920,47 @@ function computeMissing(){
   });
 }
 
-function switchGroup(g){ currentTab=g; if(g==='news'&&typeof markNewsSeen==='function') markNewsSeen(); renderSidebar(); render(); var mw=document.querySelector('.main-wrap'); if(mw) mw.scrollTop=0; }
+// ver.20260922.01: モバイル下部ナビ（🏠ホーム/👥人材/📄書類/📰ニュース/☰メニュー）
+var _MNAV_MORE=['done','all','flow','orginfo','kyoryoku','office'];
+function _renderMobileNav(nActive, nMissing, nNews){
+  var nav=document.getElementById('mobileNav');
+  if(!nav) return;
+  function it(id,ico,label,badge,warn,extraActive){
+    var act=(currentTab===id)||(extraActive&&extraActive.indexOf(currentTab)>=0);
+    var b=(badge&&badge>0)?'<span class="mnav-badge'+(warn?'':' info')+'">'+badge+'</span>':'';
+    var on=(id==='more')?'_mnavSheet(true)':'switchGroup(\''+id+'\')';
+    return '<button class="mnav-item'+(act?' active':'')+'" onclick="'+on+'">'+b+'<span class="mnav-ico">'+ico+'</span><span>'+label+'</span></button>';
+  }
+  nav.innerHTML=
+    it('dashboard','🏠','ホーム')
+    +it('active','👥','人材',nActive,false)
+    +it('docs','📄','書類',nMissing,true)
+    +it('news','📰','ニュース',nNews,true)
+    +it('more','☰','メニュー',null,false,_MNAV_MORE);
+}
+function _mnavSheet(open){
+  var s=document.getElementById('mobileSheet');
+  if(!s) return;
+  if(open){
+    var items=[
+      ['done','✅','発行済み・完了'],
+      ['all','🗂','すべての人材'],
+      ['flow','🧭','申請の流れ'],
+      ['orginfo','🏢','所属機関情報'],
+      ['kyoryoku','🤝','協力確認書'],
+      ['office','🏛','事務所情報']
+    ];
+    var p=document.getElementById('msheetPanel');
+    p.innerHTML='<div class="msheet-grip"></div>'+items.map(function(x){
+      return '<button class="msheet-item'+(currentTab===x[0]?' cur':'')+'" onclick="_mnavGo(\''+x[0]+'\')"><span class="mi-ico">'+x[1]+'</span>'+x[2]+(currentTab===x[0]?' <span style="margin-left:auto;font-size:11px;">表示中</span>':'')+'</button>';
+    }).join('');
+    s.classList.add('open');
+  } else {
+    s.classList.remove('open');
+  }
+}
+function _mnavGo(g){ _mnavSheet(false); switchGroup(g); }
+function switchGroup(g){ currentTab=g; if(g==='news'&&typeof markNewsSeen==='function') markNewsSeen(); renderSidebar(); render(); var mw=document.querySelector('.main-wrap'); if(mw) mw.scrollTop=0; try{window.scrollTo({top:0,behavior:'instant'});}catch(e){window.scrollTo(0,0);} }
 function renderSidebar(){
   var nDone=0; allCases.forEach(function(c){ if(classifyCase(c)==='done') nDone++; });
   var nAll=allCases.length, nActive=nAll-nDone;
@@ -913,6 +984,7 @@ function renderSidebar(){
   var _nu=(typeof newsUnreadCount==='function')?newsUnreadCount():0;
   h+=item('news','📰 ニュース等',(_nu>0?_nu:null),_nu>0);
   document.getElementById('sidebar').innerHTML=h;
+  _renderMobileNav(nActive, missingDocCount, _nu);  // ver.20260922.01
 }
 
 function expInfo(dateStr){
