@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
 <!-- ver.20260922.01: 【不具合修正】希望在留期間確認モーダルのカード表示で、受取方法が「窓口受取」なのに「窓口申請」と誤表示されていたのを修正。実際の受取方法（窓口受取/郵送交付/メール交付）をそのまま表示。 -->
+<!-- ver.20260921.11: 案件一覧の各行に「🏢 企業詳細」ボタン（GP専用・人材詳細ボタンの隣）を追加。企業詳細モーダル＝貴社担当者（タップ編集）／Ofusa担当／案件数／国交省書類x/16＋45日期限／企業ログインPIN（専属のみ）／「企業マイページを開く」（機関スコープリンク・貴社案件のみ表示）。 -->
 <!-- ver.20260921.10: 📅スケジュール先頭に「⏱進み具合」バッジを追加——標準スケジュール（受領日から約16日で申請）との比較で🟢オンタイム/🟡要注意/🔴遅延n日を表示。審査中は経過日数（45日超は入管都合と明記）、特活完了後・特定技能1号案件は書類提出期限基準で判定。 -->
 <!-- ver.20260921.09: 📅スケジュール・📄期限バッジを特定技能1号（特活からの継続・複製案件）でも表示。デッドライン表記は在留資格で自動切替（特定技能1号案件＝特定技能1号申請のデッドライン・書類期限は申請1ヶ月前）。特定技能1号案件の人材書類は特活/特定技能1号の固定振り分けをせず、複製案件に登録された必要書類（doc_check）をそのまま1本で表示。⏸表示は従来どおり特活×国交省未申請のみ。 -->
 <!-- ver.20260921.08: 支援企業リストにPIN列を追加（専属企業のみ表示・複数機関を跨ぐ企業は「共有企業」表示でPIN非表示）。「開く」と人材詳細の企業マイページリンクを機関スコープリンク（&ot/&op）に変更——その機関が支援する案件のみサーバー側で絞り込み表示・企業PIN不要。 -->
@@ -1592,13 +1593,64 @@ function renderGpCompanies(){
   main.innerHTML=h;
 }
 var _KS_KOKKO_APPLIED_G=['申請済み','補正可能','補正完了','補正未着手','完了(許可済)'];
+// ver.20260921.11: 企業詳細ボタン（GP専用・人材詳細と同列）→ 企業詳細モーダル → 企業マイページへ移動
+function _gpCoBtn(c){
+  if(!_gpIsGpOrg()||!c.companyId) return '';
+  return ' <button onclick="event.stopPropagation();openGpCoModal(\''+esc(c.companyId)+'\')" style="background:#eef4fd;color:#1c3d6e;border:1px solid #b9d0ee;border-radius:6px;font-size:10.5px;font-weight:800;padding:3px 8px;cursor:pointer;">🏢 企業詳細</button>';
+}
+function closeGpCoModal(){ var m=document.getElementById('gpCoModal'); if(m) m.remove(); }
+function openGpCoModal(companyId){
+  closeGpCoModal();
+  var e={name:'',active:0,done:0,staff:{},minKokkoDl:null};
+  allCases.forEach(function(c){
+    if(c.companyId!==companyId) return;
+    if(!e.name && c.company) e.name=c.company;
+    var isDone=(c.status==='完了'||c.status==='審査完了');
+    if(isDone) e.done++; else e.active++;
+    if(c.staff) String(c.staff).split(/[、,・\/]/).forEach(function(s){ s=s.trim(); if(s) e.staff[s]=1; });
+    if(!isDone && (c.residenceStatus==='特定活動') && String(c.applicantField||'').indexOf('建設')>=0 && c.requestDate){
+      if(_KS_KOKKO_APPLIED_G.indexOf(c.kokkoStatus||'')<0){ var d=_ksParse(c.requestDate); if(d){ var dl=_ksAdd(d,45); if(!e.minKokkoDl||dl<e.minKokkoDl) e.minKokkoDl=dl; } } }
+  });
+  var linksReady=(_gpCoLinks!==null);
+  if(!linksReady){ _gpLoadCoLinks().then(function(){ if(document.getElementById('gpCoModal')) openGpCoModal(companyId); }); }
+  var m=(linksReady?_gpCoLinks:[]).find(function(x){return x.company_id===companyId;});
+  var kokkoMap=(coDocsAll[companyId]||{});
+  var recv=0; requiredDocsCoKokko.forEach(function(d){ var v=kokkoMap[d]; if(v&&v.staff&&v.staff!=='false'&&v.staff!=='') recv++; });
+  var today=new Date(); today.setHours(0,0,0,0);
+  var kokkoLine=recv+' / '+requiredDocsCoKokko.length+' 受領';
+  if(recv<requiredDocsCoKokko.length && e.minKokkoDl){
+    var days=Math.round((e.minKokkoDl-today)/86400000);
+    kokkoLine+=(days<0?'　<span style="color:#b91c1c;font-weight:800;">⚠ 提出期限超過（〜'+_ksFmt(e.minKokkoDl)+'）</span>':'　<span style="color:#64748b;">提出期限 〜'+_ksFmt(e.minKokkoDl)+'</span>');
+  }
+  var gpStaff=m?(m.gp_staff||''):'';
+  var pinTxt=!linksReady?'…':(!m?'—':(m.shared?'<span style="font-size:10px;color:#64748b;background:#f1f5f9;border-radius:4px;padding:2px 6px;">共有企業（PIN非表示）</span>':(m.pin?'<span style="font-family:monospace;font-weight:800;letter-spacing:1px;">'+esc(m.pin)+'</span>':'未設定')));
+  var _otq='&ot='+encodeURIComponent(currentToken)+(currentPass?('&op='+encodeURIComponent(currentPass)):'');
+  var openBtn=(m&&m.token)
+    ? '<a href="https://ofusa2026.github.io/org-view/company.html?token='+encodeURIComponent(m.token)+_otq+'" target="_blank" rel="noopener" style="display:inline-block;background:#0f2040;color:#fff;font-size:12px;font-weight:800;border-radius:8px;padding:9px 16px;text-decoration:none;">🏢 企業マイページを開く</a>'
+    : (linksReady?'<span style="color:#94a3b8;font-size:11.5px;">企業マイページ未発行</span>':'<span style="color:#cbd5e1;">読込中…</span>');
+  function row(l,v){ return '<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid #eef1f5;font-size:12.5px;"><span style="width:110px;flex:none;color:#64748b;font-weight:700;">'+l+'</span><span style="flex:1;">'+v+'</span></div>'; }
+  var html='<div id="gpCoModal" onclick="if(event.target.id===\'gpCoModal\')closeGpCoModal();" style="position:fixed;inset:0;background:rgba(15,32,64,.55);z-index:600;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;">'
+    +'<div style="background:#fff;border-radius:14px;max-width:560px;width:100%;padding:20px 22px;">'
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">'
+    +'<div style="font-size:16px;font-weight:900;color:#0f2040;">🏢 '+esc(e.name||companyId)+'</div>'
+    +'<button onclick="closeGpCoModal()" style="background:#f1f5f9;border:none;border-radius:8px;font-size:13px;font-weight:800;padding:6px 10px;cursor:pointer;">✕</button></div>'
+    +row('貴社担当者','<span style="cursor:pointer;border-bottom:1px dashed #94a3b8;" onclick="_gpEditStaff(\''+esc(companyId)+'\')">'+(gpStaff?esc(gpStaff):'<span style="color:#94a3b8;">未設定 ✎</span>')+'</span>')
+    +row('Ofusa担当',esc(Object.keys(e.staff).join('・')||'—'))
+    +row('案件','進行中 <b>'+e.active+'</b>／完了 '+e.done)
+    +row('国交省書類',kokkoLine)
+    +row('企業ログインPIN',pinTxt)
+    +'<div style="margin-top:14px;">'+openBtn+'</div>'
+    +'<div style="font-size:10.5px;color:#94a3b8;margin-top:6px;">「開く」で表示される企業ページには、貴社が支援している案件のみが表示されます。</div>'
+    +'</div></div>';
+  document.body.insertAdjacentHTML('beforeend',html);
+}
 function _gpEditStaff(companyId){
   var m=(_gpCoLinks||[]).find(function(x){return x.company_id===companyId;});
   var cur=m?(m.gp_staff||''):'';
   var v=prompt('この企業の貴社（グローバルパートナーズ）担当者名を入力してください（空欄で削除）', cur);
   if(v===null) return;
   sbRpc('org_set_gp_staff',{p_token:currentToken,p_pass:(currentPass||null),p_company_id:companyId,p_staff:v}).then(function(r){
-    if(r&&r.ok){ if(m) m.gp_staff=r.gp_staff||''; if(currentGroup==='gpcompanies') renderMain(); }
+    if(r&&r.ok){ if(m) m.gp_staff=r.gp_staff||''; if(currentGroup==='gpcompanies') renderMain(); if(document.getElementById('gpCoModal')) openGpCoModal(companyId); }
     else alert('保存に失敗しました。');
   }).catch(function(){ alert('保存に失敗しました。'); });
 }
@@ -2353,7 +2405,7 @@ function buildRow(c){
       +'<div style="line-height:1.45;">'+_rsBadge+'<span style="font-size:13px;font-weight:700;color:#0f2040;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</span></div>'
       +'<div style="font-size:12px;color:#475569;font-weight:600;white-space:normal;word-break:break-word;line-height:1.4;margin-top:3px;">'+esc(c.company||'—')+'</div>'
       +'<div style="font-size:12px;color:#6b7280;line-height:1.4;">'+esc(c.applicant||'')+'</div>'
-      +'<div>'+_personBtn(cid)+'</div>'
+      +'<div>'+_personBtn(cid)+_gpCoBtn(c)+'</div>'
       +'</td>';
     // 組合受領日 独立列
     h+='<td data-col-key="gpKumiaiDate" style="white-space:nowrap;text-align:center;font-size:12px;color:#475569;min-width:96px;">'

@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260921.21: 最終デッドライン注意文を「最終提出期限＝特定活動の在留カードが発行されるまで」基準に変更（5ヶ月前表記を廃止）。 -->
 <!-- ver.20260921.20: ダッシュボードの進捗カードに🛂入管書類の軸も追加（クローズ中はグレー・タイトルを「書類・申請の進捗」に）。国交省書類軸の下に最終提出期限の注記——「特定活動の在留カードが発行されるまでにすべての書類のご提出が必要（標準は受領日から45日以内）」を追加（国交省申請前のみ表示）。入管軸を共通関数化。 -->
 <!-- ver.20260921.19: ①国交省の進捗軸をダッシュボードにもカード表示（案件詳細に埋もれない・提出書類を開くボタン付き）。②国交省軸に「事前補正のご対応（依頼から5日以内）」ステップを追加。③最終デッドライン注意文を追加——特定活動の在留期限の5ヶ月前までに全書類、間に合わない場合は特定活動の更新申請＝工程1回増＋在留カード発行費用が追加発生する旨（特活交付後は日付入り）。軸描画を共通関数化。 -->
 <!-- ver.20260921.18: 受入実績「有」（companies.kokko_experience=有）の企業対応——ご依頼事項は国交省書類一式の代わりに🖥就労管理システムのID・パスワード提供依頼（kokko_id/kokko_pw両方入力で自動非表示）。提出書類ビューの国交省セクションはID/PW状態のみ表示（16点は不足にしない）。タイムライン🏗軸もID提供→申請→許可の3ステップに切替。RPC company_view_getにkokko_exp/has_kokko_idpw追加（値は渡さない）。 -->
@@ -284,7 +285,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20260921.20</span>
+  <span class="header-ver">ver.20260921.21</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -741,11 +742,10 @@ function _cksNyukanAxisHtml(expireD, t1Applied){
     {nm:'特定技能1号申請', d:gateClosed?null:dl, dt:gateClosed?'⏸':'', done:t1Applied}
   ], gateClosed, gateClosed?'⏸ 国交省申請が完了するとオープンします':'');
 }
-// 最終デッドラインの注意文（特活交付後は日付入り）
+// 最終提出期限の注意文（ver.20260921.21: 特定活動の在留カード発行まで基準に変更）
 function _cksFinalDlNote(finalD){
-  var dtx=finalD?('（'+finalD.getFullYear()+'/'+(finalD.getMonth()+1)+'/'+finalD.getDate()+'）'):'';
   return '<div style="background:#fdeeee;border:1px solid #e5a3a3;border-radius:10px;padding:10px 14px;margin:8px 0;font-size:12px;color:#7a1f1f;line-height:1.7;">'
-    +'<b>⚠ 最終デッドライン：特定活動の在留期限の5ヶ月前'+dtx+'までに、すべての書類が揃っている必要があります。</b><br>'
+    +'<b>⚠ 最終提出期限：特定活動の在留カードが発行されるまでに、すべての書類のご提出が必要です。</b><br>'
     +'各期限に間に合わない場合は<b>特定活動の更新申請</b>が必要となり、申請工程が1回増えるため、その分の<b>在留カードの発行に係る費用が追加で発生</b>してしまいます。あらかじめご理解ください。</div>';
 }
 function _cksSchedule(c){
