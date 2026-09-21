@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260921.01: 人材詳細モーダルに「申請スケジュール（建設特定技能）」セクションを追加。希望在留資格「特定活動」×建設分野の案件で、依頼日・受付日・在留期限・一時帰国・ステータス・国交省ステータスから各工程の期限/実績/現在地を自動表示し、書類チェックリスト（doc_check/co_doc_check）の受領状況と連動した進捗チップを表示。申請デッドライン（在留期限前日/出国日前日）バナー付き。表示対象はオープンケア協同組合・REMONTADA株式会社・グローバルパートナーズ様の3機関のみ（orgName前方一致。アライズ様は対象外）。WHATS_NEWにorgs指定（機関名リスト）によるaudience制御を追加。 -->
 <!-- ver.20260916.01: 希望在留期間確認モーダルの決済手数料注記を動的化。3年以上(3年/5年)を選ぶと550円/件、それ以外330円/件、混在時は両方明示。 -->
 <!-- ver.20260915.01: 【不具合修正】新規案件依頼の「希望在留期間」が依頼テキスト（本人ステータス）に出力されていなかったのを修正。_buildLineReportText の本人ブロックに「希望在留期間」行を追加し、過去依頼の再コピー経路（_intakeGroupToPayload）でも hoped_stay_period をマップするようにした。 -->
 <!-- ver.20260914.01: 新規案件依頼の受取方法：申請種別が「認定」のとき、郵送交付/窓口受取の選択肢自体を非表示にして「メール交付」のみに。まとめて貼り付けで入った受取方法も認定なら上書き固定 -->
@@ -1180,6 +1181,16 @@ var NOTIF_LABELS={'申請済(番号待)':'📤 申請済（番号待ち）','受
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
   {
+    version: 'ver.20260921.01',
+    date: '2026-09-21',
+    audience: 'orgs',
+    orgs: ['オープンケア協同組合','REMONTADA','グローバルパートナーズ'],
+    notify: true,
+    items: [
+      '📅 人材詳細に<b>「申請スケジュール（建設特定技能）」</b>を追加しました。特定活動→特定技能1号の各工程の期限・現在の進捗・申請デッドライン（在留期限の前日／一時帰国の出発前日）が自動表示され、書類チェックリストの受領状況と連動して進み具合をご確認いただけます。'
+    ]
+  },
+  {
     version: 'ver.20260901.10',
     date: '2026-09-01',
     audience: 'all',
@@ -1477,6 +1488,141 @@ function _docChecklistHtml(docMap, docFiles){
   return summary+'<div>'+rows+'</div>';
 }
 function _personSectionTitle(t){ return '<div style="font-size:13px;font-weight:800;color:#0f2040;margin:16px 0 8px;padding-bottom:5px;border-bottom:2px solid #e2e8f0;">'+t+'</div>'; }
+// ===== ver.20260921.01: 建設特定技能 申請スケジュール（人材詳細モーダル） =====
+// 対象：希望在留資格「特定活動」× 分野に「建設」を含む案件。
+// requestDate(依頼日)から各工程の期限を計算し、receiptDate(受付)・status・kokkoStatusで実績/現在地を表示。
+// 書類チェックリスト（doc_check / co_doc_check）の受領数と連動した進捗チップを出す。
+var _KS_ORGS=['オープンケア協同組合','REMONTADA','グローバルパートナーズ'];
+function _ksOrgAllowed(){ var n=orgName||''; return _KS_ORGS.some(function(k){ return n.indexOf(k)===0; }); }
+var _KS_HOLIDAYS=['2026-01-01','2026-01-12','2026-02-11','2026-02-23','2026-03-20','2026-04-29','2026-05-03','2026-05-04','2026-05-05','2026-05-06','2026-07-20','2026-08-11','2026-09-21','2026-09-22','2026-09-23','2026-10-12','2026-11-03','2026-11-23','2027-01-01','2027-01-11','2027-02-11','2027-02-23','2027-03-21','2027-03-22','2027-04-29','2027-05-03','2027-05-04','2027-05-05','2027-07-19','2027-08-11','2027-09-20','2027-09-23','2027-10-11','2027-11-03','2027-11-23'];
+function _ksParse(s){ if(!s) return null; var m=String(s).match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/); if(!m) return null; return new Date(+m[1],+m[2]-1,+m[3]); }
+function _ksYmd(d){ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+function _ksAdd(d,n){ var r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function _ksAddM(d,n){ var r=new Date(d),day=r.getDate(); r.setMonth(r.getMonth()+n); if(r.getDate()!==day) r.setDate(0); return r; }
+function _ksIsBiz(d){ var w=d.getDay(); return w!==0&&w!==6&&_KS_HOLIDAYS.indexOf(_ksYmd(d))<0; }
+function _ksAddBiz(d,n){ var r=new Date(d),c=0; while(c<n){ r=_ksAdd(r,1); if(_ksIsBiz(r)) c++; } return r; }
+function _ksFmt(d){ if(!d) return '—'; var W=['日','月','火','水','木','金','土']; return (d.getMonth()+1)+'/'+d.getDate()+'('+W[d.getDay()]+')'; }
+function _ksFmtY(d){ if(!d) return '—'; var W=['日','月','火','水','木','金','土']; return d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+'('+W[d.getDay()]+')'; }
+function _ksDocStats(map){
+  var done=0,total=0;
+  if(map) Object.keys(map).forEach(function(name){
+    var d=map[name]||{};
+    if(_hasV(d.skip)||_hasV(d.autoskip)) return;
+    if(!_hasV(d.staff)&&!_hasV(d.req)&&!_hasV(d.sashimodoshi)&&(_hasV(d.mailauto)||_hasV(d.waitmail))) return;
+    if(/\.(jpe?g|png|gif|webp|pdf|heic|heif|bmp|tiff?)$/i.test(name)) return;
+    total++; if(_hasV(d.staff)) done++;
+  });
+  return {done:done,total:total};
+}
+function _ksChip(label,st){
+  if(!st||!st.total) return '<span style="font-size:10px;color:#94a3b8;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:2px 8px;">'+label+' —</span>';
+  var full=st.done>=st.total;
+  var col=full?'#16a34a':'#ea580c', bg=full?'#f0fdf4':'#fff7ed', bor=full?'#86efac':'#fed7aa';
+  return '<span style="font-size:10px;font-weight:800;color:'+col+';background:'+bg+';border:1px solid '+bor+';border-radius:5px;padding:2px 8px;">'+label+' 受領 '+st.done+'/'+st.total+'</span>';
+}
+function _ksRow(mark,name,rule,dateHtml,extra){
+  var mk, mkStyle;
+  if(mark==='done'){ mk='✓'; mkStyle='background:#f0fdf4;color:#16a34a;border:1px solid #86efac;'; }
+  else if(mark==='now'){ mk='●'; mkStyle='background:#2563eb;color:#fff;border:1px solid #2563eb;'; }
+  else { mk='○'; mkStyle='background:#f8fafc;color:#94a3b8;border:1px solid #e2e8f0;'; }
+  return '<div style="display:flex;gap:9px;padding:6px 2px;border-bottom:1px solid #f1f5f9;align-items:flex-start;">'
+    +'<span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:1px;'+mkStyle+'">'+mk+'</span>'
+    +'<div style="flex:1;min-width:0;">'
+      +'<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">'
+        +'<span style="font-size:11.5px;font-weight:700;color:'+(mark==='now'?'#1d4ed8':'#0f2040')+';">'+name+'</span>'
+        +'<span style="font-size:12px;font-weight:800;color:'+(mark==='done'?'#94a3b8':'#1d4ed8')+';white-space:nowrap;">'+dateHtml+'</span>'
+      +'</div>'
+      +'<div style="font-size:10px;color:#94a3b8;">'+rule+'</div>'
+      +(extra||'')
+    +'</div></div>';
+}
+function _ksScheduleHtml(c,p,caseId){
+  if(!_ksOrgAllowed()) return '';
+  if((c.residenceStatus||'')!=='特定活動') return '';
+  if(String(c.applicantField||'').indexOf('建設')<0) return '';
+  // 現在地（STATUS_COLSの6段階）
+  var stage=-1;
+  for(var i=0;i<STATUS_COLS.length;i++){ if(STATUS_COLS[i].statuses.indexOf(c.status)>=0){ stage=i; break; } }
+  var N=_ksParse(c.requestDate);
+  var expire=_ksParse(c.expire||(p&&p.expire));
+  var tripOut=_ksParse(p&&p.temp_return), tripIn=_ksParse(p&&p.temp_return_in);
+  var appActual=_ksParse(c.receiptDate);
+  // デッドライン：在留期限の前日 / 一時帰国出国日の前日 の早い方
+  var dl=null,dlSrc='';
+  if(expire){ dl=_ksAdd(expire,-1); dlSrc='在留期限の前日'; }
+  if(tripOut){ var e2=_ksAdd(tripOut,-1); if(!dl||e2<dl){ dl=e2; dlSrc='一時帰国の出発日の前日'; } }
+  // 期限チェーン（依頼日起点・各工程が期限当日完了の最遅想定）
+  var soufu=N?_ksAddBiz(N,3):null;
+  var kakunin=soufu?_ksAdd(soufu,3):null;
+  var sign=kakunin?_ksAdd(kakunin,3):null;
+  var ouin=sign?_ksAdd(_ksAdd(sign,1),3):null;
+  var appPlan=ouin?_ksAdd(ouin,3):null;
+  var appDate=appActual||appPlan;
+  var s1=appDate?_ksAdd(appDate,30):null, s2=appDate?_ksAdd(appDate,45):null;
+  var c1=s2?_ksAdd(s2,10):null, c2=s2?_ksAdd(s2,14):null;
+  var h='';
+  h+=_personSectionTitle('📅 申請スケジュール（建設特定技能）');
+  // デッドラインバナー
+  if(dl){
+    var dlNote='';
+    if(stage>=0&&stage<3&&appDate){
+      dlNote = (appDate<=dl)
+        ? '<span style="color:#16a34a;font-weight:800;">✓ 申請予定（'+_ksFmt(appDate)+'）は間に合う見込みです</span>'
+        : '<span style="color:#b45309;font-weight:800;">⚠ 申請予定（'+_ksFmt(appDate)+'）ではデッドラインを過ぎます。工程の前倒しが必要です</span>';
+    } else if(stage>=3){ dlNote='<span style="color:#16a34a;font-weight:800;">✓ 申請済みです</span>'; }
+    h+='<div style="background:#fef9c3;border:1px solid #f59e0b;border-radius:8px;padding:10px 14px;margin-bottom:8px;">'
+      +'<div style="font-size:11px;font-weight:800;color:#78350f;">⛔ 特定活動申請のデッドライン（'+dlSrc+'）</div>'
+      +'<div style="font-size:17px;font-weight:900;color:#b45309;">'+_ksFmtY(dl)+'</div>'
+      +'<div style="font-size:11px;color:#78350f;line-height:1.6;">この日までに特定活動申請のすべてが完了している必要があります（日本にいない期間は申請できません）。'+(dlNote?'<br>'+dlNote:'')+'</div>'
+      +'</div>';
+  }
+  if(!N&&!appActual){
+    h+='<div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">依頼日が未登録のため、期限の自動計算は表示できません。</div>';
+  }
+  // 書類連動チップ
+  var stP=_ksDocStats(personDocsAll[caseId]);
+  var stKo=null, stNy=null;
+  if(c.companyId&&coDocsAll[c.companyId]){
+    var _m=coDocsAll[c.companyId], _ko={}, _ny={};
+    var _kl=(Array.isArray(requiredDocsCoKokko)?requiredDocsCoKokko:[]);
+    Object.keys(_m).forEach(function(nm){ if(_kl.indexOf(nm)>=0) _ko[nm]=_m[nm]; else _ny[nm]=_m[nm]; });
+    stKo=_ksDocStats(_ko); stNy=_ksDocStats(_ny);
+  }
+  h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">'
+    +_ksChip('人材書類',stP)
+    +(stKo?_ksChip('企業・国交省',stKo):'')
+    +(stNy?_ksChip('企業・入管',stNy):'')
+    +'<span style="font-size:10px;color:#94a3b8;align-self:center;">※下の書類チェックリストと連動</span>'
+    +'</div>';
+  // タイムライン（第1フェーズ）
+  function mk(idx){ if(stage<0) return 'todo'; if(stage>idx) return 'done'; if(stage===idx) return 'now'; return 'todo'; }
+  h+='<div style="border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;margin-bottom:8px;">';
+  h+=_ksRow(mk(0),'雇用条件書の作成・企業確認','依頼日から3営業日以内に送付 → 確認3日以内', N?(_ksFmt(soufu)+' 〜 '+_ksFmt(kakunin)):'—','');
+  h+=_ksRow(mk(1),'申請人サイン対応','確定後3日以内にサイン依頼', sign?('〜 '+_ksFmt(sign)):'—','');
+  h+=_ksRow(mk(2),'企業押印・申請準備','サイン後1日以内に押印依頼（対応3日以内）', ouin?('〜 '+_ksFmt(ouin)):'—','');
+  h+=_ksRow(stage>=3?'done':mk(2)==='done'?'now':'todo','特定活動申請'+(appActual?'（受付済）':''),'押印後3日以内。日本にいない期間は申請不可', appDate?_ksFmt(appDate):'—','');
+  h+=_ksRow(mk(3)==='done'||stage>=4?'done':(stage===3?'now':'todo'),'審査完了','申請から30〜45日 ※入管の審査状況により前後する場合があります', (s1?(_ksFmt(s1)+' 〜 '+_ksFmt(s2)):'—'),
+    (tripOut&&tripIn&&s1&&s2&&s1<=tripIn&&s2>=tripOut?'<div style="font-size:10px;color:#b45309;">⚠ 審査完了時に日本にいない場合は、帰国後（'+_ksFmt(tripIn)+'以降）に郵送交付の手続きになります</div>':''));
+  h+=_ksRow(stage>=5?'done':(stage===4?'now':'todo'),'在留カード発行 → 郵送交付','発行〜送付は10〜14日', c1?(_ksFmt(c1)+' 〜 '+_ksFmt(c2)):'—','');
+  h+='</div>';
+  // 第2フェーズ（国交省〜特定技能1号）
+  var kokkoBadge = c.kokkoStatus ? '<span style="font-size:10px;font-weight:800;color:#0369a1;background:#e0f2fe;border:1px solid #7dd3fc;border-radius:5px;padding:2px 8px;">国交省：'+esc(c.kokkoStatus)+'</span>'
+                                 : '<span style="font-size:10px;color:#94a3b8;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:2px 8px;">国交省：未登録</span>';
+  h+='<div style="border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;background:#f8fafc;">'
+    +'<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:5px;">'
+      +'<span style="font-size:11px;font-weight:800;color:#0f2040;">第2フェーズ：国交省 → 特定技能1号</span>'+kokkoBadge
+    +'</div>'
+    +'<div style="font-size:10.5px;color:#475569;line-height:1.7;">'
+      +'・新しい在留カード発行から<b>約1ヶ月</b>で国交省申請（事前補正の対応後）<br>'
+      +'・国交省申請の約1ヶ月後から補正依頼あり（0〜3回・随時3日以内に対応をお願いします）／許可は申請から約3ヶ月<br>'
+      +'・カード発行から<b>3ヶ月以内</b>に特1用書類の取得開始、<b>4ヶ月まで</b>に弊社へ提出、<b>5ヶ月以内</b>に特定技能1号申請<br>'
+      +'・⚠ 課税・納税証明書・住民票等は<b>申請時点で発行3ヶ月以内</b>が必要です（早く取りすぎにもご注意ください）'
+      +(stage>=5&&expire?'<br>・⛔ 特定技能1号申請のデッドライン：<b style="color:#b45309;">'+_ksFmtY(_ksAdd(expire,-1))+'</b>（特定活動の在留期限の前日）— この日までに特1申請のすべてが完了している必要があります':'')
+    +'</div>'
+    +'</div>';
+  return h;
+}
+// ===== /建設特定技能 申請スケジュール =====
 function openPersonModal(caseId){
   var c=allCases.find(function(x){return x.id===caseId;})||{};
   var p=allPersons[caseId]||{};
@@ -1494,6 +1640,8 @@ function openPersonModal(caseId){
   var caseRows=[['担当(機関側)',c.clientStaff],['担当(大房側)',c.staff],['受付番号',c.receiptNo],['受取方法',c.deliveryMethod==='window'?'窓口受取':'郵送'],['在留期限',c.expire],['帰国予定',c.tempReturn]];
   var caseGrid=''; caseRows.forEach(function(r){ if(_hasV(r[1])) caseGrid+='<div style="padding:4px 0;"><span style="display:inline-block;min-width:96px;font-size:10px;color:#94a3b8;font-weight:700;">'+esc(r[0])+'</span><span style="font-size:12px;color:#1e293b;">'+esc(String(r[1]))+'</span></div>'; });
   if(caseGrid){ h+=_personSectionTitle('📌 案件情報'); h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 18px;">'+caseGrid+'</div>'; }
+  // ver.20260921.01: 建設特定技能 申請スケジュール（特活×建設のみ表示）
+  h+=_ksScheduleHtml(c,p,caseId);
   // 人材情報グリッド（全項目）
   // ver.20260701.test64: 在留資格で項目を出し分け（特定技能=学歴非表示／技人国=技能評価・日本語試験非表示）
   var _rs=c.residenceStatus||'';
@@ -6228,6 +6376,12 @@ function _filterWhatsNewByAudience(entries){
   if(!entries) return [];
   var isAidem = _isAidemViewer();
   return entries.filter(function(e){
+    // ver.20260921.01: orgs（機関名リスト・前方一致）指定があればそれを最優先。
+    // 「アライズ様（オープンケア協同組合）」のような括弧内一致を誤って拾わないよう、部分一致ではなく前方一致で判定する。
+    if(Array.isArray(e.orgs) && e.orgs.length){
+      var n = orgName || '';
+      return e.orgs.some(function(k){ return n.indexOf(k) === 0; });
+    }
     var aud = e.audience || 'all';
     if(aud === 'all') return true;
     if(aud === 'aidem') return isAidem;
