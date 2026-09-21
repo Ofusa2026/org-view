@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260921.15: ①国交省書類は各行タップで説明・見本（アップロードページと同一メタ・★時間がかかる書類マーク付き）を表示。②タイムラインを横型ステップラインに刷新——受領→条件書確認→サイン→押印→申請→審査完了→カード交付の各工程に標準期限を表示し、遅れ工程は🔴⚠遅れ・完了🟢・現在🔵で色分け。③ご依頼事項に残り日数チップ（あとn日／n日超過・至急）を追加、期限超過時はカード赤枠＋🚨バナーで強調。 -->
 <!-- ver.20260921.14: 提出書類の国交省セクションを16点フル表示（未提出も一覧）。6委任状・8同等報酬説明書・12雇用契約書・15重要事項説明書は「📝大房行政書士法人が作成」バッジとし、提出済/未提出の対象外・ご依頼事項の不足リストからも除外。 -->
 <!-- ver.20260921.13: ①ご依頼事項に🏗国交省申請書類（16点の未受領＋受領日から45日の提出期限・国交省申請前のみ）／🛂入管提出書類（オープン時のみ・特定技能1号申請1ヶ月前の期限付き）を表示（期限超過は⚠赤）。②📅タイムライン先頭に「⏱進み具合」バッジ——標準スケジュール（受領日→約16日で申請予定）比で🟢オンタイム/🟡要注意/🔴遅延n日、審査中は経過日数（45日超は入管都合と明記）、完了後・特定技能1号案件は書類提出期限基準。 -->
 <!-- ver.20260921.12: 提出書類ビューを🏗国交省／🛂入管に分割。国交省書類は専用アップロードページ（kokko_dataup.html）へのボタンを追加。建設×特活で国交省未申請の間は入管書類をクローズ（⏸バナー＋グレーアウト・アップロードボタン非表示）、オープン条件＝入管書類のいずれかに依頼日(req)が入る、または国交省ステータスが補正未着手/補正可能/補正完了/完了(許可済)（「申請済み」段階ではまだ開かない）。画面表示バージョンラベルも更新。📅スケジュールを特定技能1号（継続・複製案件）でも表示（ラベル自動切替・特定技能1号書類期限表示・⏸税書類バナーは特活のみ）。 -->
@@ -278,7 +279,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20260921.14</span>
+  <span class="header-ver">ver.20260921.15</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -701,17 +702,48 @@ function _cksSchedule(c){
       +(days>=0?'　残り <b>'+days+'日</b>':'　<b>期限超過</b>')
       +'<br>この日までにサイン・押印・書類提出のすべてが必要です（日本にいない期間は申請できません）。</div>';
   }
-  // 進捗ドット
-  h+='<div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin:4px 0 8px;">';
-  for(var j=0;j<_CKS_COLS.length;j++){
-    var st=(stage<0)?'':(j<stage?'done':(j===stage?'now':''));
-    var col=st==='done'?'#16a34a':(st==='now'?'#2563eb':'#cbd5e1');
-    var w=st==='now'?'800':'600';
-    h+='<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:'+w+';color:'+(st?'#1c2430':'#94a3b8')+';">'
-      +'<span style="width:9px;height:9px;border-radius:50%;background:'+col+';display:inline-block;"></span>'+_CKS_COLS[j].label+'</span>'
-      +(j<_CKS_COLS.length-1?'<span style="color:#cbd5e1;">›</span>':'');
-  }
-  h+='</div>';
+  // ver.20260921.15: 横型ステップライン——各アクションの期限つき。遅れは赤、完了は緑、現在は青
+  (function(){
+    var soufu=reqD?_cksAddBiz(reqD,3):null;
+    var kakunin=soufu?_cksAdd(soufu,3):null;
+    var sign=kakunin?_cksAdd(kakunin,3):null;
+    var ouin=sign?_cksAdd(_cksAdd(sign,1),3):null;
+    var appPlan=ouin?_cksAdd(ouin,3):null;
+    var appActual=_cksParse(c.receipt_date);
+    var appD=appActual||appPlan;
+    var shinsaEnd=appD?_cksAdd(appD,45):null;
+    var cardEnd=shinsaEnd?_cksAdd(shinsaEnd,14):null;
+    var steps=[
+      {nm:'案件受領', d:reqD, done:!!reqD},
+      {nm:'条件書確認', d:kakunin, done:stage>=1},
+      {nm:'サイン', d:sign, done:stage>=2},
+      {nm:'押印', d:ouin, done:stage>=3||applied},
+      {nm:_appLabel+'申請', d:appD, done:applied},
+      {nm:'審査完了', d:shinsaEnd, done:stage>=4},
+      {nm:'カード交付', d:cardEnd, done:stage>=5}
+    ];
+    var curIdx=-1;
+    for(var k=0;k<steps.length;k++){ if(!steps[k].done){ curIdx=k; break; } }
+    var sh='<div style="overflow-x:auto;margin:4px 0 10px;"><div style="display:flex;align-items:flex-start;min-width:560px;">';
+    steps.forEach(function(s2,k){
+      var late=!s2.done && s2.d && s2.d<today;
+      var isCur=(k===curIdx);
+      var col = s2.done?'#16a34a' : late?'#dc2626' : isCur?'#2563eb':'#cbd5e1';
+      var mark = s2.done?'✓' : late?'!' : '';
+      var txtCol = s2.done?'#166534' : late?'#b91c1c' : isCur?'#1d4ed8':'#94a3b8';
+      sh+='<div style="display:flex;flex-direction:column;align-items:center;width:80px;flex:none;">'
+        +'<div style="width:20px;height:20px;border-radius:50%;background:'+(s2.done||late?col:'#fff')+';border:2.5px solid '+col+';color:#fff;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;'+(isCur&&!late?'box-shadow:0 0 0 3px #dbeafe;':'')+'">'+mark+'</div>'
+        +'<div style="font-size:10px;font-weight:'+(isCur||late?'900':'700')+';color:'+txtCol+';margin-top:4px;text-align:center;line-height:1.3;">'+s2.nm+'</div>'
+        +'<div style="font-size:9.5px;color:'+(late?'#b91c1c':'#94a3b8')+';font-weight:'+(late?'800':'600')+';">'+(s2.d?('〜'+_cksFmt(s2.d)):'—')+(late?'<br>⚠遅れ':'')+'</div>'
+        +'</div>';
+      if(k<steps.length-1){
+        sh+='<div style="flex:1;min-width:12px;height:2.5px;background:'+(s2.done?'#16a34a':'#e2e8f0')+';margin-top:9px;"></div>';
+      }
+    });
+    sh+='</div></div>';
+    sh+='<div style="font-size:10px;color:#94a3b8;margin:-4px 0 8px;">🟢完了　🔵現在の工程　🔴期限に遅れています（各期限は案件受領日からの標準スケジュール）</div>';
+    h+=sh;
+  })();
   // 期限表
   function row(l,v){ return '<div class="dt-row"><span class="dt-l">'+l+'</span><span class="dt-v">'+v+'</span></div>'; }
   if(reqD){
@@ -906,10 +938,17 @@ function renderRequests(){
     if(ex){ var due=_cksAddM(_cksAdd(ex,-1),-1); if(!minT1Due||due<minT1Due) minT1Due=due; }
   });
   var today=new Date(); today.setHours(0,0,0,0);
+  var _overdueAny=false;
   function dlLine(due,label){
     if(!due) return '';
-    var over=due<today;
-    return '<div style="font-size:11px;font-weight:800;color:'+(over?'#b91c1c':'#b45309')+';margin:2px 0 6px;">📄 提出期限 〜'+_cksFmt(due)+'（'+label+'）'+(over?'　⚠ 期限超過':'')+'</div>';
+    var days=Math.round((due-today)/86400000);
+    var over=days<0;
+    if(over) _overdueAny=true;
+    var chip;
+    if(over) chip='<span style="background:#dc2626;color:#fff;border-radius:6px;padding:2px 8px;font-weight:900;">⚠ '+(-days)+'日超過・至急ご対応ください</span>';
+    else if(days<=7) chip='<span style="background:#f59e0b;color:#fff;border-radius:6px;padding:2px 8px;font-weight:900;">⏳ あと'+days+'日</span>';
+    else chip='<span style="background:#eef4fd;color:#1c3d6e;border-radius:6px;padding:2px 8px;font-weight:800;">⏳ あと'+days+'日</span>';
+    return '<div style="font-size:11px;font-weight:800;color:'+(over?'#b91c1c':'#b45309')+';margin:2px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">📄 提出期限 〜'+_cksFmt(due)+'（'+label+'）'+chip+'</div>';
   }
   var missing=[];
   Object.keys(coDocs).forEach(function(name){ if(docInList(coDocs[name]) && docState(coDocs[name])==='todo') missing.push(name); });
@@ -964,7 +1003,8 @@ function renderRequests(){
     return '<div class="req-card ok"><div class="req-head">📌 ご依頼事項</div>'
       +'<div class="req-clear">✅ 現在ご対応いただく依頼事項はありません。</div></div>';
   }
-  return '<div class="req-card"><div class="req-head">📌 ご依頼事項</div>'+secs.join('')+'</div>';
+  var urgentBar=_overdueAny?'<div style="background:#dc2626;color:#fff;font-size:12px;font-weight:900;border-radius:8px;padding:8px 12px;margin:4px 0 10px;">🚨 期限を過ぎたご依頼があります。申請スケジュール全体に影響しますので、至急のご対応をお願いいたします。</div>':'';
+  return '<div class="req-card"'+(_overdueAny?' style="border:2px solid #dc2626;"':'')+'><div class="req-head">📌 ご依頼事項</div>'+urgentBar+secs.join('')+'</div>';
 }
 /* ステータス変更日を「（M月D日時点）」表記にする（DBはJST=+09:00シリアライズなので日付部をそのまま使用） */
 function _asOf(v){ if(!v) return ''; var m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/); if(!m) return ''; return '（'+(+m[2])+'月'+(+m[3])+'日時点）'; }
@@ -1496,22 +1536,40 @@ function _docRowsHtml(names){
   });
   return s;
 }
+// ver.20260921.15: 国交省書類の説明・見本（アップロードページと同じ内容）
+var _KOKKO_SAMPLE_BASE='https://ofusa2026.github.io/upload/samples/';
+
 // ver.20260921.14: 国交省16点を番号順に全件表示。大房作成4点は📝バッジ、それ以外は提出済/未提出
+function _kokkoToggle(i){
+  var d=document.getElementById('kokdet_'+i), a=document.getElementById('kokarw_'+i);
+  if(!d) return;
+  var open=d.style.display!=='none';
+  d.style.display=open?'none':'block';
+  if(a) a.textContent=open?'▸':'▾';
+}
 function _kokkoRowsHtml(){
   var s='';
-  _CKS_K16.forEach(function(name){
+  _CKS_K16.forEach(function(name,i){
     var v=coDocs[name]||{};
     var made=_isOfusaMade(name);
     var done=_hasVal(v.staff)||_hasVal(v.skip)||_hasVal(v.autoskip);
+    var meta=(!made && typeof _KOKKO_META!=='undefined')?_KOKKO_META[name]:null;
     var ico, stTxt, stCls;
     if(made){ ico='📝'; stTxt='大房行政書士法人が作成'; stCls='s-made'; }
     else if(done){ ico='✅'; stTxt='提出済（または不要）'; stCls='s-done'; }
     else { ico='⬜'; stTxt='未提出'; stCls='s-todo'; }
-    s+='<div class="doc-row">';
+    s+='<div class="doc-row"'+(meta?' style="cursor:pointer;" onclick="_kokkoToggle('+i+')"':'')+'>';
     s+='<span class="doc-ico">'+ico+'</span>';
-    s+='<div class="doc-name">'+esc(name)+'</div>';
+    s+='<div class="doc-name">'+esc(name)+(meta?' <span id="kokarw_'+i+'" style="color:#94a3b8;font-size:11px;">▸</span>'+(meta.slow?' <span style="font-size:10px;font-weight:800;color:#b45309;background:#fef3c7;border-radius:4px;padding:1px 5px;">★取得に時間がかかります</span>':''):'')+'</div>';
     s+='<span class="doc-state '+stCls+'">'+stTxt+'</span>';
     s+='</div>';
+    if(meta){
+      s+='<div id="kokdet_'+i+'" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;margin:2px 0 8px 30px;font-size:11.5px;color:#334155;line-height:1.7;">'
+        +(meta.name&&meta.name!==name?'<div style="font-weight:800;margin-bottom:3px;">'+esc(meta.name)+'</div>':'')
+        +esc(meta.desc||'').replace(/\n/g,'<br>')
+        +(meta.sample?'<div style="margin-top:6px;"><a href="'+_KOKKO_SAMPLE_BASE+esc(meta.sample)+'" target="_blank" rel="noopener" style="display:inline-block;background:#0f2040;color:#fff;font-size:11px;font-weight:800;border-radius:6px;padding:5px 12px;text-decoration:none;">🖼 見本を見る</a></div>':'')
+        +'</div>';
+    }
   });
   return s;
 }
@@ -1537,7 +1595,7 @@ function renderDocs(){
   var showK16=gateExists||kokkoNames.length;  // 建設案件がある企業は16点フル表示
   if(showK16 || kokkoUrl){
     h+='<div class="section-title" style="margin-top:14px;font-size:14px;">🏗 国交省申請書類（受入計画）</div>';
-    h+='<div style="font-size:11px;color:#64748b;margin:2px 0 6px;">📝＝大房行政書士法人が作成する書類のため、御社でのご準備は不要です。</div>';
+    h+='<div style="font-size:11px;color:#64748b;margin:2px 0 6px;">📝＝大房行政書士法人が作成する書類のため、御社でのご準備は不要です。<b>各書類をタップすると説明と見本が見られます。</b></div>';
     if(kokkoUrl){ h+='<div><a class="upload-btn" href="'+esc(kokkoUrl)+'" target="_blank" rel="noopener">📤 国交省書類をアップロード</a></div>'; }
     if(showK16){ h+='<div class="doc-co">'+_kokkoRowsHtml()+'</div>'; }
     else if(kokkoNames.length){ h+='<div class="doc-co">'+_docRowsHtml(kokkoNames)+'</div>'; }
