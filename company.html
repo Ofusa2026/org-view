@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260921.17: タイムラインに🏗国交省書類（収集着手7日→全書類45日→国交省申請→許可・受領数x/12付き）と🛂入管書類（収集開始→全書類そろう→特定技能1号申請・期限付き）の別軸ステップラインを追加。入管軸はクローズ中グレーアウト（⏸国交省申請後にオープン）。遅れは同様に🔴⚠表示。 -->
 <!-- ver.20260921.16: 右下の「💬コメント・要望」フローティングウィジェットを非表示化（マウント呼び出しをコメントアウト。機能コード自体は残置、再表示は1行で復帰可能）。タイムラインの⏸バナーから人材書類（税書類・健康診断票）の記載を削除し、企業書類（登記事項証明書・住民票・納税証明書）のみに修正。 -->
 <!-- ver.20260921.15: ①国交省書類は各行タップで説明・見本（アップロードページと同一メタ・★時間がかかる書類マーク付き）を表示。②タイムラインを横型ステップラインに刷新——受領→条件書確認→サイン→押印→申請→審査完了→カード交付の各工程に標準期限を表示し、遅れ工程は🔴⚠遅れ・完了🟢・現在🔵で色分け。③ご依頼事項に残り日数チップ（あとn日／n日超過・至急）を追加、期限超過時はカード赤枠＋🚨バナーで強調。 -->
 <!-- ver.20260921.14: 提出書類の国交省セクションを16点フル表示（未提出も一覧）。6委任状・8同等報酬説明書・12雇用契約書・15重要事項説明書は「📝大房行政書士法人が作成」バッジとし、提出済/未提出の対象外・ご依頼事項の不足リストからも除外。 -->
@@ -280,7 +281,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20260921.16</span>
+  <span class="header-ver">ver.20260921.17</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -744,6 +745,56 @@ function _cksSchedule(c){
     sh+='</div></div>';
     sh+='<div style="font-size:10px;color:#94a3b8;margin:-4px 0 8px;">🟢完了　🔵現在の工程　🔴期限に遅れています（各期限は案件受領日からの標準スケジュール）</div>';
     h+=sh;
+    // ver.20260921.17: 国交省書類・入管書類の別軸タイムライン
+    function axis(title, steps2, dim, note){
+      var cur=-1;
+      for(var k=0;k<steps2.length;k++){ if(!steps2[k].done){ cur=k; break; } }
+      var a='<div style="font-size:11px;font-weight:900;color:'+(dim?'#94a3b8':'#334155')+';margin:8px 0 2px;">'+title+(note?' <span style="font-weight:700;color:#94a3b8;">'+note+'</span>':'')+'</div>';
+      a+='<div style="overflow-x:auto;"><div style="display:flex;align-items:flex-start;min-width:420px;'+(dim?'opacity:.45;filter:grayscale(50%);':'')+'">';
+      steps2.forEach(function(s3,k){
+        var late=!dim && !s3.done && s3.d && s3.d<today;
+        var isCur=!dim && (k===cur);
+        var col = s3.done?'#16a34a' : late?'#dc2626' : isCur?'#2563eb':'#cbd5e1';
+        var mark = s3.done?'✓' : late?'!' : '';
+        var txtCol = s3.done?'#166534' : late?'#b91c1c' : isCur?'#1d4ed8':'#94a3b8';
+        a+='<div style="display:flex;flex-direction:column;align-items:center;width:96px;flex:none;">'
+          +'<div style="width:16px;height:16px;border-radius:50%;background:'+(s3.done||late?col:'#fff')+';border:2.5px solid '+col+';color:#fff;font-size:9.5px;font-weight:900;display:flex;align-items:center;justify-content:center;'+(isCur&&!late?'box-shadow:0 0 0 3px #dbeafe;':'')+'">'+mark+'</div>'
+          +'<div style="font-size:10px;font-weight:'+(isCur||late?'900':'700')+';color:'+txtCol+';margin-top:3px;text-align:center;line-height:1.3;">'+s3.nm+'</div>'
+          +'<div style="font-size:9.5px;color:'+(late?'#b91c1c':'#94a3b8')+';font-weight:'+(late?'800':'600')+';">'+(s3.d?('〜'+_cksFmt(s3.d)):(s3.dt||'—'))+(late?'<br>⚠遅れ':'')+'</div>'
+          +'</div>';
+        if(k<steps2.length-1){
+          a+='<div style="flex:1;min-width:10px;height:2.5px;background:'+(s3.done?'#16a34a':'#e2e8f0')+';margin-top:7px;"></div>';
+        }
+      });
+      a+='</div></div>';
+      return a;
+    }
+    // 🏗 国交省書類の軸
+    var _need=0,_recv=0;
+    _CKS_K16.forEach(function(n){
+      if(_isOfusaMade(n)) return;
+      _need++;
+      var v=coDocs[n]||{};
+      if(_hasVal(v.staff)||_hasVal(v.skip)||_hasVal(v.autoskip)) _recv++;
+    });
+    var _kokkoKyoka=(kokko==='完了(許可済)');
+    h+=axis('🏗 国交省書類（'+_recv+'/'+_need+' 受領）',[
+      {nm:'収集着手', d:(reqD&&!kokkoApplied)?_cksAdd(reqD,7):null, dt:'', done:_recv>0||kokkoApplied},
+      {nm:'全書類そろう', d:(reqD&&!kokkoApplied)?_cksAdd(reqD,45):null, dt:'', done:_recv>=_need||kokkoApplied},
+      {nm:'国交省申請', dt:'弊社にて申請', done:kokkoApplied},
+      {nm:'許可', dt:'審査1〜2ヶ月', done:_kokkoKyoka}
+    ], false, kokko?('現在：'+esc(kokko)):'');
+    // 🛂 入管書類の軸
+    var _gateClosed=_nyukanGateClosed();
+    var _nyu=Object.keys(coDocs).filter(function(n){ return docInList(coDocs[n]) && !_isKokkoDocName(n); });
+    var _nyuDone=_nyu.length>0 && _nyu.every(function(n){ return docState(coDocs[n])==='done'; });
+    var _t1due=expire?_cksAddM(_cksAdd(expire,-1),-1):null;
+    var _t1dl=expire?_cksAdd(expire,-1):null;
+    h+=axis('🛂 入管書類（特定技能1号申請用）',[
+      {nm:'収集開始', dt:_gateClosed?'国交省申請後':'オープン中', done:!_gateClosed},
+      {nm:'全書類そろう', d:_gateClosed?null:_t1due, dt:_gateClosed?'⏸':'', done:!_gateClosed&&_nyuDone},
+      {nm:'特定技能1号申請', d:_gateClosed?null:_t1dl, dt:_gateClosed?'⏸':'', done:_t1&&applied}
+    ], _gateClosed, _gateClosed?'⏸ 国交省申請が完了するとオープンします':'');
   })();
   // 期限表
   function row(l,v){ return '<div class="dt-row"><span class="dt-l">'+l+'</span><span class="dt-v">'+v+'</span></div>'; }
