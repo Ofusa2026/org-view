@@ -8,8 +8,9 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260921.12: 提出書類ビューを🏗国交省／🛂入管に分割。国交省書類は専用アップロードページ（kokko_dataup.html）へのボタンを追加。建設×特活で国交省未申請の間は入管書類をクローズ（⏸バナー＋グレーアウト・アップロードボタン非表示）、オープン条件＝入管書類のいずれかに依頼日(req)が入る、または国交省ステータスが補正未着手/補正可能/補正完了/完了(許可済)（「申請済み」段階ではまだ開かない）。画面表示バージョンラベルも更新。📅スケジュールを特定技能1号（継続・複製案件）でも表示（ラベル自動切替・特定技能1号書類期限表示・⏸税書類バナーは特活のみ）。 -->
 <!-- ver.20260921.11: &ot=（機関トークン）&op=（機関パス）で機関スコープ表示——company_view_get/extraがサーバー側でその機関の案件のみ返却・企業PIN不要・上部に機関向け表示バナー。複数の登録支援機関を跨ぐ企業でも他機関の案件は見えない。 -->
-<!-- ver.20260921.10: ①&pass=パラメータで自動ログイン（案シスからPINなしアクセス用）②PIN変更機能（現PIN＋新PIN→company_view_change_pass RPC・案シスに自動反映）③人材詳細に📅建設特定技能スケジュール（特活×建設のみ：デッドライン・進捗・国交省着手7日/提出45日・特1期限・⏸税書類早取り注意。company_view_extra RPCで受領日/国交省ステータス取得） -->
+<!-- ver.20260921.10: ①&pass=パラメータで自動ログイン（案シスからPINなしアクセス用）②PIN変更機能（現PIN＋新PIN→company_view_change_pass RPC・案シスに自動反映）③人材詳細に📅建設特定技能スケジュール（特活×建設のみ：デッドライン・進捗・国交省着手7日/提出45日・特定技能1号期限・⏸税書類早取り注意。company_view_extra RPCで受領日/国交省ステータス取得） -->
 <!-- ver.20260716.01: 提出書類チェックリストで「未提出」が表示されない不具合を修正。依頼済み(req::依頼日)の書類をリストに表示し未提出として扱う。国交チェック(kokko::)は提出済(または不要)扱いに追加。 -->
 <!-- ver.20260709.01: ニュース配信の宛先を区分化。所属機関ページは audience=all/company(+支援機関がアイデムならaidem) を表示（news_list(text[])利用）。既存all投稿は従来どおり両方に表示。 -->
 <!-- ver.20260630.02: ヘッダーにバージョン表示を追加 -->
@@ -274,7 +275,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20260716.01</span>
+  <span class="header-ver">ver.20260921.12</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -636,7 +637,10 @@ function _cksFmt(d){ return d?(d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDat
 function _cksAdd(d,n){ var r=new Date(d); r.setDate(r.getDate()+n); return r; }
 function _cksAddM(d,n){ var r=new Date(d); var dd=r.getDate(); r.setMonth(r.getMonth()+n); if(r.getDate()!==dd) r.setDate(0); return r; }
 function _cksSchedule(c){
-  if((c.residence_status||'')!=='特定活動') return '';
+  // ver.20260921.12: 特定技能1号（特活からの継続・複製案件）も表示対象に
+  var _t1=((c.residence_status||'')==='特定技能1号');
+  if((c.residence_status||'')!=='特定活動' && !_t1) return '';
+  var _appLabel=_t1?'特定技能1号':'特定活動';
   if(String(c.applicant_field||'').indexOf('建設')<0) return '';
   var ex=_extraByCase[c.id]||{};
   var reqD=_cksParse(ex.request_date);
@@ -656,7 +660,7 @@ function _cksSchedule(c){
     var days=Math.round((dl-today)/86400000);
     var urgent=days<=14;
     h+='<div style="background:'+(urgent?'#fdeeee':'#eef4fd')+';border:1px solid '+(urgent?'#e5a3a3':'#b9d0ee')+';border-radius:10px;padding:10px 14px;margin:6px 0 8px;font-size:12.5px;line-height:1.6;color:'+(urgent?'#7a1f1f':'#1c3d6e')+';">'
-      +'<b>⛔ 特定活動申請の期限：'+_cksFmt(dl)+' まで</b>（'+dlSrc+'）'
+      +'<b>⛔ '+_appLabel+'申請の期限：'+_cksFmt(dl)+' まで</b>（'+dlSrc+'）'
       +(days>=0?'　残り <b>'+days+'日</b>':'　<b>期限超過</b>')
       +'<br>この日までにサイン・押印・書類提出のすべてが必要です（日本にいない期間は申請できません）。</div>';
   }
@@ -680,14 +684,17 @@ function _cksSchedule(c){
       h+=row('国交省書類 提出期限','<b>'+_cksFmt(_cksAdd(reqD,45))+'</b>（受領日から45日以内）');
     }
   }
-  if(c.receipt_date) h+=row('特定活動 申請日',esc(String(c.receipt_date).slice(0,10)));
+  if(c.receipt_date) h+=row(_appLabel+' 申請日',esc(String(c.receipt_date).slice(0,10)));
   if(kokko) h+=row('国交省 受入計画',esc(kokko));
   if(kokkoApplied && expire){
     var t1dl=_cksAdd(expire,-1);
-    h+=row('特1書類 提出期限','<b>'+_cksFmt(_cksAddM(t1dl,-1))+'</b>（特1申請の1ヶ月前）');
+    h+=row('特定技能1号書類 提出期限','<b>'+_cksFmt(_cksAddM(t1dl,-1))+'</b>（特定技能1号申請の1ヶ月前）');
     h+=row('特定技能1号 申請期限','<b>'+_cksFmt(t1dl)+'</b>（特定活動の在留期限の前日）');
-  } else if(!kokkoApplied){
-    h+='<div style="background:#fef9e8;border:1px solid #f0d060;border-radius:8px;padding:8px 12px;margin-top:6px;font-size:11.5px;color:#6b4e0a;line-height:1.6;">⏸ 特1用の書類（税書類・健康診断票・登記事項証明書など）は<b>まだ取得しないでください</b>。発行から3ヶ月以内でないと使えず、期限切れで再提出になります。国交省申請後にご案内します。</div>';
+  } else if(!kokkoApplied && !_t1){
+    h+='<div style="background:#fef9e8;border:1px solid #f0d060;border-radius:8px;padding:8px 12px;margin-top:6px;font-size:11.5px;color:#6b4e0a;line-height:1.6;">⏸ 特定技能1号用の書類（税書類・健康診断票・登記事項証明書など）は<b>まだ取得しないでください</b>。発行から3ヶ月以内でないと使えず、期限切れで再提出になります。国交省申請後にご案内します。</div>';
+  } else if(_t1 && expire){
+    var t1dl2=_cksAdd(expire,-1);
+    h+=row('特定技能1号書類 提出期限','<b>'+_cksFmt(_cksAddM(t1dl2,-1))+'</b>（特定技能1号申請の1ヶ月前）');
   }
   return h;
 }
@@ -1364,6 +1371,52 @@ function renderDashboard(){
   return h;
 }
 
+// ver.20260921.12: 建設×特活で国交省未申請の間、入管書類の提出をクローズ（国交省申請＝申請日が入ると自動オープン）
+function _nyukanGateClosed(){
+  // オープン条件（いずれか）: ①入管書類のいずれかに依頼日(req)が入っている ②国交省ステータスが補正段階〜完了
+  //（「申請済み」ではまだ開かない。補正なしで一気に完了(許可済)になるケースもあるため完了も含む）
+  var hasKs=false, anyOpen=false;
+  var KOKKO_OPEN=['補正未着手','補正可能','補正完了','完了(許可済)'];
+  allCases.forEach(function(c){
+    if((c.residence_status||'')!=='特定活動') return;
+    if(String(c.applicant_field||'').indexOf('建設')<0) return;
+    hasKs=true;
+    var k=getKokkoStatus(c)||((_extraByCase[c.id]||{}).kokko_status||'');
+    if(KOKKO_OPEN.indexOf(k)>=0) anyOpen=true;
+  });
+  if(!hasKs) return false;
+  if(anyOpen) return false;
+  var reqFound=false;
+  Object.keys(coDocs).forEach(function(n){
+    if(_isKokkoDocName(n)) return;
+    var v=coDocs[n]||{};
+    if(v.req!=null && v.req!=='' && v.req!=='false') reqFound=true;
+  });
+  return !reqFound;
+}
+function _isKokkoDocName(n){ return /^\d{1,2}[.．]/.test(String(n||'').trim()); }
+function buildKokkoUploadUrl(){
+  var fid=extractDriveFolderId(companyDrive);
+  if(!fid) return '';
+  return 'https://ofusa2026.github.io/upload/kokko_dataup.html?folder='+fid
+    +'&company='+encodeURIComponent(companyId)
+    +(companyName?'&name='+encodeURIComponent(companyName):'');
+}
+function _docRowsHtml(names){
+  var s='';
+  names.forEach(function(name){
+    var st=docState(coDocs[name]);
+    var ico = st==='done'?'✅':'⬜';
+    var stTxt = st==='done'?'提出済（または不要）':'未提出';
+    var stCls = st==='done'?'s-done':'s-todo';
+    s+='<div class="doc-row">';
+    s+='<span class="doc-ico">'+ico+'</span>';
+    s+='<div class="doc-name">'+esc(name)+'</div>';
+    s+='<span class="doc-state '+stCls+'">'+stTxt+'</span>';
+    s+='</div>';
+  });
+  return s;
+}
 function renderDocs(){
   var names=Object.keys(coDocs).filter(function(n){ return docInList(coDocs[n]); });
   if(!names.length) return '<div class="empty">提出書類リストはまだ登録されていません。</div>';
@@ -1374,23 +1427,34 @@ function renderDocs(){
     if(order[sa]!==order[sb]) return order[sa]-order[sb];
     return a.localeCompare(b,'ja');
   });
+  var kokkoNames=names.filter(_isKokkoDocName);
+  var nyukanNames=names.filter(function(n){ return !_isKokkoDocName(n); });
+  var gateClosed=_nyukanGateClosed();
   var h='<div class="section-title">📄 御社の提出書類チェックリスト</div>';
   h+='<div class="note">大房行政書士法人でチェックが入った書類は「提出済（または不要）」になります。「未提出」の書類はご提出をお願いいたします。ご不明点は担当者までご連絡ください。</div>';
+  var kokkoUrl=buildKokkoUploadUrl();
   var upUrl=buildCompanyUploadUrl();
-  if(upUrl){ h+='<div><a class="upload-btn" href="'+esc(upUrl)+'" target="_blank" rel="noopener">📤 書類をアップロード</a></div>'; }
-  h+='<div class="doc-co">';
-  names.forEach(function(name){
-    var st=docState(coDocs[name]);
-    var ico = st==='done'?'✅':'⬜';
-    var stTxt = st==='done'?'提出済（または不要）':'未提出';
-    var stCls = st==='done'?'s-done':'s-todo';
-    h+='<div class="doc-row">';
-    h+='<span class="doc-ico">'+ico+'</span>';
-    h+='<div class="doc-name">'+esc(name)+'</div>';
-    h+='<span class="doc-state '+stCls+'">'+stTxt+'</span>';
-    h+='</div>';
-  });
-  h+='</div>';
+  // ── 国交省書類 ──
+  if(kokkoNames.length || kokkoUrl){
+    h+='<div class="section-title" style="margin-top:14px;font-size:14px;">🏗 国交省申請書類（受入計画）</div>';
+    if(kokkoUrl){ h+='<div><a class="upload-btn" href="'+esc(kokkoUrl)+'" target="_blank" rel="noopener">📤 国交省書類をアップロード</a></div>'; }
+    if(kokkoNames.length){ h+='<div class="doc-co">'+_docRowsHtml(kokkoNames)+'</div>'; }
+  }
+  // ── 入管書類 ──
+  h+='<div class="section-title" style="margin-top:18px;font-size:14px;">🛂 入管提出書類</div>';
+  if(gateClosed){
+    h+='<div style="background:#fef9e8;border:1px solid #f0d060;border-radius:10px;padding:12px 14px;margin:6px 0 10px;font-size:12.5px;color:#6b4e0a;line-height:1.7;">'
+      +'<b>⏸ 入管書類はまだご提出いただかなくて大丈夫です。</b><br>'
+      +'登記事項証明書・住民票・納税証明書などは<b>発行から3ヶ月以内</b>でないと申請に使えないため、先に取得されると期限切れで再提出になります。'
+      +'<b>国土交通省の審査が補正段階または完了（許可済）に進むか、担当者が書類のご案内（依頼日の入力）をすると、この欄は自動でオープンし、アップロードボタンが表示されます。</b></div>';
+    if(nyukanNames.length){
+      h+='<div class="doc-co" style="opacity:.45;pointer-events:none;filter:grayscale(60%);">'+_docRowsHtml(nyukanNames)+'</div>';
+    }
+  } else {
+    if(upUrl){ h+='<div><a class="upload-btn" href="'+esc(upUrl)+'" target="_blank" rel="noopener">📤 入管書類をアップロード</a></div>'; }
+    if(nyukanNames.length){ h+='<div class="doc-co">'+_docRowsHtml(nyukanNames)+'</div>'; }
+    else h+='<div class="empty" style="padding:10px 0;">入管書類のご案内はまだありません。</div>';
+  }
   return h;
 }
 

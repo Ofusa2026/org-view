@@ -5,12 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
 <!-- ver.20260922.01: 【不具合修正】希望在留期間確認モーダルのカード表示で、受取方法が「窓口受取」なのに「窓口申請」と誤表示されていたのを修正。実際の受取方法（窓口受取/郵送交付/メール交付）をそのまま表示。 -->
+<!-- ver.20260921.09: 📅スケジュール・📄期限バッジを特定技能1号（特活からの継続・複製案件）でも表示。デッドライン表記は在留資格で自動切替（特定技能1号案件＝特定技能1号申請のデッドライン・書類期限は申請1ヶ月前）。特定技能1号案件の人材書類は特活/特定技能1号の固定振り分けをせず、複製案件に登録された必要書類（doc_check）をそのまま1本で表示。⏸表示は従来どおり特活×国交省未申請のみ。 -->
 <!-- ver.20260921.08: 支援企業リストにPIN列を追加（専属企業のみ表示・複数機関を跨ぐ企業は「共有企業」表示でPIN非表示）。「開く」と人材詳細の企業マイページリンクを機関スコープリンク（&ot/&op）に変更——その機関が支援する案件のみサーバー側で絞り込み表示・企業PIN不要。 -->
 <!-- ver.20260921.07: グローバルパートナーズ専用「🏢 支援企業リスト」ビューを追加（サイドバー）。企業ごとに：貴社担当者（タップで編集・org_set_gp_staff RPCでcompanies.extra.gp_staffに保存）／Ofusa担当（案件担当者を集約）／案件数（進行中/完了）／国交省書類の受領数x/16と45日提出期限バッジ（企業単位のため表示・人材書類は載せない）／企業マイページを開くボタン。 -->
 <!-- ver.20260921.06: グローバルパートナーズ機関のO-Linkに「🏢 企業マイページを開く」ボタンを追加（人材詳細モーダルの企業書類セクション上・org_company_links RPCでトークン取得・PIN有無バッジ付き）。 -->
 <!-- ver.20260921.05: 企業・国交省書類の提出期限を「案件受領日から着手7日以内・提出45日以内」に変更（request_date基準・全ステージ共通表示）。 -->
-<!-- ver.20260921.04: 書類チェックリスト（人材）を「人材・特定活動」（パスポート/顔写真/在留カード/合格証/専門級）と「人材・特定技能1号」（税書類・健康診断票等）に分割表示（対象3機関×特活×建設のみ）。特1分は国交省申請前は⏸グレーアウト。国交省申請済み判定を人材/企業で共通化。 -->
-<!-- ver.20260921.03: 書類チェックリスト（人材/企業・国交省/企業・入管）の各見出しに提出期限バッジを追加（対象3機関×特活×建設のみ。特活中=特活申請まで、特活完了後=特1申請1ヶ月前・国交省は審査3ヶ月逆算の目安）。既存の受領済/未受領表示・⏸グレーアウト仕様は変更なし。 -->\n<!-- ver.20260921.02: 申請スケジュール（建設特定技能）の起点日の呼称を「依頼日」→「案件受領日」に統一（使用フィールドは request_date のまま）。 -->
+<!-- ver.20260921.04: 書類チェックリスト（人材）を「人材・特定活動」（パスポート/顔写真/在留カード/合格証/専門級）と「人材・特定技能1号」（税書類・健康診断票等）に分割表示（対象3機関×特活×建設のみ）。特定技能1号分は国交省申請前は⏸グレーアウト。国交省申請済み判定を人材/企業で共通化。 -->
+<!-- ver.20260921.03: 書類チェックリスト（人材/企業・国交省/企業・入管）の各見出しに提出期限バッジを追加（対象3機関×特活×建設のみ。特活中=特活申請まで、特活完了後=特定技能1号申請1ヶ月前・国交省は審査3ヶ月逆算の目安）。既存の受領済/未受領表示・⏸グレーアウト仕様は変更なし。 -->\n<!-- ver.20260921.02: 申請スケジュール（建設特定技能）の起点日の呼称を「依頼日」→「案件受領日」に統一（使用フィールドは request_date のまま）。 -->
 <!-- ver.20260921.01: 人材詳細モーダルに「申請スケジュール（建設特定技能）」セクションを追加。希望在留資格「特定活動」×建設分野の案件で、案件受領日・受付日・在留期限・一時帰国・ステータス・国交省ステータスから各工程の期限/実績/現在地を自動表示し、書類チェックリスト（doc_check/co_doc_check）の受領状況と連動した進捗チップを表示。申請デッドライン（在留期限前日/出国日前日）バナー付き。表示対象はオープンケア協同組合・REMONTADA株式会社・グローバルパートナーズ様の3機関のみ（orgName前方一致。アライズ様は対象外）。WHATS_NEWにorgs指定（機関名リスト）によるaudience制御を追加。 -->
 <!-- ver.20260916.01: 希望在留期間確認モーダルの決済手数料注記を動的化。3年以上(3年/5年)を選ぶと550円/件、それ以外330円/件、混在時は両方明示。 -->
 <!-- ver.20260915.01: 【不具合修正】新規案件依頼の「希望在留期間」が依頼テキスト（本人ステータス）に出力されていなかったのを修正。_buildLineReportText の本人ブロックに「希望在留期間」行を追加し、過去依頼の再コピー経路（_intakeGroupToPayload）でも hoped_stay_period をマップするようにした。 -->
@@ -1653,7 +1654,10 @@ function _ksRow(mark,name,rule,dateHtml,extra){
 }
 function _ksScheduleHtml(c,p,caseId){
   if(!_ksOrgAllowed()) return '';
-  if((c.residenceStatus||'')!=='特定活動') return '';
+  // ver.20260921.09: 特定技能1号（特活からの継続・複製案件）も表示対象に
+  var _ksT1=((c.residenceStatus||'')==='特定技能1号');
+  if((c.residenceStatus||'')!=='特定活動' && !_ksT1) return '';
+  var _ksAppLabel=_ksT1?'特定技能1号':'特定活動';
   if(String(c.applicantField||'').indexOf('建設')<0) return '';
   // 現在地（STATUS_COLSの6段階）
   var stage=-1;
@@ -1686,7 +1690,7 @@ function _ksScheduleHtml(c,p,caseId){
         : '<span style="color:#b45309;font-weight:800;">⚠ 申請予定（'+_ksFmt(appDate)+'）ではデッドラインを過ぎます。工程の前倒しが必要です</span>';
     } else if(stage>=3){ dlNote='<span style="color:#16a34a;font-weight:800;">✓ 申請済みです</span>'; }
     h+='<div style="background:#fef9c3;border:1px solid #f59e0b;border-radius:8px;padding:10px 14px;margin-bottom:8px;">'
-      +'<div style="font-size:11px;font-weight:800;color:#78350f;">⛔ 特定活動申請のデッドライン（'+dlSrc+'）</div>'
+      +'<div style="font-size:11px;font-weight:800;color:#78350f;">⛔ '+_ksAppLabel+'申請のデッドライン（'+dlSrc+'）</div>'
       +'<div style="font-size:17px;font-weight:900;color:#b45309;">'+_ksFmtY(dl)+'</div>'
       +'<div style="font-size:11px;color:#78350f;line-height:1.6;">この日までに特定活動申請のすべてが完了している必要があります（日本にいない期間は申請できません）。'+(dlNote?'<br>'+dlNote:'')+'</div>'
       +'</div>';
@@ -1730,9 +1734,9 @@ function _ksScheduleHtml(c,p,caseId){
     +'<div style="font-size:10.5px;color:#475569;line-height:1.7;">'
       +'・新しい在留カード発行から<b>約1ヶ月</b>で国交省申請（事前補正の対応後）<br>'
       +'・国交省申請の約1ヶ月後から補正依頼あり（0〜3回・随時3日以内に対応をお願いします）／許可は申請から約3ヶ月<br>'
-      +'・カード発行から<b>3ヶ月以内</b>に特1用書類の取得開始、<b>4ヶ月まで</b>に弊社へ提出、<b>5ヶ月以内</b>に特定技能1号申請<br>'
+      +'・カード発行から<b>3ヶ月以内</b>に特定技能1号用書類の取得開始、<b>4ヶ月まで</b>に弊社へ提出、<b>5ヶ月以内</b>に特定技能1号申請<br>'
       +'・⚠ 課税・納税証明書・住民票等は<b>申請時点で発行3ヶ月以内</b>が必要です（早く取りすぎにもご注意ください）'
-      +(stage>=5&&expire?'<br>・⛔ 特定技能1号申請のデッドライン：<b style="color:#b45309;">'+_ksFmtY(_ksAdd(expire,-1))+'</b>（特定活動の在留期限の前日）— この日までに特1申請のすべてが完了している必要があります':'')
+      +(stage>=5&&expire?'<br>・⛔ 特定技能1号申請のデッドライン：<b style="color:#b45309;">'+_ksFmtY(_ksAdd(expire,-1))+'</b>（特定活動の在留期限の前日）— この日までに特定技能1号申請のすべてが完了している必要があります':'')
     +'</div>'
     +'</div>';
   return h;
@@ -1741,7 +1745,8 @@ function _ksScheduleHtml(c,p,caseId){
 function _ksDlBadge(txt){ return ' <span style="font-size:10px;font-weight:800;color:#b45309;background:#fef9c3;border:1px solid #f59e0b;border-radius:5px;padding:2px 8px;vertical-align:middle;">📄 '+txt+'</span>'; }
 function _ksDocDl(c,p){
   if(!_ksOrgAllowed()) return null;
-  if((c.residenceStatus||'')!=='特定活動') return null;
+  var _t1case=((c.residenceStatus||'')==='特定技能1号');
+  if((c.residenceStatus||'')!=='特定活動' && !_t1case) return null;
   if(String(c.applicantField||'').indexOf('建設')<0) return null;
   var stage=-1;
   for(var i=0;i<STATUS_COLS.length;i++){ if(STATUS_COLS[i].statuses.indexOf(c.status)>=0){ stage=i; break; } }
@@ -1755,18 +1760,25 @@ function _ksDocDl(c,p){
   if(tripOut){ var e2=_ksAdd(tripOut,-1); if(!dl1||e2<dl1) dl1=e2; }
   var r={person:'',person2:'',kokko:'',nyukan:''};
   if(stage>=5){
-    // 特活完了後：expire＝特定活動の在留期限。特1申請デッドライン＝その前日
+    // 特活完了後：expire＝特定活動の在留期限。特定技能1号申請デッドライン＝その前日
     var t1dl=expire?_ksAdd(expire,-1):null;
-    var t1txt = t1dl ? ('提出期限 〜'+_ksFmt(_ksAddM(t1dl,-1))+'（特1申請の1ヶ月前）') : '特1申請の1ヶ月前までにご提出ください';
+    var t1txt = t1dl ? ('提出期限 〜'+_ksFmt(_ksAddM(t1dl,-1))+'（特定技能1号申請の1ヶ月前）') : '特定技能1号申請の1ヶ月前までにご提出ください';
     r.person = '特定活動申請時に提出済み';
     r.person2 = t1txt;
     r.kokko  = kokkoTxt;
     r.nyukan = t1txt;
+  } else if(_t1case){
+    // 特定技能1号（変更）案件：デッドライン＝特活の在留期限前日、書類は申請1ヶ月前まで
+    var t1txt2 = dl1 ? ('提出期限 〜'+_ksFmt(_ksAddM(dl1,-1))+'（特定技能1号申請の1ヶ月前）') : '特定技能1号申請の1ヶ月前までにご提出ください';
+    r.person = t1txt2;
+    r.person2 = t1txt2;
+    r.kokko  = kokkoTxt;
+    r.nyukan = t1txt2;
   } else {
     r.person = dl1 ? ('提出期限 特定活動申請まで（〜'+_ksFmt(dl1)+'）') : '特定活動申請までにご提出ください';
-    r.person2 = '国交省「申請済み」以降に収集開始（提出期限は特1申請の1ヶ月前）';
+    r.person2 = '国交省「申請済み」以降に収集開始（提出期限は特定技能1号申請の1ヶ月前）';
     r.kokko  = kokkoTxt;
-    r.nyukan = '国交省「申請済み」以降に収集開始（提出期限は特1申請の1ヶ月前）';
+    r.nyukan = '国交省「申請済み」以降に収集開始（提出期限は特定技能1号申請の1ヶ月前）';
   }
   return r;
 }
@@ -1807,11 +1819,16 @@ function openPersonModal(caseId){
   h+=_personSectionTitle('📄 書類PDF');
   h+=buildDownloadCell(c);
   // 書類チェックリスト（人材）
-  // ver.20260921.03: 提出期限バッジ／ver.20260921.04: 人材書類を特活分・特1分に分割（対象3機関×特活×建設のみ）
+  // ver.20260921.03: 提出期限バッジ／ver.20260921.04: 人材書類を特活分・特定技能1号分に分割（対象3機関×特活×建設のみ）
   var _dlInfo=_ksDocDl(c,p);
   var _KS_KOKKO_APPLIED=['申請済み','補正可能','補正完了','補正未着手','完了(許可済)'];
   var _notYetPhase2=(c.residenceStatus==='特定活動') && _KS_KOKKO_APPLIED.indexOf(c.kokkoStatus||'')<0;
-  if(_dlInfo){
+  if(_dlInfo && c.residenceStatus==='特定技能1号'){
+    // ver.20260921.09: 特定技能1号（複製）案件は固定の振り分けをせず、その案件に登録された必要書類をそのまま表示
+    //（課税・納税・源泉・健康診断・在留カード（裏）など、案シスの登録内容がそのまま反映される）
+    h+=_personSectionTitle('✅ 書類チェックリスト（人材）'+(_dlInfo.person2?_ksDlBadge(_dlInfo.person2):''));
+    h+=_docChecklistHtml(personDocsAll[caseId], allDocsByCase[caseId]);
+  } else if(_dlInfo){
     var _pm=personDocsAll[caseId]||{};
     var _tkMap={}, _t1Map={};
     var _KS_TK_NAMES=['パスポート','顔写真','在留カード（表）','在留カード（裏）','在留カード','合格証（技能）','合格証（日本語）','専門級','合格証（技能・日本語）／専門級','技能者ID'];  // 案シスの特活5点セット＋建設の技能者ID（旧案件の個別合格証名も含む）
