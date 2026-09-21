@@ -2436,7 +2436,7 @@ function buildRow(c){
     } else { _shinseiHtml='<span style="color:#cbd5e1;font-size:12px;">—</span>'; }
     h+='<td data-col-key="gpShinseiElapsed" style="white-space:nowrap;text-align:center;min-width:100px;">'+_shinseiHtml+'</td>';
   } else {
-    h+='<td data-col-key="name" style="min-width:110px;max-width:170px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;word-break:break-word;">'+esc(c.applicant||'')+'</div>'+_personBtn(cid)+'</td>'; // ver.20260612.test05: 幅を半分に＋折り返し
+    h+='<td data-col-key="name" style="min-width:110px;max-width:170px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;word-break:break-word;">'+esc(c.applicant||'')+'</div>'+_personBtn(cid)+_gpCoBtn(c)+'</td>'; // ver.20260612.test05: 幅を半分に＋折り返し ver.20260921.11b: 企業詳細ボタン追加
   }
   h+='<td data-col-key="company" style="min-width:110px;max-width:170px;"><div style="font-size:10px;font-weight:600;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(c.company||'—')+'</div></td>'; // ver.20260612.test05: 折り返して全文表示
   h+='<td data-col-key="requestDate" style="font-size:10px;white-space:nowrap;color:#475569;min-width:88px;">'+(c.requestDate?esc(c.requestDate):'<span style="color:#d1d5db;">—</span>')+'</td>'; // ver.20260617.test47: 案件受領日
