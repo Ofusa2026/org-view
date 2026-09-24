@@ -8,6 +8,8 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260924.04: 国交省書類の提出期限を「初回案内日から45日」で固定（kokko_annai_first::）。再案内で依頼日(req::)を更新しても期限が後ろにずれない。初回案内日が無い会社は依頼日の最も早いもの→案件受領日の順で代用。 -->
+<!-- ver.20260924.03: 国交省書類のご依頼事項の判定を見直し——申請分野が未設定でも、国交省書類に案内日(req::)が入っていれば建設案件として扱い16点を表示する。チェック済(staff::)・不要(skip::)の書類は従来どおり除外。提出期限の起算日も案内日（最も早いもの）を優先し「ご案内日から45日以内」と表示。 -->
 <!-- ver.20260922.02: 「対応が必要なタスク」システム——タスク数＝未提出書類＋就労管理ID/PW未提供＋ボールが企業側の案件（雇用条件待ち・1-6確認待ち・サイン/押印返送待ち・人材/企業書類待ち）＋ヒアリング未回答。全タブ共通の赤タスクバー（sticky・タップでご依頼事項へスクロール）、PCサイドバー/モバイル🏠に赤バッジ、ご依頼事項タイトルを🚨対応が必要なタスク(n件)に動的化＋⚽ご対応待ち案件セクション＋📝ヒアリングセクション、ブラウザタブ名に(n件のタスク)。0件なら全て消えて✅表示。 -->
 <!-- ver.20260922.01: モバイル（560px以下）をアプリ型UIに刷新——①ヘッダーをスリム化（縦書き崩れ修正・企業名バーは1行化）②画面下部に固定ナビ（🏠ホーム/👥人材/📄書類/📰ニュース/☰メニュー・バッジ付き・セーフエリア対応）③「メニュー」はボトムシートで発行済み/すべて/申請の流れ/所属機関情報/協力確認書/事務所情報へ移動④タブ切替時に画面トップへ自動スクロール。デスクトップ表示は変更なし。 -->
 <!-- ver.20260921.21: 最終デッドライン注意文を「最終提出期限＝特定活動の在留カードが発行されるまで」基準に変更（5ヶ月前表記を廃止）。 -->
@@ -320,7 +322,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20260922.02</span>
+  <span class="header-ver">ver.20260924.04</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -891,6 +893,15 @@ function _cksSchedule(c){
   return h;
 }
 function _hasVal(v){ return v!=null && v!=='' && v!=='false'; }
+// ver.20260924.04: 国交省書類の「初回案内日」。提出期限はこの日から45日で固定する。
+//   req::（依頼日）は再案内のたびに更新されるため、それを起点にすると期限が後ろにずれてしまう。
+//   案シス側で初回案内時に kokko_annai_first:: が記録される（一度入ったら上書きしない）。
+function _kokkoFirstAnnai(){
+  try{
+    var v=(coDocs['']||{})['kokko_annai_first'];
+    return _hasVal(v) ? _cksParse(v) : null;
+  }catch(e){ return null; }
+}
 function _lastPdfUrl(arr){ if(Array.isArray(arr)&&arr.length){ var l=arr[arr.length-1]; if(l&&l.url) return l.url; } return ''; }
 function _pdfChip(label,url,color,icon){
   if(url) return '<a class="pdf-chip" style="background:'+color+';" href="'+esc(url)+'" target="_blank" rel="noopener">'+icon+' '+label+'</a>';
@@ -1183,8 +1194,14 @@ function renderRequests(){
   // ver.20260921.13: 建設案件がある企業は 国交省／入管 に分けて期限付きで表示
   var hasKensetsu=false, kokkoAppliedAny=false, minReqD=null, minT1Due=null;
   var KOKKO_APPLIED_ALL=['申請済み','補正未着手','補正可能','補正完了','完了(許可済)'];
+  // ver.20260924.03: 建設案件の判定を「申請分野に建設」だけに頼らない。
+  //   分野が未設定のままだと国交省書類のご依頼事項が丸ごと出ず、企業には
+  //   「対応いただく事項はありません」と見えてしまっていた（分野未設定は1,200件超ある）。
+  //   国交省書類に案内日（req::依頼日）が入っていれば、建設案件として扱う。
+  var _kokkoAnnaiAny = !!_kokkoFirstAnnai() || _CKS_K16.some(function(n){ return _hasVal((coDocs[n]||{}).req); });
   allCases.forEach(function(c){
-    if(String(c.applicant_field||'').indexOf('建設')<0) return;
+    var _fieldKs = String(c.applicant_field||'').indexOf('建設')>=0;
+    if(!_fieldKs && !_kokkoAnnaiAny) return;
     var rs=(c.residence_status||'');
     if(rs!=='特定活動'&&rs!=='特定技能1号') return;
     hasKensetsu=true;
@@ -1223,7 +1240,17 @@ function renderRequests(){
       var kokkoMissing=[];
       _CKS_K16.forEach(function(n){ if(_isOfusaMade(n)) return; var v=coDocs[n]||{}; if(!_hasVal(v.staff)&&!_hasVal(v.skip)&&!_hasVal(v.autoskip)) kokkoMissing.push(n); });
       if(kokkoMissing.length){
-        var kb=dlLine(minReqD?_cksAdd(minReqD,45):null,'案件受領日から45日以内')
+        // ver.20260924.04: 起算日は「初回案内日」。再案内で依頼日が更新されても期限は動かさない。
+        //   初回案内日が無い会社は、依頼日のうち最も早いもの→案件受領日 の順で代用する。
+        var _annaiD=_kokkoFirstAnnai();
+        if(!_annaiD){
+          _CKS_K16.forEach(function(n){
+            var r=_cksParse((coDocs[n]||{}).req);
+            if(r && (!_annaiD || r<_annaiD)) _annaiD=r;
+          });
+        }
+        var _base=_annaiD||minReqD;
+        var kb=dlLine(_base?_cksAdd(_base,45):null, _annaiD?'ご案内日から45日以内':'案件受領日から45日以内')
           +kokkoMissing.map(function(n){ return '<div class="req-row"><span class="req-nm">'+esc(n)+'</span></div>'; }).join('')
           +'<button class="req-btn" onclick="switchGroup(\'docs\')">提出書類を開く</button>';
         secs.push(_reqSection('🏗','国交省申請書類のご提出', kokkoMissing.length, kb));
