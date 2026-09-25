@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260925.02: 国交省「11. 経歴書」の詳細に「経歴書ひな形(Word)をダウンロード」ボタンを追加。_KOKKO_META['11. 経歴書']にform{file,label}を追加し、_kokkoRowsHtmlの詳細でformダウンロードボタンを描画（forms/keirekisho_form.docx＝upload配信）。 -->
 <!-- ver.20260925.01: 提出書類チェックリストの各書類をタップすると「説明・見本・取得方法」が表示されるように。①国交省書類は_KOKKO_META未定義でタップが無反応だったのを修正し、取得方法(place)も表示。②入管書類も新たにタップ詳細（説明・見本画像・取得用申請書PDF）に対応。メタはアップロードページ(kokko_dataup.html/company_dataup.html)と同一内容を移植。 -->
 <!-- ver.20260924.04: 国交省書類の提出期限を「初回案内日から45日」で固定（kokko_annai_first::）。再案内で依頼日(req::)を更新しても期限が後ろにずれない。初回案内日が無い会社は依頼日の最も早いもの→案件受領日の順で代用。 -->
 <!-- ver.20260924.03: 国交省書類のご依頼事項の判定を見直し——申請分野が未設定でも、国交省書類に案内日(req::)が入っていれば建設案件として扱い16点を表示する。チェック済(staff::)・不要(skip::)の書類は従来どおり除外。提出期限の起算日も案内日（最も早いもの）を優先し「ご案内日から45日以内」と表示。 -->
@@ -323,7 +324,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20260925.01</span>
+  <span class="header-ver">ver.20260925.02</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -1921,7 +1922,8 @@ var _KOKKO_META = {
     name:'特定技能外国人と同等の技能を有する日本人の職務経歴書',
     sample:'kokko_11_keirekisho.png',
     desc:'特定技能外国人と同等の技能を有する日本人の職務経歴書。\n・賃金台帳と同じ方の経歴書\n・添付の経歴書ひな形より作成をお願いいたします。',
-    place:''
+    place:'',
+    form:{ file:'forms/keirekisho_form.docx', label:'経歴書ひな形' }
   },
   '13. 36協定': {
     name:'36協定届出書',
@@ -2051,6 +2053,7 @@ function _kokkoRowsHtml(){
         +(meta.name&&meta.name!==name?'<div style="font-weight:800;margin-bottom:3px;">'+esc(meta.name)+'</div>':'')
         +esc(meta.desc||'').replace(/\n/g,'<br>')
         +(meta.place?'<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #cbd5e1;"><span style="font-weight:800;color:#0f2040;">📍 取得方法：</span>'+_linkifyText(meta.place)+'</div>':'')
+        +(meta.form&&meta.form.file?'<div style="margin-top:6px;"><a href="'+_KOKKO_SAMPLE_BASE.replace(/samples\/$/,'')+esc(meta.form.file)+'" target="_blank" rel="noopener" style="display:inline-block;background:#1a56db;color:#fff;font-size:11px;font-weight:800;border-radius:6px;padding:5px 12px;text-decoration:none;">📝 '+esc(meta.form.label||'様式')+'をダウンロード</a></div>':'')
         +(meta.sample?'<div style="margin-top:6px;"><a href="'+_KOKKO_SAMPLE_BASE+esc(meta.sample)+'" target="_blank" rel="noopener" style="display:inline-block;background:#0f2040;color:#fff;font-size:11px;font-weight:800;border-radius:6px;padding:5px 12px;text-decoration:none;">🖼 見本を見る</a></div>':'')
         +'</div>';
     }
