@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260925.01: 建設スケジュールの日数見込みを実態に合わせて見直し。全工程を営業日ベースに統一し「サイン書類の作成（企業確認後3営業日以内）」工程を新設。サイン（人材）・押印（企業）は合わせて3営業日以内、その後3営業日以内に特定活動申請。受領日→15営業日（約3週間）で申請予定を新標準とし、「進み具合」バッジの基準も15営業日に変更。 -->
 <!-- ver.20260922.01: 【不具合修正】希望在留期間確認モーダルのカード表示で、受取方法が「窓口受取」なのに「窓口申請」と誤表示されていたのを修正。実際の受取方法（窓口受取/郵送交付/メール交付）をそのまま表示。 -->
 <!-- ver.20260921.11: 案件一覧の各行に「🏢 企業詳細」ボタン（GP専用・人材詳細ボタンの隣）を追加。企業詳細モーダル＝貴社担当者（タップ編集）／Ofusa担当／案件数／国交省書類x/16＋45日期限／企業ログインPIN（専属のみ）／「企業マイページを開く」（機関スコープリンク・貴社案件のみ表示）。 -->
 <!-- ver.20260921.10: 📅スケジュール先頭に「⏱進み具合」バッジを追加——標準スケジュール（受領日から約16日で申請）との比較で🟢オンタイム/🟡要注意/🔴遅延n日を表示。審査中は経過日数（45日超は入管都合と明記）、特活完了後・特定技能1号案件は書類提出期限基準で判定。 -->
@@ -604,7 +605,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260922.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260925.01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1705,7 +1706,7 @@ function _ksRow(mark,name,rule,dateHtml,extra){
       +(extra||'')
     +'</div></div>';
 }
-// ver.20260921.10: ⏱ 進み具合バッジ。標準スケジュール（受領日→約16日で申請）と実績を比較して色分け表示
+// ver.20260921.10: ⏱ 進み具合バッジ。標準スケジュール（受領日→15営業日＝約3週間で申請）と実績を比較して色分け表示
 function _ksPill(color,bg,bor,icon,main,sub){
   return '<div style="display:flex;align-items:center;gap:8px;background:'+bg+';border:1px solid '+bor+';border-radius:8px;padding:8px 12px;margin-bottom:8px;">'
     +'<span style="font-size:15px;">'+icon+'</span>'
@@ -1734,8 +1735,9 @@ function _ksPaceBadge(c, isT1, stage, N, appActual, expire){
       return '';
     }
     if(!N) return '';
-    // 未申請：標準チェーン（受領日→約16日で申請予定）と比較
-    var plan=_ksAdd(_ksAdd(_ksAdd(_ksAdd(_ksAddBiz(N,3),3),3),4),3);
+    // 未申請：標準チェーン（受領日→15営業日＝約3週間で申請予定）と比較
+    // ver.20260925.01: 全工程 営業日ベース（送付3+確認3+サイン書類作成3+サイン/押印3+申請3＝15営業日）
+    var plan=_ksAddBiz(_ksAddBiz(_ksAddBiz(_ksAddBiz(_ksAddBiz(N,3),3),3),3),3);
     var d=D(plan,today);
     if(d<0) return _ksPill('#7a1f1f','#fdeeee','#e5a3a3','🔴','標準スケジュールより '+(-d)+'日 遅れています','標準の申請予定日 '+_ksFmt(plan)+' を超過。未対応の確認・サイン・押印・書類のご対応で解消できます');
     if(d<3) return _ksPill('#92400e','#fef9c3','#f0d060','🟡','標準の申請予定日まで あと'+d+'日','申請予定 '+_ksFmt(plan)+'。未対応のものがあれば本日中のご対応をお願いします');
@@ -1767,12 +1769,13 @@ function _ksScheduleHtml(c,p,caseId){
   var dl=null,dlSrc='';
   if(expire){ dl=_ksAdd(expire,-1); dlSrc='在留期限の前日'; }
   if(tripOut){ var e2=_ksAdd(tripOut,-1); if(!dl||e2<dl){ dl=e2; dlSrc='一時帰国の出発日の前日'; } }
-  // 期限チェーン（依頼日起点・各工程が期限当日完了の最遅想定）
-  var soufu=N?_ksAddBiz(N,3):null;
-  var kakunin=soufu?_ksAdd(soufu,3):null;
-  var sign=kakunin?_ksAdd(kakunin,3):null;
-  var ouin=sign?_ksAdd(_ksAdd(sign,1),3):null;
-  var appPlan=ouin?_ksAdd(ouin,3):null;
+  // 期限チェーン（案件受領日起点・各工程が期限当日完了の最遅想定・全工程 営業日ベース）
+  // ver.20260925.01: 全工程を営業日に統一＋「サイン書類作成」を新設。受領日→15営業日（約3週間）で申請の標準に変更。
+  var soufu=N?_ksAddBiz(N,3):null;            // 雇用条件書の作成・送付（+3営業日）
+  var kakunin=soufu?_ksAddBiz(soufu,3):null;  // 企業確認（+3営業日）
+  var sakusei=kakunin?_ksAddBiz(kakunin,3):null; // サイン書類の作成（+3営業日）
+  var signOuin=sakusei?_ksAddBiz(sakusei,3):null; // 申請人サイン・企業押印（+3営業日）
+  var appPlan=signOuin?_ksAddBiz(signOuin,3):null; // 特定活動申請（+3営業日）
   var appDate=appActual||appPlan;
   var s1=appDate?_ksAdd(appDate,30):null, s2=appDate?_ksAdd(appDate,45):null;
   var c1=s2?_ksAdd(s2,10):null, c2=s2?_ksAdd(s2,14):null;
@@ -1815,10 +1818,10 @@ function _ksScheduleHtml(c,p,caseId){
   // タイムライン（第1フェーズ）
   function mk(idx){ if(stage<0) return 'todo'; if(stage>idx) return 'done'; if(stage===idx) return 'now'; return 'todo'; }
   h+='<div style="border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;margin-bottom:8px;">';
-  h+=_ksRow(mk(0),'雇用条件書の作成・企業確認','案件受領日から3営業日以内に送付 → 確認3日以内', N?(_ksFmt(soufu)+' 〜 '+_ksFmt(kakunin)):'—','');
-  h+=_ksRow(mk(1),'申請人サイン対応','確定後3日以内にサイン依頼', sign?('〜 '+_ksFmt(sign)):'—','');
-  h+=_ksRow(mk(2),'企業押印・申請準備','サイン後1日以内に押印依頼（対応3日以内）', ouin?('〜 '+_ksFmt(ouin)):'—','');
-  h+=_ksRow(stage>=3?'done':mk(2)==='done'?'now':'todo','特定活動申請'+(appActual?'（受付済）':''),'押印後3日以内。日本にいない期間は申請不可', appDate?_ksFmt(appDate):'—','');
+  h+=_ksRow(mk(0),'雇用条件書の作成・企業確認','案件受領日から3営業日以内に送付 → 企業確認3営業日以内', N?(_ksFmt(soufu)+' 〜 '+_ksFmt(kakunin)):'—','');
+  h+=_ksRow(stage>=2?'done':(stage===1?'now':'todo'),'サイン書類の作成','企業確認後3営業日以内に作成', sakusei?('〜 '+_ksFmt(sakusei)):'—','');
+  h+=_ksRow(stage>=3?'done':(stage===2?'now':'todo'),'申請人サイン・企業押印','サイン書類の完成後、3営業日以内にサイン（人材）・押印（企業）', signOuin?('〜 '+_ksFmt(signOuin)):'—','');
+  h+=_ksRow(stage>=3?'done':'todo','特定活動申請'+(appActual?'（受付済）':''),'サイン・押印の完了後3営業日以内。日本にいない期間は申請不可', appDate?_ksFmt(appDate):'—','');
   h+=_ksRow(mk(3)==='done'||stage>=4?'done':(stage===3?'now':'todo'),'審査完了','申請から30〜45日 ※入管の審査状況により前後する場合があります', (s1?(_ksFmt(s1)+' 〜 '+_ksFmt(s2)):'—'),
     (tripOut&&tripIn&&s1&&s2&&s1<=tripIn&&s2>=tripOut?'<div style="font-size:10px;color:#b45309;">⚠ 審査完了時に日本にいない場合は、帰国後（'+_ksFmt(tripIn)+'以降）に郵送交付の手続きになります</div>':''));
   h+=_ksRow(stage>=5?'done':(stage===4?'now':'todo'),'在留カード発行 → 郵送交付','発行〜送付は10〜14日', c1?(_ksFmt(c1)+' 〜 '+_ksFmt(c2)):'—','');
