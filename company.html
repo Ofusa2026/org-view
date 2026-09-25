@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260925.01: 提出書類チェックリストの各書類をタップすると「説明・見本・取得方法」が表示されるように。①国交省書類は_KOKKO_META未定義でタップが無反応だったのを修正し、取得方法(place)も表示。②入管書類も新たにタップ詳細（説明・見本画像・取得用申請書PDF）に対応。メタはアップロードページ(kokko_dataup.html/company_dataup.html)と同一内容を移植。 -->
 <!-- ver.20260924.04: 国交省書類の提出期限を「初回案内日から45日」で固定（kokko_annai_first::）。再案内で依頼日(req::)を更新しても期限が後ろにずれない。初回案内日が無い会社は依頼日の最も早いもの→案件受領日の順で代用。 -->
 <!-- ver.20260924.03: 国交省書類のご依頼事項の判定を見直し——申請分野が未設定でも、国交省書類に案内日(req::)が入っていれば建設案件として扱い16点を表示する。チェック済(staff::)・不要(skip::)の書類は従来どおり除外。提出期限の起算日も案内日（最も早いもの）を優先し「ご案内日から45日以内」と表示。 -->
 <!-- ver.20260922.02: 「対応が必要なタスク」システム——タスク数＝未提出書類＋就労管理ID/PW未提供＋ボールが企業側の案件（雇用条件待ち・1-6確認待ち・サイン/押印返送待ち・人材/企業書類待ち）＋ヒアリング未回答。全タブ共通の赤タスクバー（sticky・タップでご依頼事項へスクロール）、PCサイドバー/モバイル🏠に赤バッジ、ご依頼事項タイトルを🚨対応が必要なタスク(n件)に動的化＋⚽ご対応待ち案件セクション＋📝ヒアリングセクション、ブラウザタブ名に(n件のタスク)。0件なら全て消えて✅表示。 -->
@@ -322,7 +323,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20260924.04</span>
+  <span class="header-ver">ver.20260925.01</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -1832,6 +1833,14 @@ function buildKokkoUploadUrl(){
     +'&company='+encodeURIComponent(companyId)
     +(companyName?'&name='+encodeURIComponent(companyName):'');
 }
+// ver.20260925.01: URL をリンク化（取得方法・説明文内の申請URL等）
+function _linkifyText(t){
+  var e=esc(String(t||''));
+  e=e.replace(/(https?:\/\/[^\s<）)]+)/g,function(u){ return '<a href="'+u+'" target="_blank" rel="noopener" style="color:#1a56db;font-weight:700;word-break:break-all;">'+u+'</a>'; });
+  return e.replace(/\n/g,'<br>');
+}
+// ver.20260925.01: 入管書類も各行タップで説明・見本・取得方法（アップロードページ company_dataup.html と同一内容）を表示
+var _docRowUid=0;
 function _docRowsHtml(names){
   var s='';
   names.forEach(function(name){
@@ -1839,16 +1848,179 @@ function _docRowsHtml(names){
     var ico = st==='done'?'✅':'⬜';
     var stTxt = st==='done'?'提出済（または不要）':'未提出';
     var stCls = st==='done'?'s-done':'s-todo';
-    s+='<div class="doc-row">';
+    var meta=(typeof _nyukanMetaFor==='function')?_nyukanMetaFor(name):null;
+    var uid=++_docRowUid;
+    s+='<div class="doc-row"'+(meta?' style="cursor:pointer;" onclick="_nyukanToggle('+uid+')"':'')+'>';
     s+='<span class="doc-ico">'+ico+'</span>';
-    s+='<div class="doc-name">'+esc(name)+'</div>';
+    s+='<div class="doc-name">'+esc(name)+(meta?' <span id="nyuarw_'+uid+'" style="color:#94a3b8;font-size:11px;">▸</span>':'')+'</div>';
     s+='<span class="doc-state '+stCls+'">'+stTxt+'</span>';
     s+='</div>';
+    if(meta){ s+=_nyukanDetailHtml(uid, meta); }
   });
   return s;
 }
 // ver.20260921.15: 国交省書類の説明・見本（アップロードページと同じ内容）
 var _KOKKO_SAMPLE_BASE='https://ofusa2026.github.io/upload/samples/';
+// ver.20260925.01: 書類の説明・見本・取得方法メタ（アップロードページ kokko_dataup.html / company_dataup.html と同一内容を移植）
+var _KOKKO_META = {
+  '1. 履歴事項全部証明書': {
+    name:'履歴事項全部証明書（※個人事業主の場合は住民票）',
+    sample:'kokko_01_tokibo.png',
+    desc:'3か月以内に発行されたもの。\n（個人事業主の場合は住民票。住民票は「本籍地の記載あり・マイナンバーの記載なし」のもの）',
+    place:'法務局'
+  },
+  '1. 住民票（代表者）': {
+    name:'代表者の住民票（※個人事業主）',
+    sample:'kokko_01_tokibo.png',
+    desc:'個人事業主の場合は、代表者の住民票をご提出ください。\n・申請日より3か月以内に発行されたもの\n・「本籍地の記載あり・マイナンバーの記載なし」のもの',
+    place:'お住まいの市区町村役場（マイナンバーカードがあればコンビニ交付も可）'
+  },
+  '2. 建設業許可': {
+    name:'建設業許可証の写し',
+    sample:'kokko_02_kensetsu_kyoka.png',
+    desc:'有効期限内のもの。',
+    place:'会社にて保管があるもの。管轄の行政庁（都道府県や地方整備局）から発行されたもの。'
+  },
+  '3. 標準報酬決定通知書': {
+    name:'健康保険・厚生年金保険被保険者標準報酬決定通知書の写し',
+    sample:'kokko_03_hyojun_hoshu.png',
+    desc:'日本年金機構より郵送される、全員分の「健康保険・厚生年金保険被保険者標準報酬決定通知書」の写し。\n提出時のお願い：\n①被保険者整理番号にマスキング（その他の部分はマスキングしないでください）\n②氏名の横に職員種別を記入\n＜日本人＞短時間労働者「パ」／非常勤役員「非」／常勤フルタイムは記載不要\n＜外国人＞全員在留資格を記載（技能実習生「実」／特定活動「特」／その他はその在留資格）\n\n【個人事業主の方へ】雇用状況によって提出書類が変わります：\n・従業員5人以上（社会保険適用）→ 上記の標準報酬決定通知書の写し\n・従業員4人以下 → 「雇用保険被保険者台帳」の写し\n・一人親方（雇用なし）→ 「確定申告書」の写し（税務署の受付印あり、または電子申請の受付画面のプリントアウト付き）',
+    place:'会社にて保管があるもの。毎年8〜9月頃に届く最新の書類をご提出ください。'
+  },
+  '4. キャリアアップID': {
+    name:'建設キャリアアップシステムの事業者IDを確認する書類',
+    sample:'kokko_04_ccus_id.png', slow:true,
+    desc:'建設キャリアアップシステムの事業者IDを確認できる書類。\n・はがき「事業者情報登録完了のおしらせについて」\n・メール「事業者情報新規登録完了「事業者ID」のおしらせ」写し\nのどちらか。\n※初期パスワードには必ずマスキングをしてください。\n上記2点が無い場合はログイン画面でも代用可。',
+    place:'登録完了後、CCUSより登録住所・アドレスに事業者IDのお知らせ（はがき・メール）が届きます。未登録の場合：https://www.ccus.jp/p/application'
+  },
+  '5. 会員証明書': {
+    name:'特定技能外国人受入事業実施法人（JACまたは全中連）に加入していることを証する書類（加入証明書）',
+    sample:'kokko_05_kaiin_shomei.png', slow:true,
+    desc:'特定技能外国人受入事業実施法人（JACまたは全中連）に加入していることを証する書類（加入証明書）。\nJAC正会員または賛助会員に所属している必要があります。\n・JAC賛助会員（年会費24万円）\n・JAC会員団体の会員（例：全中連 年会費84,000円 など）',
+    place:'入会手続き完了後、入会先から加入証明書が発行されます。JAC：https://jac-skill.or.jp/membership.php ／ 全中連：https://zenchuren-group.jp/foreign-worker/'
+  },
+  '7. 求人票': {
+    name:'ハローワークの求人票',
+    sample:'kokko_07_kyujin.png', slow:true,
+    desc:'ハローワークの求人票。\n・直近1年以内のもの\n・フルタイムかつ建築・土木の作業員で、特定技能外国人と同じ職種の募集であること\n・求人を出していない場合は新しく求人を出して提出\n・求人番号が掲載されているもの\n・「プレビュー」「無効」表記は不可',
+    place:'管轄のハローワーク。ハローワークインターネットサービスでオンライン作成も可：https://www.hellowork.mhlw.go.jp/'
+  },
+  '9. 就業規則および賃金規程': {
+    name:'就業規則・賃金規定',
+    sample:'kokko_09_shugyo_kisoku.png', cond:'shugyo',
+    desc:'常勤職員数が10人以上の場合に提出が必須です。\n就業規則とは別に賃金規定や退職金規定がある場合はそれらもご提出ください。',
+    place:'会社にて保管があるもの。労働基準監督署の受付印のあるものをご提出ください。'
+  },
+  '10. 賃金台帳': {
+    name:'特定技能外国人と同等の技能を有する日本人の賃金台帳',
+    sample:'kokko_10_chingin_daicho.png',
+    desc:'特定技能外国人と同等の技能を有する日本人の賃金台帳。\n・経験年数が1番近い方の賃金台帳\n・直近1年分のもの\n・給与明細は不可\n同等の技能を有する日本人がいない場合は統計表を使用しますのでお申し付けください。',
+    place:'会社にて保管があるもの。賃金台帳がない場合はテンプレートをお送りします。'
+  },
+  '11. 経歴書': {
+    name:'特定技能外国人と同等の技能を有する日本人の職務経歴書',
+    sample:'kokko_11_keirekisho.png',
+    desc:'特定技能外国人と同等の技能を有する日本人の職務経歴書。\n・賃金台帳と同じ方の経歴書\n・添付の経歴書ひな形より作成をお願いいたします。',
+    place:''
+  },
+  '13. 36協定': {
+    name:'36協定届出書',
+    sample:'kokko_13_36kyotei.png', cond:'jikangai',
+    desc:'時間外労働がある場合に提出が必須です。\n・労働基準監督署に提出し、受領印のあるもの\n・有効期限内のもの',
+    place:'会社にて保管があるもの（労働基準監督署に提出したもの）。'
+  },
+  '14. 年間カレンダー': {
+    name:'変形労働時間制に関する協定届出書・労使協定書・年間カレンダー',
+    sample:'', cond:'henkei',
+    desc:'1年単位の変形労働時間制を採用している場合に、変形労働届出書・変形労働労使協定書・年間カレンダーの3点をご提出ください。\n・労働基準監督署に提出し、受領印のあるもの\n・有効期限内のもの',
+    place:'会社にて保管があるもの（労働基準監督署に提出したもの）。'
+  }
+};
+var _NYUKAN_UP_BASE='https://ofusa2026.github.io/upload/';
+var _NYUKAN_SAMPLES = {
+  houtei:        { image:_NYUKAN_UP_BASE+'samples/houtei_sample.png',        note:'源泉徴収税額が1,000万円以上の大企業の場合に提出。法定調書合計表（給与所得の源泉徴収票等の法定調書合計表）の写し、または四季報の写し・上場証明書類でも可。' },
+  tokibo:        { image:_NYUKAN_UP_BASE+'samples/tokibo_sample.png',        note:'法務局またはオンライン（登記・供託オンライン申請システム）で取得。「履歴事項全部証明書」を取得してください（現在事項証明書は不可の場合あり）。発行から3か月以内のもの。' },
+  zeimu_3:       { image:_NYUKAN_UP_BASE+'samples/zeimu_3_sample.png',       note:'税務署発行の「納税証明書（その３）」。税目＝源泉所得税及び復興特別所得税・法人税・消費税及び地方消費税。未納がないことの証明。', form:{ file:_NYUKAN_UP_BASE+'forms/zeimu_3_form.pdf', label:'納税証明書交付請求書（税務署）' } },
+  zeimu_shimin:  { image:_NYUKAN_UP_BASE+'samples/zeimu_shimin_sample.png',  note:'市区町村発行の法人住民税の納税証明書（直近2年度分）。' },
+  rodo_hoken:    { image:_NYUKAN_UP_BASE+'samples/rodo_hoken_sample.png',    note:'労働保険料等の未納なし証明。入管申請の際は、添付のフォーマットでの提出が必要となります。添付フォーマットの黄色箇所をご記入のうえ、返信用封筒を同封し、管轄の労働局へご送付いただきますようお願いいたします。押印済みの書類が返送されますので、返送された書類をご提出ください。', form:{ file:_NYUKAN_UP_BASE+'forms/rodo_hoken_form.pdf', label:'労働保険料等納付証明書（特定技能外国人関係申請用）' } },
+  shakai_hoken:  { images:[{src:_NYUKAN_UP_BASE+'samples/shakai_hoken_sample.png',label:'Ver.1 社会保険料納入証明書'},{src:_NYUKAN_UP_BASE+'samples/shakai_hoken_sample2.png',label:'Ver.2 社会保険料納入状況照会回答票'}],  note:'年金事務所の「社会保険料納入状況照会回答票」、または「社会保険料納入証明書」「健康保険・厚生年金保険料の領収証書の写し」（申請月の前々月までの24か月分）。いずれかでOK。健康保険料の納入額が「0円」と記載されている場合は、同じ期間の支払いが完了していることを確認できる書類もあわせてご提出ください。', form:{ file:_NYUKAN_UP_BASE+'forms/shakai_hoken_form.pdf', label:'社会保険料納付記録 交付申請書（特定技能・適用事業所用）' } },
+  jumin_hyo:     { image:_NYUKAN_UP_BASE+'samples/jumin_hyo_sample.png',     note:'業務執行に関与する役員（代表で1名分）の住民票の写し。マイナンバーの記載がなく、本籍の記載があるものを取得してください。' },
+  kessan:        { image:_NYUKAN_UP_BASE+'samples/kessan_sample.png',        note:'直近3期分の決算文書（損益計算書及び貸借対照表）の写し。' },
+  kakutei_shinkoku: { images:[{src:_NYUKAN_UP_BASE+'samples/kakutei_shinkoku_sample1.jpg',label:'損益計算書'},{src:_NYUKAN_UP_BASE+'samples/kakutei_shinkoku_sample2.jpg',label:'貸借対照表'}], note:'個人事業主の方は、直近3年分の確定申告書（青色申告決算書など）の写しをご提出ください。見本は青色申告決算書（不動産所得用）の例です。' },
+  shugyo_kisoku: { image:_NYUKAN_UP_BASE+'samples/shugyo_kisoku_sample.png', note:'就業規則。常時10人以上を使用する事業場は労働基準監督署への届出が必要（受付印のある写し）。' },
+  chingin_kitei: { image:_NYUKAN_UP_BASE+'samples/chingin_kitei_sample.png', note:'賃金規定。就業規則本体に賃金規定が含まれる場合は、その該当部分でも可。' },
+  san_roku:      { image:_NYUKAN_UP_BASE+'samples/san_roku_sample.png',      note:'時間外労働・休日労働に関する協定届（36協定／様式第９号）。労働基準監督署への届出（受付印のある写し）。有効期間が切れていないもの。' },
+  henkei_rodo:   { image:_NYUKAN_UP_BASE+'samples/henkei_rodo_sample.png',   note:'変形労働時間制を採用している場合の協定届。年間カレンダー等を添付。' },
+  nengkan_cal:   { image:_NYUKAN_UP_BASE+'samples/nengkan_cal_sample.png',   note:'変形労働時間制の所定労働日・休日を示す年間カレンダー。' },
+  madori:        { image:_NYUKAN_UP_BASE+'samples/madori_sample.png',        note:'特定技能外国人の住居予定物件の間取り図・物件資料。居室の広さ（1人あたり7.5㎡以上が目安）が分かるもの。' },
+  kyogikai:      { image:_NYUKAN_UP_BASE+'samples/kyogikai_sample.png',      note:'受け入れ分野の協議会への加入を証明する書類。分野により名称・様式が異なります。' },
+  kojin_jumin:     { image:_NYUKAN_UP_BASE+'samples/kojin_jumin_sample.png',     note:'個人事業主本人の住民票の写し（マイナンバー記載なし）。' },
+  kojin_iryo:      { image:_NYUKAN_UP_BASE+'samples/kojin_iryo_sample.png',      note:'マイナポータルからダウンロードした医療保険の資格情報の写し、または資格確認書の写し。' },
+  kojin_kokuho:    { image:_NYUKAN_UP_BASE+'samples/kojin_kokuho_sample.png',    note:'国民健康保険料（税）納付証明書（直近2年分）。市区町村窓口で取得。' },
+  kojin_nenkin_fu: { image:_NYUKAN_UP_BASE+'samples/kojin_nenkin_fu_sample.png', note:'被保険者記録照会（納付Ⅱ）または国民年金保険料領収証書の写し（直近24か月分）。' },
+  kojin_nenkin_rec:{ image:_NYUKAN_UP_BASE+'samples/kojin_nenkin_rec_sample.png',note:'年金事務所で取得する被保険者記録照会回答票。' },
+  kojin_zeimu3:    { image:_NYUKAN_UP_BASE+'samples/kojin_zeimu3_sample.png',    note:'税務署発行の納税証明書（その３）。税目＝源泉所得税・申告所得税・消費税・地方消費税・相続税・贈与税。', form:{ file:_NYUKAN_UP_BASE+'forms/zeimu_3_form.pdf', label:'納税証明書交付請求書（税務署）' } },
+  kojin_shimin:    { image:_NYUKAN_UP_BASE+'samples/kojin_shimin_sample.png',    note:'市区町村発行の個人住民税の納税証明書（直近2年度分）。' }
+};
+function _nyukanSampleKey(label){
+  var t=String(label||'');
+  var has=function(){ for(var i=0;i<arguments.length;i++){ if(t.indexOf(arguments[i])<0) return false; } return true; };
+  if(t.indexOf('登記事項')>=0) return 'tokibo';
+  if(t.indexOf('法定調書')>=0 || t.indexOf('四季報')>=0 || t.indexOf('上場証明')>=0) return 'houtei';
+  if(t.indexOf('協議会')>=0) return 'kyogikai';
+  if(t.indexOf('個人住民税')>=0) return 'kojin_shimin';
+  if(t.indexOf('法人住民税')>=0 || has('地方税','法人')) return 'zeimu_shimin';
+  if(t.indexOf('納税証明')>=0){
+    if(t.indexOf('法人税')>=0) return 'zeimu_3';
+    if(t.indexOf('申告所得税')>=0 || t.indexOf('相続税')>=0 || t.indexOf('贈与税')>=0) return 'kojin_zeimu3';
+    return 'zeimu_3';
+  }
+  if(t.indexOf('労働保険')>=0) return 'rodo_hoken';
+  if(t.indexOf('社会保険料')>=0) return 'shakai_hoken';
+  if(t.indexOf('住民票')>=0) return (t.indexOf('役員')>=0) ? 'jumin_hyo' : 'kojin_jumin';
+  if(t.indexOf('決算')>=0) return 'kessan';
+  if(t.indexOf('確定申告')>=0) return 'kakutei_shinkoku';
+  if(t.indexOf('就業規則')>=0) return 'shugyo_kisoku';
+  if(t.indexOf('賃金')>=0) return 'chingin_kitei';
+  if(t.indexOf('36協定')>=0 || t.indexOf('３６協定')>=0 || t.indexOf('時間外労働')>=0) return 'san_roku';
+  if(t.indexOf('変形労働')>=0) return 'henkei_rodo';
+  if(t.indexOf('年間カレンダー')>=0) return 'nengkan_cal';
+  if(t.indexOf('間取り')>=0 || t.indexOf('物件')>=0 || t.indexOf('居住予定')>=0) return 'madori';
+  if(t.indexOf('医療保険')>=0 || t.indexOf('資格確認書')>=0 || t.indexOf('マイナポータル')>=0) return 'kojin_iryo';
+  if(t.indexOf('国民健康保険')>=0) return 'kojin_kokuho';
+  if(t.indexOf('被保険者記録照会回答票')>=0) return 'kojin_nenkin_rec';
+  if(t.indexOf('被保険者記録照会')>=0 || t.indexOf('国民年金')>=0) return 'kojin_nenkin_fu';
+  return null;
+}
+function _nyukanMetaFor(label){ var k=_nyukanSampleKey(label); return k?_NYUKAN_SAMPLES[k]:null; }
+function _nyukanToggle(id){
+  var d=document.getElementById('nyudet_'+id), a=document.getElementById('nyuarw_'+id);
+  if(!d) return; var open=d.style.display!=='none';
+  d.style.display=open?'none':'block'; if(a) a.textContent=open?'▸':'▾';
+}
+function _nyukanDetailHtml(id, smp){
+  var h='<div id="nyudet_'+id+'" style="display:none;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin:2px 0 8px 30px;font-size:11.5px;color:#92400e;line-height:1.7;">';
+  if(smp.note){ h+='<div style="margin-bottom:8px;">💡 '+_linkifyText(smp.note)+'</div>'; }
+  if(smp.form && smp.form.file){
+    h+='<div style="margin-bottom:8px;"><a href="'+esc(smp.form.file)+'" target="_blank" rel="noopener" style="display:inline-block;background:#1a56db;color:#fff;font-size:11px;font-weight:800;border-radius:6px;padding:5px 12px;text-decoration:none;">📝 '+esc(smp.form.label||'取得用の申請書')+'（PDF）</a></div>';
+  }
+  var imgs=[];
+  if(smp.images && smp.images.length){ imgs=smp.images; }
+  else if(smp.image){ imgs=[{src:smp.image,label:''}]; }
+  if(imgs.length){
+    h+='<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;">';
+    imgs.forEach(function(im){
+      h+='<a href="'+esc(im.src)+'" target="_blank" rel="noopener" style="text-align:center;text-decoration:none;">'
+        +'<img src="'+esc(im.src)+'" alt="見本" style="max-width:120px;max-height:150px;border:1px solid #e2e8f0;border-radius:6px;display:block;background:#fff;" loading="lazy">'
+        +(im.label?'<span style="font-size:10px;color:#92400e;font-weight:700;display:block;margin-top:2px;">'+esc(im.label)+'</span>':'<span style="font-size:10px;color:#1a56db;font-weight:700;display:block;margin-top:2px;">🖼 見本を拡大</span>')
+        +'</a>';
+    });
+    h+='</div>';
+  }
+  h+='</div>';
+  return h;
+}
+
 
 // ver.20260921.14: 国交省16点を番号順に全件表示。大房作成4点は📝バッジ、それ以外は提出済/未提出
 function _kokkoToggle(i){
@@ -1878,6 +2050,7 @@ function _kokkoRowsHtml(){
       s+='<div id="kokdet_'+i+'" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;margin:2px 0 8px 30px;font-size:11.5px;color:#334155;line-height:1.7;">'
         +(meta.name&&meta.name!==name?'<div style="font-weight:800;margin-bottom:3px;">'+esc(meta.name)+'</div>':'')
         +esc(meta.desc||'').replace(/\n/g,'<br>')
+        +(meta.place?'<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #cbd5e1;"><span style="font-weight:800;color:#0f2040;">📍 取得方法：</span>'+_linkifyText(meta.place)+'</div>':'')
         +(meta.sample?'<div style="margin-top:6px;"><a href="'+_KOKKO_SAMPLE_BASE+esc(meta.sample)+'" target="_blank" rel="noopener" style="display:inline-block;background:#0f2040;color:#fff;font-size:11px;font-weight:800;border-radius:6px;padding:5px 12px;text-decoration:none;">🖼 見本を見る</a></div>':'')
         +'</div>';
     }
