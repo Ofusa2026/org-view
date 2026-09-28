@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260928.01: ①提出書類チェックリストの未提出書類（国交省・入管とも）に「📅取得予定日」入力を追加。company_view_set_yotei RPCで co_doc_check に yotei:: マーカーで保存（案シスと連動）。②提出書類チェックリスト上部に「📋所属機関ヒアリングフォームを開く」ボタンを常時表示。 -->
 <!-- ver.20260925.03: 建設スケジュール（横型ステップライン・進み具合バッジ）の日数見込みを見直し。全工程を営業日ベースに統一し「サイン書類作成」工程を新設、「サイン」「押印」を「サイン・押印（合わせて3営業日以内）」に統合。受領日→15営業日（約3週間）で申請の標準に変更（share.htmlと同一ロジック）。 -->
 <!-- ver.20260925.02: 国交省「11. 経歴書」の詳細に「経歴書ひな形(Word)をダウンロード」ボタンを追加。_KOKKO_META['11. 経歴書']にform{file,label}を追加し、_kokkoRowsHtmlの詳細でformダウンロードボタンを描画（forms/keirekisho_form.docx＝upload配信）。 -->
 <!-- ver.20260925.01: 提出書類チェックリストの各書類をタップすると「説明・見本・取得方法」が表示されるように。①国交省書類は_KOKKO_META未定義でタップが無反応だったのを修正し、取得方法(place)も表示。②入管書類も新たにタップ詳細（説明・見本画像・取得用申請書PDF）に対応。メタはアップロードページ(kokko_dataup.html/company_dataup.html)と同一内容を移植。 -->
@@ -325,7 +326,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20260925.03</span>
+  <span class="header-ver">ver.20260928.01</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -1843,6 +1844,24 @@ function _linkifyText(t){
   e=e.replace(/(https?:\/\/[^\s<）)]+)/g,function(u){ return '<a href="'+u+'" target="_blank" rel="noopener" style="color:#1a56db;font-weight:700;word-break:break-all;">'+u+'</a>'; });
   return e.replace(/\n/g,'<br>');
 }
+// ver.20260928.01: 企業書類の「取得予定日」入力（未提出のみ）。co_doc_check の yotei:: に保存
+function _yoteiInputHtml(name){
+  var cur=(coDocs[name]&&coDocs[name].yotei)?coDocs[name].yotei:'';
+  return '<div style="display:flex;align-items:center;gap:8px;padding:2px 16px 8px 46px;flex-wrap:wrap;">'
+    +'<span style="font-size:11px;color:#64748b;font-weight:700;">📅 取得予定日</span>'
+    +'<input type="date" value="'+esc(cur)+'" onchange="saveYoteiCo('+JSON.stringify(name).replace(/"/g,'&quot;')+',this.value,this)" style="font-size:12px;padding:4px 8px;border:1px solid #cbd5e1;border-radius:6px;color:#334155;">'
+    +'<span class="yotei-msg" style="font-size:10.5px;font-weight:700;"></span>'
+    +'</div>';
+}
+function saveYoteiCo(doc, val, el){
+  var msg=el&&el.parentNode?el.parentNode.querySelector('.yotei-msg'):null;
+  if(msg){ msg.textContent='…'; msg.style.color='#94a3b8'; }
+  callRpc('company_view_set_yotei',{p_token:currentToken,p_pass:_correctPass,p_doc:doc,p_date:val||''}).then(function(r){
+    if(r&&r.ok){ if(!coDocs[doc]) coDocs[doc]={}; if(val){ coDocs[doc].yotei=val; } else { delete coDocs[doc].yotei; }
+      if(msg){ msg.textContent='✓ 保存しました'; msg.style.color='#16a34a'; setTimeout(function(){ if(msg) msg.textContent=''; },2000); }
+    } else { if(msg){ msg.textContent='⚠ 保存に失敗しました'; msg.style.color='#dc2626'; } }
+  }).catch(function(){ if(msg){ msg.textContent='⚠ 保存に失敗しました'; msg.style.color='#dc2626'; } });
+}
 // ver.20260925.01: 入管書類も各行タップで説明・見本・取得方法（アップロードページ company_dataup.html と同一内容）を表示
 var _docRowUid=0;
 function _docRowsHtml(names){
@@ -1860,6 +1879,7 @@ function _docRowsHtml(names){
     s+='<span class="doc-state '+stCls+'">'+stTxt+'</span>';
     s+='</div>';
     if(meta){ s+=_nyukanDetailHtml(uid, meta); }
+    if(st!=='done'){ s+=_yoteiInputHtml(name); }  // ver.20260928.01: 未提出に取得予定日
   });
   return s;
 }
@@ -2060,6 +2080,7 @@ function _kokkoRowsHtml(){
         +(meta.sample?'<div style="margin-top:6px;"><a href="'+_KOKKO_SAMPLE_BASE+esc(meta.sample)+'" target="_blank" rel="noopener" style="display:inline-block;background:#0f2040;color:#fff;font-size:11px;font-weight:800;border-radius:6px;padding:5px 12px;text-decoration:none;">🖼 見本を見る</a></div>':'')
         +'</div>';
     }
+    if(!made && !done){ s+=_yoteiInputHtml(name); }  // ver.20260928.01: 未提出（大房作成以外）に取得予定日
   });
   return s;
 }
@@ -2079,6 +2100,8 @@ function renderDocs(){
   var gateExists=allCases.some(function(c){ var rs=(c.residence_status||''); return (rs==='特定活動'||rs==='特定技能1号') && String(c.applicant_field||'').indexOf('建設')>=0; });
   var h='<div class="section-title">📄 御社の提出書類チェックリスト</div>';
   h+='<div class="note">大房行政書士法人でチェックが入った書類は「提出済（または不要）」になります。「未提出」の書類はご提出をお願いいたします。ご不明点は担当者までご連絡ください。</div>';
+  // ver.20260928.01: 所属機関ヒアリングフォームへ飛ぶボタン（常時表示）
+  h+='<div style="margin-bottom:14px;"><a href="'+esc(_companyHearingUrl())+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#7c3aed;color:#fff;text-decoration:none;font-size:12px;font-weight:800;padding:11px 18px;border-radius:10px;box-shadow:0 2px 6px rgba(124,58,237,.25);">📋 所属機関ヒアリングフォームを開く</a></div>';
   var kokkoUrl=buildKokkoUploadUrl();
   var upUrl=buildCompanyUploadUrl();
   // ── 国交省書類 ──

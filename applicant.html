@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>申請人マイページ | 大房行政書士法人</title>
+<!-- ver.20260928.01: 提出書類タブの未提出書類に「📅取得予定日」入力を追加。入力するとRPC applicant_view_set_yotei で自分の案件のdoc_checkに yotei:: マーカーで保存（案シス・所属機関ページと連動）。8言語対応。 -->
 <!-- ver.20260716.03: ヒアリング行を常時表示に変更（未回答なら⬜＋回答ボタン。ステータス段階を過ぎても回答導線を維持）。黄色バナーの督促はヒアリング段階のみ。回答済み表示は送信済み回答の実在時のみ（16.02の厳格化は維持）。 -->
 <!-- ver.20260716.02: 「回答済み」の誤表示を修正。回答済み判定を送信済みフォーム回答の実在のみに厳格化（ステータス推定を廃止、RPCも submitted_at 必須に）。ヒアリング段階を過ぎて回答が無い案件は行を非表示にし、書類行の番号を1.に振り直し。 -->
 <!-- ver.20260716.01: 依頼事項の「ヒアリングフォーム回答」が未回答のとき、申請人ページから直接回答できる「✍️ 回答する」ボタン（8言語対応）を追加。フォーム種別は在留資格・申請種別から自動判定（index側と同ロジック）。 -->
@@ -171,7 +172,7 @@ body{line-height:1.45;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;flex:none;white-space:nowrap;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title" id="hdrTitle">申請人マイページ</span>
-  <span class="header-ver">ver.20260716.03</span>
+  <span class="header-ver">ver.20260928.01</span>
   <div class="header-right">
     <div id="langSwitch" class="lang-switch"></div>
     <div class="header-org" id="headerName" style="font-size:13px;font-weight:700;opacity:.95;max-width:none;">読み込み中...</div>
@@ -335,6 +336,9 @@ var TR={
  docs_empty:{ja:'提出書類リストはまだ準備中です。担当者にお問い合わせください。',en:'The document list is being prepared. Please contact your representative.',vi:'Danh sách hồ sơ đang được chuẩn bị. Vui lòng liên hệ người phụ trách.',id:'Daftar dokumen sedang disiapkan. Hubungi penanggung jawab Anda.',zh:'提交材料清单正在准备中。请联系负责人。',km:'បញ្ជីឯកសារកំពុងរៀបចំ។ សូមទាក់ទងអ្នកទទួលបន្ទុក។',my:'စာရွက်စာတမ်းစာရင်း ပြင်ဆင်နေဆဲ။ တာဝန်ခံကိုဆက်သွယ်ပါ။',th:'รายการเอกสารกำลังเตรียมอยู่ กรุณาติดต่อผู้รับผิดชอบ'},
  doc_done_state:{ja:'提出済（または不要）',en:'Submitted (or N/A)',vi:'Đã nộp (hoặc không cần)',id:'Diserahkan (atau tidak perlu)',zh:'已提交（或不需要）',km:'បានដាក់ (ឬមិនចាំបាច់)',my:'တင်ပြီး (သို့မလို)',th:'ยื่นแล้ว (หรือไม่จำเป็น)'},
  doc_todo_state:{ja:'未提出',en:'Not submitted',vi:'Chưa nộp',id:'Belum diserahkan',zh:'未提交',km:'មិនទាន់ដាក់',my:'မတင်ရသေး',th:'ยังไม่ได้ยื่น'},
+ yotei_label:{ja:'📅 取得予定日',en:'📅 Planned date to obtain',vi:'📅 Ngày dự kiến lấy',id:'📅 Tanggal rencana pengambilan',zh:'📅 预计取得日',km:'📅 ថ្ងៃគ្រោងយក',my:'📅 ရယူရန်ရက်',th:'📅 วันที่วางแผนขอรับ'},
+ yotei_saved:{ja:'保存しました',en:'Saved',vi:'Đã lưu',id:'Tersimpan',zh:'已保存',km:'បានរក្សាទុក',my:'သိမ်းပြီး',th:'บันทึกแล้ว'},
+ yotei_failed:{ja:'保存に失敗しました',en:'Failed to save',vi:'Lưu thất bại',id:'Gagal menyimpan',zh:'保存失败',km:'រក្សាទុកបរាជ័យ',my:'သိမ်းမရ',th:'บันทึกไม่สำเร็จ'},
  doc_required:{ja:'必須',en:'Required',vi:'Bắt buộc',id:'Wajib',zh:'必须',km:'ចាំបាច់',my:'မဖြစ်မနေ',th:'จำเป็น'},
  note_specialist:{ja:'※ 技能実習をしていた方のみ',en:'* Only for those who did Technical Intern Training (Ginou Jisshu)',vi:'* Chỉ dành cho người từng thực tập kỹ năng (Ginou Jisshu)',id:'* Hanya untuk yang pernah ikut Pemagangan Teknis (Ginou Jisshu)',zh:'※ 仅限曾参加技能实习（技能実習）者',km:'* សម្រាប់តែអ្នកធ្លាប់កម្មសិក្សាជំនាញ (Ginou Jisshu) ប៉ុណ្ណោះ',my:'* နည်းပညာအလုပ်သင် (Ginou Jisshu) လုပ်ခဲ့ဖူးသူများသာ',th:'* เฉพาะผู้ที่เคยฝึกงานทักษะ (Ginou Jisshu) เท่านั้น'},
  temp_return_title:{ja:'🛫 一時帰国',en:'🛫 Temporary Return Home',vi:'🛫 Về nước tạm thời',id:'🛫 Pulang Sementara',zh:'🛫 临时回国',km:'🛫 ត្រឡប់ប្រទេសវិញបណ្ដោះអាសន្ន',my:'🛫 ယာယီပြည်တော်ပြန်',th:'🛫 กลับประเทศชั่วคราว'},
@@ -645,7 +649,7 @@ function buildHearingFormUrl(){
 
 function _hasVal(v){ return v!=null && v!=='' && v!=='false'; }
 
-var theCase=null, thePerson={}, cacheDocs=[], doneSet={}, missingDocCount=0, pdfCert='', pdfCustody='', pdfReceipt='', pdfShinsa='', hasHearingForm=false, _passMode='enter', currentTab='status', currentToken='', _correctPass='', applicantChangeReq=null, signRequests=[], pendingSignCount=0;
+var theCase=null, thePerson={}, cacheDocs=[], doneSet={}, yoteiMap={}, missingDocCount=0, pdfCert='', pdfCustody='', pdfReceipt='', pdfShinsa='', hasHearingForm=false, _passMode='enter', currentTab='status', currentToken='', _correctPass='', applicantChangeReq=null, signRequests=[], pendingSignCount=0;
 
 function savePin(token,pin){
   return callRpc('applicant_view_set_pin',{p_token:token,p_pin:pin}).then(function(r){return !!(r&&r.ok);}).catch(function(){return false;});
@@ -712,12 +716,13 @@ async function loadData(pass){
     var _cu=thePerson.custody_receipt_pdf_urls; if(Array.isArray(_cu)&&_cu.length){ var _l2=_cu[_cu.length-1]; if(_l2&&_l2.url) pdfCustody=_l2.url; }
     hasHearingForm=!!res.has_hearing_form;
     cacheDocs=Array.isArray(res.cache_docs)?res.cache_docs:[];
-    doneSet={};
+    doneSet={}; yoteiMap={};
     (res.doc_check||[]).forEach(function(row){
       var idx=row.doc_key.indexOf('::'); if(idx<0) return;
       var prefix=row.doc_key.substring(0,idx); var name=row.doc_key.substring(idx+2);
       var v=row.value; var truthy=(v!=null&&v!==''&&v!=='false');
       if((prefix==='staff'||prefix==='skip')&&truthy) doneSet[name]=true;
+      if(prefix==='yotei'&&truthy) yoteiMap[name]=v;  // ver.20260928.01: 取得予定日
     });
     computeMissing();
     var nm=theCase.applicant||theCase.name||'';
@@ -1265,6 +1270,16 @@ function renderDocs(){
     var hd=getDocHelp(d.l);
     h+='<div class="doc-item">';
     h+='<div class="doc-row"><span class="doc-ico">'+ico+'</span><div class="doc-name">'+nameHtml+reqMark+'</div><span class="doc-state '+stCls+'">'+stTxt+'</span></div>';
+    // ver.20260928.01: 未提出の書類に「取得予定日」入力を表示
+    if(!done){
+      var _yv=yoteiMap[d.l]||'';
+      var _yid='yotei_'+encodeURIComponent(d.l).replace(/[^a-zA-Z0-9]/g,'');
+      h+='<div class="doc-yotei" style="display:flex;align-items:center;gap:8px;padding:2px 16px 8px 46px;flex-wrap:wrap;">'
+        +'<span style="font-size:11px;color:#64748b;font-weight:700;">'+t('yotei_label')+'</span>'
+        +'<input type="date" value="'+esc(_yv)+'" onchange="saveYotei('+JSON.stringify(d.l).replace(/"/g,'&quot;')+',this.value,this)" style="font-size:12px;padding:4px 8px;border:1px solid #cbd5e1;border-radius:6px;color:#334155;">'
+        +'<span class="yotei-msg" style="font-size:10.5px;font-weight:700;"></span>'
+        +'</div>';
+    }
     if(String(d.l).indexOf('専門級')>=0){ h+='<div class="doc-subnote">'+t('note_specialist')+'</div>'; }
     if(hd){ h+=docHelpInline(hd); }
     h+='</div>';
@@ -1273,6 +1288,16 @@ function renderDocs(){
   return h;
 }
 
+// ver.20260928.01: 取得予定日の保存（自分の案件のdoc_checkにyotei::を書き込む）
+function saveYotei(doc, val, el){
+  var msg=el&&el.parentNode?el.parentNode.querySelector('.yotei-msg'):null;
+  if(msg){ msg.textContent='…'; msg.style.color='#94a3b8'; }
+  callRpc('applicant_view_set_yotei',{p_token:currentToken,p_pass:_correctPass,p_doc:doc,p_date:val||''}).then(function(r){
+    if(r&&r.ok){ yoteiMap[doc]=val||''; if(!val) delete yoteiMap[doc];
+      if(msg){ msg.textContent='✓ '+t('yotei_saved'); msg.style.color='#16a34a'; setTimeout(function(){ if(msg) msg.textContent=''; },2000); }
+    } else { if(msg){ msg.textContent='⚠ '+t('yotei_failed'); msg.style.color='#dc2626'; } }
+  }).catch(function(){ if(msg){ msg.textContent='⚠ '+t('yotei_failed'); msg.style.color='#dc2626'; } });
+}
 function _pdfBtn(label,url,color,icon){
   if(url) return '<a class="pdf-btn" style="background:'+color+';" href="'+esc(url)+'" target="_blank" rel="noopener">'+icon+' '+label+'</a>';
   return '<span class="pdf-btn pdf-none">'+icon+' '+label+'（'+t('pdf_unissued')+'）</span>';
