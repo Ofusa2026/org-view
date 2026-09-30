@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20260930.01: 【不具合修正】希望在留期間確認モーダルの発行手数料が受取方法で変わっていた不具合を修正。窓口受取→window額／郵送交付→online額に振り分けていたが、手数料は受取方法（窓口受取/郵送交付）では変わらないため振り分けを廃止。大房は原則オンライン申請のため本体額はオンライン額で統一表示（例：3年＝56,000円）。オンライン申請の別途決済手数料（3年未満330円/3年以上550円）は注記のまま。金額は入管庁2026-10-01改定表と一致を確認。 -->
 <!-- ver.20260925.01: 建設スケジュールの日数見込みを実態に合わせて見直し。全工程を営業日ベースに統一し「サイン書類の作成（企業確認後3営業日以内）」工程を新設。サイン（人材）・押印（企業）は合わせて3営業日以内、その後3営業日以内に特定活動申請。受領日→15営業日（約3週間）で申請予定を新標準とし、「進み具合」バッジの基準も15営業日に変更。 -->
 <!-- ver.20260922.01: 【不具合修正】希望在留期間確認モーダルのカード表示で、受取方法が「窓口受取」なのに「窓口申請」と誤表示されていたのを修正。実際の受取方法（窓口受取/郵送交付/メール交付）をそのまま表示。 -->
 <!-- ver.20260921.11: 案件一覧の各行に「🏢 企業詳細」ボタン（GP専用・人材詳細ボタンの隣）を追加。企業詳細モーダル＝貴社担当者（タップ編集）／Ofusa担当／案件数／国交省書類x/16＋45日期限／企業ログインPIN（専属のみ）／「企業マイページを開く」（機関スコープリンク・貴社案件のみ表示）。 -->
@@ -605,7 +606,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260925.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260930.01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -7444,12 +7445,10 @@ function _openHopedFeeConfirm(payload, onOK){
   var missingFee = false;
   (payload.jinzaiList||[]).forEach(function(j, i){
     var fee = _feeForPeriod(j.hopedStayPeriod);
-    var isOnline = (j.ukeMethod||'').indexOf('郵送')<0 && (j.ukeMethod||'').indexOf('窓口')<0
-      ? false : (j.ukeMethod==='郵送交付'); // 郵送交付＝オンライン系(申請コスト同)扱いにするか？現状は「窓口/オンライン」の区別で計上
-    // 現行UIは受取方法=郵送交付/窓口受取。手数料表は申請時の「窓口/オンライン」区分なので
-    // 「窓口受取＝窓口申請」「郵送交付＝オンライン申請」とみなす（大房の実運用）
-    var applyMethod = (j.ukeMethod==='窓口受取') ? '窓口' : 'オンライン';
-    var amount = fee ? (applyMethod==='窓口' ? fee.window : fee.online) : 0;
+    // ver.20260930.01: 発行手数料は受取方法（窓口受取/郵送交付）では変わらない。
+    //   大房は原則オンライン申請のため、本体額はオンライン額で表示する（受取方法では振り分けない）。
+    //   ※オンライン申請の別途決済手数料（3年未満330円/3年以上550円）は下部の注記で案内。
+    var amount = fee ? fee.online : 0;
     if(!fee) missingFee = true;
     totalFee += amount;
     // ver.20260901.08: カード形式（1人=2行）で表示
@@ -7461,7 +7460,7 @@ function _openHopedFeeConfirm(payload, onOK){
       + '</div>'
       + '<div style="font-size:10.5px;color:#64748b;padding-left:24px;">'
       +   '<span style="font-weight:700;color:#334155;">'+esc(j.hopedStayPeriod||'-')+'</span>'
-      +   ' / '+esc(j.ukeMethod||applyMethod)
+      +   ' / '+esc(j.ukeMethod||'')
       + '</div>'
       + '</div>';
   });
