@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20260930.01: 提出書類タブの「🏗国交省申請書類」見出し直下に提出期限（受領日/ご案内日から45日・残りn日／超過は赤）を表示。会社単位の起算日＝初回案内日→国交省reqの最早→特定活動案件の受領日の最早。これまで期限はご依頼事項・📅スケジュールにしか出ておらず、提出書類タブでは「いつまで」が分からなかったのを解消。 -->
 <!-- ver.20260928.01: ①提出書類チェックリストの未提出書類（国交省・入管とも）に「📅取得予定日」入力を追加。company_view_set_yotei RPCで co_doc_check に yotei:: マーカーで保存（案シスと連動）。②提出書類チェックリスト上部に「📋所属機関ヒアリングフォームを開く」ボタンを常時表示。 -->
 <!-- ver.20260925.03: 建設スケジュール（横型ステップライン・進み具合バッジ）の日数見込みを見直し。全工程を営業日ベースに統一し「サイン書類作成」工程を新設、「サイン」「押印」を「サイン・押印（合わせて3営業日以内）」に統合。受領日→15営業日（約3週間）で申請の標準に変更（share.htmlと同一ロジック）。 -->
 <!-- ver.20260925.02: 国交省「11. 経歴書」の詳細に「経歴書ひな形(Word)をダウンロード」ボタンを追加。_KOKKO_META['11. 経歴書']にform{file,label}を追加し、_kokkoRowsHtmlの詳細でformダウンロードボタンを描画（forms/keirekisho_form.docx＝upload配信）。 -->
@@ -326,7 +327,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20260928.01</span>
+  <span class="header-ver">ver.20260930.01</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -908,8 +909,29 @@ function _kokkoFirstAnnai(){
     return _hasVal(v) ? _cksParse(v) : null;
   }catch(e){ return null; }
 }
-function _lastPdfUrl(arr){ if(Array.isArray(arr)&&arr.length){ var l=arr[arr.length-1]; if(l&&l.url) return l.url; } return ''; }
-function _pdfChip(label,url,color,icon){
+// ver.20260930.01: 提出書類タブ用——国交省書類の会社単位の提出期限（起算日＝初回案内日→国交省reqの最早→特定活動案件の受領日の最早、+45日）を表示。
+function _kokkoDeadlineHtml(){
+  var today=new Date(); today.setHours(0,0,0,0);
+  var annaiD=_kokkoFirstAnnai();
+  if(!annaiD){ _CKS_K16.forEach(function(n){ var r=_cksParse((coDocs[n]||{}).req); if(r&&(!annaiD||r<annaiD)) annaiD=r; }); }
+  var minReqD=null;
+  (allCases||[]).forEach(function(c){
+    var rs=(c.residence_status||'');
+    if(rs==='特定活動'||rs==='特定技能1号'){ var rd=_cksParse((_extraByCase[c.id]||{}).request_date); if(rd&&(!minReqD||rd<minReqD)) minReqD=rd; }
+  });
+  var base=annaiD||minReqD;
+  if(!base) return '';
+  var due=_cksAdd(base,45);
+  var days=Math.round((due-today)/86400000);
+  var over=days<0;
+  var chip = over
+    ? '<span style="background:#dc2626;color:#fff;border-radius:6px;padding:2px 8px;font-weight:900;">⚠ '+(-days)+'日超過・至急ご提出ください</span>'
+    : (days<=7 ? '<span style="background:#f59e0b;color:#fff;border-radius:6px;padding:2px 8px;font-weight:900;">⏳ あと'+days+'日</span>'
+               : '<span style="background:#eef4fd;color:#1c3d6e;border-radius:6px;padding:2px 8px;font-weight:800;">⏳ あと'+days+'日</span>');
+  var label=annaiD?'ご案内日から45日以内':'案件受領日から45日以内';
+  return '<div style="font-size:12px;font-weight:800;color:'+(over?'#b91c1c':'#b45309')+';background:'+(over?'#fdeeee':'#fffbeb')+';border:1px solid '+(over?'#e5a3a3':'#fde68a')+';border-radius:8px;padding:8px 12px;margin:4px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">📄 国交省書類の提出期限 〜'+_cksFmt(due)+'（'+label+'）'+chip+'</div>';
+}
+function _lastPdfUrl(arr){ if(Array.isArray(arr)&&arr.length){ var l=arr[arr.length-1]; if(l&&l.url) return l.url; } return ''; }function _pdfChip(label,url,color,icon){
   if(url) return '<a class="pdf-chip" style="background:'+color+';" href="'+esc(url)+'" target="_blank" rel="noopener">'+icon+' '+label+'</a>';
   return '<span class="pdf-chip pdf-chip-none">'+icon+' '+label+'</span>';
 }
@@ -2117,6 +2139,8 @@ function renderDocs(){
       +'</div></div>';
   } else if(showK16 || kokkoUrl){
     h+='<div class="section-title" style="margin-top:14px;font-size:14px;">🏗 国交省申請書類（受入計画）</div>';
+    // ver.20260930.01: 国交省書類の提出期限（受領日/ご案内日から45日・残り日数）を見出し直下に表示
+    h+=_kokkoDeadlineHtml();
     h+='<div style="font-size:11px;color:#64748b;margin:2px 0 6px;">📝＝大房行政書士法人が作成する書類のため、御社でのご準備は不要です。<b>各書類をタップすると説明と見本が見られます。</b></div>';
     if(kokkoUrl){ h+='<div><a class="upload-btn" href="'+esc(kokkoUrl)+'" target="_blank" rel="noopener">📤 国交省書類をアップロード</a></div>'; }
     if(showK16){ h+='<div class="doc-co">'+_kokkoRowsHtml()+'</div>'; }
