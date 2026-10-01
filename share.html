@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261002.01: 登録支援機関情報の保存押し忘れ対策。修正モード中は画面下に「💾 保存する」固定バーを常時表示し、未保存の変更件数をリアルタイム表示（変更ありで点滅強調）。未保存のままタブ移動・キャンセル・ページ離脱しようとすると確認を出す。 -->
+<!-- ver.20261001.02: 登録支援機関情報＞職業紹介事業者に、基本情報（登録支援機関）からのコピー誘導バナーを常時表示。職業紹介＝登録支援機関が同じ場合に「コピーしますか？」ボタンで雇用保険番号・法人番号・郵便番号・住所・電話番号などの未入力欄だけを一括コピー（確認あり・上書きしない・履歴記録）。コピー判定ロジックを_jjCopyTargetsに共通化し、未入力コピー対象の件数・項目名をバナーに表示。 -->
 <!-- ver.20261001.01: 「送信した依頼」カードに依頼時入力項目を全表示。人材行に「現在の在留資格」「希望在留期間」の2列を追加（従来は希望在留資格のみ）、ヘッダーに「取次」「パートナー(オープンケア専用)」、カードに「📧 宛先(TO/CC)」を依頼値があるときだけ表示。表示元はget_org_intakesの既存カラム(residence_status/hoped_stay_period/toritsugisha/sales_partner/to_email/cc_email)。※人材紹介手数料は依頼時にDB保存していないため過去分は表示不可（保存対応は別途要相談）。 -->
 <!-- ver.20260930.01: 【不具合修正】希望在留期間確認モーダルの発行手数料が受取方法で変わっていた不具合を修正。窓口受取→window額／郵送交付→online額に振り分けていたが、手数料は受取方法（窓口受取/郵送交付）では変わらないため振り分けを廃止。大房は原則オンライン申請のため本体額はオンライン額で統一表示（例：3年＝56,000円）。オンライン申請の別途決済手数料（3年未満330円/3年以上550円）は注記のまま。金額は入管庁2026-10-01改定表と一致を確認。 -->
 <!-- ver.20260925.01: 建設スケジュールの日数見込みを実態に合わせて見直し。全工程を営業日ベースに統一し「サイン書類の作成（企業確認後3営業日以内）」工程を新設。サイン（人材）・押印（企業）は合わせて3営業日以内、その後3営業日以内に特定活動申請。受領日→15営業日（約3週間）で申請予定を新標準とし、「進み具合」バッジの基準も15営業日に変更。 -->
@@ -607,7 +609,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261001.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261002.01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -4770,6 +4772,7 @@ var _orgEditMode = false;
 var _orgEditBuf = {};
 
 function toggleOrgEdit(){
+  if(_orgEditMode && _orgDirtyCount()>0 && !confirm('保存していない変更が'+_orgDirtyCount()+'件あります。\n保存せずに修正モードを終了しますか？')) return;
   _orgEditMode = !_orgEditMode;
   _orgEditBuf = {};
   renderOrgProfile();
@@ -4780,7 +4783,44 @@ function toggleOrgEdit(){
     }, 60);
   }
 }
-function _orgEditInput(key, val){ _orgEditBuf[key] = val; }
+function _orgEditInput(key, val){ _orgEditBuf[key] = val; _updateOrgSaveFloat(); }
+// ver.20261002.01: 保存押し忘れ防止 — 修正モード中は画面下に固定の保存バーを常時表示
+function _orgDirtyCount(){
+  var p=orgProfile||{}, n=0;
+  Object.keys(_orgEditBuf).forEach(function(k){
+    var nv=String(_orgEditBuf[k]==null?'':_orgEditBuf[k]).trim(), ov=String(p[k]==null?'':p[k]).trim();
+    if(nv!==ov) n++;
+  });
+  return n;
+}
+function _updateOrgSaveFloat(){
+  var el=document.getElementById('orgSaveFloat');
+  var show=_orgEditMode && currentGroup==='orgprofile';
+  if(!show){ if(el) el.remove(); document.body.style.paddingBottom=''; return; }
+  if(!el){
+    el=document.createElement('div'); el.id='orgSaveFloat';
+    el.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:9000;background:#0f2040;box-shadow:0 -4px 16px rgba(0,0,0,.18);padding:10px 16px;';
+    document.body.appendChild(el);
+    document.body.style.paddingBottom='70px';
+  }
+  var n=_orgDirtyCount();
+  el.innerHTML='<div style="max-width:880px;margin:0 auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
+    +'<div style="flex:1;min-width:180px;color:#fff;font-size:12.5px;font-weight:700;line-height:1.5;">'
+    +(n?'⚠️ 未保存の変更が <span style="color:#fde047;font-size:15px;font-weight:900;">'+n+'件</span> あります。<span style="font-weight:500;color:#cbd5e1;">「保存する」を押すまで反映されません。</span>'
+       :'✏️ 修正モード中です。<span style="font-weight:500;color:#cbd5e1;">変更したら「保存する」を押してください。</span>')
+    +'</div>'
+    +'<button type="button" onclick="toggleOrgEdit()" style="font-size:12px;font-weight:700;color:#fff;background:transparent;border:1px solid #64748b;border-radius:8px;padding:9px 16px;cursor:pointer;">キャンセル</button>'
+    +'<button type="button" id="orgEditSaveBtnF" onclick="saveOrgProfileEdits()" style="font-size:14px;font-weight:900;color:#fff;background:#16a34a;border:none;border-radius:8px;padding:11px 28px;cursor:pointer;'+(n?'box-shadow:0 0 0 3px #86efac;animation:orgSavePulse 1.4s infinite;':'opacity:.85;')+'">💾 保存する</button>'
+    +'</div>';
+  if(!document.getElementById('orgSaveFloatCss')){
+    var st=document.createElement('style'); st.id='orgSaveFloatCss';
+    st.textContent='@keyframes orgSavePulse{0%,100%{box-shadow:0 0 0 3px #86efac}50%{box-shadow:0 0 0 7px rgba(134,239,172,.35)}}';
+    document.head.appendChild(st);
+  }
+}
+window.addEventListener('beforeunload',function(e){
+  if(_orgEditMode && _orgDirtyCount()>0){ e.preventDefault(); e.returnValue=''; return ''; }
+});
 
 async function saveOrgProfileEdits(){
   var p = orgProfile || {};
@@ -5680,29 +5720,33 @@ function _orgOfficesSectionHtml(){
   h+='</div></div>';
   return h;
 }
-// ver.20260827.01: 基本情報→職業紹介事業者へ一括コピー（未入力欄のみ・確認あり）
-async function _copyFromBaseToJj(){
-  if(!orgProfile) return;
-  var p = orgProfile;
-  // マッピング：[基本情報キー, 職業紹介キー, ラベル]
-  var mapping = [
-    ['corp_no',        'jj_corp_no',          '法人番号'],
-    ['emp_ins_no',     'jj_emp_ins_no',       '雇用保険番号'],
-    ['zip',            'jj_zip',              '郵便番号'],
-    ['pref',           'jj_pref',             '都道府県'],
-    ['city',           'jj_city',             '市区町村'],
-    ['address_detail', 'jj_address_detail',   '町名丁目番地号等'],
-    ['tel',            'jj_tel',              '電話番号']
-  ];
-  // コピー対象（jj側が空・基本側に値あり）を集計
+// ver.20261001.02: 基本情報→職業紹介のコピー対象マッピング（バナー表示と実コピーで共用）
+var _JJ_COPY_MAP=[
+  ['corp_no',        'jj_corp_no',          '法人番号'],
+  ['emp_ins_no',     'jj_emp_ins_no',       '雇用保険番号'],
+  ['zip',            'jj_zip',              '郵便番号'],
+  ['pref',           'jj_pref',             '都道府県'],
+  ['city',           'jj_city',             '市区町村'],
+  ['address_detail', 'jj_address_detail',   '町名丁目番地号等'],
+  ['tel',            'jj_tel',              '電話番号']
+];
+function _jjCopyTargets(p){
   var targets=[], skipped_filled=[], skipped_empty=[];
-  mapping.forEach(function(m){
-    var base=p[m[0]], jj=p[m[1]];
+  _JJ_COPY_MAP.forEach(function(m){
+    var base=p?p[m[0]]:'', jj=p?p[m[1]]:'';
     var baseEmpty=(base==null||String(base).trim()===''), jjEmpty=(jj==null||String(jj).trim()==='');
     if(baseEmpty){ skipped_empty.push(m[2]); return; }
     if(!jjEmpty){ skipped_filled.push(m[2]+'（現在: '+String(jj).slice(0,20)+'）'); return; }
     targets.push({from:m[0], to:m[1], label:m[2], value:String(base)});
   });
+  return {targets:targets, skipped_filled:skipped_filled, skipped_empty:skipped_empty};
+}
+// ver.20260827.01: 基本情報→職業紹介事業者へ一括コピー（未入力欄のみ・確認あり）
+async function _copyFromBaseToJj(){
+  if(!orgProfile) return;
+  var p = orgProfile;
+  var _info=_jjCopyTargets(p);
+  var targets=_info.targets, skipped_filled=_info.skipped_filled, skipped_empty=_info.skipped_empty;
   if(!targets.length){
     var msg='コピーできる項目がありませんでした。\n';
     if(skipped_filled.length) msg += '\n【既に入力済み・スキップ】\n・' + skipped_filled.join('\n・');
@@ -5788,13 +5832,22 @@ function renderOrgProfile(){
 
   // 💼 職業紹介事業者
   var j='';
-  // ver.20260827.01: 基本情報からコピーするボタン（同一事業者が多いため入力の手間を減らす）
-  j+='<div style="grid-column:span 2;margin-bottom:6px;padding:8px 10px;background:#fef3c7;border:1px dashed #f59e0b;border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">'
-    +'<div style="font-size:11.5px;color:#78350f;line-height:1.5;">'
-    +'💡 職業紹介事業者が登録支援機関と同じ場合は、基本情報の内容を一括コピーできます。'
-    +'</div>'
-    +'<button type="button" onclick="_copyFromBaseToJj()" title="法人番号・雇用保険番号・郵便番号・住所・電話番号を基本情報からコピーします（既に値が入っている欄は上書きしません）" style="background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;">📋 基本情報からコピー</button>'
-    +'</div>';
+  // ver.20261001.02: 職業紹介事業者が登録支援機関と同じ場合のコピー誘導バナー（常に問う／未入力コピー対象があれば強調表示）
+  var _jjInfo=_jjCopyTargets(p);
+  if(_jjInfo.targets.length){
+    var _jjLabels=_jjInfo.targets.map(function(t){return t.label;});
+    j+='<div style="grid-column:span 2;margin-bottom:8px;padding:10px 12px;background:#fffbeb;border:1.5px solid #f59e0b;border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">'
+      +'<div style="font-size:12px;color:#78350f;line-height:1.6;font-weight:600;">'
+      +'📋 職業紹介事業者は登録支援機関と同じですか？<br>'
+      +'<span style="font-weight:500;">同じ場合、基本情報の'+esc(_jjLabels.join('・'))+'（未入力の'+_jjInfo.targets.length+'項目）をコピーできます。</span>'
+      +'</div>'
+      +'<button type="button" onclick="_copyFromBaseToJj()" title="基本情報（登録支援機関）の値を職業紹介事業者にコピーします。既に値が入っている欄は上書きしません。" style="background:#f59e0b;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;">コピーしますか？</button>'
+      +'</div>';
+  }else{
+    j+='<div style="grid-column:span 2;margin-bottom:6px;padding:8px 10px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:6px;font-size:11px;color:#64748b;line-height:1.5;">'
+      +'💡 職業紹介事業者が登録支援機関と同じ場合は、基本情報（法人番号・雇用保険番号・住所・電話番号など）をコピーできます。現在コピーできる未入力項目はありません。'
+      +'</div>';
+  }
   j+=_pfRow('許可番号（機関自身）',p.job_permit_no);
   j+=_pfRow('受理年月日（機関自身）',p.job_permit_date);
   j+=_pfRow('事業者名称',p.jj_name,true);
@@ -5890,6 +5943,7 @@ function renderOrgProfile(){
   if(_orgEditMode) h += _orgEditBarHtml(true);
   h+='</div>';
   document.getElementById('main').innerHTML=h;
+  _updateOrgSaveFloat(); // ver.20261002.01: 固定保存バー
 }
 function ncStaffAdd(){
   var inp=document.getElementById('orgStaffInput'); if(!inp) return;
@@ -6228,6 +6282,7 @@ function renderCurrent(){
   else if(currentGroup==='kyoryoku'){renderKyoryoku();}
   else if(currentGroup==='zuiji'){renderZuiji();}
   else{renderMain();}
+  _updateOrgSaveFloat(); // ver.20261002.01: 他タブでは固定保存バーを消す
   // ver.20260827.02: コメント・要望ウィジェットを撤去（要望による）。過去分はDBに残し、関数群も削除せずに温存。
   // _mountFeedbackWidget();
 }
@@ -6250,6 +6305,11 @@ function _debouncedSearch(value){
 // ver.20260612.test05: サイドバー折りたたみトグル
 function toggleSidebar(){ var l=document.querySelector('.layout'); if(l) l.classList.toggle('sb-collapsed'); }
 function switchGroup(gid){
+  // ver.20261002.01: 未保存の変更があるまま他タブへ移動しようとしたら確認
+  if(_orgEditMode && currentGroup==='orgprofile' && gid!=='orgprofile' && _orgDirtyCount()>0){
+    if(!confirm('登録支援機関情報に保存していない変更が'+_orgDirtyCount()+'件あります。\n保存せずに移動しますか？（変更は破棄されます）')) return;
+    _orgEditMode=false; _orgEditBuf={};
+  }
   currentGroup=gid;
   if(gid==='news') markNewsSeen();
   renderSidebar();
