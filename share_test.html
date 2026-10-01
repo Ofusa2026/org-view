@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261001.test05: 自社管理に人材詳細（基本情報／依頼履歴タブ）を追加。依頼履歴＝依頼日・申請受付日・受付番号・完了日・ステータス・受入企業。大房の記録（アンシス）は書き換えず、貴社入力を優先表示する二層方式（各項目に「貴社入力／大房の記録」タグ、相違時は大房の記録も併記）。依頼完了後に貴社入力が未更新なら「⚠ 要更新」表示＋絞り込み。住所欄を追加（org_managed_persons.address）。 -->
 <!-- ver.20261001.test04: 自社管理の同一人物判定を厳格化。氏名だけの一致ではまとめず、在留カード番号または氏名＋生年月日が一致した場合のみ同じ人材として1行にまとめる（同姓同名の別人が混ざるのを防止）。 -->
 <!-- ver.20261001.test03: 自社管理を改修。サイドメニューの件数バッジを廃止。大房に依頼した人材は自動で管理人材になる（追加操作不要）。ステータスを「依頼中／未依頼」の2つに整理（在籍状況欄は廃止）。依頼の案件が完了すると未依頼に戻り「大房が完了にした日」を表示（case_actions の完了記録→status_changed_at の順で採用、RPC org_case_done_dates）。同一人物の複数案件は在留カード番号→氏名＋生年月日→氏名でまとめ、編集画面に依頼履歴を表示。 -->
 <!-- ver.20261001.test02: サイドメニュー「ダッシュボード」の下に「👥 自社管理」を追加。登録支援機関が自社で管理する人材を登録・編集・削除できる（大房に依頼していない人材も可）。大房に依頼中の人材は自動表示し「＋自社管理に追加」で紐づけ可能。在留期限90日以内/期限切れを色分け。DB: org_managed_persons＋RPC org_managed_list/save/delete（トークン認証）。 -->
@@ -610,7 +611,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261001.test04</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261001.test05</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -2859,7 +2860,9 @@ async function renderKyoryoku(){
   }
 }
 
-// ver.20261001.test03: 自社管理（登録支援機関が自社で管理する人材）
+// ver.20261001.test03→test05: 自社管理（登録支援機関が自社で管理する人材）
+//  test05: 人材詳細（基本情報／依頼履歴タブ）を追加。大房の記録(アンシス)は一切書き換えず、貴社入力を優先表示する二層方式。
+//          完了後に貴社入力が未更新の人材は「要更新」として新しい在留カード・期限・住所の入力を促す
 //  - 大房に依頼した人材は自動で管理人材になる（追加操作不要）。大房に依頼していない人材も手動登録できる
 //  - ステータスは「依頼中」「未依頼」の2つ。依頼の案件が完了すると未依頼に戻り、大房が完了にした日を表示
 //  - 同一人物の判定：在留カード番号 または 氏名(空白・大小文字無視)＋生年月日 が一致した場合のみ（氏名だけの一致ではまとめない）
@@ -2925,14 +2928,24 @@ function _mgRows(){
     var lastDone=null, lastDoneCase=null;
     cs.forEach(function(c){ if(!_mgIsDone(c)) return; var d=(_mgDone||{})[c.id]||''; if(!lastDoneCase || (d && (!lastDone || d>lastDone))){ lastDone=d||lastDone; lastDoneCase=d?c:(lastDoneCase||c); } });
     var ps=latest?((typeof allPersons!=='undefined'&&allPersons[latest.id])||{}):{};
-    return {g:g, own:g.own, cases:cs, latest:latest, active:active, lastDone:lastDone, lastDoneCase:lastDoneCase,
-      state: active.length?'依頼中':'未依頼',
-      name: p.name||(latest?(latest.applicant||latest.name):'')||'',
-      kana: p.name_kana||'',
-      nat: p.nationality||ps.nationality||'',
-      rs: p.residence_status||(latest?latest.residenceStatus:'')||ps.residence_status||'',
-      expire: p.expiry_date||(latest?latest.expire:'')||ps.expire||'',
-      company: p.company_name||(latest?latest.company:'')||''};
+    // 大房の記録（アンシス）— 表示専用・書き換えない
+    var of={
+      name: latest?(latest.applicant||latest.name||''):'', name_kana:'',
+      nationality: ps.nationality||'', gender: ps.gender||'', birth_date: ps.birthdate||'',
+      residence_status: (latest?latest.residenceStatus:'')||ps.residence_status||'',
+      residence_card_no: ps.residence_card||'', expiry_date: (latest?latest.expire:'')||ps.expire||'',
+      company_name: latest?(latest.company||''):'', job_field: latest?(latest.applicantField||''):'',
+      hire_date: ps.hire_date||'', phone: ps.cel_phone||ps.phone||ps.tel_num||'',
+      address: ps.address||ps.jp_address||((ps.jp_postal_code?'〒'+ps.jp_postal_code+' ':'')+(ps.jp_detail_address||'')).trim()||''
+    };
+    var state=active.length?'依頼中':'未依頼';
+    var ownUpd=g.own&&g.own.updated_at?String(g.own.updated_at).slice(0,10):'';
+    var needUpd=(state==='未依頼' && !!lastDone && (!ownUpd || ownUpd<lastDone));
+    function pick(k){ var v=p[k]; return (v!=null&&String(v)!=='')?v:(of[k]||''); }
+    return {g:g, own:g.own, of:of, cases:cs, latest:latest, active:active, lastDone:lastDone, lastDoneCase:lastDoneCase,
+      state: state, needUpd: needUpd, pick: pick,
+      name: pick('name'), kana: pick('name_kana'), nat: pick('nationality'), rs: pick('residence_status'),
+      expire: pick('expiry_date'), company: pick('company_name')};
   });
 }
 function renderSelfManage(){
@@ -2949,6 +2962,7 @@ function renderSelfManage(){
   var rows=all.filter(function(r){
     if(_mgFilter==='req' && r.state!=='依頼中') return false;
     if(_mgFilter==='none' && r.state!=='未依頼') return false;
+    if(_mgFilter==='upd' && !r.needUpd) return false;
     if(q){ var hay=(r.name+' '+r.kana+' '+r.nat+' '+r.company+' '+r.rs).toLowerCase(); if(hay.indexOf(q)<0) return false; }
     return true;
   });
@@ -2963,7 +2977,7 @@ function renderSelfManage(){
     +'<div style="font-size:11.5px;color:#64748b;margin-top:2px;">貴社で管理している人材の一覧です。大房行政書士法人にご依頼いただいた人材は自動で登録されます。ご依頼のない人材も「＋ 人材を登録」から追加できます。<br>ご依頼の案件が完了すると「未依頼」に戻り、完了日が表示されます。登録内容は貴社のみが閲覧でき、大房からの申請内容には影響しません。</div></div>'
     +'<button onclick="openMgModal()" style="background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:800;padding:9px 16px;cursor:pointer;white-space:nowrap;">＋ 人材を登録</button></div>';
   h+='<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:10px 0;">'
-    +chip('all','すべて '+all.length)+chip('req','依頼中 '+nReq)+chip('none','未依頼 '+nNo)
+    +chip('all','すべて '+all.length)+chip('req','依頼中 '+nReq)+chip('none','未依頼 '+nNo)+chip('upd','⚠ 要更新 '+all.filter(function(r){return r.needUpd;}).length)
     +'<input id="mgSearch" type="text" value="'+esc(_mgQuery)+'" oninput="_mgQuery=this.value;_mgRenderKeepFocus();" placeholder="氏名・国籍・受入企業で検索" style="margin-left:auto;min-width:200px;font-size:12px;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;outline:none;">'
     +'</div>';
   if(!rows.length){
@@ -2991,17 +3005,17 @@ function renderSelfManage(){
       info='<span style="color:#cbd5e1;font-size:11px;">依頼履歴なし</span>';
     }
     h+='<tr style="border-top:1px solid #eef1f5;'+(i%2?'background:#f8fafc;':'')+'">'
-      +'<td style="padding:9px 12px;"><div style="font-weight:800;">'+esc(r.name||'（氏名未入力）')+'</div>'+(r.kana?'<div style="font-size:10.5px;color:#94a3b8;">'+esc(r.kana)+'</div>':'')+'</td>'
+      +'<td style="padding:9px 12px;"><div style="font-weight:800;color:#1d4ed8;cursor:pointer;text-decoration:underline dotted;" onclick="openMgDetail('+i+')">'+esc(r.name||'（氏名未入力）')+'</div>'+(r.kana?'<div style="font-size:10.5px;color:#94a3b8;">'+esc(r.kana)+'</div>':'')+'</td>'
       +'<td style="padding:9px 12px;">'+esc(r.nat||'—')+'</td>'
       +'<td style="padding:9px 12px;">'+esc(r.rs||'—')+'</td>'
       +'<td style="padding:9px 12px;white-space:nowrap;">'+_mgExpireCell(r.expire)+'</td>'
       +'<td style="padding:9px 12px;">'+esc(r.company||'—')+'</td>'
-      +'<td style="padding:9px 12px;text-align:center;">'+badge+'</td>'
+      +'<td style="padding:9px 12px;text-align:center;">'+badge+(r.needUpd?'<div style="margin-top:4px;"><span title="依頼完了後、貴社の人材情報が未更新です" style="font-size:10px;font-weight:800;border-radius:4px;padding:2px 6px;background:#fef3c7;color:#92400e;white-space:nowrap;">⚠ 要更新</span></div>':'')+'</td>'
       +'<td style="padding:9px 12px;">'+info+'</td>'
-      +'<td style="padding:9px 12px;text-align:center;"><button onclick="openMgModal('+i+')" style="background:#f1f5f9;border:none;border-radius:6px;font-size:11px;font-weight:800;padding:5px 10px;cursor:pointer;">✏️ 編集</button></td></tr>';
+      +'<td style="padding:9px 12px;text-align:center;white-space:nowrap;"><button onclick="openMgDetail('+i+')" style="background:#0f2040;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:800;padding:5px 10px;cursor:pointer;">👤 詳細</button> <button onclick="openMgModal('+i+')" style="background:#f1f5f9;border:none;border-radius:6px;font-size:11px;font-weight:800;padding:5px 10px;cursor:pointer;">✏️ 編集</button></td></tr>';
   });
   h+='</tbody></table></div>';
-  h+='<div style="font-size:10.5px;color:#94a3b8;margin-top:8px;">在留期限は90日以内をオレンジ、期限切れを赤で表示します。大房にご依頼の人材は、大房側の情報（在留期限・受入企業など）が初期表示されます。編集すると貴社の入力内容で上書き表示されます。完了日は大房が案件を完了にした日です。</div>';
+  h+='<div style="font-size:10.5px;color:#94a3b8;margin-top:8px;">在留期限は90日以内をオレンジ、期限切れを赤で表示します。大房にご依頼の人材は、大房の記録（在留期限・受入企業など）が表示されます。編集すると貴社の入力内容が優先表示されます（大房の記録は書き換わりません）。完了日は大房が案件を完了にした日です。「⚠ 要更新」は依頼完了後に貴社の人材情報が更新されていない人材です。許可後の新しい在留カード番号・在留期限などをご入力ください。</div>';
   main.innerHTML=h;
 }
 var _mgRowCache=[];
@@ -3016,20 +3030,17 @@ function openMgModal(idx){
   closeMgModal();
   var r=(idx!=null)?_mgRowCache[idx]:null;
   var own=r&&r.own;
-  var p={};
+  var p={}, of=(r&&r.of)||{};
   if(own){ p=Object.assign({},own); }
-  else if(r){
-    var c0=r.latest||{}, ps=(typeof allPersons!=='undefined'&&allPersons[c0.id])||{};
-    p={linked_case_id:c0.id||'',name:r.name,nationality:ps.nationality||'',gender:ps.gender||'',birth_date:ps.birthdate||'',
-       residence_status:r.rs,residence_card_no:ps.residence_card||'',expiry_date:r.expire,company_name:r.company,hire_date:ps.hire_date||''};
-  }
+  else if(r){ p={linked_case_id:(r.latest&&r.latest.id)||'', name:r.name}; }  // 大房の記録はコピーしない（空欄＝大房の記録を表示）
   if(r && !p.linked_case_id && r.latest) p.linked_case_id=r.latest.id;
   _mgEditCtx={id:own?own.id:'', linked:p.linked_case_id||''};
   function v(k){ var x=p[k]==null?'':String(p[k]); if(k.indexOf('date')>=0){ var d=_mgParseD(x); x=d?(d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)):''; } return esc(x); }
   var inp='width:100%;box-sizing:border-box;font-size:13px;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;outline:none;';
-  function f(label,k,type,ph){ return '<label style="display:block;"><div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:3px;">'+label+'</div><input id="mg_'+k+'" type="'+(type||'text')+'" value="'+v(k)+'" placeholder="'+esc(ph||'')+'" style="'+inp+'"></label>'; }
-  var gv=String(p.gender||''); gv=(gv.indexOf('女')>=0||/^f/i.test(gv))?'女':((gv.indexOf('男')>=0||/^m/i.test(gv))?'男':'');
-  var gOpts=['','男','女'].map(function(s){ return '<option value="'+s+'"'+(gv===s?' selected':'')+'>'+(s||'—')+'</option>'; }).join('');
+  function ofHint(k){ var x=of[k]; if(x==null||String(x)==='') return ''; if(k.indexOf('date')>=0) x=_mgFmtD(x)||x; return '<div style="font-size:10px;color:#94a3b8;margin-top:2px;">大房の記録：'+esc(x)+'</div>'; }
+  function f(label,k,type,ph){ return '<label style="display:block;"><div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:3px;">'+label+'</div><input id="mg_'+k+'" type="'+(type||'text')+'" value="'+v(k)+'" placeholder="'+esc(ph||'')+'" style="'+inp+'">'+(k==='name'?'':ofHint(k))+'</label>'; }
+  var gv=String(p.gender||'');  // 空＝大房の記録を表示 gv=(gv.indexOf('女')>=0||/^f/i.test(gv))?'女':((gv.indexOf('男')>=0||/^m/i.test(gv))?'男':'');
+  var gOpts=['','男','女'].map(function(s){ return '<option value="'+s+'"'+(gv===s?' selected':'')+'>'+(s||(of.gender?'（大房の記録：'+esc(of.gender)+'）':'—'))+'</option>'; }).join('');
   var hist='';
   if(r && r.cases.length){
     hist='<div style="margin-top:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;"><div style="font-size:11px;font-weight:800;color:#475569;margin-bottom:4px;">大房へのご依頼履歴</div>'
@@ -3041,6 +3052,8 @@ function openMgModal(idx){
     +'<div style="background:#fff;border-radius:14px;max-width:620px;width:100%;padding:20px 22px;">'
     +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div style="font-size:16px;font-weight:900;color:#0f2040;">👥 '+(r?'人材情報の編集':'人材を登録')+(r?' <span style="font-size:11px;font-weight:800;border-radius:4px;padding:2px 8px;margin-left:4px;'+(r.state==='依頼中'?'background:#dbeafe;color:#1e40af;':'background:#f1f5f9;color:#475569;')+'">'+r.state+'</span>':'')+'</div>'
     +'<button onclick="closeMgModal()" style="background:#f1f5f9;border:none;border-radius:8px;font-size:13px;font-weight:800;padding:6px 10px;cursor:pointer;">✕</button></div>'
+    +(r&&r.cases.length?'<div style="font-size:11px;color:#475569;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;margin-bottom:10px;">空欄の項目は大房の記録が表示されます。許可後の新しい在留カード番号・在留期限・住所などは、ここに入力してください（<b>大房の記録は書き換わりません</b>）。</div>':'')
+    +(r&&r.needUpd?'<div style="font-size:11.5px;color:#92400e;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:8px 10px;margin-bottom:10px;">⚠ '+_mgFmtD(r.lastDone)+' に大房へのご依頼が完了しました。新しい在留カードの内容をご確認のうえ保存してください。</div>':'')
     +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;">'
     +f('氏名（必須）','name','text','例：NGUYEN VAN A')+f('フリガナ','name_kana','text','例：グエン ヴァン エー')
     +f('国籍','nationality','text','例：ベトナム')
@@ -3050,6 +3063,7 @@ function openMgModal(idx){
     +f('受入企業','company_name','text')+f('職種・分野','job_field','text','例：外食業')
     +f('入社日','hire_date','date')+f('連絡先（電話）','phone','tel')
     +'</div>'
+    +'<div style="margin-top:10px;">'+f('住所','address','text','例：東京都新宿区…')+'</div>'
     +'<label style="display:block;margin-top:10px;"><div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:3px;">メモ</div><textarea id="mg_memo" rows="3" style="'+inp+'resize:vertical;">'+v('memo')+'</textarea></label>'
     +hist
     +'<div id="mgErr" style="color:#dc2626;font-size:12px;margin-top:8px;"></div>'
@@ -3060,9 +3074,84 @@ function openMgModal(idx){
   document.body.insertAdjacentHTML('beforeend',html);
   var n=document.getElementById('mg_name'); if(n) n.focus();
 }
+
+// ===== 人材詳細（基本情報／依頼履歴タブ） =====
+var _mgDetailKey=null, _mgDetailTab='info';
+function _mgRowKey(r){ return r.own?('o:'+r.own.id):(r.latest?('c:'+r.latest.id):''); }
+function _mgReopenDetail(){
+  if(!_mgDetailKey) return;
+  var i=_mgRowCache.findIndex(function(r){ return _mgRowKey(r)===_mgDetailKey; });
+  if(i<0){ // 新規に貴社入力が作られた場合など：案件IDで探し直す
+    var cid=_mgDetailKey.indexOf('c:')===0?_mgDetailKey.slice(2):null;
+    if(cid) i=_mgRowCache.findIndex(function(r){ return r.cases.some(function(c){return c.id===cid;}); });
+  }
+  if(i>=0) openMgDetail(i);
+}
+function closeMgDetail(){ var m=document.getElementById('mgDetail'); if(m) m.remove(); _mgDetailKey=null; }
+function openMgDetail(idx,tab){
+  var keepTab=(tab||_mgDetailTab);
+  var m0=document.getElementById('mgDetail'); if(m0) m0.remove();
+  var r=_mgRowCache[idx]; if(!r) return;
+  _mgDetailKey=_mgRowKey(r); _mgDetailTab=keepTab;
+  var own=r.own||{}, of=r.of||{};
+  function src(k){
+    var ov=own[k]!=null&&String(own[k])!=='', fv=of[k]!=null&&String(of[k])!=='';
+    var fmt=function(x){ return k.indexOf('date')>=0?(_mgFmtD(x)||x):x; };
+    if(!ov && !fv) return '<span style="color:#cbd5e1;">—</span>';
+    var main=ov?own[k]:of[k];
+    var tag=ov?'<span style="font-size:9.5px;font-weight:800;border-radius:3px;padding:1px 5px;background:#dcfce7;color:#166534;margin-left:6px;">貴社入力</span>'
+              :'<span style="font-size:9.5px;font-weight:800;border-radius:3px;padding:1px 5px;background:#f1f5f9;color:#64748b;margin-left:6px;">大房の記録</span>';
+    var extra=(ov&&fv&&String(fmt(of[k]))!==String(fmt(own[k])))?'<div style="font-size:10.5px;color:#94a3b8;">大房の記録：'+esc(fmt(of[k]))+'</div>':'';
+    var val=(k==='expiry_date')?_mgExpireCell(main):esc(fmt(main));
+    return val+tag+extra;
+  }
+  function row(l,v){ return '<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid #eef1f5;font-size:12.5px;"><span style="width:110px;flex:none;color:#64748b;font-weight:700;">'+l+'</span><span style="flex:1;word-break:break-all;">'+v+'</span></div>'; }
+  var badge=r.state==='依頼中'?'<span style="font-size:11px;font-weight:800;border-radius:4px;padding:2px 8px;background:#dbeafe;color:#1e40af;">依頼中</span>':'<span style="font-size:11px;font-weight:800;border-radius:4px;padding:2px 8px;background:#f1f5f9;color:#475569;">未依頼</span>';
+  var info='';
+  if(r.needUpd) info+='<div style="font-size:11.5px;color:#92400e;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:9px 11px;margin-bottom:8px;">⚠ '+_mgFmtD(r.lastDone)+' に大房へのご依頼が完了しました。許可後の新しい在留カード番号・在留期限・住所などを「✏️ 編集」から入力してください（大房の記録は書き換わりません）。</div>';
+  info+=row('氏名',src('name'))+row('フリガナ',src('name_kana'))+row('国籍',src('nationality'))+row('性別',src('gender'))
+    +row('生年月日',src('birth_date'))+row('在留資格',src('residence_status'))+row('在留カード番号',src('residence_card_no'))
+    +row('在留期限',src('expiry_date'))+row('住所',src('address'))+row('受入企業',src('company_name'))+row('職種・分野',src('job_field'))
+    +row('入社日',src('hire_date'))+row('連絡先',src('phone'))
+    +row('メモ',own.memo?esc(own.memo).replace(/\n/g,'<br>'):'<span style="color:#cbd5e1;">—</span>');
+  if(own.updated_at) info+='<div style="font-size:10.5px;color:#94a3b8;margin-top:6px;">貴社入力の最終更新：'+_mgFmtD(own.updated_at)+'</div>';
+  var hist='';
+  if(!r.cases.length){
+    hist='<div style="padding:22px;text-align:center;color:#94a3b8;font-size:12.5px;">大房へのご依頼履歴はありません。</div>';
+  }else{
+    r.cases.slice().reverse().forEach(function(c){
+      var done=_mgIsDone(c), dd=(_mgDone||{})[c.id];
+      function kv(l,v){ return '<div style="display:flex;gap:8px;font-size:12px;padding:3px 0;"><span style="width:96px;flex:none;color:#64748b;">'+l+'</span><span style="flex:1;">'+(v?v:'<span style="color:#cbd5e1;">—</span>')+'</span></div>'; }
+      hist+='<div style="border:1px solid #e2e8f0;border-left:4px solid '+(done?'#94a3b8':'#2563eb')+';border-radius:10px;padding:10px 12px;margin-bottom:10px;">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;">'
+        +'<div style="font-weight:900;font-size:13px;">'+esc((c.appType||'申請')+(c.residenceStatus?'（'+c.residenceStatus+'）':''))+'</div>'
+        +(done?'<span style="font-size:10.5px;font-weight:800;border-radius:4px;padding:2px 8px;background:#f1f5f9;color:#475569;">完了</span>':'<span style="font-size:10.5px;font-weight:800;border-radius:4px;padding:2px 8px;background:#dbeafe;color:#1e40af;">依頼中</span>')+'</div>'
+        +kv('依頼日',esc(_mgFmtD(c.requestDate)||''))
+        +kv('申請受付日',esc(_mgFmtD(c.receiptDate)||''))
+        +kv('受付番号',c.receiptNo?'<span style="font-family:monospace;">'+esc(c.receiptNo)+'</span>':'')
+        +kv('完了日',done?(dd?'<b>'+_mgFmtD(dd)+'</b>':'日付記録なし'):'')
+        +kv('ステータス',done?'完了':esc(c.status||''))
+        +kv('受入企業',esc(c.company||''))
+        +(typeof openPersonModal==='function'?'<div style="margin-top:6px;"><button onclick="closeMgDetail();openPersonModal(\''+esc(c.id)+'\')" style="background:#fff;border:1.5px solid #cbd5e1;border-radius:6px;font-size:11px;font-weight:800;padding:5px 10px;cursor:pointer;">この案件の詳細を見る</button></div>':'')
+        +'</div>';
+    });
+  }
+  function tabBtn(id,label){ var on=_mgDetailTab===id; return '<button onclick="_mgDetailTab=\''+id+'\';openMgDetail('+idx+',\''+id+'\')" style="flex:1;border:none;border-bottom:3px solid '+(on?'#0f2040':'transparent')+';background:none;font-size:12.5px;font-weight:800;color:'+(on?'#0f2040':'#94a3b8')+';padding:9px 4px;cursor:pointer;">'+label+'</button>'; }
+  var html='<div id="mgDetail" onclick="if(event.target.id===\'mgDetail\')closeMgDetail();" style="position:fixed;inset:0;background:rgba(15,32,64,.55);z-index:590;display:flex;align-items:flex-start;justify-content:center;padding:32px 16px;overflow:auto;">'
+    +'<div style="background:#fff;border-radius:14px;max-width:620px;width:100%;padding:18px 22px;">'
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
+    +'<div><div style="font-size:16px;font-weight:900;color:#0f2040;">👤 '+esc(r.name||'（氏名未入力）')+' '+badge+'</div>'
+    +'<div style="font-size:11px;color:#64748b;margin-top:2px;">'+(r.state==='依頼中'?'大房にご依頼中です':(r.lastDone?'前回のご依頼：'+_mgFmtD(r.lastDone)+' 完了':(r.cases.length?'前回のご依頼：完了':'大房へのご依頼履歴なし')))+'</div></div>'
+    +'<div style="display:flex;gap:6px;"><button onclick="openMgModal('+idx+')" style="background:#f1f5f9;border:none;border-radius:8px;font-size:12px;font-weight:800;padding:6px 10px;cursor:pointer;">✏️ 編集</button>'
+    +'<button onclick="closeMgDetail()" style="background:#f1f5f9;border:none;border-radius:8px;font-size:13px;font-weight:800;padding:6px 10px;cursor:pointer;">✕</button></div></div>'
+    +'<div style="display:flex;border-bottom:1px solid #e2e8f0;margin:10px 0 12px;">'+tabBtn('info','基本情報')+tabBtn('hist','依頼履歴（'+r.cases.length+'件）')+'</div>'
+    +(_mgDetailTab==='hist'?hist:info)
+    +'</div></div>';
+  document.body.insertAdjacentHTML('beforeend',html);
+}
 var _mgEditCtx={id:'',linked:''};
 function _mgSave(){
-  var keys=['name','name_kana','nationality','gender','birth_date','residence_status','residence_card_no','expiry_date','company_name','job_field','hire_date','phone','memo'];
+  var keys=['name','name_kana','nationality','gender','birth_date','residence_status','residence_card_no','expiry_date','company_name','job_field','hire_date','phone','address','memo'];
   var rec={}; keys.forEach(function(k){ var el=document.getElementById('mg_'+k); rec[k]=el?String(el.value||'').trim():''; });
   if(_mgEditCtx.id) rec.id=_mgEditCtx.id;
   rec.linked_case_id=_mgEditCtx.linked||'';
@@ -3070,7 +3159,7 @@ function _mgSave(){
   if(!rec.name){ if(err) err.textContent='氏名を入力してください。'; return; }
   var btn=document.getElementById('mgSaveBtn'); if(btn){ btn.disabled=true; btn.textContent='保存中…'; }
   sbRpc('org_managed_save',{p_token:currentToken,p_pass:(currentPass||null),p_rec:rec}).then(function(r){
-    if(r&&r.ok){ closeMgModal(); return _mgLoad(true).then(function(){ if(currentGroup==='selfmanage') renderSelfManage(); }); }
+    if(r&&r.ok){ closeMgModal(); return _mgLoad(true).then(function(){ if(currentGroup==='selfmanage') renderSelfManage(); _mgReopenDetail(); }); }
     var msg=(r&&r.error==='bad_date')?'日付の形式が正しくありません。':(r&&r.error==='auth')?'認証に失敗しました。ページを再読み込みしてください。':'保存に失敗しました。';
     if(err) err.textContent=msg; if(btn){ btn.disabled=false; btn.textContent='💾 保存'; }
   }).catch(function(){ if(err) err.textContent='保存に失敗しました。通信状況をご確認ください。'; if(btn){ btn.disabled=false; btn.textContent='💾 保存'; } });
@@ -3080,7 +3169,7 @@ function _mgDelete(){
   var isOverlay=!!_mgEditCtx.linked;
   if(!confirm(isOverlay?'貴社で入力した内容をリセットしますか？\n（大房の情報での表示に戻ります）':'この人材を自社管理から削除しますか？')) return;
   sbRpc('org_managed_delete',{p_token:currentToken,p_pass:(currentPass||null),p_id:id}).then(function(r){
-    if(r&&r.ok){ closeMgModal(); return _mgLoad(true).then(function(){ if(currentGroup==='selfmanage') renderSelfManage(); }); }
+    if(r&&r.ok){ closeMgModal(); var wasDetail=!!document.getElementById('mgDetail'); return _mgLoad(true).then(function(){ if(currentGroup==='selfmanage') renderSelfManage(); if(wasDetail && _mgEditCtx.linked){ var m=document.getElementById('mgDetail'); if(m) m.remove(); _mgDetailKey='c:'+_mgEditCtx.linked; _mgReopenDetail(); } else closeMgDetail(); }); }
     alert('削除に失敗しました。');
   }).catch(function(){ alert('削除に失敗しました。'); });
 }
