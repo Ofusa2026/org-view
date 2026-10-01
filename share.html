@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261001.01: 「送信した依頼」カードに依頼時入力項目を全表示。人材行に「現在の在留資格」「希望在留期間」の2列を追加（従来は希望在留資格のみ）、ヘッダーに「取次」「パートナー(オープンケア専用)」、カードに「📧 宛先(TO/CC)」を依頼値があるときだけ表示。表示元はget_org_intakesの既存カラム(residence_status/hoped_stay_period/toritsugisha/sales_partner/to_email/cc_email)。※人材紹介手数料は依頼時にDB保存していないため過去分は表示不可（保存対応は別途要相談）。 -->
 <!-- ver.20260930.01: 【不具合修正】希望在留期間確認モーダルの発行手数料が受取方法で変わっていた不具合を修正。窓口受取→window額／郵送交付→online額に振り分けていたが、手数料は受取方法（窓口受取/郵送交付）では変わらないため振り分けを廃止。大房は原則オンライン申請のため本体額はオンライン額で統一表示（例：3年＝56,000円）。オンライン申請の別途決済手数料（3年未満330円/3年以上550円）は注記のまま。金額は入管庁2026-10-01改定表と一致を確認。 -->
 <!-- ver.20260925.01: 建設スケジュールの日数見込みを実態に合わせて見直し。全工程を営業日ベースに統一し「サイン書類の作成（企業確認後3営業日以内）」工程を新設。サイン（人材）・押印（企業）は合わせて3営業日以内、その後3営業日以内に特定活動申請。受領日→15営業日（約3週間）で申請予定を新標準とし、「進み具合」バッジの基準も15営業日に変更。 -->
 <!-- ver.20260922.01: 【不具合修正】希望在留期間確認モーダルのカード表示で、受取方法が「窓口受取」なのに「窓口申請」と誤表示されていたのを修正。実際の受取方法（窓口受取/郵送交付/メール交付）をそのまま表示。 -->
@@ -606,7 +607,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20260930.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261001.01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -4598,7 +4599,7 @@ function renderIntakes(){
   var groups={}, order=[];
   list.forEach(function(x){
     var key=(x.received_at||'')+'||'+(x.case_name||'');
-    if(!groups[key]){ groups[key]={received_at:x.received_at,case_name:x.case_name,app_type:x.app_type,company:x.company,aidem_branch:x.aidem_branch,client_staff:x.client_staff,accept_exp:x.accept_exp,support_fee:x.support_fee,rows:[],statuses:{}}; order.push(key); }
+    if(!groups[key]){ groups[key]={received_at:x.received_at,case_name:x.case_name,app_type:x.app_type,company:x.company,aidem_branch:x.aidem_branch,client_staff:x.client_staff,toritsugisha:x.toritsugisha,accept_exp:x.accept_exp,support_fee:x.support_fee,sales_partner:x.sales_partner,to_email:x.to_email,cc_email:x.cc_email,rows:[],statuses:{}}; order.push(key); }
     groups[key].rows.push(x);
     if(x.case_name_now && !groups[key].case_name_now) groups[key].case_name_now=x.case_name_now; // ver.20260722.test83: アンシスの現在名を追従
     groups[key].statuses[x.status]=(groups[key].statuses[x.status]||0)+1;
@@ -4613,25 +4614,33 @@ function renderIntakes(){
     h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin-bottom:12px;">';
     h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">';
     h+='<div style="min-width:0;"><div style="font-size:14px;font-weight:800;color:#0f2040;">'+esc(g.case_name_now||g.case_name||'(案件名なし)')+'</div>';
-    h+='<div style="font-size:11px;color:#64748b;margin-top:3px;">'+esc(g.company||'')+(g.app_type?'　/　'+esc(g.app_type):'')+(g.aidem_branch?'　/　拠点:'+esc(g.aidem_branch):'')+(g.client_staff?'　/　案件担当者:'+esc(g.client_staff):'')+(g.accept_exp?'　/　受入れ経験:'+esc(g.accept_exp):'')+'　/　委託費:'+_intakeFee(g.support_fee)+'</div></div>';
+    h+='<div style="font-size:11px;color:#64748b;margin-top:3px;">'+esc(g.company||'')+(g.app_type?'　/　'+esc(g.app_type):'')+(g.aidem_branch?'　/　拠点:'+esc(g.aidem_branch):'')+(g.client_staff?'　/　案件担当者:'+esc(g.client_staff):'')+(g.toritsugisha?'　/　取次:'+esc(g.toritsugisha):'')+(g.sales_partner?'　/　パートナー:'+esc(g.sales_partner):'')+(g.accept_exp?'　/　受入れ経験:'+esc(g.accept_exp):'')+'　/　委託費:'+_intakeFee(g.support_fee)+'</div></div>';
     h+='<div style="text-align:right;flex-shrink:0;">'
       +'<div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;">'
       +'<button onclick="copyIntakeLineText('+gi+',this)" title="この依頼のLINE報告用テキストをコピーします" style="padding:3px 11px;border-radius:999px;font-size:11px;font-weight:800;background:#fff;color:#15803d;border:1px solid #86efac;cursor:pointer;white-space:nowrap;line-height:1.5;">📋 テキスト</button>'
       +badges+'</div>'
       +'<div style="font-size:10.5px;color:#94a3b8;margin-top:4px;">送信: '+_intakeFmtDt(g.received_at)+'</div></div>';
     h+='</div>';
+    // ver.20261001.01: 依頼時に入力した宛先(TO/CC)も表示
+    var _mailParts=[];
+    if(g.to_email) _mailParts.push('TO: '+esc(g.to_email));
+    if(g.cc_email) _mailParts.push('CC: '+esc(g.cc_email));
+    if(_mailParts.length){ h+='<div style="font-size:10.5px;color:#64748b;margin-top:7px;word-break:break-all;line-height:1.6;">📧 宛先　'+_mailParts.join('　/　')+'</div>'; }
     h+='<div style="margin-top:10px;border-top:1px dashed #e2e8f0;padding-top:8px;">';
     h+='<div style="font-size:11px;color:#475569;font-weight:700;margin-bottom:6px;">👥 人材 '+g.rows.length+'名</div>';
     h+='<div style="overflow-x:auto;">';
-    h+='<div style="display:grid;grid-template-columns:minmax(110px,1.6fr) minmax(64px,0.9fr) minmax(88px,1.3fr) minmax(86px,1fr) minmax(72px,1fr) minmax(48px,0.6fr);">';
-    ['氏名','国籍','希望在留資格','在留期限','受取方法','推薦票'].forEach(function(t){
+    h+='<div style="display:grid;grid-template-columns:minmax(104px,1.5fr) minmax(60px,0.8fr) minmax(96px,1.3fr) minmax(96px,1.3fr) minmax(74px,0.9fr) minmax(84px,1fr) minmax(72px,0.9fr) minmax(46px,0.6fr);">';
+    ['氏名','国籍','現在の在留資格','希望在留資格','希望在留期間','在留期限','受取方法','推薦票'].forEach(function(t){
       h+='<div style="padding:4px 6px;font-size:10px;color:#94a3b8;font-weight:700;border-bottom:1px solid #e2e8f0;white-space:nowrap;">'+t+'</div>';
     });
     g.rows.forEach(function(r){
-      var ds=r.desired_status||r.residence_status||'';
+      var ds=r.desired_status||'';      // 希望在留資格
+      var cs=r.residence_status||'';     // 現在の在留資格
       h+='<div style="padding:5px 6px;font-size:11.5px;color:#0f2040;font-weight:600;border-bottom:1px solid #f1f5f9;">'+esc(r.applicant||'')+'</div>';
       h+='<div style="padding:5px 6px;font-size:11.5px;color:#64748b;border-bottom:1px solid #f1f5f9;white-space:nowrap;">'+esc(r.nationality||'')+'</div>';
-      h+='<div style="padding:5px 6px;font-size:11.5px;color:#64748b;border-bottom:1px solid #f1f5f9;">'+esc(ds)+'</div>';
+      h+='<div style="padding:5px 6px;font-size:11.5px;color:#64748b;border-bottom:1px solid #f1f5f9;">'+(cs?esc(cs):'—')+'</div>';
+      h+='<div style="padding:5px 6px;font-size:11.5px;color:#64748b;border-bottom:1px solid #f1f5f9;">'+(ds?esc(ds):'—')+'</div>';
+      h+='<div style="padding:5px 6px;font-size:11.5px;color:#64748b;border-bottom:1px solid #f1f5f9;white-space:nowrap;">'+(r.hoped_stay_period?esc(r.hoped_stay_period):'—')+'</div>';
       h+='<div style="padding:5px 6px;font-size:11.5px;color:#64748b;border-bottom:1px solid #f1f5f9;white-space:nowrap;">'+(r.expire?esc(r.expire):'—')+'</div>';
       h+='<div style="padding:5px 6px;font-size:11.5px;color:#64748b;border-bottom:1px solid #f1f5f9;white-space:nowrap;">'+_intakeDelivery(r.delivery_method)+'</div>';
       h+='<div style="padding:5px 6px;font-size:11.5px;color:#64748b;border-bottom:1px solid #f1f5f9;white-space:nowrap;">'+_intakeRecommend(r.recommend_letter_required)+'</div>';
