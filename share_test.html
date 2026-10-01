@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261001.test07: 自社管理の人材詳細で更新日時を分離。人材情報欄は「更新日時（大房）」＝アンシス人材データの更新日時、貴社管理情報欄に「更新日時（貴社）」＝貴社入力の最終更新日時（時刻まで）を表示。 -->
 <!-- ver.20261001.test06: 自社管理の人材詳細「基本情報」タブで、アンシスの人材情報（氏名(英)・国籍・性別・生年月日・出生地・配偶者・職業・在留カード番号・旅券番号/有効期限・在留資格/期限/期間・希望する在留期間・入国年月日・初回入国・上陸港・郵便番号・住所・電話・メール・報酬・技能評価方法・退去強制歴・更新日時 等、値のある項目すべて）を既定で2列表示。貴社入力がある項目は貴社入力を優先し大房の記録を併記。下段に貴社管理情報（フリガナ・受入企業・職種・メモ）。 -->
 <!-- ver.20261001.test05: 自社管理に人材詳細（基本情報／依頼履歴タブ）を追加。依頼履歴＝依頼日・申請受付日・受付番号・完了日・ステータス・受入企業。大房の記録（アンシス）は書き換えず、貴社入力を優先表示する二層方式（各項目に「貴社入力／大房の記録」タグ、相違時は大房の記録も併記）。依頼完了後に貴社入力が未更新なら「⚠ 要更新」表示＋絞り込み。住所欄を追加（org_managed_persons.address）。 -->
 <!-- ver.20261001.test04: 自社管理の同一人物判定を厳格化。氏名だけの一致ではまとめず、在留カード番号または氏名＋生年月日が一致した場合のみ同じ人材として1行にまとめる（同姓同名の別人が混ざるのを防止）。 -->
@@ -612,7 +613,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261001.test06</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261001.test07</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -3137,7 +3138,7 @@ function openMgDetail(idx,tab){
     }else{
       html=esc(fv);
     }
-    cells.push([LBL[k]||k, html]);
+    cells.push([k==='updated_at'?'更新日時（大房）':(LBL[k]||k), html]); // ver.20261001.test07: 大房側の更新日時と明示
   });
   // 人材データに無い貴社入力（自社登録のみの人材など）
   [['residence_card_no','在留カード番号'],['expiry_date','在留期限'],['address','住所'],['nationality','国籍'],['gender','性別'],['birth_date','生年月日'],['residence_status','在留資格'],['hire_date','雇用日'],['phone','電話番号']].forEach(function(a){
@@ -3154,8 +3155,8 @@ function openMgDetail(idx,tab){
   if(r.latest) info+='<div style="font-size:10.5px;color:#94a3b8;margin-top:4px;">大房の記録は最新のご依頼（'+esc((r.latest.appType||'')+' '+(r.latest.residenceStatus||''))+'）時点の情報です。</div>';
   info+=sec('🏢 貴社管理情報')+grid([
     ['フリガナ',src('name_kana')],['受入企業',src('company_name')],['職種・分野',src('job_field')],
-    ['メモ',own.memo?esc(own.memo).replace(/\n/g,'<br>'):'<span style="color:#cbd5e1;">—</span>']]);
-  if(own.updated_at) info+='<div style="font-size:10.5px;color:#94a3b8;margin-top:6px;">貴社入力の最終更新：'+_mgFmtD(own.updated_at)+'</div>';
+    ['メモ',own.memo?esc(own.memo).replace(/\n/g,'<br>'):'<span style="color:#cbd5e1;">—</span>'],
+    ['更新日時（貴社）',own.updated_at?esc(fmtV('updated_at',own.updated_at)):'<span style="color:#cbd5e1;">未入力</span>']]); // ver.20261001.test07
   var hist='';
   if(!r.cases.length){
     hist='<div style="padding:22px;text-align:center;color:#94a3b8;font-size:12.5px;">大房へのご依頼履歴はありません。</div>';
