@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261001.test08: 自社管理に「⬇ CSV出力」ボタンを追加。全人材（絞り込みに関係なく全件）をUTF-8 BOM付きCSVでダウンロード（Excel対応・数式インジェクション対策）。列＝ステータス/要更新/氏名/フリガナ/氏名(英)/国籍/性別/生年月日/在留資格/在留カード番号/在留期限/旅券番号/旅券有効期限/住所/電話/メール/受入企業/職種/入社日/依頼中の内容/前回依頼完了日/前回依頼内容/前回受付番号/依頼件数/メモ/更新日時（大房）/更新日時（貴社）。値は貴社入力優先。 -->
 <!-- ver.20261001.test07: 自社管理の人材詳細で更新日時を分離。人材情報欄は「更新日時（大房）」＝アンシス人材データの更新日時、貴社管理情報欄に「更新日時（貴社）」＝貴社入力の最終更新日時（時刻まで）を表示。 -->
 <!-- ver.20261001.test06: 自社管理の人材詳細「基本情報」タブで、アンシスの人材情報（氏名(英)・国籍・性別・生年月日・出生地・配偶者・職業・在留カード番号・旅券番号/有効期限・在留資格/期限/期間・希望する在留期間・入国年月日・初回入国・上陸港・郵便番号・住所・電話・メール・報酬・技能評価方法・退去強制歴・更新日時 等、値のある項目すべて）を既定で2列表示。貴社入力がある項目は貴社入力を優先し大房の記録を併記。下段に貴社管理情報（フリガナ・受入企業・職種・メモ）。 -->
 <!-- ver.20261001.test05: 自社管理に人材詳細（基本情報／依頼履歴タブ）を追加。依頼履歴＝依頼日・申請受付日・受付番号・完了日・ステータス・受入企業。大房の記録（アンシス）は書き換えず、貴社入力を優先表示する二層方式（各項目に「貴社入力／大房の記録」タグ、相違時は大房の記録も併記）。依頼完了後に貴社入力が未更新なら「⚠ 要更新」表示＋絞り込み。住所欄を追加（org_managed_persons.address）。 -->
@@ -613,7 +614,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261001.test07</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261001.test08</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -2944,7 +2945,7 @@ function _mgRows(){
     var ownUpd=g.own&&g.own.updated_at?String(g.own.updated_at).slice(0,10):'';
     var needUpd=(state==='未依頼' && !!lastDone && (!ownUpd || ownUpd<lastDone));
     function pick(k){ var v=p[k]; return (v!=null&&String(v)!=='')?v:(of[k]||''); }
-    return {g:g, own:g.own, of:of, cases:cs, latest:latest, active:active, lastDone:lastDone, lastDoneCase:lastDoneCase,
+    return {g:g, own:g.own, of:of, ps:ps, cases:cs, latest:latest, active:active, lastDone:lastDone, lastDoneCase:lastDoneCase,
       state: state, needUpd: needUpd, pick: pick,
       name: pick('name'), kana: pick('name_kana'), nat: pick('nationality'), rs: pick('residence_status'),
       expire: pick('expiry_date'), company: pick('company_name')};
@@ -2977,7 +2978,8 @@ function renderSelfManage(){
   var h='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:6px;">'
     +'<div><div style="font-size:16px;font-weight:900;">👥 自社管理（'+all.length+'名）</div>'
     +'<div style="font-size:11.5px;color:#64748b;margin-top:2px;">貴社で管理している人材の一覧です。大房行政書士法人にご依頼いただいた人材は自動で登録されます。ご依頼のない人材も「＋ 人材を登録」から追加できます。<br>ご依頼の案件が完了すると「未依頼」に戻り、完了日が表示されます。登録内容は貴社のみが閲覧でき、大房からの申請内容には影響しません。</div></div>'
-    +'<button onclick="openMgModal()" style="background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:800;padding:9px 16px;cursor:pointer;white-space:nowrap;">＋ 人材を登録</button></div>';
+    +'<div style="display:flex;gap:6px;"><button onclick="_mgExportCsv()" title="全人材をCSVでダウンロード（Excelで開けます）" style="background:#fff;color:#0f2040;border:1.5px solid #cbd5e1;border-radius:8px;font-size:12.5px;font-weight:800;padding:9px 14px;cursor:pointer;white-space:nowrap;">⬇ CSV出力</button>'
+    +'<button onclick="openMgModal()" style="background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:800;padding:9px 16px;cursor:pointer;white-space:nowrap;">＋ 人材を登録</button></div></div>';
   h+='<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:10px 0;">'
     +chip('all','すべて '+all.length)+chip('req','依頼中 '+nReq)+chip('none','未依頼 '+nNo)+chip('upd','⚠ 要更新 '+all.filter(function(r){return r.needUpd;}).length)
     +'<input id="mgSearch" type="text" value="'+esc(_mgQuery)+'" oninput="_mgQuery=this.value;_mgRenderKeepFocus();" placeholder="氏名・国籍・受入企業で検索" style="margin-left:auto;min-width:200px;font-size:12px;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;outline:none;">'
@@ -3019,6 +3021,50 @@ function renderSelfManage(){
   h+='</tbody></table></div>';
   h+='<div style="font-size:10.5px;color:#94a3b8;margin-top:8px;">在留期限は90日以内をオレンジ、期限切れを赤で表示します。大房にご依頼の人材は、大房の記録（在留期限・受入企業など）が表示されます。編集すると貴社の入力内容が優先表示されます（大房の記録は書き換わりません）。完了日は大房が案件を完了にした日です。「⚠ 要更新」は依頼完了後に貴社の人材情報が更新されていない人材です。許可後の新しい在留カード番号・在留期限などをご入力ください。</div>';
   main.innerHTML=h;
+}
+
+// ver.20261001.test08: 自社管理 CSV出力（全人材・絞り込みに関係なく全件／UTF-8 BOM付き・Excel対応）
+var _MG_CSV_COLS=[
+  ['ステータス',function(r){return r.state;}],
+  ['要更新',function(r){return r.needUpd?'要更新':'';}],
+  ['氏名',function(r){return r.name;}],
+  ['フリガナ',function(r){return r.kana;}],
+  ['氏名(英)',function(r){return r.ps.applicant_name_en||'';}],
+  ['国籍',function(r){return r.pick('nationality');}],
+  ['性別',function(r){return r.pick('gender');}],
+  ['生年月日',function(r){return _mgFmtD(r.pick('birth_date'));}],
+  ['在留資格',function(r){return r.pick('residence_status');}],
+  ['在留カード番号',function(r){return r.pick('residence_card_no');}],
+  ['在留期限',function(r){return _mgFmtD(r.pick('expiry_date'));}],
+  ['旅券番号',function(r){return r.ps.passport||'';}],
+  ['旅券有効期限',function(r){return _mgFmtD(r.ps.passport_expiry);}],
+  ['住所',function(r){return r.pick('address');}],
+  ['電話番号',function(r){return r.pick('phone');}],
+  ['メール',function(r){return r.ps.email||'';}],
+  ['受入企業',function(r){return r.pick('company_name');}],
+  ['職種・分野',function(r){return r.pick('job_field');}],
+  ['入社日',function(r){return _mgFmtD(r.pick('hire_date'));}],
+  ['依頼中の内容',function(r){return r.active.map(function(c){return (c.appType||'')+' '+(c.residenceStatus||'')+'（'+(c.status||'')+'）';}).join(' / ');}],
+  ['前回依頼完了日',function(r){return r.lastDone?_mgFmtD(r.lastDone):(r.lastDoneCase?'日付記録なし':'');}],
+  ['前回依頼内容',function(r){return r.lastDoneCase?((r.lastDoneCase.appType||'')+' '+(r.lastDoneCase.residenceStatus||'')):'';}],
+  ['前回受付番号',function(r){return r.lastDoneCase?(r.lastDoneCase.receiptNo||''):'';}],
+  ['依頼件数',function(r){return String(r.cases.length);}],
+  ['メモ',function(r){return (r.own&&r.own.memo)||'';}],
+  ['更新日時（大房）',function(r){var u=r.ps.updated_at; if(!u) return ''; var d=new Date(u); return isNaN(d)?String(u):(_mgFmtD(u)+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2));}],
+  ['更新日時（貴社）',function(r){var u=r.own&&r.own.updated_at; if(!u) return ''; var d=new Date(u); return isNaN(d)?String(u):(_mgFmtD(u)+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2));}]
+];
+function _mgCsvCell(v){ v=(v==null?'':String(v)).replace(/\r?\n/g,' '); if(/^[=+\-@]/.test(v)) v="'"+v; return /[",]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
+function _mgExportCsv(){
+  if(_mgPersons===null || _mgDone===null){ alert('読み込み中です。少し待ってから再度お試しください。'); return; }
+  var rows=_mgRows();
+  rows.sort(function(a,b){ var da=_mgParseD(a.expire), db=_mgParseD(b.expire); if(da&&db) return da-db; if(da) return -1; if(db) return 1; return (a.name||'').localeCompare(b.name||'','ja'); });
+  var lines=[_MG_CSV_COLS.map(function(c){return _mgCsvCell(c[0]);}).join(',')];
+  rows.forEach(function(r){ lines.push(_MG_CSV_COLS.map(function(c){ var v=''; try{ v=c[1](r); }catch(e){} return _mgCsvCell(v); }).join(',')); });
+  var blob=new Blob(['\ufeff'+lines.join('\r\n')+'\r\n'],{type:'text/csv;charset=utf-8'});
+  var t=new Date(), ymd=t.getFullYear()+('0'+(t.getMonth()+1)).slice(-2)+('0'+t.getDate()).slice(-2);
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='自社管理人材_'+(orgName||'').replace(/[\\\/:*?"<>|\s]/g,'')+'_'+ymd+'.csv';
+  document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },1000);
 }
 var _mgRowCache=[];
 function _mgRenderKeepFocus(){
