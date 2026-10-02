@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>申請人マイページ | 大房行政書士法人</title>
+<!-- ver.20261002.01: スマホで書類を送りやすく。画面下に「📤 書類をアップロード（残n件）」の固定ボタン、提出書類タブは未提出→提出済み（折りたたみ）の順、未提出の各書類に「📤 送る」ボタン、取得方法・説明はタップで開く形に。進捗タブの「必要書類提出」に「書類を見る」ボタン。スマホではヘッダーを小さくし、タブを上に固定。アイコンの二重表示（📄📄・📤📤）を修正。8言語対応。 -->
 <!-- ver.20260928.01: 提出書類タブの未提出書類に「📅取得予定日」入力を追加。入力するとRPC applicant_view_set_yotei で自分の案件のdoc_checkに yotei:: マーカーで保存（案シス・所属機関ページと連動）。8言語対応。 -->
 <!-- ver.20260716.03: ヒアリング行を常時表示に変更（未回答なら⬜＋回答ボタン。ステータス段階を過ぎても回答導線を維持）。黄色バナーの督促はヒアリング段階のみ。回答済み表示は送信済み回答の実在時のみ（16.02の厳格化は維持）。 -->
 <!-- ver.20260716.02: 「回答済み」の誤表示を修正。回答済み判定を送信済みフォーム回答の実在のみに厳格化（ステータス推定を廃止、RPCも submitted_at 必須に）。ヒアリング段階を過ぎて回答が無い案件は行を非表示にし、書類行の番号を1.に振り直し。 -->
@@ -165,6 +166,38 @@ body{line-height:1.45;}
 .cr-sent-at{font-size:11px;color:#94a3b8;margin-bottom:8px;}
 .cr-pending{font-size:11px;color:#b45309;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:7px 10px;margin-top:10px;}
 .cr-msg{font-size:11.5px;font-weight:700;margin-top:8px;min-height:14px;}
+/* ver.20261002.01: 書類を送りやすく */
+.send-bar{position:fixed;left:0;right:0;bottom:0;z-index:180;background:rgba(255,255,255,.96);border-top:1px solid #e2e8f0;padding:10px 14px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -4px 14px rgba(15,32,64,.08);}
+.send-bar a{display:block;max-width:640px;margin:0 auto;text-align:center;background:#16a34a;color:#fff;text-decoration:none;font-size:15px;font-weight:900;padding:14px 12px;border-radius:12px;box-shadow:0 2px 8px rgba(22,163,74,.35);}
+.send-bar a:active{background:#15803d;}
+body.has-send-bar .wrap{padding-bottom:96px;}
+.doc-send{margin-left:6px;flex-shrink:0;font-size:11.5px;font-weight:800;padding:6px 11px;border-radius:8px;background:#16a34a;color:#fff;text-decoration:none;white-space:nowrap;}
+.doc-send:active{background:#15803d;}
+.docs-sub{font-size:12px;font-weight:800;color:#0f2040;margin:14px 2px 8px;}
+.docs-sub.todo{color:#b45309;}
+details.docs-done{margin-top:14px;}
+details.docs-done>summary{list-style:none;cursor:pointer;font-size:12px;font-weight:800;color:#15803d;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:11px 14px;margin-bottom:8px;}
+details.docs-done>summary::-webkit-details-marker{display:none;}
+details.docs-done>summary::after{content:' ▼';font-size:10px;}
+details.docs-done[open]>summary::after{content:' ▲';}
+details.doc-help-d>summary{list-style:none;cursor:pointer;display:inline-block;font-size:11px;font-weight:800;color:#2563eb;padding:3px 0 6px;}
+details.doc-help-d>summary::-webkit-details-marker{display:none;}
+details.doc-help-d>summary::after{content:' ▼';font-size:9px;}
+details.doc-help-d[open]>summary::after{content:' ▲';}
+.next-box.tap{cursor:pointer;}
+@media (max-width:640px){
+  .header{position:relative;padding:9px 12px;row-gap:4px;}
+  .header-logo,.header-ver{display:none;}
+  .header-title{font-size:13px;}
+  .header-right{width:100%;justify-content:space-between;}
+  .tabs{top:0;padding:0 6px;}
+  .tab{padding:10px 10px;}
+  .wrap{padding:12px;}
+  .doc-row{padding:11px 12px;gap:8px;}
+  .doc-name{font-size:13px;}
+  .doc-help,.doc-subnote{padding-left:40px;padding-right:12px;}
+  .doc-yotei{padding-left:40px !important;padding-right:12px !important;}
+}
 </style>
 </head>
 <body>
@@ -172,7 +205,7 @@ body{line-height:1.45;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;flex:none;white-space:nowrap;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title" id="hdrTitle">申請人マイページ</span>
-  <span class="header-ver">ver.20260928.01</span>
+  <span class="header-ver">ver.20261002.01</span>
   <div class="header-right">
     <div id="langSwitch" class="lang-switch"></div>
     <div class="header-org" id="headerName" style="font-size:13px;font-weight:700;opacity:.95;max-width:none;">読み込み中...</div>
@@ -297,6 +330,11 @@ var TR={
  btn_answer_form:{ja:'✍️ 回答する',en:'✍️ Answer now',vi:'✍️ Trả lời ngay',id:'✍️ Isi sekarang',zh:'✍️ 立即回答',km:'✍️ ឆ្លើយឥឡូវនេះ',my:'✍️ ယခုဖြေပါ',th:'✍️ ตอบตอนนี้'},
  todo_docs:{ja:'2. 必要書類提出',en:'2. Submit required documents',vi:'2. Nộp hồ sơ cần thiết',id:'2. Serahkan dokumen yang diperlukan',zh:'2. 提交必要材料',km:'2. ដាក់ឯកសារដែលត្រូវការ',my:'2. လိုအပ်သောစာရွက်စာတမ်းတင်ပါ',th:'2. ยื่นเอกสารที่จำเป็น'},
  st_answered:{ja:'回答済み',en:'Answered',vi:'Đã trả lời',id:'Sudah dijawab',zh:'已回答',km:'បានឆ្លើយ',my:'ဖြေပြီး',th:'ตอบแล้ว'},
+ btn_send_doc:{ja:'📤 送る',en:'📤 Send',vi:'📤 Gửi',id:'📤 Kirim',zh:'📤 发送',km:'📤 ផ្ញើ',my:'📤 ပို့ရန်',th:'📤 ส่ง'},
+ docs_todo_head:{ja:'⬜ まだ出していない書類（{n}件）',en:'⬜ Not yet submitted ({n})',vi:'⬜ Chưa nộp ({n})',id:'⬜ Belum diserahkan ({n})',zh:'⬜ 尚未提交（{n}件）',km:'⬜ មិនទាន់ដាក់ ({n})',my:'⬜ မတင်ရသေး ({n})',th:'⬜ ยังไม่ได้ยื่น ({n})'},
+ docs_done_head:{ja:'✅ 提出済み（{n}件）',en:'✅ Submitted ({n})',vi:'✅ Đã nộp ({n})',id:'✅ Sudah diserahkan ({n})',zh:'✅ 已提交（{n}件）',km:'✅ បានដាក់ ({n})',my:'✅ တင်ပြီး ({n})',th:'✅ ยื่นแล้ว ({n})'},
+ btn_see_docs:{ja:'書類を見る',en:'View',vi:'Xem',id:'Lihat',zh:'查看',km:'មើល',my:'ကြည့်ရန်',th:'ดู'},
+ bar_upload:{ja:'📤 書類をアップロード（残り{n}件）',en:'📤 Upload documents ({n} left)',vi:'📤 Tải hồ sơ lên (còn {n})',id:'📤 Unggah dokumen (sisa {n})',zh:'📤 上传材料（剩余{n}件）',km:'📤 ផ្ទុកឯកសារឡើង (នៅសល់ {n})',my:'📤 စာရွက်စာတမ်းတင်ရန် ({n} ကျန်)',th:'📤 อัปโหลดเอกสาร (เหลือ {n})'},
  st_unanswered:{ja:'未回答',en:'Not answered',vi:'Chưa trả lời',id:'Belum dijawab',zh:'未回答',km:'មិនទាន់ឆ្លើយ',my:'မဖြေရသေး',th:'ยังไม่ตอบ'},
  doc_submitted:{ja:'提出済み',en:'Submitted',vi:'Đã nộp',id:'Sudah diserahkan',zh:'已提交',km:'បានដាក់',my:'တင်ပြီး',th:'ยื่นแล้ว'},
  doc_remaining:{ja:'残り{n}件',en:'{n} left',vi:'Còn {n}',id:'Sisa {n}',zh:'剩余{n}件',km:'នៅសល់ {n}',my:'{n} ကျန်',th:'เหลือ {n}'},
@@ -761,6 +799,16 @@ function render(){
   else if(currentTab==='info') m.innerHTML=renderInfo();
   else if(currentTab==='office') m.innerHTML=renderOffice();
   else if(currentTab==='flow') m.innerHTML=renderFlow();
+  renderSendBar();
+}
+// ver.20261002.01: 未提出があるあいだ、進捗・提出書類タブの画面下にアップロードボタンを固定表示
+function renderSendBar(){
+  var bar=document.getElementById('sendBar');
+  if(!bar){ bar=document.createElement('div'); bar.id='sendBar'; bar.className='send-bar hide'; document.body.appendChild(bar); }
+  var up=buildUploadUrl();
+  var show=!!up && docDisplayList().length>0 && !docsAllDone() && (currentTab==='status'||currentTab==='docs');
+  if(show){ bar.innerHTML='<a href="'+esc(up)+'" target="_blank" rel="noopener">'+t('bar_upload',{n:missingDocCount})+'</a>'; bar.classList.remove('hide'); document.body.classList.add('has-send-bar'); }
+  else { bar.classList.add('hide'); bar.innerHTML=''; document.body.classList.remove('has-send-bar'); }
 }
 
 // 依頼事項（トップ）。ヒアリング=回答待ち以前なら未回答 / 必要書類=全件提出済みでチェック
@@ -787,7 +835,8 @@ function renderTodo(){
   var _hfUrl=hAns?'':buildHearingFormUrl();
   var _hfBtn=(!hAns&&_hfUrl)?'<a class="todo-btn" href="'+_hfUrl+'" target="_blank" rel="noopener">'+t('btn_answer_form')+'</a>':'';
   h+=_todoRow(t('todo_hearing'),hAns,hAns?t('st_answered'):t('st_unanswered'),_hfBtn);
-  h+=_todoRow(t('todo_docs'),dDone,dState);
+  var _dBtn=(docDisplayList().length&&!dDone)?'<a class="todo-btn" href="javascript:void(0)" onclick="switchTab(\'docs\');window.scrollTo(0,0);">'+t('btn_see_docs')+'</a>':'';
+  h+=_todoRow(t('todo_docs'),dDone,dState,_dBtn);
   h+='</div>';
   return h;
 }
@@ -806,7 +855,8 @@ function renderNextAction(){
   if(!hAns&&hearingNagActive()) msgs.push(t('next_hearing'));
   if(dHas&&!dDone) msgs.push(t('next_docs',{n:missingDocCount}));
   if(msgs.length){
-    return '<div class="next-box"><div class="next-l">'+t('next_ask_title')+'</div><div class="next-t">'+msgs.join('<br>')+'</div></div>';
+    var _tap=(dHas&&!dDone)?' tap" onclick="switchTab(\'docs\');window.scrollTo(0,0);':'';
+    return '<div class="next-box'+_tap+'"><div class="next-l">'+t('next_ask_title')+'</div><div class="next-t">'+msgs.join('<br>')+'</div></div>';
   }
   return '<div class="next-box ok"><div class="next-l">'+t('next_ok_title')+'</div><div class="next-t">'+t('next_ok_body')+'</div></div>';
 }
@@ -1239,11 +1289,10 @@ function docHelpInline(d){
   var img=d.image?(d.image.indexOf('http')===0?d.image:'https://ofusa2026.github.io/upload/'+d.image):'';
   var txt=(d.where&&(d.where[curLang]||d.where.en||d.where.ja))||(d.help&&(d.help[curLang]||d.help.en||d.help.ja))||'';
   if(!txt && !img) return '';
-  var b='<div class="doc-help">';
-  b+='<div class="doc-help-l">'+t('dh_method')+'</div>';
+  var b='<div class="doc-help"><details class="doc-help-d"><summary>'+t('dh_method')+'</summary>';
   if(txt){ var th=(curLang==='ja')?fz(txt):esc(txt); b+='<div class="doc-help-v">'+th+'</div>'; }
   if(img){ b+='<div class="doc-help-img"><img src="'+esc(img)+'" alt="sample" loading="lazy" onerror="this.parentElement.style.display=\'none\';"></div>'; }
-  b+='</div>';
+  b+='</details></div>';
   return b;
 }
 
@@ -1252,13 +1301,21 @@ function renderDocs(){
   if(docDisplayList().length>0 && !docsAllDone()){
     h+='<div class="next-box"><div class="next-l">'+t('next_ask_title')+'</div><div class="next-t">'+t('next_docs',{n:missingDocCount})+'</div></div>';
   }
-  h+='<div class="section-title">📄 '+t('docs_title')+'</div>';
+  h+='<div class="section-title">'+t('docs_title')+'</div>';
   h+='<div class="note">'+t('docs_note')+'</div>';
   var upUrl=buildUploadUrl();
-  if(upUrl){ h+='<div><a class="upload-btn" href="'+esc(upUrl)+'" target="_blank" rel="noopener">📤 '+t('btn_upload')+'</a></div>'; }
+  if(upUrl){ h+='<div><a class="upload-btn" href="'+esc(upUrl)+'" target="_blank" rel="noopener">'+t('btn_upload')+'</a></div>'; }
   var list=docDisplayList();
   if(!list.length){ h+='<div class="empty">'+t('docs_empty')+'</div>'; return h; }
   list=list.slice().sort(function(a,b){ var da=isDocDone(a)?1:0, db=isDocDone(b)?1:0; if(da!==db)return da-db; return String(a.l).localeCompare(String(b.l),'ja'); });
+  // ver.20261002.01: 未提出 → 提出済み（折りたたみ）の2つに分ける。未提出の書類には「📤 送る」ボタン
+  var _todoL=list.filter(function(d){ return !isDocDone(d); }), _doneL=list.filter(function(d){ return isDocDone(d); });
+  if(_todoL.length){ h+='<div class="docs-sub todo">'+t('docs_todo_head',{n:_todoL.length})+'</div>'+_docItemsHtml(_todoL, upUrl); }
+  if(_doneL.length){ h+='<details class="docs-done"'+(_todoL.length?'':' open')+'><summary>'+t('docs_done_head',{n:_doneL.length})+'</summary>'+_docItemsHtml(_doneL, upUrl)+'</details>'; }
+  return h;
+}
+function _docItemsHtml(list, upUrl){
+  var h='';
   h+='<div class="doc-co">';
   list.forEach(function(d){
     var done=isDocDone(d);
@@ -1269,7 +1326,8 @@ function renderDocs(){
     var nameHtml=(curLang==='ja')?fz(d.l):esc(d.l);
     var hd=getDocHelp(d.l);
     h+='<div class="doc-item">';
-    h+='<div class="doc-row"><span class="doc-ico">'+ico+'</span><div class="doc-name">'+nameHtml+reqMark+'</div><span class="doc-state '+stCls+'">'+stTxt+'</span></div>';
+    var _sendB=(!done && upUrl)?'<a class="doc-send" href="'+esc(upUrl)+'" target="_blank" rel="noopener">'+t('btn_send_doc')+'</a>':'';
+    h+='<div class="doc-row"><span class="doc-ico">'+ico+'</span><div class="doc-name">'+nameHtml+reqMark+'</div>'+(_sendB||'<span class="doc-state '+stCls+'">'+stTxt+'</span>')+'</div>';
     // ver.20260928.01: 未提出の書類に「取得予定日」入力を表示
     if(!done){
       var _yv=yoteiMap[d.l]||'';
