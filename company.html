@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261002.01: スマホのUI改修。人材一覧を横スクロールの表→タップしやすいカード（氏名・進捗・在留期限・国籍/種別/在留資格・受付番号）に、検索欄を追加。ダッシュボードの重複カード（全申請件数〜・期限アラート・未提出の注意書き）をスマホでは非表示にして「対応が必要なタスク」→期限が近い人材→人数の順に集約。提出書類タブは画面下に「📤 書類をアップロード（未提出n件）」を固定表示。パソコン表示は従来どおり。 -->
 <!-- ver.20260930.01: 提出書類タブの「🏗国交省申請書類」見出し直下に提出期限（受領日/ご案内日から45日・残りn日／超過は赤）を表示。会社単位の起算日＝初回案内日→国交省reqの最早→特定活動案件の受領日の最早。これまで期限はご依頼事項・📅スケジュールにしか出ておらず、提出書類タブでは「いつまで」が分からなかったのを解消。 -->
 <!-- ver.20260928.01: ①提出書類チェックリストの未提出書類（国交省・入管とも）に「📅取得予定日」入力を追加。company_view_set_yotei RPCで co_doc_check に yotei:: マーカーで保存（案シスと連動）。②提出書類チェックリスト上部に「📋所属機関ヒアリングフォームを開く」ボタンを常時表示。 -->
 <!-- ver.20260925.03: 建設スケジュール（横型ステップライン・進み具合バッジ）の日数見込みを見直し。全工程を営業日ベースに統一し「サイン書類作成」工程を新設、「サイン」「押印」を「サイン・押印（合わせて3営業日以内）」に統合。受領日→15営業日（約3週間）で申請の標準に変更（share.htmlと同一ロジック）。 -->
@@ -319,7 +320,31 @@ tr:hover td{background:#fcfcfd;}
   .msheet-item:active{background:#f8fafc;}
   .msheet-item .mi-ico{font-size:17px;width:24px;text-align:center;}
   .msheet-item.cur{color:#4f46e5;}
+  /* ver.20261002.01: 人材一覧はカード表示に／ダッシュボードの重複を隠す／書類アップロードを下に固定 */
+  .tbl-wrap.has-pcards{display:none;}
+  .pcards{display:flex !important;}
+  .dash-dup{display:none !important;}
+  .co-send-bar{display:block !important;}
+  .main.has-send-bar{padding-bottom:calc(150px + env(safe-area-inset-bottom));}
 }
+.pcards{display:none;flex-direction:column;gap:10px;}
+.pcard{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:13px 14px;box-shadow:0 1px 3px rgba(15,32,64,.06);cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.pcard:active{background:#f8fafc;}
+.pc-top{display:flex;align-items:flex-start;gap:8px;}
+.pc-name{flex:1;font-size:14.5px;font-weight:800;color:#0f2040;line-height:1.35;word-break:break-word;}
+.pc-arw{color:#94a3b8;font-size:16px;font-weight:800;}
+.pc-st{margin-top:7px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.pc-st .badge-st{white-space:normal;line-height:1.35;font-size:11.5px;}
+.pc-meta{margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;}
+.pc-chip{font-size:11px;font-weight:700;color:#475569;background:#f1f5f9;border-radius:99px;padding:3px 9px;}
+.pc-exp{margin-top:8px;display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;}
+.pc-exp .exl{font-size:10.5px;color:#94a3b8;font-weight:700;margin-right:4px;}
+.pc-foot{margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:#64748b;}
+.pc-foot > span > div{flex-direction:row !important;flex-wrap:wrap;}
+.pc-search{width:100%;padding:11px 13px;border:1px solid #cbd5e1;border-radius:10px;font-size:16px;margin:0 0 10px;box-sizing:border-box;}
+.co-send-bar{display:none;position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom));z-index:390;padding:8px 12px;background:rgba(241,245,249,.96);border-top:1px solid #e2e8f0;}
+.co-send-bar a{display:block;text-align:center;background:#16a34a;color:#fff;text-decoration:none;font-size:15px;font-weight:900;padding:13px 10px;border-radius:12px;box-shadow:0 2px 8px rgba(22,163,74,.35);}
+.co-send-bar a:active{background:#15803d;}
 </style>
 </head>
 <body>
@@ -327,7 +352,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20260930.01</span>
+  <span class="header-ver">ver.20261002.01</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -1110,6 +1135,7 @@ function render(){
   else if(currentTab==='orginfo') m.innerHTML=renderOrgInfo();
   else if(currentTab==='office') m.innerHTML=renderOffice();
   else m.innerHTML=renderDashboard();
+  try{ _renderCoSendBar(); }catch(e){}
   // ver.20260921.16: コメント・要望ウィジェットは非表示（ユーザー要望により削除）
   // _mountFeedbackWidget();
 }
@@ -1791,7 +1817,7 @@ function renderDashboard(){
   h+=_companyHearingCard();
   h+=_dashAlertList();
   h+=_dashHero(total,soon,expired);
-  h+='<div class="cards">';
+  h+='<div class="cards dash-dup">';
   h+='<div class="card" onclick="switchGroup(\'all\')"><div class="lbl">全申請件数</div><div class="num">'+total+'<small> 件</small></div></div>';
   h+='<div class="card" onclick="switchGroup(\'active\')"><div class="lbl">進行中の申請</div><div class="num">'+active+'<small> 件</small></div></div>';
   h+='<div class="card" onclick="switchGroup(\'done\')"><div class="lbl">手続き完了</div><div class="num">'+done+'<small> 件</small></div></div>';
@@ -1811,8 +1837,8 @@ function renderDashboard(){
   var tokSoon=allCases.filter(function(c){if(!_tokureiTracked(c))return false;var td=_tokureiDate(c);if(!td)return false;var d=expInfo(td).days;return d!=null&&d>=0&&d<=30;}).length;
   var tokOver=allCases.filter(function(c){if(!_tokureiTracked(c))return false;var td=_tokureiDate(c);if(!td)return false;var d=expInfo(td).days;return d!=null&&d<0;}).length;
   if(expired>0||soon>0||tokOver>0||tokSoon>0){
-    h+='<div class="section-title">⏰ 期限アラート</div>';
-    h+='<div class="cards">';
+    h+='<div class="section-title dash-dup">⏰ 期限アラート</div>';
+    h+='<div class="cards dash-dup">';
     if(expired>0) h+='<div class="card warn" onclick="openList(\'expired\')"><div class="lbl">在留期限切れ</div><div class="num">'+expired+'<small> 名</small></div></div>';
     if(soon>0) h+='<div class="card alert" onclick="openList(\'soon\')"><div class="lbl">在留期限 90日以内</div><div class="num">'+soon+'<small> 名</small></div></div>';
     if(tokOver>0) h+='<div class="card warn" onclick="openList(\'tokOver\')"><div class="lbl">特例期限 超過</div><div class="num">'+tokOver+'<small> 名</small></div></div>';
@@ -1820,7 +1846,7 @@ function renderDashboard(){
     h+='</div>';
   }
   if(missingDocCount>0){
-    h+='<div class="note">⚠️ 未提出の書類が <b>'+missingDocCount+'件</b> あります。「提出書類」タブからご確認のうえ、ご提出をお願いいたします。</div>';
+    h+='<div class="note dash-dup">⚠️ 未提出の書類が <b>'+missingDocCount+'件</b> あります。「提出書類」タブからご確認のうえ、ご提出をお願いいたします。</div>';
   }
   h+=renderStats();
   return h;
@@ -2190,7 +2216,37 @@ function renderPeople(group){
   h+='<div class="note">行をタップすると、在留カード番号・パスポート・住所などの詳細が表示されます。</div>';
   h+='<div class="tbl-tools"><button class="tbtn" onclick="exportCsv()">⬇ CSV出力</button></div>';
   if(!rows.length){ h+='<div class="empty">この区分の申請はありません。</div>'; return h; }
-  h+='<div class="tbl-wrap"><table><thead><tr>'
+  // ver.20261002.01: スマホ用カード一覧（表はスマホでは隠す）
+  h+='<div class="pcards">';
+  if(rows.length>=5) h+='<input class="pc-search" type="search" placeholder="🔍 氏名・国籍・進捗で探す" oninput="_pcFilter(this.value)">';
+  rows.forEach(function(c){
+    var nm=c.applicant||c.name||'—';
+    var est=getExternalStatus(c.status);
+    var ei=expInfo(c.expire);
+    var td2=_tokureiTracked(c)?_tokureiDate(c):null;
+    var tempR=_dateOnly(c.temp_return);
+    var key=(nm+' '+natVal(c)+' '+est+' '+(c.app_type||'')+' '+(c.receipt_no||'')).toLowerCase();
+    var x='<div class="pcard" data-k="'+esc(key)+'" onclick="openDetail(\''+esc(c.id)+'\')">';
+    x+='<div class="pc-top"><div class="pc-name">'+esc(nm)+'</div><span class="pc-arw">›</span></div>';
+    x+='<div class="pc-st"><span class="badge-st" style="'+stExtStyle(est)+'">'+esc(est)+'</span>';
+    var _sof=_asOf(c.status_date); if(_sof) x+='<span class="st-asof" style="margin-top:0;">'+_sof+'</span>';
+    if(companyShowMlit){ var ml=getKokkoStatus(c); if(ml) x+='<span style="font-size:10.5px;color:'+agencyColor(ml)+';font-weight:700;">🏗 国交省 '+esc(ml)+'</span>'; }
+    x+='</div>';
+    x+='<div class="pc-exp"><span><span class="exl">在留期限</span><span class="exp '+ei.cls+'">'+esc(ei.txt)+'</span></span>';
+    if(td2){ var ti=expInfo(td2); x+='<span><span class="exl">特例</span><span class="exp '+ti.cls+'">'+esc(_dateOnly(td2))+'</span></span>'; }
+    if(tempR!=='—'){ x+='<span><span class="exl">一時帰国</span>'+esc(tempR)+'</span>'; }
+    x+='</div>';
+    var chips=[natVal(c), c.app_type, c.residence_status, [c.applicant_field,c.job_category].filter(Boolean).join(' / ')].filter(function(v){ return v&&String(v).trim(); });
+    if(chips.length){ x+='<div class="pc-meta">'+chips.map(function(v){ return '<span class="pc-chip">'+esc(v)+'</span>'; }).join('')+'</div>'; }
+    var pdf=_rowPdfIcons(c);
+    if(c.receipt_no || (pdf && pdf.replace(/<[^>]*>/g,'').trim()!=='—' && pdf.indexOf('<a')>=0)){
+      x+='<div class="pc-foot">'+(c.receipt_no?'<span>受付番号 <b>'+esc(c.receipt_no)+'</b></span>':'')+(pdf.indexOf('<a')>=0?'<span onclick="event.stopPropagation()">'+pdf+'</span>':'')+'</div>';
+    }
+    x+='</div>';
+    h+=x;
+  });
+  h+='</div>';
+  h+='<div class="tbl-wrap has-pcards"><table><thead><tr>'
     +'<th>氏名</th><th>国籍</th><th>登録支援機関</th><th>申請在留資格</th><th>申請種別</th><th>分野・職種</th>'
     +'<th>進捗</th><th>受付番号</th><th>在留期限</th><th>担当窓口</th><th>PDF</th>'
     +'</tr></thead><tbody>';
@@ -2228,6 +2284,24 @@ function renderPeople(group){
   return h;
 }
 
+function _pcFilter(q){
+  q=String(q||'').trim().toLowerCase();
+  document.querySelectorAll('.pcard').forEach(function(el){ el.style.display=(!q||(el.getAttribute('data-k')||'').indexOf(q)>=0)?'':'none'; });
+}
+// ver.20261002.01: スマホの提出書類タブ：未提出があるあいだ、画面下にアップロードボタンを固定
+function _renderCoSendBar(){
+  var bar=document.getElementById('coSendBar');
+  if(!bar){ bar=document.createElement('div'); bar.id='coSendBar'; document.body.appendChild(bar); }
+  var m=document.getElementById('main');
+  var url='';
+  if(currentTab==='docs' && missingDocCount>0){
+    if(!_nyukanGateClosed()) url=buildCompanyUploadUrl();
+    if(!url) url=buildKokkoUploadUrl();
+  }
+  if(url){ bar.className='co-send-bar'; bar.innerHTML='<a href="'+esc(url)+'" target="_blank" rel="noopener">📤 書類をアップロード（未提出 '+missingDocCount+'件）</a>'; if(m) m.classList.add('has-send-bar'); }
+  else { bar.className=''; bar.style.display='none'; bar.innerHTML=''; if(m) m.classList.remove('has-send-bar'); }
+  if(url) bar.style.display='';
+}
 function renderOffice(){
   var h='<div class="section-title">🏢 事務所情報</div>';
   h+='<div style="margin-bottom:10px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px;font-size:12.5px;color:#b91c1c;font-weight:800;">📮 郵送物は下記の住所へお送りください</div>';
