@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261005.03: 特定技能クイズのトップ画面の「これまでの結果」（回答履歴）を非表示に。受験記録の保存（quiz_save_attempt）は継続。 -->
 <!-- ver.20261005.02: サイドメニュー（ダッシュボードの下）に「📝 特定技能クイズ」を追加（share_test ver.20261005.test02〜test09 を本番反映。自社管理は含めない）。運用要領・支援運用要領・各分野別冊ベースの4択1000問。出題範囲の複数選択、10/50/100/300/1000問ランダム出題、受験者名（任意）、結果レポート（範囲別正答率・間違えた問題／正解した問題と解説・印刷/PDF）、受験記録 RPC quiz_save_attempt / quiz_history。 -->
 <!-- ver.20261005.01: グローバルパートナーズ様のCSV出力を復活。オープンケア経由のpartner_filter方式に移行した際にGPモード(gp_filter)判定から外れ、CSVボタンが消えていた。orgNameに「グローバルパートナーズ」を含むページではCSVボタンを表示し、不足書類（人材・企業入管・企業国交省）も集計して出力。列は案件名/企業名/申請者/種別/ステータス/在留期限/案件受領日/経過日数/受付番号/受取方法/不足書類件数・一覧。 -->
 <!-- ver.20261003.01: 新規案件依頼で申請種別が「認定」のときは「希望在留期間の確認」（発行手数料）ポップアップを出さずにそのまま確認画面へ進む（認定は在留カード交付時の手数料が発生しないため）。変更・更新は従来どおり表示。 -->
@@ -612,7 +613,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261005.02</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261005.03</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -4125,7 +4126,7 @@ function renderQuiz(){
   if(_qzS && _qzS.phase==='q') return _qzRenderQ();
   if(_qzS && _qzS.phase==='done') return _qzRenderReport();
   var all=_qzLoad(), pool=_qzPool(), n=pool.length;
-  if(_qzHist===null){ _qzLoadHist().then(function(){ if(currentGroup==='quiz' && !_qzS) renderQuiz(); }); }
+  if(false && _qzHist===null){ _qzLoadHist().then(function(){ if(currentGroup==='quiz' && !_qzS) renderQuiz(); }); }
   var C=_qzCats();
   var h=_QZ_CSS+'<div class="qz-wrap"><div class="qz-card">'
     +'<div style="font-size:18px;font-weight:900;color:#0f2040;">📝 特定技能クイズ</div>'
@@ -4142,7 +4143,7 @@ function renderQuiz(){
     +(n&&_qzN>n?'<div style="font-size:11.5px;color:#b45309;margin-top:8px;">選択中の範囲は'+n+'問のため、'+n+'問すべてを出題します'+(all.length<1000?'（問題は順次追加中です）':'')+'。</div>':'')
     +(n?'':'<div style="font-size:11.5px;color:#dc2626;margin-top:8px;">出題範囲を1つ以上選んでください。</div>')
     +'<div style="margin-top:18px;"><button class="qz-btn" onclick="_qzStart()" '+(n?'':'disabled')+'>スタート</button></div></div>';
-  if(_qzHist && _qzHist.length){
+  if(false && _qzHist && _qzHist.length){ // 回答履歴（これまでの結果）は非表示。受験記録の保存は継続
     h+='<div class="qz-card"><div style="font-size:13px;font-weight:800;color:#0f2040;margin-bottom:6px;">これまでの結果（直近'+_qzHist.length+'回）</div><table class="qz-tbl"><tr><th>日時</th><th>受験者</th><th class="n">問題数</th><th class="n">正解</th><th class="n">正答率</th></tr>'
       +_qzHist.map(function(a){ var d=new Date(a.created_at); var ds=isNaN(d)?'':(d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2));
         return '<tr><td>'+ds+'</td><td>'+(a.taker_name?esc(a.taker_name):'<span style="color:#cbd5e1;">—</span>')+'</td><td class="n">'+a.total+'</td><td class="n">'+a.correct+'</td><td class="n">'+Math.round(a.correct/a.total*100)+'%</td></tr>'; }).join('')+'</table></div>';
