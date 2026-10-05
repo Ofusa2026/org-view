@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261005.01: オープンケア協同組合・グローバルパートナーズの企業には「所属機関（企業）ヒアリングフォーム」を出さない（提出書類タブのボタン・ダッシュボードのカード・対応が必要なタスクの「企業ヒアリング未回答」）。機関名は前方一致（「アライズ様（オープンケア協同組合）」のような括弧内は対象外）。この会社の案件の登録支援機関がすべて該当するときだけ非表示。 -->
 <!-- ver.20261002.01: スマホのUI改修。人材一覧を横スクロールの表→タップしやすいカード（氏名・進捗・在留期限・国籍/種別/在留資格・受付番号）に、検索欄を追加。ダッシュボードの重複カード（全申請件数〜・期限アラート・未提出の注意書き）をスマホでは非表示にして「対応が必要なタスク」→期限が近い人材→人数の順に集約。提出書類タブは画面下に「📤 書類をアップロード（未提出n件）」を固定表示。パソコン表示は従来どおり。 -->
 <!-- ver.20260930.01: 提出書類タブの「🏗国交省申請書類」見出し直下に提出期限（受領日/ご案内日から45日・残りn日／超過は赤）を表示。会社単位の起算日＝初回案内日→国交省reqの最早→特定活動案件の受領日の最早。これまで期限はご依頼事項・📅スケジュールにしか出ておらず、提出書類タブでは「いつまで」が分からなかったのを解消。 -->
 <!-- ver.20260928.01: ①提出書類チェックリストの未提出書類（国交省・入管とも）に「📅取得予定日」入力を追加。company_view_set_yotei RPCで co_doc_check に yotei:: マーカーで保存（案シスと連動）。②提出書類チェックリスト上部に「📋所属機関ヒアリングフォームを開く」ボタンを常時表示。 -->
@@ -352,7 +353,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261002.01</span>
+  <span class="header-ver">ver.20261005.01</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -1027,7 +1028,7 @@ function _companyTasks(){
     if(_CKS_BALL.indexOf(c.status)>=0){ t.ball++; t.ballCases.push({id:c.id, applicant:c.applicant||c.name||'', status:c.status}); }
   });
   // 企業情報ヒアリング未回答
-  if(companyHearingExists && !companyHearingDone && companyHearingShow!==false) t.hearing=1;
+  if(companyHearingExists && !companyHearingDone && companyHearingShow!==false && !_noHearingOrg()) t.hearing=1;
   t.total=t.docs+t.idpw+t.ball+t.hearing;
   return t;
 }
@@ -1379,7 +1380,16 @@ function _companyHearingUrl(){
 }
 /* 企業ヒアリングを表示するか。フラグ優先(true/false)、未設定はフォーム存在で判定。
    → フォーム未作成かつ未指定の会社(昔からの取引先など)には出さない。 */
+// ver.20261005.01: 企業ヒアリングフォームを使わない登録支援機関（前方一致）
+var _NO_CO_HEARING_ORGS=['オープンケア協同組合','グローバルパートナーズ'];
+function _noHearingOrg(){
+  var orgs=[]; (allCases||[]).forEach(function(c){ var o=String((c&&c.org)||'').trim(); if(o && orgs.indexOf(o)<0) orgs.push(o); });
+  if(_orgScope) orgs=[String(_orgScope)];
+  if(!orgs.length) return false;
+  return orgs.every(function(o){ return _NO_CO_HEARING_ORGS.some(function(k){ return o.indexOf(k)===0; }); });
+}
 function _showHearing(){
+  if(_noHearingOrg()) return false;
   if(companyHearingShow===true) return true;
   if(companyHearingShow===false) return false;
   return !!companyHearingExists;
@@ -2149,7 +2159,7 @@ function renderDocs(){
   var h='<div class="section-title">📄 御社の提出書類チェックリスト</div>';
   h+='<div class="note">大房行政書士法人でチェックが入った書類は「提出済（または不要）」になります。「未提出」の書類はご提出をお願いいたします。ご不明点は担当者までご連絡ください。</div>';
   // ver.20260928.01: 所属機関ヒアリングフォームへ飛ぶボタン（常時表示）
-  h+='<div style="margin-bottom:14px;"><a href="'+esc(_companyHearingUrl())+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#7c3aed;color:#fff;text-decoration:none;font-size:12px;font-weight:800;padding:11px 18px;border-radius:10px;box-shadow:0 2px 6px rgba(124,58,237,.25);">📋 所属機関ヒアリングフォームを開く</a></div>';
+  if(!_noHearingOrg()) h+='<div style="margin-bottom:14px;"><a href="'+esc(_companyHearingUrl())+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#7c3aed;color:#fff;text-decoration:none;font-size:12px;font-weight:800;padding:11px 18px;border-radius:10px;box-shadow:0 2px 6px rgba(124,58,237,.25);">📋 所属機関ヒアリングフォームを開く</a></div>';   // ver.20261005.01
   var kokkoUrl=buildKokkoUploadUrl();
   var upUrl=buildCompanyUploadUrl();
   // ── 国交省書類 ──
