@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261005.01: グローバルパートナーズ様のCSV出力を復活。オープンケア経由のpartner_filter方式に移行した際にGPモード(gp_filter)判定から外れ、CSVボタンが消えていた。orgNameに「グローバルパートナーズ」を含むページではCSVボタンを表示し、不足書類（人材・企業入管・企業国交省）も集計して出力。列は案件名/企業名/申請者/種別/ステータス/在留期限/案件受領日/経過日数/受付番号/受取方法/不足書類件数・一覧。 -->
 <!-- ver.20261003.01: 新規案件依頼で申請種別が「認定」のときは「希望在留期間の確認」（発行手数料）ポップアップを出さずにそのまま確認画面へ進む（認定は在留カード交付時の手数料が発生しないため）。変更・更新は従来どおり表示。 -->
 <!-- ver.20261002.01: 登録支援機関情報の保存押し忘れ対策。修正モード中は画面下に「💾 保存する」固定バーを常時表示し、未保存の変更件数をリアルタイム表示（変更ありで点滅強調）。未保存のままタブ移動・キャンセル・ページ離脱しようとすると確認を出す。 -->
 <!-- ver.20261001.02: 登録支援機関情報＞職業紹介事業者に、基本情報（登録支援機関）からのコピー誘導バナーを常時表示。職業紹介＝登録支援機関が同じ場合に「コピーしますか？」ボタンで雇用保険番号・法人番号・郵便番号・住所・電話番号などの未入力欄だけを一括コピー（確認あり・上書きしない・履歴記録）。コピー判定ロジックを_jjCopyTargetsに共通化し、未入力コピー対象の件数・項目名をバナーに表示。 -->
@@ -610,7 +611,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261003.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261005.01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1369,7 +1370,7 @@ var GROUPS=[{id:'dashboard',label:'ダッシュボード'},{id:'active',label:'�
 var orgHours={},orgConsult={},orgEmergency={},orgProperness='',orgEdits=[],orgStd17={};   // ver.20260805.test01
 var orgAttachments={support_managers:[],interpreters:[],support_staff:[]};                // ver.20260805.test04: 別紙情報バッファ
 var _attachDirty=false;                                                                    // ver.20260805.test04: 未保存フラグ
-var allCases=[],allReceipts=[],allShinsa=[],allCerts=[],allIntakes=[],orgProfile=null,intakeStaff=[],orgEmails=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},inshiChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus=[],filterCompany=[],filterClientStaff=[],colFilters={},sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,isGpMode=false,gpInfoByCaseId={},_imeOn=false; // ver.20260606.13: allCerts追加（認定証PDF）
+var allCases=[],allReceipts=[],allShinsa=[],allCerts=[],allIntakes=[],orgProfile=null,intakeStaff=[],orgEmails=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},inshiChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus=[],filterCompany=[],filterClientStaff=[],colFilters={},sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,isGpMode=false,isGpPartner=false,gpInfoByCaseId={},_imeOn=false; // ver.20260606.13: allCerts追加（認定証PDF）
 // ver.20260622.test54: 書類リスト用グローバル変数（settingsから取得 / 案件管理側と同期）→ 国交省/入管分離に必要
 var requiredDocs={},caseCustomDocs={},requiredDocsCo=[],requiredDocsCoField={};
 var requiredDocsCoKokko=['1. 履歴事項全部証明書','2. 建設業許可','3. 標準報酬決定通知書','4. キャリアアップID','5. 会員証明書','6. 委任状','7. 求人票','8. 同等の技能を有する日本人と同等額以上の報酬であることの説明書','9. 就業規則および賃金規程','10. 賃金台帳','11. 経歴書','12. 雇用契約書','13. 36協定','14. 年間カレンダー','15. 重要事項説明書','16. 技能者ID'];
@@ -2213,20 +2214,30 @@ function exportGpCsv(){
     var rows=groupCases(currentGroup);
     if(!rows.length){ alert('出力する案件がありません'); return; }
     var todayD=new Date(); todayD.setHours(0,0,0,0);
-    var headers=['受注ID','案件名','企業名','申請者','在留資格(種別)','ステータス','在留期限','組合受領日','依頼日','経過日数','人材不足書類','企業不足書類','人材不足書類一覧','企業不足書類一覧'];
+    var headers=isGpMode
+      ? ['受注ID','案件名','企業名','申請者','在留資格(種別)','ステータス','在留期限','組合受領日','依頼日','経過日数','人材不足書類','企業不足書類','人材不足書類一覧','企業不足書類一覧']
+      : ['案件名','企業名','申請者','在留資格(種別)','ステータス','在留期限','案件受領日','経過日数','受付番号','受取方法','人材不足書類','企業不足書類（入管）','企業不足書類（国交省）','人材不足書類一覧','企業不足書類一覧（入管）','企業不足書類一覧（国交省）'];
     var lines=[headers.join(',')];
     rows.forEach(function(c){
       var elapsed='';
-      if(c.gpIraiDate){
+      var _baseDate=isGpMode?c.gpIraiDate:c.requestDate;
+      if(_baseDate){
         try{
-          var d=new Date(c.gpIraiDate); d.setHours(0,0,0,0);
+          var d=new Date(_baseDate); d.setHours(0,0,0,0);
           var e=Math.floor((todayD-d)/86400000);
           if(e>=0) elapsed=String(e);
         }catch(eX){}
       }
       var pMis=c.gpPersonMissing||[];
       var cMis=c.gpCoMissing||[];
-      var row=[
+      var kMis=(c.gpCoKokkoStats&&c.gpCoKokkoStats.missing)||[];
+      var row=!isGpMode ? [
+        c.name||'', c.company||'', c.applicant||'', c.appType||'',
+        getExternalStatus(c.status)||c.status||'', c.expire||'', c.requestDate||'', elapsed,
+        c.receiptNo||'', (c.deliveryMethod==='window'?'窓口受取':'郵送交付'),
+        c._hidePerson?'-':pMis.length, c._hideCoNyukan?'-':cMis.length, c._hideCoKokko?'-':kMis.length,
+        pMis.join(' | '), cMis.join(' | '), kMis.join(' | ')
+      ] : [
         c.gpOrderId||'',
         c.name||'',
         c.company||'',
@@ -3196,8 +3207,8 @@ function renderFilterBar(){
   // クリアボタン
   if(searchQuery||filterStatus.length||filterCompany.length||filterClientStaff.length||_colFilterActive()) h+='<button onclick="searchQuery=\'\';filterStatus=[];filterCompany=[];filterClientStaff=[];clearColFilters();renderSidebar();renderCurrent()" style="padding:7px 12px;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap;">✕ クリア</button>';
   h+='<span style="font-size:11px;color:#94a3b8;white-space:nowrap;">'+cases.length+'件</span>';
-  // ver.20260606.05: GPモード CSV出力ボタン
-  if(isGpMode){
+  // ver.20260606.05: GPモード CSV出力ボタン（ver.20261005.01: グローバルパートナーズ様ページでも表示）
+  if(isGpMode || isGpPartner){
     h+='<button onclick="exportGpCsv()" style="padding:6px 12px;background:#0f2040;color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">📥 CSV出力 ('+cases.length+'件)</button>';
   }
   // ビュー切り替えボタン
@@ -6968,6 +6979,8 @@ async function init(){
     if(!meta){document.getElementById('main').innerHTML='<div class="error-box">このURLは無効です。担当者にお問い合わせください。</div>';return;}
     orgName=meta.orgName||'';
     isGpMode=!!meta.isGpMode;
+    // ver.20261005.01: オープンケア協同組合経由のグローバルパートナーズ様ページ（partner_filter方式・GPモード外）でもCSV出力・不足書類集計を使えるように
+    isGpPartner=!isGpMode && /グローバルパートナーズ/.test(orgName);
     progressUrlCfg=meta.progressUrlCfg||null;
     if(isGpMode){ document.body.classList.add('gp-mode'); } else { document.body.classList.remove('gp-mode'); }
     if(isGpMode && !sortCol){ sortCol='gpOrderId'; sortDir='asc'; }
@@ -7083,8 +7096,8 @@ async function loadData(){
       if(!coDocsAll[r.co_id][name]) coDocsAll[r.co_id][name]={};
       coDocsAll[r.co_id][name][prefix]=r.value;
     });
-    if(isGpMode){
-      allCases=allCases.filter(function(c){ return !!gpInfoByCaseId[c.id]; });
+    if(isGpMode || isGpPartner){
+      if(isGpMode) allCases=allCases.filter(function(c){ return !!gpInfoByCaseId[c.id]; });
       try{
         var _hasVal=function(v){ return v!=null && v!=='' && v!=='false'; };
         var personDocs={};
