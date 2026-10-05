@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261005.test03: 特定技能クイズに「出題範囲」の選択を追加（分野・運用要領ごとのチップで複数選択、すべて選ぶ/すべて外す、選択中の問題数表示）。選んだ範囲からランダム出題し、レポートに出題範囲を表示。 -->
 <!-- ver.20261005.test02: ①別作業の本番同期(ver.20261001.test02)で消えていた「👥 自社管理」一式(test02〜test09)を再適用。②サイドメニューに「📝 特定技能クイズ」を追加（自社管理の下）。運用要領・支援運用要領・各分野別冊ベースの4択を10/50/100/300/1000問からランダム出題、回答ごとに正誤と解説、最後に結果レポート（範囲別正答率・弱点範囲・間違えた問題と解説、印刷/PDF保存）。受験記録はRPC quiz_save_attempt→tokutei_quiz_attempts、直近20回をquiz_historyで表示。問題データは末尾 script#tokuteiQuizData に同梱。 -->
 <!-- ver.20261005.test01: 本番 share.html(ver.20261005.01) を丸ごと同期（グローバルパートナーズ様CSV出力復活）。テスト固有=監査ログ source:'share_test'・バージョン表記 testNN は保持。 -->
 <!-- ver.20261005.01: グローバルパートナーズ様のCSV出力を復活。オープンケア経由のpartner_filter方式に移行した際にGPモード(gp_filter)判定から外れ、CSVボタンが消えていた。orgNameに「グローバルパートナーズ」を含むページではCSVボタンを表示し、不足書類（人材・企業入管・企業国交省）も集計して出力。列は案件名/企業名/申請者/種別/ステータス/在留期限/案件受領日/経過日数/受付番号/受取方法/不足書類件数・一覧。 -->
@@ -621,7 +622,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261005.test02</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261005.test03</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -3295,7 +3296,11 @@ function _mgDelete(){
 }
 // ver.20261005.test02: 特定技能クイズ（運用要領ベースの4択。問題データは末尾の <script id="tokuteiQuizData"> に同梱。受験記録は tokutei_quiz_attempts）
 var _QZ_COUNTS=[10,50,100,300,1000];
-var _qzData=null, _qzN=10, _qzS=null, _qzHist=null;
+var _qzData=null, _qzN=10, _qzS=null, _qzHist=null, _qzSel=null; // ver.20261005.test03: _qzSel=出題範囲（複数選択）
+function _qzCats(){ var o=[],m={}; _qzLoad().forEach(function(q){ if(!m[q[0]]){ m[q[0]]=0; o.push(q[0]); } m[q[0]]++; }); return {order:o,count:m}; }
+function _qzPool(){ var all=_qzLoad(); if(!_qzSel) return all; return all.filter(function(q){ return _qzSel[q[0]]; }); }
+function _qzToggle(i){ var c=_qzCats().order[i]; if(!_qzSel){ _qzSel={}; _qzCats().order.forEach(function(x){ _qzSel[x]=true; }); } _qzSel[c]=!_qzSel[c]; renderQuiz(); }
+function _qzSelAll(on){ _qzSel={}; _qzCats().order.forEach(function(x){ _qzSel[x]=!!on; }); renderQuiz(); }
 function _qzLoad(){
   if(_qzData) return _qzData;
   try{ _qzData=JSON.parse(document.getElementById('tokuteiQuizData').textContent||'[]'); }catch(e){ _qzData=[]; }
@@ -3326,18 +3331,22 @@ function renderQuiz(){
   var main=document.getElementById('main'); if(!main) return;
   if(_qzS && _qzS.phase==='q') return _qzRenderQ();
   if(_qzS && _qzS.phase==='done') return _qzRenderReport();
-  var all=_qzLoad(), n=all.length;
+  var all=_qzLoad(), pool=_qzPool(), n=pool.length;
   if(_qzHist===null){ _qzLoadHist().then(function(){ if(currentGroup==='quiz' && !_qzS) renderQuiz(); }); }
-  var cats={}; all.forEach(function(q){ cats[q[0]]=(cats[q[0]]||0)+1; });
+  var C=_qzCats();
   var h=_QZ_CSS+'<div class="qz-wrap"><div class="qz-card">'
     +'<div style="font-size:18px;font-weight:900;color:#0f2040;">📝 特定技能クイズ</div>'
-    +'<div style="font-size:12.5px;color:#64748b;margin-top:4px;line-height:1.7;">出入国在留管理庁の「特定技能外国人受入れに関する運用要領」「1号特定技能外国人支援に関する運用要領」と各分野の運用要領をもとにした4択問題です。全'+n+'問の中からランダムに出題し、最後に結果レポートを表示します。</div>'
+    +'<div style="font-size:12.5px;color:#64748b;margin-top:4px;line-height:1.7;">出入国在留管理庁の「特定技能外国人受入れに関する運用要領」「1号特定技能外国人支援に関する運用要領」と各分野の運用要領をもとにした4択問題です。全'+all.length+'問の中から、選んだ出題範囲の問題をランダムに出題し、最後に結果レポートを表示します。</div>'
+    +'<div style="display:flex;align-items:center;gap:10px;margin:16px 0 8px;"><span style="font-size:12px;font-weight:800;color:#475569;">出題範囲（複数選択できます）</span>'
+    +'<button class="qz-chip" style="padding:4px 10px;font-size:11px;" onclick="_qzSelAll(true)">すべて選ぶ</button><button class="qz-chip" style="padding:4px 10px;font-size:11px;" onclick="_qzSelAll(false)">すべて外す</button></div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:6px;">'+C.order.map(function(c,i){ var on=!_qzSel||_qzSel[c];
+      return '<button class="qz-chip'+(on?' on':'')+'" style="padding:6px 12px;font-size:12px;" onclick="_qzToggle('+i+')">'+(on?'✓ ':'')+esc(c)+' <span style="opacity:.65;font-weight:600;">'+C.count[c]+'</span></button>'; }).join('')+'</div>'
+    +'<div style="font-size:12px;color:#475569;margin-top:8px;">選択中の範囲：<b>'+n+'問</b></div>'
     +'<div style="font-size:12px;font-weight:800;color:#475569;margin:16px 0 8px;">出題数</div><div style="display:flex;flex-wrap:wrap;gap:8px;">'
     +_QZ_COUNTS.map(function(c){ return '<button class="qz-chip'+(_qzN===c?' on':'')+'" onclick="_qzN='+c+';renderQuiz();">'+c+'問</button>'; }).join('')+'</div>'
-    +(_qzN>n?'<div style="font-size:11.5px;color:#b45309;margin-top:8px;">現在の問題数は'+n+'問のため、'+n+'問すべてを出題します（問題は順次追加中です）。</div>':'')
-    +'<div style="margin-top:18px;"><button class="qz-btn" onclick="_qzStart()" '+(n?'':'disabled')+'>スタート</button></div></div>'
-    +'<div class="qz-card"><div style="font-size:13px;font-weight:800;color:#0f2040;margin-bottom:6px;">出題範囲（'+Object.keys(cats).length+'範囲）</div><div style="font-size:12px;color:#64748b;line-height:1.9;">'
-    +Object.keys(cats).map(function(c){ return esc(c)+' '+cats[c]+'問'; }).join('　/　')+'</div></div>';
+    +(n&&_qzN>n?'<div style="font-size:11.5px;color:#b45309;margin-top:8px;">選択中の範囲は'+n+'問のため、'+n+'問すべてを出題します'+(all.length<1000?'（問題は順次追加中です）':'')+'。</div>':'')
+    +(n?'':'<div style="font-size:11.5px;color:#dc2626;margin-top:8px;">出題範囲を1つ以上選んでください。</div>')
+    +'<div style="margin-top:18px;"><button class="qz-btn" onclick="_qzStart()" '+(n?'':'disabled')+'>スタート</button></div></div>';
   if(_qzHist && _qzHist.length){
     h+='<div class="qz-card"><div style="font-size:13px;font-weight:800;color:#0f2040;margin-bottom:6px;">これまでの結果（直近'+_qzHist.length+'回）</div><table class="qz-tbl"><tr><th>日時</th><th class="n">問題数</th><th class="n">正解</th><th class="n">正答率</th></tr>'
       +_qzHist.map(function(a){ var d=new Date(a.created_at); var ds=isNaN(d)?'':(d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2));
@@ -3347,9 +3356,10 @@ function renderQuiz(){
   main.innerHTML=h;
 }
 function _qzStart(){
-  var all=_qzLoad().slice(); _qzShuffle(all);
+  var all=_qzPool().slice(); if(!all.length) return; _qzShuffle(all);
   var list=all.slice(0,Math.min(_qzN,all.length)).map(function(q){ return {q:q, idx:_qzShuffle([0,1,2,3]), pick:null}; });
-  _qzS={phase:'q', list:list, i:0, ok:0, t0:Date.now()};
+  var C=_qzCats(), selc=C.order.filter(function(c){ return !_qzSel||_qzSel[c]; });
+  _qzS={phase:'q', list:list, i:0, ok:0, t0:Date.now(), range:(selc.length===C.order.length?'すべて':selc.join('、'))};
   renderQuiz(); window.scrollTo(0,0);
 }
 function _qzRenderQ(){
@@ -3392,6 +3402,7 @@ function _qzReportHtml(forPrint){
     +'<div style="font-size:12px;color:#94a3b8;margin-top:2px;">'+esc(orgName||'')+'　'+now.getFullYear()+'/'+(now.getMonth()+1)+'/'+now.getDate()+'</div>'
     +'<div style="font-size:54px;font-weight:900;color:#0f2040;line-height:1.1;margin-top:10px;">'+pct+'<span style="font-size:22px;">%</span></div>'
     +'<div style="font-size:13px;color:#475569;">'+n+'問中 '+ok+'問正解　／　所要時間 '+mm+'分'+ss+'秒</div>'
+    +'<div style="font-size:11.5px;color:#64748b;margin-top:4px;">出題範囲：'+esc(S.range||'すべて')+'</div>'
     +'<div style="display:inline-block;margin-top:10px;border:2.5px solid #dc2626;color:#dc2626;font-weight:900;font-size:17px;padding:3px 14px;border-radius:6px;transform:rotate(-4deg);">'+rank+'</div></div>';
   var rows=Object.keys(S.by).map(function(c){ var b=S.by[c]; return [c,b[0],b[1],Math.round(b[0]/b[1]*100)]; }).sort(function(a,b){ return a[3]-b[3]; });
   h+='<div class="qz-card"><div style="font-size:13px;font-weight:800;color:#0f2040;margin-bottom:6px;">範囲別の正答率（低い順）</div><table class="qz-tbl"><tr><th>範囲</th><th class="n">正解 / 出題</th><th class="n">正答率</th><th style="width:30%;"></th></tr>'
@@ -3411,7 +3422,7 @@ function _qzReportHtml(forPrint){
 function _qzRenderReport(){
   var main=document.getElementById('main');
   main.innerHTML=_QZ_CSS+'<div class="qz-wrap">'+_qzReportHtml()
-    +'<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="qz-btn" onclick="_qzStart()">もう一度（'+Math.min(_qzN,_qzLoad().length)+'問）</button>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="qz-btn" onclick="_qzStart()">もう一度（'+Math.min(_qzN,_qzPool().length)+'問）</button>'
     +'<button class="qz-btn sub" onclick="_qzPrint()">🖨 レポートを印刷・PDF保存</button>'
     +'<button class="qz-btn sub" onclick="_qzS=null;renderQuiz();">トップに戻る</button></div></div>';
 }
