@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261007.01: 【不具合修正】登録支援機関情報で支援担当者等を「保存できない」問題。5分ごと・タブ復帰時の自動更新(reloadDataSilent→loadData)が未保存の別紙入力（支援責任者/通訳者/支援担当者）と案件担当者リストを上書きして消していた。未保存の入力がある間は自動更新をスキップし、loadDataでも未保存分は上書きしないように修正。あわせて再読込時に別紙の備考(remarks)を読み込んでおらず、次の保存で備考が空で上書きされる不具合も修正。 -->
 <!-- ver.20261005.03: 特定技能クイズのトップ画面の「これまでの結果」（回答履歴）を非表示に。受験記録の保存（quiz_save_attempt）は継続。 -->
 <!-- ver.20261005.02: サイドメニュー（ダッシュボードの下）に「📝 特定技能クイズ」を追加（share_test ver.20261005.test02〜test09 を本番反映。自社管理は含めない）。運用要領・支援運用要領・各分野別冊ベースの4択1000問。出題範囲の複数選択、10/50/100/300/1000問ランダム出題、受験者名（任意）、結果レポート（範囲別正答率・間違えた問題／正解した問題と解説・印刷/PDF）、受験記録 RPC quiz_save_attempt / quiz_history。 -->
 <!-- ver.20261005.01: グローバルパートナーズ様のCSV出力を復活。オープンケア経由のpartner_filter方式に移行した際にGPモード(gp_filter)判定から外れ、CSVボタンが消えていた。orgNameに「グローバルパートナーズ」を含むページではCSVボタンを表示し、不足書類（人材・企業入管・企業国交省）も集計して出力。列は案件名/企業名/申請者/種別/ステータス/在留期限/案件受領日/経過日数/受付番号/受取方法/不足書類件数・一覧。 -->
@@ -613,7 +614,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261005.03</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261007.01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -6125,11 +6126,20 @@ function renderOrgProfile(){
 function ncStaffAdd(){
   var inp=document.getElementById('orgStaffInput'); if(!inp) return;
   var v=(inp.value||'').trim(); if(!v) return;
-  if(intakeStaff.indexOf(v)===-1){ intakeStaff.push(v); }
+  if(intakeStaff.indexOf(v)===-1){ intakeStaff.push(v); _intakeStaffDirty=true; }
   renderOrgProfile();
   setTimeout(function(){ var e=document.getElementById('orgStaffInput'); if(e) e.focus(); },30);
 }
-function ncStaffRemove(i){ intakeStaff.splice(i,1); renderOrgProfile(); }
+function ncStaffRemove(i){ intakeStaff.splice(i,1); _intakeStaffDirty=true; renderOrgProfile(); }
+var _intakeStaffDirty=false;
+// ver.20261007.01: 登録支援機関情報に未保存の入力があるか（自動更新の抑止判定）
+function _orgHasUnsaved(){
+  try{
+    return !!(_attachDirty || _officesDirty || _intakeStaffDirty
+      || (_orgEditMode && _orgDirtyCount()>0)
+      || _hoursBuf || _consultBuf || _emgBuf || _properBuf!=null);
+  }catch(e){ return false; }
+}
 async function ncStaffSave(){
   var btn=document.getElementById('orgStaffSaveBtn');
   if(btn){ btn.disabled=true; btn.textContent='保存中...'; }
@@ -6138,6 +6148,7 @@ async function ncStaffSave(){
     var res=await sbRpc('upsert_org_intake_staff',{p_token:currentToken,p_pass:(currentPass||null),p_staff:intakeStaff});
     if(res && res.ok){
       if(Array.isArray(res.intakeStaff)) intakeStaff=res.intakeStaff;
+      _intakeStaffDirty=false;
       _fillClientStaffDatalist();
       okMsg='✅ 保存しました。';
     }else{
@@ -7097,6 +7108,8 @@ async function reloadDataSilent(){
   // データ取得中・コメント編集中・IME変換中はスキップ
   if(_isReloading) return;
   if(_editingCommentId||_editingImeOn) return;
+  // ver.20261007.01: 登録支援機関情報に未保存の入力があるときは自動更新しない（入力が消えて「保存できない」ように見える不具合の対策）
+  if(currentGroup==='orgprofile' && _orgHasUnsaved()) return;
   var now=Date.now();
   if(now-_lastReloadAt < MIN_RELOAD_INTERVAL_MS) return;
   _isReloading=true;
@@ -7191,7 +7204,7 @@ async function loadData(){
         orgProfile.offices=Array.isArray(prof.offices)?prof.offices:[];
         orgProfile.supportStaffList=Array.isArray(prof.supportStaffList)?prof.supportStaffList:[];
         await loadOrgLangs(); // ver.20260808.test05: 言語別詳細をロード
-        intakeStaff=Array.isArray(prof.intakeStaff)?prof.intakeStaff:[];
+        if(!_intakeStaffDirty) intakeStaff=Array.isArray(prof.intakeStaff)?prof.intakeStaff:[]; // ver.20261007.01: 未保存の担当者リストは上書きしない
         orgEmails=Array.isArray(prof.emails)?prof.emails:[];
         // ver.20260805.test01: 対応時間・相談方法・緊急時対応・適正性・変更履歴
         orgHours     = (prof.hours && typeof prof.hours==='object') ? prof.hours : {};
@@ -7202,12 +7215,15 @@ async function loadData(){
         orgStd17     = (prof.std17 && typeof prof.std17==='object') ? prof.std17 : {};
         // ver.20260805.test04: 別紙情報（支援責任者名簿・通訳者名簿・支援担当者名簿）
         var _at = (prof.attachments && typeof prof.attachments==='object') ? prof.attachments : {};
-        orgAttachments = {
-          support_managers: Array.isArray(_at.support_managers) ? _at.support_managers.slice() : [],
-          interpreters:     Array.isArray(_at.interpreters)     ? _at.interpreters.slice()     : [],
-          support_staff:    Array.isArray(_at.support_staff)    ? _at.support_staff.slice()    : []
-        };
-        _attachDirty=false;
+        // ver.20261007.01: 未保存の別紙入力は上書きしない／備考(remarks)も読み込む（以前は再読込で備考が空になり、次の保存で備考が消えていた）
+        if(!_attachDirty){
+          orgAttachments = {
+            support_managers: Array.isArray(_at.support_managers) ? _at.support_managers.slice() : [],
+            interpreters:     Array.isArray(_at.interpreters)     ? _at.interpreters.slice()     : [],
+            support_staff:    Array.isArray(_at.support_staff)    ? _at.support_staff.slice()    : [],
+            remarks:          (typeof _at.remarks==='string') ? _at.remarks : ''
+          };
+        }
       }
       _fillClientStaffDatalist();
     }catch(e){ console.warn('[org profile load failed]', e); }
