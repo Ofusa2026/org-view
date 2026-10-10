@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261010.01: 新規案件依頼の送信完了画面に「✉️ 企業様への初回メール文案（大房行政書士法人のご紹介）」を表示（その場で編集・コピー可）。「送信した依頼」の各カードにも「✉️ 初回メール」ボタンを追加し、ワンタッチで文案をコピー。所属機関名・人材名・案件担当者名・自社名を自動で差し込む。 -->
 <!-- ver.20261007.01: 【不具合修正】登録支援機関情報で支援担当者等を「保存できない」問題。5分ごと・タブ復帰時の自動更新(reloadDataSilent→loadData)が未保存の別紙入力（支援責任者/通訳者/支援担当者）と案件担当者リストを上書きして消していた。未保存の入力がある間は自動更新をスキップし、loadDataでも未保存分は上書きしないように修正。あわせて再読込時に別紙の備考(remarks)を読み込んでおらず、次の保存で備考が空で上書きされる不具合も修正。 -->
 <!-- ver.20261005.03: 特定技能クイズのトップ画面の「これまでの結果」（回答履歴）を非表示に。受験記録の保存（quiz_save_attempt）は継続。 -->
 <!-- ver.20261005.02: サイドメニュー（ダッシュボードの下）に「📝 特定技能クイズ」を追加（share_test ver.20261005.test02〜test09 を本番反映。自社管理は含めない）。運用要領・支援運用要領・各分野別冊ベースの4択1000問。出題範囲の複数選択、10/50/100/300/1000問ランダム出題、受験者名（任意）、結果レポート（範囲別正答率・間違えた問題／正解した問題と解説・印刷/PDF）、受験記録 RPC quiz_save_attempt / quiz_history。 -->
@@ -614,7 +615,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261007.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261010.01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -704,6 +705,15 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
           </div>
           <textarea id="ncLineText" readonly style="width:100%;min-height:180px;padding:10px;border:1px solid #e2e8f0;border-radius:6px;font-size:11.5px;font-family:'SF Mono','Menlo','Consolas',monospace;line-height:1.6;background:white;color:#334155;resize:vertical;box-sizing:border-box;"></textarea>
           <div style="font-size:10px;color:#64748b;margin-top:6px;">※ この内容をLINEにそのまま貼り付けてください</div>
+        </div>
+        <!-- ver.20261010.01: 企業様へ大房行政書士法人をご紹介する初回メールの文案 -->
+        <div id="ncMailTextBox" style="margin-top:14px;background:#eff6ff;border:1.5px solid #93c5fd;border-radius:10px;padding:14px;text-align:left;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap;">
+            <div style="font-size:12px;font-weight:800;color:#0f2040;">✉️ 企業様への初回メール文案（大房行政書士法人のご紹介）</div>
+            <button onclick="copyIntroMailText()" id="ncCopyMailBtn" style="padding:6px 14px;background:#2563eb;color:white;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📋 クリップボードにコピー</button>
+          </div>
+          <textarea id="ncMailText" style="width:100%;min-height:260px;padding:10px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;line-height:1.7;background:white;color:#334155;resize:vertical;box-sizing:border-box;"></textarea>
+          <div style="font-size:10px;color:#64748b;margin-top:6px;">※ 企業様へのメールに貼り付けてお使いください（この欄で直接書き換えてからコピーもできます）。あとから「送信した依頼」の「✉️ 初回メール」ボタンでもコピーできます。</div>
         </div>
       </div>
       <div class="nc-big-error" id="ncBigError">
@@ -1200,6 +1210,15 @@ var NOTIF_LABELS={'申請済(番号待)':'📤 申請済（番号待ち）','受
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20261010.01',
+    date: '2026-10-10',
+    audience: 'all',
+    notify: true,
+    items: [
+      '✉️ 新規案件依頼を送信すると、<b>企業様へ大房行政書士法人をご紹介する初回メールの文案</b>が表示されるようになりました。所属機関名・人材のお名前・案件担当者名が自動で入るので、そのままコピーしてメールに貼り付けられます（その場で書き換えも可能）。<br>あとからでも「送信した依頼」の各依頼の<b>「✉️ 初回メール」</b>ボタンでワンタッチでコピーできます。'
+    ]
+  },
   {
     version: 'ver.20261005.02',
     date: '2026-10-05',
@@ -4798,6 +4817,7 @@ function renderIntakes(){
     h+='<div style="text-align:right;flex-shrink:0;">'
       +'<div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;">'
       +'<button onclick="copyIntakeLineText('+gi+',this)" title="この依頼のLINE報告用テキストをコピーします" style="padding:3px 11px;border-radius:999px;font-size:11px;font-weight:800;background:#fff;color:#15803d;border:1px solid #86efac;cursor:pointer;white-space:nowrap;line-height:1.5;">📋 テキスト</button>'
+      +'<button onclick="copyIntakeMailText('+gi+',this)" title="企業様へ大房行政書士法人をご紹介する初回メールの文案をコピーします" style="padding:3px 11px;border-radius:999px;font-size:11px;font-weight:800;background:#fff;color:#1d4ed8;border:1px solid #93c5fd;cursor:pointer;white-space:nowrap;line-height:1.5;">✉️ 初回メール</button>'
       +badges+'</div>'
       +'<div style="font-size:10.5px;color:#94a3b8;margin-top:4px;">送信: '+_intakeFmtDt(g.received_at)+'</div></div>';
     h+='</div>';
@@ -4869,6 +4889,62 @@ function _intakeGroupToPayload(g){
       };
     })
   };
+}
+// ===== ver.20261010.01: 企業様へ大房行政書士法人をご紹介する初回メールの文案 =====
+function _buildIntroMailText(company, names, staff){
+  var co=String(company||'').trim()||'・・・';
+  var nm=(names||[]).map(function(x){return String(x||'').trim();}).filter(Boolean);
+  var who=nm.length?nm.join('様、'):'・・・';
+  var st=String(staff||'').split(/[、,]/).map(function(x){return x.trim();}).filter(Boolean);
+  var me=st.length?st[0]:'・・・';
+  var tanto=st.length?st.join('、'):'・・・';
+  var org=String(orgName||'').trim()||'株式会社・・・';
+  return [
+    co+'様',
+    '',
+    'お世話になっております。',
+    org+'の'+me+'です。',
+    who+'様のご入社に向けて、今後、ビザ申請に必要な書類の準備を進めてまいります。',
+    'ビザ申請につきましては、専門的な確認や書類の準備が必要となるため、弊社が提携しております',
+    '「大房行政書士法人」と連携のうえ、手続きを進めさせていただきます。',
+    '＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝',
+    '大房行政書士法人',
+    '〒144-0052',
+    '東京都大田区蒲田5-11-10 FUNDES蒲田8F',
+    'TEL：03-6424-8849',
+    'HP：https://gyosei-cambo.com/',
+    '＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝',
+    '今後の手続きや必要書類について、まずは大房行政書士法人の担当者よりメールにてご連絡させていただきます。',
+    'ビザ申請に関するご不明点や、必要書類についてのご質問等がございましたら、大房行政書士法人の担当者へ',
+    '直接お問い合わせいただけますと、スムーズにご案内が可能です。',
+    '弊社とも連携しながら入社に向けて手続きを進めてまいりますので、どうぞよろしくお願いいたします。',
+    '',
+    '登録支援機関の担当は引き続き、'+tanto+'が担当させていただきます。'
+  ].join('\n');
+}
+function _copyTextFlash(text,btn){
+  function _flash(ok){
+    if(!btn) return;
+    var t=btn.textContent, bg=btn.style.background, co=btn.style.color, bo=btn.style.borderColor;
+    btn.textContent = ok ? '✅ コピーしました' : '❌ コピー失敗';
+    btn.style.background = ok ? '#059669' : '#dc2626'; btn.style.color='#fff'; btn.style.borderColor = ok ? '#059669' : '#dc2626';
+    setTimeout(function(){ btn.textContent=t; btn.style.background=bg; btn.style.color=co; btn.style.borderColor=bo; },1800);
+  }
+  function _fallback(){
+    var ta=document.createElement('textarea'); ta.value=text; ta.setAttribute('readonly','');
+    ta.style.position='fixed'; ta.style.left='-9999px'; ta.style.top='0';
+    document.body.appendChild(ta); var ok=_legacyCopyText(ta); document.body.removeChild(ta); _flash(ok);
+  }
+  if(navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(text).then(function(){_flash(true);},_fallback); }
+  else _fallback();
+}
+function copyIntroMailText(){
+  var ta=document.getElementById('ncMailText'); if(!ta) return;
+  _copyTextFlash(ta.value, document.getElementById('ncCopyMailBtn'));
+}
+function copyIntakeMailText(gid,btn){
+  var g=_intakeGroupCache[gid]; if(!g) return;
+  _copyTextFlash(_buildIntroMailText(g.company, (g.rows||[]).map(function(r){return r.applicant;}), g.client_staff), btn);
 }
 function copyIntakeLineText(gid,btn){
   var g=_intakeGroupCache[gid];
@@ -8546,6 +8622,8 @@ async function executeSubmit(){
     var lineText = _buildLineReportText(p);
     var lineTextEl = document.getElementById('ncLineText');
     if(lineTextEl) lineTextEl.value = lineText;
+    var mailTextEl = document.getElementById('ncMailText');   // ver.20261010.01: 初回メール文案
+    if(mailTextEl) mailTextEl.value = _buildIntroMailText(p.company, (p.jinzaiList||[]).map(function(j){return j.name;}), p.clientStaff);
     bigSuc.classList.add('show');
     // 下部ボタンの調整
     document.getElementById('ncSubmitBtn').style.display = 'none';
