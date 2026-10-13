@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261013.test01: 本番 share.html(ver.20261013.01) と同じ変更。「登録する」が反応しないように見える問題対策（エラートースト表示＋submit前クリーンアップ）。 -->
 <!-- ver.20261010.test01: 本番 share.html(ver.20261010.01) と同じ変更。新規案件依頼の送信完了画面に企業様への初回メール文案を表示し、「送信した依頼」の各カードに「✉️ 初回メール」コピーボタンを追加。 -->
 <!-- ver.20261007.test01: 本番 share.html(ver.20261007.01) を丸ごと同期（自動更新で未保存の入力が消える不具合の修正）。テスト固有=監査ログ source:'share_test'・バージョン表記 testNN は保持。 -->
 <!-- ver.20261007.01: 【不具合修正】登録支援機関情報で支援担当者等を「保存できない」問題。5分ごと・タブ復帰時の自動更新(reloadDataSilent→loadData)が未保存の別紙入力（支援責任者/通訳者/支援担当者）と案件担当者リストを上書きして消していた。未保存の入力がある間は自動更新をスキップし、loadDataでも未保存分は上書きしないように修正。あわせて再読込時に別紙の備考(remarks)を読み込んでおらず、次の保存で備考が空で上書きされる不具合も修正。 -->
@@ -616,7 +617,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261010.test01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261013.test01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -8221,7 +8222,15 @@ function showNcError(msg){
   var el = document.getElementById('ncError');
   el.textContent = '⚠️ ' + msg;
   el.style.display = '';
-  el.scrollIntoView({behavior:'smooth', block:'nearest'});
+  // ver.20261013.test01: 下部でエラーが見えない問題対策
+  el.scrollIntoView({behavior:'smooth', block:'start'});
+  var _ex = document.getElementById('_ncErrToast'); if(_ex) _ex.remove();
+  var toast = document.createElement('div');
+  toast.id = '_ncErrToast';
+  toast.textContent = '⚠️ ' + msg;
+  toast.style.cssText = 'position:fixed;left:50%;bottom:88px;transform:translateX(-50%);background:#dc2626;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:800;box-shadow:0 8px 24px rgba(220,38,38,.4);z-index:2147483647;max-width:92vw;text-align:center;line-height:1.6;';
+  document.body.appendChild(toast);
+  setTimeout(function(){ if(toast && toast.parentNode) toast.parentNode.removeChild(toast); }, 4500);
 }
 
 // ver.20260525.03: アイデム拠点 → 使用する支援事業所の自動マッピング
@@ -8282,6 +8291,19 @@ function _onAidemBranchChange(){
 var _ncPendingPayload = null; // 確認モーダル内で参照する保留中データ
 
 async function submitNewCase(){
+  // ver.20261013.test01: 「登録する」ボタン無反応の防衛策
+  // 前回の確認モーダル残骸・前回のpayload残り・disabled残りを掃除
+  try{
+    var _leftover=document.getElementById('_hopedFeeConfirm'); if(_leftover){ _leftover.remove(); document.body.style.overflow=''; }
+    window._hfOnOK=null;
+    _ncPendingPayload=null;
+    var _sb=document.getElementById('ncSubmitBtn');
+    if(_sb){ _sb.disabled=false; _sb.style.display=''; }
+    var _csb=document.getElementById('ncConfirmSendBtn');
+    if(_csb){ _csb.disabled=false; _csb.textContent='送信する'; }
+    var _cbg=document.getElementById('ncConfirmModalBg');
+    if(_cbg){ _cbg.classList.remove('open'); }
+  }catch(_){}
   // バリデーション
   var caseName = document.getElementById('nc_caseName').value.trim();
   var appType = document.getElementById('nc_appType').value;
