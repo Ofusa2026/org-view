@@ -4,10 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
-<!-- ver.20261013.test02: 本番 share.html(ver.20261013.02) と同じ変更。「登録する」が閉じるだけで反応しない問題の再対策（try/catch包囲・stopPropagation・入力値併記エラー）。 -->
-<!-- ver.20261013.test01: 本番 share.html(ver.20261013.01) と同じ変更。「登録する」が反応しないように見える問題対策（エラートースト表示＋submit前クリーンアップ）。 -->
-<!-- ver.20261010.test01: 本番 share.html(ver.20261010.01) と同じ変更。新規案件依頼の送信完了画面に企業様への初回メール文案を表示し、「送信した依頼」の各カードに「✉️ 初回メール」コピーボタンを追加。 -->
-<!-- ver.20261007.test01: 本番 share.html(ver.20261007.01) を丸ごと同期（自動更新で未保存の入力が消える不具合の修正）。テスト固有=監査ログ source:'share_test'・バージョン表記 testNN は保持。 -->
+<!-- ver.20261013.test04: サイドメニューに「📖 使い方ガイド」を追加（ログイン・画面の見方・ダッシュボード・案件一覧/詳細・ステータス・新規案件依頼・送信した依頼・申請記録/審査完了・登録支援機関情報・便利な機能・FAQ）。各章から該当画面へ移動可。 -->
+<!-- ver.20261013.test03: 本番 share.html(ver.20261013.02) を丸ごと同期。テスト固有=監査ログ source:'share_test'・バージョン表記 testNN は保持。 -->
+<!-- ver.20261013.02: 【再修正】「登録する」を押してもモーダルが閉じるだけでエラーも出ない問題。(1)submitNewCase全体をtry/catchで包み、どこで例外が出ても必ずトーストで原因表示、(2)「登録する」ボタンのonclickにevent.stopPropagation()+return falseで背景clickイベント伝播を遮断、(3)エラーメッセージに現在の入力値を併記（例：支援委託費が「aaa」なら『現在の入力:「aaa」』と表示）＋該当欄に赤枠フォーカス、(4)console.logでsubmitNewCase開始/内部エラーを記録。 -->
+<!-- ver.20261013.01: 【不具合修正】新規案件依頼モーダルで「登録する」を押しても反応がないように見える問題。入力エラー時のメッセージがモーダル最上部にのみ表示されており、下部でボタンを押したユーザーには見えなかった。対策：(1)モーダル本文を最上部に強制スクロール、(2)画面下部中央にも赤色トースト風の警告を4.5秒表示（登録ボタン近くに見える）、(3)submitNewCase先頭で前回の確認モーダル残骸・ボタンdisabled残りを掃除。 -->
+<!-- ver.20261010.01: 新規案件依頼の送信完了画面に「✉️ 企業様への初回メール文案（大房行政書士法人のご紹介）」を表示（その場で編集・コピー可）。「送信した依頼」の各カードにも「✉️ 初回メール」ボタンを追加し、ワンタッチで文案をコピー。所属機関名・人材名・案件担当者名・自社名を自動で差し込む。 -->
 <!-- ver.20261007.01: 【不具合修正】登録支援機関情報で支援担当者等を「保存できない」問題。5分ごと・タブ復帰時の自動更新(reloadDataSilent→loadData)が未保存の別紙入力（支援責任者/通訳者/支援担当者）と案件担当者リストを上書きして消していた。未保存の入力がある間は自動更新をスキップし、loadDataでも未保存分は上書きしないように修正。あわせて再読込時に別紙の備考(remarks)を読み込んでおらず、次の保存で備考が空で上書きされる不具合も修正。 -->
 <!-- ver.20261005.03: 特定技能クイズのトップ画面の「これまでの結果」（回答履歴）を非表示に。受験記録の保存（quiz_save_attempt）は継続。 -->
 <!-- ver.20261005.02: サイドメニュー（ダッシュボードの下）に「📝 特定技能クイズ」を追加（share_test ver.20261005.test02〜test09 を本番反映。自社管理は含めない）。運用要領・支援運用要領・各分野別冊ベースの4択1000問。出題範囲の複数選択、10/50/100/300/1000問ランダム出題、受験者名（任意）、結果レポート（範囲別正答率・間違えた問題／正解した問題と解説・印刷/PDF）、受験記録 RPC quiz_save_attempt / quiz_history。 -->
@@ -27,7 +28,8 @@
 <!-- ver.20260921.06: グローバルパートナーズ機関のO-Linkに「🏢 企業マイページを開く」ボタンを追加（人材詳細モーダルの企業書類セクション上・org_company_links RPCでトークン取得・PIN有無バッジ付き）。 -->
 <!-- ver.20260921.05: 企業・国交省書類の提出期限を「案件受領日から着手7日以内・提出45日以内」に変更（request_date基準・全ステージ共通表示）。 -->
 <!-- ver.20260921.04: 書類チェックリスト（人材）を「人材・特定活動」（パスポート/顔写真/在留カード/合格証/専門級）と「人材・特定技能1号」（税書類・健康診断票等）に分割表示（対象3機関×特活×建設のみ）。特定技能1号分は国交省申請前は⏸グレーアウト。国交省申請済み判定を人材/企業で共通化。 -->
-<!-- ver.20260921.03: 書類チェックリスト（人材/企業・国交省/企業・入管）の各見出しに提出期限バッジを追加（対象3機関×特活×建設のみ。特活中=特活申請まで、特活完了後=特定技能1号申請1ヶ月前・国交省は審査3ヶ月逆算の目安）。既存の受領済/未受領表示・⏸グレーアウト仕様は変更なし。 -->\n<!-- ver.20260921.02: 申請スケジュール（建設特定技能）の起点日の呼称を「依頼日」→「案件受領日」に統一（使用フィールドは request_date のまま）。 -->
+<!-- ver.20260921.03: 書類チェックリスト（人材/企業・国交省/企業・入管）の各見出しに提出期限バッジを追加（対象3機関×特活×建設のみ。特活中=特活申請まで、特活完了後=特定技能1号申請1ヶ月前・国交省は審査3ヶ月逆算の目安）。既存の受領済/未受領表示・⏸グレーアウト仕様は変更なし。 -->
+<!-- ver.20260921.02: 申請スケジュール（建設特定技能）の起点日の呼称を「依頼日」→「案件受領日」に統一（使用フィールドは request_date のまま）。 -->
 <!-- ver.20260921.01: 人材詳細モーダルに「申請スケジュール（建設特定技能）」セクションを追加。希望在留資格「特定活動」×建設分野の案件で、案件受領日・受付日・在留期限・一時帰国・ステータス・国交省ステータスから各工程の期限/実績/現在地を自動表示し、書類チェックリスト（doc_check/co_doc_check）の受領状況と連動した進捗チップを表示。申請デッドライン（在留期限前日/出国日前日）バナー付き。表示対象はオープンケア協同組合・REMONTADA株式会社・グローバルパートナーズ様の3機関のみ（orgName前方一致。アライズ様は対象外）。WHATS_NEWにorgs指定（機関名リスト）によるaudience制御を追加。 -->
 <!-- ver.20260916.01: 希望在留期間確認モーダルの決済手数料注記を動的化。3年以上(3年/5年)を選ぶと550円/件、それ以外330円/件、混在時は両方明示。 -->
 <!-- ver.20260915.01: 【不具合修正】新規案件依頼の「希望在留期間」が依頼テキスト（本人ステータス）に出力されていなかったのを修正。_buildLineReportText の本人ブロックに「希望在留期間」行を追加し、過去依頼の再コピー経路（_intakeGroupToPayload）でも hoped_stay_period をマップするようにした。 -->
@@ -618,7 +620,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261013.test02</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261013.test04</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -709,7 +711,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
           <textarea id="ncLineText" readonly style="width:100%;min-height:180px;padding:10px;border:1px solid #e2e8f0;border-radius:6px;font-size:11.5px;font-family:'SF Mono','Menlo','Consolas',monospace;line-height:1.6;background:white;color:#334155;resize:vertical;box-sizing:border-box;"></textarea>
           <div style="font-size:10px;color:#64748b;margin-top:6px;">※ この内容をLINEにそのまま貼り付けてください</div>
         </div>
-        <!-- ver.20261010.test01: 企業様へ大房行政書士法人をご紹介する初回メールの文案 -->
+        <!-- ver.20261010.01: 企業様へ大房行政書士法人をご紹介する初回メールの文案 -->
         <div id="ncMailTextBox" style="margin-top:14px;background:#eff6ff;border:1.5px solid #93c5fd;border-radius:10px;padding:14px;text-align:left;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap;">
             <div style="font-size:12px;font-weight:800;color:#0f2040;">✉️ 企業様への初回メール文案（大房行政書士法人のご紹介）</div>
@@ -1223,7 +1225,7 @@ var WHATS_NEW = [
     ]
   },
   {
-    version: 'ver.20261005.02',
+    version: 'ver.20261005.test02',
     date: '2026-10-05',
     audience: 'all',
     notify: true,
@@ -1232,7 +1234,7 @@ var WHATS_NEW = [
     ]
   },
   {
-    version: 'ver.20260921.01',
+    version: 'ver.20260921.test01',
     date: '2026-09-21',
     audience: 'orgs',
     orgs: ['オープンケア協同組合','REMONTADA','グローバルパートナーズ'],
@@ -1242,7 +1244,7 @@ var WHATS_NEW = [
     ]
   },
   {
-    version: 'ver.20260901.10',
+    version: 'ver.20260901.test10',
     date: '2026-09-01',
     audience: 'all',
     notify: true,
@@ -1251,7 +1253,7 @@ var WHATS_NEW = [
     ]
   },
   {
-    version: 'ver.20260722.03',
+    version: 'ver.20260722.test03',
     date: '2026-07-22',
     audience: 'aidem',
     notify: true,
@@ -1261,7 +1263,7 @@ var WHATS_NEW = [
     ]
   },
   {
-    version: 'ver.20260708.01',
+    version: 'ver.20260708.test01',
     date: '2026-07-08',
     audience: 'all',
     notify: true,
@@ -1272,7 +1274,7 @@ var WHATS_NEW = [
     ]
   },
   {
-    version: 'ver.20260702.02',
+    version: 'ver.20260702.test02',
     date: '2026-07-02',
     audience: 'all',
     notify: true,
@@ -1283,7 +1285,7 @@ var WHATS_NEW = [
     ]
   },
   {
-    version: 'ver.20260701.01',
+    version: 'ver.20260701.test01',
     date: '2026-07-01',
     audience: 'all',
     notify: true,
@@ -1297,7 +1299,7 @@ var WHATS_NEW = [
     ]
   },
   {
-    version: 'ver.20260607.09',
+    version: 'ver.20260607.test09',
     date: '2026-06-07',
     audience: 'all',
     notify: true,
@@ -1310,7 +1312,7 @@ var WHATS_NEW = [
     ]
   },
   {
-    version: 'ver.20260603.10',
+    version: 'ver.20260603.test10',
     date: '2026-06-03',
     audience: 'all',
     notify: false,
@@ -1319,7 +1321,7 @@ var WHATS_NEW = [
     ]
   },
   {
-    version: 'ver.20260603.07',
+    version: 'ver.20260603.test07',
     date: '2026-06-03',
     audience: 'all',
     notify: false,
@@ -1328,7 +1330,7 @@ var WHATS_NEW = [
     ]
   },
   {
-    version: 'ver.20260603.06',
+    version: 'ver.20260603.test06',
     date: '2026-06-03',
     audience: 'all',
     notify: false,
@@ -1337,7 +1339,7 @@ var WHATS_NEW = [
     ]
   },
   {
-    version: 'ver.20260603.05',
+    version: 'ver.20260603.test05',
     date: '2026-06-03',
     audience: 'all',
     notify: true,
@@ -1346,7 +1348,7 @@ var WHATS_NEW = [
     ]
   },
   {
-    version: 'ver.20260603.04',
+    version: 'ver.20260603.test04',
     date: '2026-06-03',
     audience: 'all',
     notify: true,
@@ -1355,7 +1357,7 @@ var WHATS_NEW = [
     ]
   },
   {
-    version: 'ver.20260603.02',
+    version: 'ver.20260603.test02',
     date: '2026-06-03',
     audience: 'aidem',
     notify: true,
@@ -1364,7 +1366,7 @@ var WHATS_NEW = [
     ]
   },
   {
-    version: 'ver.20260602.03',
+    version: 'ver.20260602.test03',
     date: '2026-06-02',
     audience: 'all',
     notify: true,
@@ -1373,7 +1375,7 @@ var WHATS_NEW = [
     ]
   },
   {
-    version: 'ver.20260601.01',
+    version: 'ver.20260601.test01',
     date: '2026-06-01',
     audience: 'all',
     notify: true,
@@ -1383,7 +1385,7 @@ var WHATS_NEW = [
     ]
   },
   {
-    version: 'ver.20260531.02',
+    version: 'ver.20260531.test02',
     date: '2026-05-31',
     audience: 'all',
     notify: true,
@@ -2969,6 +2971,9 @@ function renderSidebar(){
   h+='<div class="sb-item'+(currentGroup==='kyoryoku'?' active':'')+'" onclick="switchGroup(\'kyoryoku\')">📋 協力確認書作成</div>';
   h+='<div class="sb-divider"></div>';
   h+='<div class="sb-item'+(currentGroup==='zuiji'?' active':'')+'" onclick="switchGroup(\'zuiji\')">📝 随時届出チェッカー</div>';
+  // ver.20261013.test04: 使い方ガイド
+  h+='<div class="sb-divider"></div>';
+  h+='<div class="sb-item'+(currentGroup==='guide'?' active':'')+'" onclick="switchGroup(\'guide\')">📖 使い方ガイド</div>';
   if(isSidebarItemVisible('flow')){
     h+='<div class="sb-divider"></div>';
     h+='<div class="flow-sb-item" onclick="openFlowModal()">📋 申請の流れ <span style="margin-left:auto;font-size:10px;">ℹ️</span></div>';
@@ -4893,7 +4898,7 @@ function _intakeGroupToPayload(g){
     })
   };
 }
-// ===== ver.20261010.test01: 企業様へ大房行政書士法人をご紹介する初回メールの文案 =====
+// ===== ver.20261010.01: 企業様へ大房行政書士法人をご紹介する初回メールの文案 =====
 function _buildIntroMailText(company, names, staff){
   var co=String(company||'').trim()||'・・・';
   var nm=(names||[]).map(function(x){return String(x||'').trim();}).filter(Boolean);
@@ -6537,6 +6542,145 @@ async function orgEmailSave(){
   }
 })();
 
+// ===== ver.20261013.test04: 使い方ガイド（登録支援機関向け） =====
+function _gdGo(gid){ switchGroup(gid); }
+function _gdJump(id){
+  var t=document.getElementById(id); if(!t) return;
+  var m=document.getElementById('main');
+  if(m && m.scrollHeight>m.clientHeight){ m.scrollTop=t.offsetTop-8; } else { t.scrollIntoView({behavior:'smooth',block:'start'}); }
+}
+function renderGuide(){
+  var fb=document.getElementById('filter-bar'); if(fb){ fb.innerHTML=''; fb.style.display='none'; }
+  var css='<style>'+
+    '.gd{max-width:860px;margin:0 auto;color:#1e293b;font-size:13.5px;line-height:1.85;}'+
+    '.gd-hero{background:linear-gradient(135deg,#1e3a5f,#2c5282);color:#fff;border-radius:14px;padding:22px 24px;margin-bottom:14px;}'+
+    '.gd-hero h2{margin:0 0 6px;font-size:20px;} .gd-hero p{margin:0;font-size:13px;opacity:.92;}'+
+    '.gd-toc{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin-bottom:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;}'+
+    '.gd-toc button{text-align:left;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:12.5px;cursor:pointer;color:#1e3a5f;font-weight:700;font-family:inherit;}'+
+    '.gd-toc button:hover{background:#eff6ff;border-color:#93c5fd;}'+
+    '.gd-sec{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;margin-bottom:14px;box-shadow:0 1px 3px rgba(15,32,64,.05);}'+
+    '.gd-sec h3{margin:0 0 10px;font-size:16px;color:#1e3a5f;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}'+
+    '.gd-sec h4{margin:14px 0 6px;font-size:13.5px;color:#334155;}'+
+    '.gd-sec p{margin:0 0 8px;} .gd-sec ul,.gd-sec ol{margin:4px 0 8px;padding-left:22px;} .gd-sec li{margin:2px 0;}'+
+    '.gd-open{margin-left:auto;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}'+
+    '.gd-open:hover{background:#1d4ed8;}'+
+    '.gd-key{display:inline-block;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;padding:0 7px;font-size:12px;font-weight:700;color:#334155;white-space:nowrap;}'+
+    '.gd-tip{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:9px 12px;font-size:12.5px;color:#166534;margin:8px 0;}'+
+    '.gd-warn{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:9px 12px;font-size:12.5px;color:#9a3412;margin:8px 0;}'+
+    '.gd-st{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:start;margin:6px 0;}'+
+    '.gd-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle;}'+
+    '.gd-stl{font-weight:700;white-space:nowrap;font-size:12.5px;}'+
+    '.gd-faq dt{font-weight:700;margin-top:10px;color:#1e3a5f;} .gd-faq dd{margin:2px 0 0 0;}'+
+    '@media(max-width:640px){.gd-sec{padding:14px;} .gd-hero{padding:18px;} .gd-st{grid-template-columns:1fr;}}'+
+  '</style>';
+  function sec(id,title,open,body){
+    return '<div class="gd-sec" id="'+id+'"><h3>'+title+(open?'<button class="gd-open" onclick="_gdGo(\''+open+'\')">この画面を開く →</button>':'')+'</h3>'+body+'</div>';
+  }
+  var toc=[
+    ['gd-login','🔑 ログイン'],['gd-screen','🖥 画面の見方'],['gd-dash','📊 ダッシュボード'],
+    ['gd-list','📁 案件一覧・詳細'],['gd-status','🚦 ステータスの見方'],['gd-new','＋ 新規案件依頼'],
+    ['gd-intakes','📤 送信した依頼'],['gd-records','📮 申請記録・審査完了'],['gd-org','🏢 登録支援機関情報'],
+    ['gd-tools','🧰 便利な機能'],['gd-faq','❓ よくあるご質問']
+  ];
+  var h=css+'<div class="gd">';
+  h+='<div class="gd-hero"><h2>📖 O-Link 使い方ガイド</h2><p>登録支援機関マイページでできることと、基本の操作をまとめています。各章の「この画面を開く」から、そのまま該当画面へ移動できます。</p></div>';
+  h+='<div class="gd-toc">'+toc.map(function(t){return '<button onclick="_gdJump(\''+t[0]+'\')">'+t[1]+'</button>';}).join('')+'</div>';
+
+  h+=sec('gd-login','🔑 ログイン','',
+    '<ol><li>大房行政書士法人からお送りしている<b>貴社専用のURL</b>を開きます。</li>'+
+    '<li>パスワード入力欄に<b>貴社専用のパスワード</b>を入れて <span class="gd-key">ログイン</span> を押します。</li></ol>'+
+    '<div class="gd-tip">💡 URLをブラウザの「ブックマーク（お気に入り）」に登録しておくと、次回からすぐに開けます。</div>'+
+    '<div class="gd-warn">⚠️ URLとパスワードは貴社専用です。社外の方には共有しないでください。お忘れの場合は大房行政書士法人までご連絡ください。</div>');
+
+  h+=sec('gd-screen','🖥 画面の見方','',
+    '<p>画面上部（ヘッダー）と、左側のメニュー（サイドバー）で操作します。</p><ul>'+
+    '<li><span class="gd-key">☰</span>：左のメニューを開く／閉じる。スマートフォンでは、メニューが画面上部に横並びで表示され、横にスクロールして選べます。</li>'+
+    '<li><span class="gd-key">🔔</span>：お知らせ。受付番号が付いた・審査が完了したなどの通知が届きます。赤い数字は未確認の件数です。</li>'+
+    '<li><span class="gd-key">＋ 新規案件依頼</span>：大房行政書士法人へ新しい申請をご依頼するときに使います。</li>'+
+    '<li>タイトル下の小さな <span class="gd-key">ver.…</span> を押すと、マイページのアップデート履歴が見られます。</li></ul>'+
+    '<div class="gd-tip">💡 左のメニューに表示される項目は、貴社の設定によって一部異なる場合があります。</div>');
+
+  h+=sec('gd-dash','📊 ダッシュボード','dashboard',
+    '<p>ログイン後、最初に表示される画面です。</p><ul>'+
+    '<li><b>本日の動向</b>：今日の「申請」「申請受付番号」「審査完了」の件数です。カードを押すと、該当の一覧に移動します。</li>'+
+    '<li><b>未確認の案件</b>：新しく動きがあり、まだ貴社で確認していない案件が並びます。内容を確認したらチェックを付けてください。チェックはお知らせ（🔔）とも連動します。</li></ul>');
+
+  h+=sec('gd-list','📁 案件一覧・詳細','active',
+    '<p>左メニューの <span class="gd-key">進行中</span> <span class="gd-key">発行済み・完了</span> <span class="gd-key">すべて</span> で、ご依頼いただいた案件を一覧で確認できます（数字は件数）。</p>'+
+    '<h4>探す・絞り込む</h4><ul>'+
+    '<li>上部の <b>🔍 検索</b> に、案件名・企業名・申請者名などを入れると絞り込めます。</li>'+
+    '<li><b>ステータス</b>・<b>所属機関</b>・<b>担当</b> のプルダウンで絞り込み、<span class="gd-key">✕ クリア</span> で元に戻せます。</li>'+
+    '<li><span class="gd-key">☰ リスト</span> と <span class="gd-key">▦ カンバン</span> で表示を切り替えられます。カンバンは進み具合ごとに列で並びます。</li>'+
+    '<li><span class="gd-key">📥 CSV出力</span> で、表示中の一覧をExcel等で開けるファイルに書き出せます。</li></ul>'+
+    '<h4>案件の詳細を見る</h4><ul>'+
+    '<li>一覧の案件を押すと詳細が開き、<b>案件情報</b>（担当・受付番号・受取方法・在留期限など）、<b>人材情報</b>、<b>書類PDF</b>、<b>書類チェックリスト</b>（ご提出いただく書類の状況）が確認できます。</li>'+
+    '<li>一覧の <b>PDF</b> 欄から、作成済みの書類をダウンロードできます。</li>'+
+    '<li>コメント欄が表示されている場合は、大房からのコメントの確認や、貴社からのコメントの入力・保存ができます。</li></ul>'+
+    '<div class="gd-warn">⚠️ 課税・納税証明書、源泉徴収票、健康診断票は、発行・受診から3か月以内のものでないと申請に使えません。弊社からご案内するタイミングでのご準備をお願いします。</div>');
+
+  var st=[
+    ['#2563eb','雇用条件作成・企業確認','ヒアリングフォームや雇用条件書（1-6号）の作成・企業様のご確認の段階です。'],
+    ['#a21caf','申請人サイン対応','申請人ご本人にサインいただく書類を作成・送付し、返送をお待ちしている段階です。'],
+    ['#ea580c','企業押印ご対応・書類収集・申請準備','企業様の押印書類や必要書類を集め、申請の準備をしている段階です。'],
+    ['#b45309','審査中','入管へ申請済みで、審査を待っている段階です。「要追完」は入管から追加書類を求められている状態です。'],
+    ['#1d4ed8','審査完了（受取対応中）','許可が出て、在留カード等の受け取り方法を調整・手続している段階です。'],
+    ['#16a34a','新在留カード（または認定証）発行済み','新しい在留カード、または認定証明書が発行された状態です。']
+  ];
+  h+=sec('gd-status','🚦 ステータスの見方','',
+    '<p>案件の進み具合は、次の6つの段階で表示されます。</p>'+
+    '<div class="gd-st">'+st.map(function(s){return '<div class="gd-stl"><span class="gd-dot" style="background:'+s[0]+'"></span>'+s[1]+'</div><div>'+s[2]+'</div>';}).join('')+'</div>'+
+    '<div class="gd-tip">💡 申請から審査完了までの全体の流れは、左メニュー下の「📋 申請の流れ」でもご覧いただけます。</div>');
+
+  h+=sec('gd-new','＋ 新規案件依頼','',
+    '<p>新しい申請のご依頼は、画面上部の <span class="gd-key">＋ 新規案件依頼</span> から送れます。</p><ol>'+
+    '<li><b>案件共通情報</b>を入力します：案件名、申請種別（認定・変更・更新）、所属機関（企業名）、希望在留資格、受入れ経験、支援委託費・人材紹介手数料、案件担当者 など。特定技能の場合は分野も選べます。</li>'+
+    '<li><b>人材</b>を入力します（1回で最大30名）：氏名（英語）、国籍、現在の在留資格・在留期限、希望在留期間、受取方法 など。<span class="gd-key">＋ 人材を追加</span> で行を増やせます。</li>'+
+    '<li>連絡事項があれば <b>備考</b> に記入し、<span class="gd-key">登録する</span> を押します。</li>'+
+    '<li>確認画面で内容を見直し、<span class="gd-key">送信する</span> を押すと完了です。</li></ol>'+
+    '<div class="gd-tip">💡 <b>📋 まとめて貼り付け</b>：Excelやスプレッドシートの人材一覧をコピーして貼り付けると、氏名・国籍・受取方法・在留期限などを自動で読み取って入力します。列の順番はばらばらでも大丈夫です。</div>'+
+    '<p>送信が完了すると、<b>LINE報告用テキスト</b>（そのままLINEに貼り付けられます）と、<b>企業様への初回メール文案</b>（大房行政書士法人のご紹介）が表示されます。どちらもその場でコピーできます。</p>'+
+    '<div class="gd-warn">⚠️ <span class="gd-key">登録する</span> を押して先へ進めないときは、入力内容に不足があります。赤いメッセージと赤枠の欄を確認して直してください。</div>');
+
+  h+=sec('gd-intakes','📤 送信した依頼','intakes',
+    '<p>新規案件依頼で送った内容と、その受付状況を確認できます。年度（4月〜翌3月）ごとに表示されます。</p><ul>'+
+    '<li><b>確認待ち</b>：大房行政書士法人で内容を確認中です。</li>'+
+    '<li><b>登録済み</b>：正式な案件として登録されました。「進行中」「すべて」に表示されます。</li>'+
+    '<li><b>差し戻し</b>：内容に確認が必要な点があります。内容をご確認のうえ、大房行政書士法人までご連絡ください。</li></ul>'+
+    '<p>各依頼の <span class="gd-key">📋 テキスト</span> でLINE報告用テキストを、<span class="gd-key">✉️ 初回メール</span> で企業様への初回メール文案を、あとからでもコピーできます。</p>'+
+    '<div class="gd-tip">💡 送信後に内容を直したいときは、大房行政書士法人までご連絡ください。</div>');
+
+  h+=sec('gd-records','📮 申請記録・審査完了','receipts',
+    '<ul><li><b>申請記録</b>：入管へ申請し、受付番号が付いた記録の一覧です。</li>'+
+    '<li><b>審査完了</b>：入管の審査が完了した記録の一覧です（左メニューの「審査完了」から開けます）。</li></ul>'+
+    '<p>どちらも、まだ確認していないものが上部の「未確認」に並びます。確認したらチェックを付けてください。同じ案件のお知らせ（🔔）も一緒に確認済みになります。</p>');
+
+  h+=sec('gd-org','🏢 登録支援機関情報','orgprofile',
+    '<p>貴社の基本情報（名称・登録番号・所在地・連絡先・代表者・支援責任者など）を確認・更新できます。申請書類の作成に使う情報ですので、変更があったときは更新をお願いします。</p>'+
+    '<div class="gd-warn">⚠️ 編集したら必ず保存してください。保存しないまま別の画面へ移ると、確認のメッセージが出ます。</div>');
+
+  h+=sec('gd-tools','🧰 便利な機能','',
+    '<ul>'+
+    '<li><b>📰 ニュース等</b>：大房行政書士法人からのお知らせや、制度に関するニュースが届きます。新着があると数字が付きます。 <a href="javascript:void(0)" onclick="_gdGo(\'news\')">開く</a></li>'+
+    '<li><b>📋 協力確認書作成</b>：所属機関（企業）と提出先の市区町村を選ぶと、協力確認書の様式を作成できます。ブラウザの印刷からPDF保存・印刷できます。 <a href="javascript:void(0)" onclick="_gdGo(\'kyoryoku\')">開く</a></li>'+
+    '<li><b>📝 随時届出チェッカー</b>：「退職した」「住所が変わった」など、起きた状況を選ぶと、必要な随時届出が分かります。 <a href="javascript:void(0)" onclick="_gdGo(\'zuiji\')">開く</a></li>'+
+    '<li><b>📝 特定技能クイズ</b>：運用要領をもとにした問題で、支援担当者の知識を確認できます。出題範囲と問題数を選んで始め、最後に結果が表示されます。 <a href="javascript:void(0)" onclick="_gdGo(\'quiz\')">開く</a></li>'+
+    '<li><b>📋 申請の流れ</b>：ご依頼から審査完了までの流れと、貴社にご対応いただく部分を図で確認できます（左メニューの下にあります）。</li>'+
+    '</ul>');
+
+  h+=sec('gd-faq','❓ よくあるご質問','',
+    '<dl class="gd-faq">'+
+    '<dt>Q. 左のメニューに、このガイドで紹介している項目が見当たりません。</dt><dd>A. 表示される項目は貴社の設定により異なります。必要な場合は大房行政書士法人までご相談ください。</dd>'+
+    '<dt>Q. スマートフォンでも使えますか？</dt><dd>A. 使えます。スマートフォンではメニューが画面上部に横並びで表示されるので、横にスクロールして選んでください。</dd>'+
+    '<dt>Q. 新規案件依頼の「登録する」を押しても進みません。</dt><dd>A. 入力に不足があります。画面下の赤いメッセージと、赤枠で示された欄を確認してください。</dd>'+
+    '<dt>Q. 送った依頼の内容を間違えました。</dt><dd>A. 「送信した依頼」で状況を確認のうえ、大房行政書士法人までご連絡ください。</dd>'+
+    '<dt>Q. 新しい機能が追加されたか知りたい。</dt><dd>A. 画面上部の ver.… を押すと、アップデート履歴が見られます。新しい機能が追加されたときは右上にもお知らせが出ます。</dd>'+
+    '</dl>');
+
+  h+='<div style="text-align:center;font-size:11.5px;color:#94a3b8;margin:4px 0 24px;">ご不明な点は、大房行政書士法人までお気軽にお問い合わせください。</div>';
+  h+='</div>';
+  document.getElementById('main').innerHTML=h;
+}
+
 // ver.20260519.21: 現在のタブに応じた再描画（検索・フィルタ変更時に使う）
 function renderCurrent(){
   if(currentGroup==='dashboard'){renderDashboard();}
@@ -6549,6 +6693,7 @@ function renderCurrent(){
   else if(currentGroup==='news'){renderNews();}
   else if(currentGroup==='kyoryoku'){renderKyoryoku();}
   else if(currentGroup==='zuiji'){renderZuiji();}
+  else if(currentGroup==='guide'){renderGuide();} // ver.20261013.test04: 使い方ガイド
   else{renderMain();}
   _updateOrgSaveFloat(); // ver.20261002.01: 他タブでは固定保存バーを消す
   // ver.20260827.02: コメント・要望ウィジェットを撤去（要望による）。過去分はDBに残し、関数群も削除せずに温存。
@@ -8223,13 +8368,15 @@ function showNcError(msg){
   var el = document.getElementById('ncError');
   el.textContent = '⚠️ ' + msg;
   el.style.display = '';
-  // ver.20261013.test01: 下部でエラーが見えない問題対策
+  // ver.20261013.01: モーダル下部で登録を押したときにエラーが見えないのを防ぐ
+  // (1) モーダル本文を最上部まで強制スクロール
   el.scrollIntoView({behavior:'smooth', block:'start'});
+  // (2) 登録ボタン近く（画面下部）にもトースト風の警告を一時表示
   var _ex = document.getElementById('_ncErrToast'); if(_ex) _ex.remove();
   var toast = document.createElement('div');
   toast.id = '_ncErrToast';
   toast.textContent = '⚠️ ' + msg;
-  toast.style.cssText = 'position:fixed;left:50%;bottom:88px;transform:translateX(-50%);background:#dc2626;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:800;box-shadow:0 8px 24px rgba(220,38,38,.4);z-index:2147483647;max-width:92vw;text-align:center;line-height:1.6;';
+  toast.style.cssText = 'position:fixed;left:50%;bottom:88px;transform:translateX(-50%);background:#dc2626;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:800;box-shadow:0 8px 24px rgba(220,38,38,.4);z-index:2147483647;max-width:92vw;text-align:center;line-height:1.6;animation:_ncErrShake .4s;';
   document.body.appendChild(toast);
   setTimeout(function(){ if(toast && toast.parentNode) toast.parentNode.removeChild(toast); }, 4500);
 }
@@ -8292,8 +8439,9 @@ function _onAidemBranchChange(){
 var _ncPendingPayload = null; // 確認モーダル内で参照する保留中データ
 
 async function submitNewCase(){
-  // ver.20261013.test02: 「登録する」が無反応に見える問題への対策一式
+  // ver.20261013.02: 「登録する」が無反応に見える問題への対策一式
   console.log('[submitNewCase] start');
+  // 前回の確認モーダル残骸・pending残り・disabled残りを掃除
   try{
     var _leftover=document.getElementById('_hopedFeeConfirm'); if(_leftover){ _leftover.remove(); document.body.style.overflow=''; }
     window._hfOnOK=null;
@@ -8305,12 +8453,13 @@ async function submitNewCase(){
     var _cbg=document.getElementById('ncConfirmModalBg');
     if(_cbg){ _cbg.classList.remove('open'); }
   }catch(_){}
+  // ver.20261013.02: submitNewCase 全体を try/catch で包み、どこで落ちてもユーザーに原因を見せる
   try{
     await _submitNewCaseInner();
   }catch(err){
     console.error('[submitNewCase] 内部エラー:', err);
     var _msg = (err && err.message) ? err.message : String(err);
-    showNcError('内部エラー: ' + _msg);
+    showNcError('内部エラー: ' + _msg + '（コンソールログも併せてご確認ください）');
   }
 }
 async function _submitNewCaseInner(){
@@ -8657,7 +8806,7 @@ async function executeSubmit(){
     var lineText = _buildLineReportText(p);
     var lineTextEl = document.getElementById('ncLineText');
     if(lineTextEl) lineTextEl.value = lineText;
-    var mailTextEl = document.getElementById('ncMailText');   // ver.20261010.test01: 初回メール文案
+    var mailTextEl = document.getElementById('ncMailText');   // ver.20261010.01: 初回メール文案
     if(mailTextEl) mailTextEl.value = _buildIntroMailText(p.company, (p.jinzaiList||[]).map(function(j){return j.name;}), p.clientStaff);
     bigSuc.classList.add('show');
     // 下部ボタンの調整
