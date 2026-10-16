@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261016.01: 新規案件依頼で、申請種別が「変更」「更新」のときは人材の「在留期限」を必須に（見出しに * を表示・未入力なら「○人目の在留期限を入力してください」で止める）。認定は今までどおり空でもよい。 -->
 <!-- ver.20261013.02: 【再修正】「登録する」を押してもモーダルが閉じるだけでエラーも出ない問題。(1)submitNewCase全体をtry/catchで包み、どこで例外が出ても必ずトーストで原因表示、(2)「登録する」ボタンのonclickにevent.stopPropagation()+return falseで背景clickイベント伝播を遮断、(3)エラーメッセージに現在の入力値を併記（例：支援委託費が「aaa」なら『現在の入力:「aaa」』と表示）＋該当欄に赤枠フォーカス、(4)console.logでsubmitNewCase開始/内部エラーを記録。 -->
 <!-- ver.20261013.01: 【不具合修正】新規案件依頼モーダルで「登録する」を押しても反応がないように見える問題。入力エラー時のメッセージがモーダル最上部にのみ表示されており、下部でボタンを押したユーザーには見えなかった。対策：(1)モーダル本文を最上部に強制スクロール、(2)画面下部中央にも赤色トースト風の警告を4.5秒表示（登録ボタン近くに見える）、(3)submitNewCase先頭で前回の確認モーダル残骸・ボタンdisabled残りを掃除。 -->
 <!-- ver.20261010.01: 新規案件依頼の送信完了画面に「✉️ 企業様への初回メール文案（大房行政書士法人のご紹介）」を表示（その場で編集・コピー可）。「送信した依頼」の各カードにも「✉️ 初回メール」ボタンを追加し、ワンタッチで文案をコピー。所属機関名・人材名・案件担当者名・自社名を自動で差し込む。 -->
@@ -617,7 +618,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261013.02</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261016.01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -867,7 +868,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
               <th>氏名(英語)<span style="color:#dc2626;">*</span></th>
               <th style="width:120px;">国籍 <span style="color:#dc2626;">*</span></th>
               <th style="width:155px;">現在の在留資格</th>
-              <th style="width:140px;">在留期限</th>
+              <th style="width:140px;">在留期限<span class="nc-exp-req" style="color:#dc2626;"> *</span></th>
               <th style="width:150px;">現在の在留期間</th>
               <th style="width:130px;">希望在留期間 <span style="color:#dc2626;">*</span></th>
               <th style="width:120px;">受取方法 <span style="color:#dc2626;">*</span></th>
@@ -8114,6 +8115,8 @@ function addJinzaiRow(){
 function _ncApplyUkeRule(){
   var at=(document.getElementById('nc_appType')||{}).value||'';
   var isNintei=(at==='認定');
+  // ver.20261016.01: 変更・更新は在留期限が必須（見出しの * を出す）。認定は空でもよい
+  document.querySelectorAll('.nc-exp-req').forEach(function(el){ el.style.display=isNintei?'none':''; });
   document.querySelectorAll('#ncJinzaiBody .nc-j-uke').forEach(function(sel){
     var optMail=sel.querySelector('option[value="メール交付"]');
     // ver.20260914.01: 認定は「メール交付」以外の選択肢そのものを消す（郵送交付/窓口受取は出さない）
@@ -8421,6 +8424,12 @@ async function _submitNewCaseInner(){
     if(!nm && !nat && !uke){ continue; }
     if(!nm){ showNcError((i+1) + '人目の氏名を入力してください'); return; }
     if(!nat){ showNcError((i+1) + '人目の国籍を選択してください'); return; }
+    // ver.20261016.01: 変更・更新は在留期限を必須に（認定は新しく入国する人のため空でもよい）
+    if(appType !== '認定' && !exp){
+      showNcError((i+1) + '人目の在留期限を入力してください（変更・更新のときは必須です）');
+      try{ rowEl.querySelector('.nc-j-expire').focus(); }catch(e){}
+      return;
+    }
     // ver.20260828.03: 希望在留期間を必須化
     if(!hopedStayPeriod){ showNcError((i+1) + '人目の希望在留期間を選択してください'); return; }
     if(!uke){ showNcError((i+1) + '人目の受取方法を選択してください'); return; }
