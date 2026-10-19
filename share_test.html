@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261019.test03: AI読み取りで人材紹介手数料を1人あたりで入れる（合計の場合は人数で割り、割ったことを表示）。欄の見出しも「1人あたり」に。送信時に人材紹介手数料を申請人ごとに依頼データ（intro_fee）へ保存するように（1-16号に自動で入る）。 -->
 <!-- ver.20261019.test02: 新規案件依頼に「🤖 AIで読み取って入力」（文章・スクリーンショットを貼ると、案件情報と人材の欄に自動で入る。空欄だけに入れ、入れた欄は黄色で表示）。 -->
 <!-- ver.20261019.test01: 使い方ガイドに「🎓 チュートリアル：新規案件依頼」（練習モード＝送信されない新規案件依頼）と「💬 申請の流れ Q&A（よくある質問）」を追加。 -->
 <!-- ver.20261016.test01: 本番 ver.20261016.01 と同じ。変更・更新のときは在留期限を必須に。 -->
@@ -623,7 +624,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261019.test02</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261019.test03</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -763,7 +764,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                 <th style="min-width:172px;">希望在留資格 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:152px;">受入れ経験 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:128px;" title="全員同額で反映されます">支援委託費(円・税抜)</th>
-                <th style="min-width:140px;" title="依頼テキストに反映されます">人材紹介手数料(円・税抜)</th>
+                <th style="min-width:140px;" title="依頼テキストに反映されます">人材紹介手数料(円・税抜・1人あたり)</th>
                 <th style="min-width:112px;" id="nc_branchTh">アイデム拠点 <span style="color:#dc2626;">*</span></th>
                 <!-- ver.20260907.01: オープンケア専用「パートナー」列 -->
                 <th style="min-width:150px;display:none;" id="nc_partnerTh">パートナー <span style="color:#dc2626;">*</span></th>
@@ -6699,7 +6700,7 @@ function renderGuide(){
       '<li><b>案件名</b>：例「株式会社〇〇（変更・ベトナム2名）」。会社名・申請種別・国籍・人数が入っていると分かりやすいです。</li>'+
       '<li><b>申請種別</b>：海外から呼ぶ＝<b>認定</b>、日本にいて在留資格を変える＝<b>変更</b>、今の在留資格を延長＝<b>更新</b>。</li>'+
       '<li><b>所属機関</b>：雇用する企業名。<b>希望在留資格</b>（特定技能1号など）と、特定技能の場合は<b>分野</b>も選びます。</li>'+
-      '<li><b>受入れ経験</b>・<b>支援委託費</b>・<b>人材紹介手数料</b>・<b>案件担当者</b>（貴社のご担当者）を入れます。</li></ul></div>'+
+      '<li><b>受入れ経験</b>・<b>支援委託費</b>・<b>人材紹介手数料（1人あたり）</b>・<b>案件担当者</b>（貴社のご担当者）を入れます。</li></ul></div>'+
     '<div class="gd-step"><b class="t">人材を入力する（1回で最大30名）</b><ul>'+
       '<li>氏名（パスポートと同じ英語表記）、国籍、現在の在留資格・在留期限、希望在留期間、受取方法を入れます。</li>'+
       '<li><b>変更・更新</b>のときは<b>在留期限が必須</b>です。</li>'+
@@ -8322,7 +8323,17 @@ function _ncAiApply(d){
     else if(chk.value!==c.acceptExp) skipped.push('受入れ経験');
   }
   setTxt('nc_supportFee','支援委託費',String(c.supportFee||'').replace(/[^\d]/g,''));
-  setTxt('nc_referralFee','人材紹介手数料',String(c.referralFee||'').replace(/[^\d]/g,''));
+  // ver.20261019.test03: 人材紹介手数料は1人あたり。合計で書かれていたら人数で割る（AIが割っていなくても念のためここでも割る）
+  var _nJin=(Array.isArray(d.jinzai)?d.jinzai:[]).filter(function(x){ return x && (x.name||x.nationality||x.expire); }).length;
+  var _rfTot=parseInt(String(c.referralFeeTotal||'').replace(/[^\d]/g,''),10)||0;
+  var _rf=parseInt(String(c.referralFee||'').replace(/[^\d]/g,''),10)||0;
+  var _rfMsg='';
+  if(_rfTot && _nJin>1){
+    var _per=Math.round(_rfTot/_nJin);
+    if(!_rf || _rf===_rfTot) _rf=_per;
+    _rfMsg='人材紹介手数料：合計 '+_rfTot.toLocaleString()+'円 を '+_nJin+'名で割って、1人あたり '+_rf.toLocaleString()+'円 で入れました。';
+  }
+  setTxt('nc_referralFee','人材紹介手数料（1人あたり）',_rf?String(_rf):'');
   if(c.remarks){
     var rm=document.getElementById('nc_remarks');
     if(rm){ if(!String(rm.value||'').trim()){ rm.value=c.remarks; } else if(rm.value.indexOf(c.remarks)<0){ rm.value=rm.value+'\n'+c.remarks; } _ncAiMark(rm); filled.push('備考'); }
@@ -8360,6 +8371,7 @@ function _ncAiApply(d){
   }
   _ncAiMsg('ok','✅ 入力しました：<b>'+filled.map(esc).join('、')+'</b><br>黄色の欄を確認・修正してから「登録する」を押してください。'
     +(skipped.length?'<br><span style="color:#92400e;">⚠ すでに入力があったため変えなかった欄：'+skipped.map(esc).join('、')+'</span>':'')
+    +(_rfMsg?'<br><span style="color:#1d4ed8;">💴 '+esc(_rfMsg)+'</span>':'')
     +(notes.length?'<br><span style="color:#92400e;">⚠ AIからのメモ：'+notes.map(esc).join(' ／ ')+'</span>':''));
 }
 function openNewCaseModal(){
@@ -9078,6 +9090,7 @@ async function executeSubmit(){
         current_stay_period: j.currentStayPeriod || '',
         support_staff: '別紙参照',
         support_fee: feeStr,
+        intro_fee: p.referralFee || '',   // ver.20261019.test03: 人材紹介手数料（1人あたり）を申請人ごとに保存（1-16号に自動で入る）
         delivery_method: dm,
         recommend_letter_required: rec,
         other_support_note: otherNote,
