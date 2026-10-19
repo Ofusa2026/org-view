@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261019.test02: 新規案件依頼に「🤖 AIで読み取って入力」（文章・スクリーンショットを貼ると、案件情報と人材の欄に自動で入る。空欄だけに入れ、入れた欄は黄色で表示）。 -->
 <!-- ver.20261019.test01: 使い方ガイドに「🎓 チュートリアル：新規案件依頼」（練習モード＝送信されない新規案件依頼）と「💬 申請の流れ Q&A（よくある質問）」を追加。 -->
 <!-- ver.20261016.test01: 本番 ver.20261016.01 と同じ。変更・更新のときは在留期限を必須に。 -->
 <!-- ver.20261013.test04: サイドメニューに「📖 使い方ガイド」を追加（ログイン・画面の見方・ダッシュボード・案件一覧/詳細・ステータス・新規案件依頼・送信した依頼・申請記録/審査完了・登録支援機関情報・便利な機能・FAQ）。各章から該当画面へ移動可。 -->
@@ -622,7 +623,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261019.test01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261019.test02</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -730,6 +731,25 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
         <div class="nc-big-success-sub">お手数ですが、もう一度お試しいただくか、OFUSAまでご連絡ください。</div>
       </div>
       <div id="ncFormArea">
+
+        <!-- ver.20261019.test02: AIで読み取って入力 -->
+        <div id="ncAiBox" style="border:1.5px solid #a5b4fc;background:linear-gradient(135deg,#eef2ff,#f5f3ff);border-radius:12px;padding:10px 12px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;cursor:pointer;" onclick="_ncAiToggle()">
+            <div style="font-size:13px;font-weight:800;color:#3730a3;">🤖 AIで読み取って入力</div>
+            <div style="font-size:11px;color:#6366f1;flex:1;min-width:180px;">LINE・メールの文章や、求人票・在留カード・Excelのスクリーンショットを入れると、下の欄に自動で入ります</div>
+            <span id="ncAiCaret" style="font-size:12px;color:#6366f1;font-weight:800;">開く ▼</span>
+          </div>
+          <div id="ncAiBody" style="display:none;margin-top:10px;">
+            <textarea id="ncAiText" placeholder="ここに文章を貼り付け（例：株式会社〇〇で、ベトナム人2名の特定技能1号への変更をお願いします。NGUYEN VAN A 在留期限2027/1/31 技能実習2号…）&#10;&#10;スクリーンショットは、この欄で Ctrl+V（スマホは下のボタン）で追加できます" style="width:100%;min-height:96px;padding:9px 10px;border:1px solid #c7d2fe;border-radius:8px;font-size:12.5px;line-height:1.6;resize:vertical;background:#fff;box-sizing:border-box;"></textarea>
+            <div id="ncAiThumbs" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;"></div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;">
+              <label style="display:inline-flex;align-items:center;gap:4px;padding:7px 12px;background:#fff;border:1.5px solid #a5b4fc;border-radius:8px;font-size:12px;font-weight:700;color:#4338ca;cursor:pointer;">🖼 スクリーンショットを選ぶ<input type="file" id="ncAiFile" accept="image/*" multiple style="display:none;" onchange="_ncAiAddFiles(this.files);this.value='';"></label>
+              <button type="button" id="ncAiBtn" onclick="_ncAiRun()" style="padding:8px 16px;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:800;cursor:pointer;">🤖 読み取って入力する</button>
+              <span style="font-size:10.5px;color:#6b7280;">※ 空いている欄だけに入れます。入った欄は<span style="background:#fef9c3;padding:0 4px;border-radius:3px;">黄色</span>になるので、必ず確認してから「登録する」を押してください。</span>
+            </div>
+            <div id="ncAiMsg" style="display:none;margin-top:8px;font-size:12px;line-height:1.6;border-radius:8px;padding:8px 10px;"></div>
+          </div>
+        </div>
 
         <div class="nc-section-title">📋 案件共通情報</div>
         <div style="font-size:10.5px;color:#94a3b8;margin:-4px 0 8px;">→ 横スクロールで各項目を入力できます</div>
@@ -1217,6 +1237,15 @@ var NOTIF_LABELS={'申請済(番号待)':'📤 申請済（番号待ち）','受
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20261019.test02',
+    date: '2026-10-19',
+    audience: 'all',
+    notify: true,
+    items: [
+      '🤖 ご依頼の入力画面に<b>「AIで読み取って入力」</b>を追加しました。LINE・メールの文章や、求人票・在留カード・Excelのスクリーンショットを入れると、案件情報と人材の欄に自動で入ります。入った欄は黄色で表示されるので、確認してから送信してください。'
+    ]
+  },
   {
     version: 'ver.20261019.test01',
     date: '2026-10-19',
@@ -6664,7 +6693,8 @@ function renderGuide(){
     '<p>新しい申請をご依頼するときの手順です。上から順に進めれば完了します。わからないときは、下の<b>練習モード</b>で実際の画面を触ってみてください。</p>'+
     '<div class="gd-practice"><p>🎓 <b>練習モード</b>：本物と同じ「新規案件依頼」の画面が開きます。最後まで入力して「送信する」を押しても、<b>大房行政書士法人には送信されません</b>。完了画面（LINE報告用テキスト・初回メール文案）まで確認できます。</p><button onclick="openNewCasePractice()">🎓 練習モードで開く</button></div>'+
     '<div class="gd-steps">'+
-    '<div class="gd-step"><b class="t">画面上部の「＋ 新規案件依頼」を押す</b>入力画面が開きます。上から「📋 案件共通情報」→「👤 人材」→「備考」の順に入力します。</div>'+
+    '<div class="gd-step"><b class="t">画面上部の「＋ 新規案件依頼」を押す</b>入力画面が開きます。上から「📋 案件共通情報」→「👤 人材」→「備考」の順に入力します。'+
+      '<div class="gd-tip" style="margin-top:6px;">🤖 <b>AIで読み取って入力</b>：入力画面いちばん上の欄に、企業様からのLINE・メールの文章を貼り付けたり、求人票・在留カード・Excelのスクリーンショットを入れて <span class="gd-key">🤖 読み取って入力する</span> を押すと、下の欄に自動で入ります。入った欄は黄色になるので、内容を確認してから進めてください（空いている欄にだけ入ります）。</div></div>'+
     '<div class="gd-step"><b class="t">案件共通情報を入力する</b><ul>'+
       '<li><b>案件名</b>：例「株式会社〇〇（変更・ベトナム2名）」。会社名・申請種別・国籍・人数が入っていると分かりやすいです。</li>'+
       '<li><b>申請種別</b>：海外から呼ぶ＝<b>認定</b>、日本にいて在留資格を変える＝<b>変更</b>、今の在留資格を延長＝<b>更新</b>。</li>'+
@@ -8193,8 +8223,148 @@ function _hfConfirm(){
   _hfClose();
   if(typeof cb==='function') cb();
 }
+// ===== ver.20261019.test02: 🤖 AIで読み取って入力（文章・スクリーンショット → 新規案件依頼の欄へ） =====
+var _ncAiImages=[];   // [{media_type, data(base64), url}]
+function _ncAiToggle(force){
+  var b=document.getElementById('ncAiBody'), c=document.getElementById('ncAiCaret'); if(!b) return;
+  var open = (force===undefined) ? (b.style.display==='none') : !!force;
+  b.style.display = open ? '' : 'none'; if(c) c.textContent = open ? '閉じる ▲' : '開く ▼';
+}
+function _ncAiReset(){
+  _ncAiImages=[]; var t=document.getElementById('ncAiText'); if(t) t.value='';
+  _ncAiRenderThumbs(); var m=document.getElementById('ncAiMsg'); if(m){ m.style.display='none'; m.innerHTML=''; }
+  _ncAiToggle(false);
+  document.querySelectorAll('#newCaseModalBg ._ncAiFilled').forEach(function(e){ e.classList.remove('_ncAiFilled'); e.style.background=''; });
+}
+function _ncAiRenderThumbs(){
+  var w=document.getElementById('ncAiThumbs'); if(!w) return;
+  w.innerHTML=_ncAiImages.map(function(im,i){
+    return '<div style="position:relative;width:64px;height:64px;border:1px solid #c7d2fe;border-radius:6px;overflow:hidden;background:#fff;"><img src="'+im.url+'" style="width:100%;height:100%;object-fit:cover;"><button type="button" onclick="_ncAiImages.splice('+i+',1);_ncAiRenderThumbs();" title="外す" style="position:absolute;top:1px;right:1px;width:18px;height:18px;border:none;border-radius:50%;background:rgba(15,23,42,.7);color:#fff;font-size:11px;line-height:18px;padding:0;cursor:pointer;">✕</button></div>';
+  }).join('');
+}
+// 画像は長い辺1600pxまで縮めてJPEGにする（送る量を減らす）
+function _ncAiShrink(file){
+  return new Promise(function(res){
+    var fr=new FileReader();
+    fr.onload=function(){
+      var img=new Image();
+      img.onload=function(){
+        var max=1600, w=img.width, h=img.height, r=Math.min(1, max/Math.max(w,h));
+        var cv=document.createElement('canvas'); cv.width=Math.round(w*r); cv.height=Math.round(h*r);
+        var cx=cv.getContext('2d'); cx.fillStyle='#fff'; cx.fillRect(0,0,cv.width,cv.height); cx.drawImage(img,0,0,cv.width,cv.height);
+        var url=cv.toDataURL('image/jpeg',0.85);
+        res({ media_type:'image/jpeg', data:url.split(',')[1], url:url });
+      };
+      img.onerror=function(){ res(null); };
+      img.src=fr.result;
+    };
+    fr.onerror=function(){ res(null); };
+    fr.readAsDataURL(file);
+  });
+}
+async function _ncAiAddFiles(files){
+  var list=Array.prototype.slice.call(files||[]).filter(function(f){ return /^image\//.test(f.type); });
+  for(var i=0;i<list.length;i++){
+    if(_ncAiImages.length>=6){ _ncAiMsg('warn','スクリーンショットは6枚までです。'); break; }
+    var im=await _ncAiShrink(list[i]); if(im) _ncAiImages.push(im);
+  }
+  _ncAiRenderThumbs();
+}
+document.addEventListener('paste', function(ev){
+  var box=document.getElementById('ncAiBody'); if(!box || box.style.display==='none') return;
+  if(!document.getElementById('newCaseModalBg') || !document.getElementById('newCaseModalBg').classList.contains('open')) return;
+  var items=(ev.clipboardData && ev.clipboardData.items) || [], files=[];
+  for(var i=0;i<items.length;i++){ if(items[i].kind==='file' && /^image\//.test(items[i].type)){ var f=items[i].getAsFile(); if(f) files.push(f); } }
+  if(files.length){ ev.preventDefault(); _ncAiAddFiles(files); }
+});
+function _ncAiMsg(kind, html){
+  var m=document.getElementById('ncAiMsg'); if(!m) return;
+  var st={ok:'background:#f0fdf4;border:1px solid #86efac;color:#166534;', warn:'background:#fffbeb;border:1px solid #fde68a;color:#92400e;', err:'background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;', info:'background:#eef2ff;border:1px solid #c7d2fe;color:#3730a3;'}[kind]||'';
+  m.style.cssText='display:block;margin-top:8px;font-size:12px;line-height:1.6;border-radius:8px;padding:8px 10px;'+st;
+  m.innerHTML=html;
+}
+function _ncAiMark(el){ if(!el) return; el.classList.add('_ncAiFilled'); el.style.background='#fef9c3'; var f=function(){ el.style.background=''; el.classList.remove('_ncAiFilled'); el.removeEventListener('change',f); el.removeEventListener('input',f); }; el.addEventListener('change',f); el.addEventListener('input',f); }
+function _ncAiSetSel(el, v){
+  if(!el || !v) return false;
+  for(var i=0;i<el.options.length;i++){ if(el.options[i].value===v){ el.value=v; try{ el.dispatchEvent(new Event('change',{bubbles:true})); }catch(_){} return true; } }
+  return false;
+}
+async function _ncAiRun(){
+  var text=(document.getElementById('ncAiText').value||'').trim();
+  if(!text && !_ncAiImages.length){ _ncAiMsg('warn','文章を貼り付けるか、スクリーンショットを追加してください。'); return; }
+  var btn=document.getElementById('ncAiBtn'); btn.disabled=true; btn.textContent='🤖 読み取り中…（10〜30秒）'; btn.style.opacity='.7';
+  _ncAiMsg('info','読み取り中です。そのままお待ちください。');
+  try{
+    var r=await fetch(SUPABASE_URL+'/functions/v1/intake-ai-read',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},
+      body:JSON.stringify({ token:currentToken, pass:(currentPass||''), text:text, images:_ncAiImages.map(function(im){ return {media_type:im.media_type, data:im.data}; }) })});
+    var j=await r.json().catch(function(){ return null; });
+    if(!j || !j.ok) throw new Error((j && j.error) || ('通信エラー（'+r.status+'）'));
+    _ncAiApply(j.data||{});
+  }catch(e){
+    _ncAiMsg('err','❌ 読み取れませんでした：'+esc(e.message||String(e))+'<br>もう一度お試しいただくか、手で入力してください。');
+  }finally{
+    btn.disabled=false; btn.textContent='🤖 読み取って入力する'; btn.style.opacity='';
+  }
+}
+function _ncAiApply(d){
+  var c=d.case||{}, filled=[], skipped=[];
+  var setTxt=function(id,label,v){ var el=document.getElementById(id); if(!el||!v) return; if(String(el.value||'').trim()){ skipped.push(label); return; } el.value=String(v); _ncAiMark(el); filled.push(label); };
+  var setSel=function(id,label,v,force){ var el=document.getElementById(id); if(!el||!v) return; if(el.value && !force){ if(el.value!==v) skipped.push(label); return; } if(_ncAiSetSel(el,v)){ _ncAiMark(el); filled.push(label); } };
+  setTxt('nc_caseName','案件名',c.caseName);
+  // 申請種別は初期値が「認定」なので、AIが別の値を読んだときは入れ替える
+  setSel('nc_appType','申請種別',c.appType,true);
+  setTxt('nc_company','所属機関',c.company);
+  setSel('nc_desiredStatus','希望在留資格',c.desiredStatus);
+  setSel('nc_applicantField','分野',c.applicantField);
+  if(c.acceptExp==='有'||c.acceptExp==='無'){
+    var chk=document.querySelector('input[name="nc_acceptExp"]:checked');
+    if(!chk){ var rb=document.querySelector('input[name="nc_acceptExp"][value="'+c.acceptExp+'"]'); if(rb){ rb.checked=true; try{ rb.dispatchEvent(new Event('change',{bubbles:true})); }catch(_){} _ncAiMark(rb.closest('label')||rb); filled.push('受入れ経験'); } }
+    else if(chk.value!==c.acceptExp) skipped.push('受入れ経験');
+  }
+  setTxt('nc_supportFee','支援委託費',String(c.supportFee||'').replace(/[^\d]/g,''));
+  setTxt('nc_referralFee','人材紹介手数料',String(c.referralFee||'').replace(/[^\d]/g,''));
+  if(c.remarks){
+    var rm=document.getElementById('nc_remarks');
+    if(rm){ if(!String(rm.value||'').trim()){ rm.value=c.remarks; } else if(rm.value.indexOf(c.remarks)<0){ rm.value=rm.value+'\n'+c.remarks; } _ncAiMark(rm); filled.push('備考'); }
+  }
+  // 人材：空の行から順に入れ、足りなければ行を足す
+  var js=(Array.isArray(d.jinzai)?d.jinzai:[]).filter(function(x){ return x && (x.name||x.nationality||x.expire); });
+  var nJ=0;
+  js.forEach(function(x){
+    var rows=Array.prototype.slice.call(document.querySelectorAll('#ncJinzaiBody > tr:not([id$="_noteRow"])'));
+    var row=rows.find(function(r){ var n=r.querySelector('.nc-j-name'); return n && !String(n.value||'').trim(); });
+    if(!row){
+      if(rows.length>=_NC_MAX_JINZAI) return;
+      addJinzaiRow(); rows=document.querySelectorAll('#ncJinzaiBody > tr:not([id$="_noteRow"])'); row=rows[rows.length-1];
+    }
+    var q=function(cls){ return row.querySelector(cls); };
+    if(x.name){ var n=q('.nc-j-name'); n.value=String(x.name).toUpperCase(); _ncAiMark(n); }
+    if(x.nationality){ var na=q('.nc-j-nat'); if(_ncAiSetSel(na,x.nationality)) _ncAiMark(na); }
+    if(x.currentStatus){ var cs=q('.nc-j-current'); if(_ncAiSetSel(cs,x.currentStatus)) _ncAiMark(cs); }
+    if(x.expire && /^\d{4}-\d{2}-\d{2}$/.test(x.expire)){ var ex=q('.nc-j-expire'); ex.value=x.expire; try{ ex.dispatchEvent(new Event('change',{bubbles:true})); }catch(_){} _ncAiMark(ex); }
+    if(x.currentStayPeriod){ var cp=q('.nc-j-curperiod'); var v=String(x.currentStayPeriod).replace(/ヶ月|か月|カ月/g,'月'); if(_ncAiSetSel(cp,v)) _ncAiMark(cp); }
+    if(x.hopedStayPeriod){ var hp=q('.nc-j-hoped'); if(_ncAiSetSel(hp,x.hopedStayPeriod)) _ncAiMark(hp); }
+    if(x.ukeMethod){ var uk=q('.nc-j-uke'); if(_ncAiSetSel(uk,x.ukeMethod)) _ncAiMark(uk); }
+    nJ++;
+  });
+  if(nJ){
+    var rs=document.querySelectorAll('#ncJinzaiBody > tr:not([id$="_noteRow"])');
+    for(var k=0;k<rs.length;k++){ var nc=rs[k].querySelector('.nc-row-num'); if(nc) nc.textContent=(k+1); }
+    _ncJinzaiRows=rs.length; updateJinzaiCount(); try{ _ncApplyUkeRule(); }catch(_){}
+    filled.push('人材 '+nJ+'名');
+  }
+  var notes=(Array.isArray(d.notes)?d.notes:[]).filter(Boolean);
+  if(!filled.length){
+    _ncAiMsg('warn','読み取れる項目がありませんでした。文章を増やすか、別のスクリーンショットでお試しください。'+(notes.length?'<br>'+notes.map(function(t){return '・'+esc(t);}).join('<br>'):''));
+    return;
+  }
+  _ncAiMsg('ok','✅ 入力しました：<b>'+filled.map(esc).join('、')+'</b><br>黄色の欄を確認・修正してから「登録する」を押してください。'
+    +(skipped.length?'<br><span style="color:#92400e;">⚠ すでに入力があったため変えなかった欄：'+skipped.map(esc).join('、')+'</span>':'')
+    +(notes.length?'<br><span style="color:#92400e;">⚠ AIからのメモ：'+notes.map(esc).join(' ／ ')+'</span>':''));
+}
 function openNewCaseModal(){
   window._ncPractice=false;   // ver.20261019.test01: 通常はいつも本番（練習モードは openNewCasePractice から）
+  try{ _ncAiReset(); }catch(_){}   // ver.20261019.test02
   try{ _ncPracticeBannerSync(); }catch(_){}
   // 初期化
   // ver.20260525.03: 「使用する支援事業所」は拠点から自動マッピングするため削除
