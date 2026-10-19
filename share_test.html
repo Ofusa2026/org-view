@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261019.test04: 人材紹介手数料を「③ 人材紹介手数料」の独立ボックスへ。全員同じ／人ごとに違う／なし・未定を選び、1人あたり×人数＝合計をその場で表示。合計しか分からない時は「合計から割る」。人ごとの金額は申請人ごとに保存。見出しを①〜④の順番つきに。画面上部「💡 使い方を見る」で各欄に注釈（ふせん）を表示（初めて開いた人には自動で表示） -->
 <!-- ver.20261019.test03: AI読み取りで人材紹介手数料を1人あたりで入れる（合計の場合は人数で割り、割ったことを表示）。欄の見出しも「1人あたり」に。送信時に人材紹介手数料を申請人ごとに依頼データ（intro_fee）へ保存するように（1-16号に自動で入る）。 -->
 <!-- ver.20261019.test02: 新規案件依頼に「🤖 AIで読み取って入力」（文章・スクリーンショットを貼ると、案件情報と人材の欄に自動で入る。空欄だけに入れ、入れた欄は黄色で表示）。 -->
 <!-- ver.20261019.test01: 使い方ガイドに「🎓 チュートリアル：新規案件依頼」（練習モード＝送信されない新規案件依頼）と「💬 申請の流れ Q&A（よくある質問）」を追加。 -->
@@ -440,6 +441,37 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 .nc-modal-foot{padding:14px 20px;background:#f8fafc;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:10px;flex-shrink:0;}
 .nc-section-title{font-size:12px;font-weight:800;color:#0f2040;margin:14px 0 8px;padding-bottom:5px;border-bottom:1.5px solid #e2e8f0;display:flex;align-items:center;gap:6px;}
 .nc-section-title:first-child{margin-top:0;}
+/* ver.20261019.test04: 使い方の注釈（ふせん） */
+.nc-help-btn{background:#fde047;color:#422006;border:none;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 2px 6px rgba(0,0,0,.2);}
+.nc-help-btn.on{background:#fff;color:#0f2040;}
+.nc-help{display:none;position:relative;background:#fefce8;border:1.5px solid #facc15;border-radius:10px;padding:9px 12px 9px 40px;margin:2px 0 10px;font-size:12px;line-height:1.7;color:#422006;box-shadow:0 2px 8px rgba(202,138,4,.15);}
+.nc-help::before{content:'';position:absolute;top:-8px;left:22px;border:7px solid transparent;border-top:0;border-bottom:8px solid #facc15;}
+.nc-help .nc-help-no{position:absolute;left:10px;top:9px;width:22px;height:22px;border-radius:50%;background:#facc15;color:#422006;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;}
+.nc-help b{color:#0f2040;} .nc-help ul{margin:2px 0 0;padding-left:18px;} .nc-help li{margin:1px 0;}
+.nc-help-on .nc-help{display:block;animation:_ncHelpIn .25s ease-out;}
+.nc-help-on .nc-help-target{outline:2px dashed #facc15;outline-offset:3px;border-radius:8px;}
+@keyframes _ncHelpIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
+/* ver.20261019.test04: 手順番号・紹介料ボックス */
+.nc-stepno{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#1F4E79;color:#fff;font-size:11px;font-weight:800;flex:0 0 auto;}
+.nc-sec-sub{font-size:10.5px;font-weight:600;color:#64748b;}
+.nc-fee-box{border:1.5px solid #c7d7ea;background:#f8fbff;border-radius:10px;padding:12px 14px;margin-bottom:6px;}
+.nc-fee-modes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.nc-fee-mode{flex:1 1 150px;display:flex;gap:8px;align-items:flex-start;border:1.5px solid #cbd5e1;background:#fff;border-radius:8px;padding:8px 10px;cursor:pointer;}
+.nc-fee-mode input{margin-top:3px;accent-color:#1F4E79;}
+.nc-fee-mode span{display:flex;flex-direction:column;font-size:12px;color:#0f2040;line-height:1.4;}
+.nc-fee-mode small{font-size:10.5px;color:#64748b;}
+.nc-fee-mode:has(input:checked){border-color:#1F4E79;background:#eff6ff;box-shadow:0 0 0 2px rgba(31,78,121,.12);}
+.nc-fee-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.nc-fee-lbl{font-size:12px;font-weight:700;color:#334155;}
+.nc-fee-calc-btn{border:1px dashed #94a3b8;background:#fff;color:#334155;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;}
+.nc-fee-calc{margin-top:8px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:12px;color:#334155;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.nc-fee-calc-go{border:none;background:#1F4E79;color:#fff;border-radius:6px;padding:6px 12px;font-size:11.5px;font-weight:700;cursor:pointer;}
+.nc-fee-sum{margin-top:10px;font-size:13px;font-weight:800;color:#1F4E79;}
+.nc-fee-sum:empty{display:none;}
+.nc-fee-hint{margin-top:6px;font-size:11px;color:#64748b;line-height:1.6;}
+.nc-jinzai-table .nc-fee-col{display:none;}
+.nc-jinzai-table.nc-fee-each .nc-fee-col{display:table-cell;background:#f8fbff;}
+.nc-jinzai-table.nc-fee-each .nc-j-name{min-width:140px;}
 .nc-field{margin-bottom:11px;}
 .nc-label{display:block;font-size:11px;font-weight:700;color:#475569;margin-bottom:4px;}
 .nc-label .req{color:#dc2626;margin-left:3px;}
@@ -624,7 +656,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261019.test03</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261019.test04</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -696,7 +728,10 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="nc-modal">
     <div class="nc-modal-head">
       <div class="nc-modal-title">＋ 新規案件依頼</div>
-      <button class="nc-modal-close" onclick="closeNewCaseModal()">✕</button>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button type="button" id="ncHelpBtn" class="nc-help-btn" onclick="_ncHelpToggle()">💡 使い方を見る</button>
+        <button class="nc-modal-close" onclick="closeNewCaseModal()">✕</button>
+      </div>
     </div>
     <div class="nc-modal-body">
       <div class="nc-error" id="ncError"></div>
@@ -752,7 +787,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
           </div>
         </div>
 
-        <div class="nc-section-title">📋 案件共通情報</div>
+        <div class="nc-section-title"><span class="nc-stepno">1</span>案件の情報 <span class="nc-sec-sub">会社・申請の種類など（全員共通）</span></div>
         <div style="font-size:10.5px;color:#94a3b8;margin:-4px 0 8px;">→ 横スクロールで各項目を入力できます</div>
         <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:6px;">
           <table class="nc-common-table">
@@ -764,7 +799,6 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                 <th style="min-width:172px;">希望在留資格 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:152px;">受入れ経験 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:128px;" title="全員同額で反映されます">支援委託費(円・税抜)</th>
-                <th style="min-width:140px;" title="依頼テキストに反映されます">人材紹介手数料(円・税抜・1人あたり)</th>
                 <th style="min-width:112px;" id="nc_branchTh">アイデム拠点 <span style="color:#dc2626;">*</span></th>
                 <!-- ver.20260907.01: オープンケア専用「パートナー」列 -->
                 <th style="min-width:150px;display:none;" id="nc_partnerTh">パートナー <span style="color:#dc2626;">*</span></th>
@@ -817,7 +851,6 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                   </div>
                 </td>
                 <td><input type="text" class="nc-input" id="nc_supportFee" placeholder="例：30000" inputmode="numeric"></td>
-                <td><input type="text" class="nc-input" id="nc_referralFee" placeholder="例：100000" inputmode="numeric"></td>
                 <!-- ver.20260907.01: オープンケア専用「パートナー」欄 -->
                 <td id="nc_partnerTd" style="display:none;">
                   <select class="nc-select" id="nc_salesPartner">
@@ -881,12 +914,12 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
         </div>
 
         <div class="nc-section-title">
-          👥 人材リスト
+          <span class="nc-stepno">2</span>申請する人 <span class="nc-sec-sub">1行に1人</span>
           <button type="button" class="nc-paste-btn" onclick="openPasteModal()">📋 まとめて貼り付け</button>
           <span class="nc-jinzai-count" id="ncJinzaiCount">最大30名</span>
         </div>
 
-        <table class="nc-jinzai-table">
+        <table class="nc-jinzai-table" id="ncJinzaiTable">
           <thead>
             <tr>
               <th class="nc-row-num">#</th>
@@ -898,6 +931,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
               <th style="width:130px;">希望在留期間 <span style="color:#dc2626;">*</span></th>
               <th style="width:120px;">受取方法 <span style="color:#dc2626;">*</span></th>
               <th style="width:80px;text-align:center;">推薦票</th>
+              <th class="nc-fee-col" style="width:115px;">紹介料（1人あたり・円）</th>
               <th class="nc-row-del"></th>
             </tr>
           </thead>
@@ -907,7 +941,32 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 
         <button type="button" class="nc-add-jinzai-btn" onclick="addJinzaiRow()">＋ 人材を追加</button>
 
-        <div class="nc-section-title">📝 備考</div>
+        <!-- ver.20261019.test04: 人材紹介手数料（1人あたり）を独立ボックスに -->
+        <div class="nc-section-title"><span class="nc-stepno">3</span>人材紹介手数料 <span class="nc-sec-sub">任意・税抜・<b>1人あたり</b>で入れます</span></div>
+        <div id="ncFeeBox" class="nc-fee-box">
+          <div class="nc-fee-modes">
+            <label class="nc-fee-mode"><input type="radio" name="nc_feeMode" value="same" checked onchange="_ncFeeSync()"><span><b>全員同じ金額</b><small>1人あたりの金額を1つ入れる</small></span></label>
+            <label class="nc-fee-mode"><input type="radio" name="nc_feeMode" value="each" onchange="_ncFeeSync()"><span><b>人ごとに違う</b><small>②の表に「紹介料」の欄が出ます</small></span></label>
+            <label class="nc-fee-mode"><input type="radio" name="nc_feeMode" value="none" onchange="_ncFeeSync()"><span><b>なし・未定</b><small>あとで連絡する場合も</small></span></label>
+          </div>
+          <div id="ncFeeSame" class="nc-fee-row">
+            <span class="nc-fee-lbl">1人あたり</span>
+            <input type="text" class="nc-input" id="nc_referralFee" placeholder="例：300000" inputmode="numeric" oninput="_ncFeeSync()" style="width:150px;text-align:right;font-weight:700;">
+            <span class="nc-fee-lbl">円</span>
+            <button type="button" class="nc-fee-calc-btn" onclick="_ncFeeCalcToggle()">🧮 合計しか分からない</button>
+          </div>
+          <div id="ncFeeCalc" class="nc-fee-calc" style="display:none;">
+            全員分の合計
+            <input type="text" class="nc-input" id="nc_feeTotalIn" placeholder="例：600000" inputmode="numeric" style="width:130px;text-align:right;">
+            円 ÷ <b id="ncFeeCalcN">1</b>名
+            <button type="button" class="nc-fee-calc-go" onclick="_ncFeeCalcApply()">1人あたりにして入れる</button>
+          </div>
+          <div id="ncFeeEachHint" class="nc-fee-hint" style="display:none;">👆 ②の表のいちばん右「紹介料（1人あたり）」に、1人ずつ金額を入れてください。</div>
+          <div id="ncFeeSum" class="nc-fee-sum"></div>
+          <div class="nc-fee-hint">💡 例：2名で合計60万円 → <b>1人あたり 300,000円</b>。書類（雇用の経緯に係る説明書）には1人ずつの金額が入ります。</div>
+        </div>
+
+        <div class="nc-section-title"><span class="nc-stepno">4</span>備考</div>
         <textarea id="nc_remarks" class="nc-input" placeholder="その他、連絡事項があればご記入ください（任意）" style="width:100%;box-sizing:border-box;min-height:72px;resize:vertical;font-family:inherit;padding:8px 10px;"></textarea>
 
       </div>
@@ -1238,6 +1297,15 @@ var NOTIF_LABELS={'申請済(番号待)':'📤 申請済（番号待ち）','受
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20261019.test04',
+    date: '2026-10-20',
+    audience: 'all',
+    notify: true,
+    items: [
+      '💡 依頼の入力画面に<b>「使い方を見る」</b>ボタンを付けました。各欄の入れ方がふせんで表示されます。人材紹介手数料も<b>「1人あたり」</b>で入れやすくなり、合計もその場で表示されます。'
+    ]
+  },
   {
     version: 'ver.20261019.test02',
     date: '2026-10-19',
@@ -6616,6 +6684,7 @@ function openNewCasePractice(){
   openNewCaseModal();
   window._ncPractice=true;
   _ncPracticeBannerSync();
+  try{ _ncHelpSet(true); }catch(_){}   // ver.20261019.test04: 練習モードは使い方の注釈を最初から表示
 }
 function _ncPracticeFill(){
   var set=function(id,v){ var e=document.getElementById(id); if(e){ e.value=v; try{ e.dispatchEvent(new Event('change',{bubbles:true})); }catch(_){} } };
@@ -6694,18 +6763,22 @@ function renderGuide(){
     '<p>新しい申請をご依頼するときの手順です。上から順に進めれば完了します。わからないときは、下の<b>練習モード</b>で実際の画面を触ってみてください。</p>'+
     '<div class="gd-practice"><p>🎓 <b>練習モード</b>：本物と同じ「新規案件依頼」の画面が開きます。最後まで入力して「送信する」を押しても、<b>大房行政書士法人には送信されません</b>。完了画面（LINE報告用テキスト・初回メール文案）まで確認できます。</p><button onclick="openNewCasePractice()">🎓 練習モードで開く</button></div>'+
     '<div class="gd-steps">'+
-    '<div class="gd-step"><b class="t">画面上部の「＋ 新規案件依頼」を押す</b>入力画面が開きます。上から「📋 案件共通情報」→「👤 人材」→「備考」の順に入力します。'+
+    '<div class="gd-step"><b class="t">画面上部の「＋ 新規案件依頼」を押す</b>入力画面が開きます。番号どおり「① 案件の情報」→「② 申請する人」→「③ 人材紹介手数料」→「④ 備考」の順に入力します。迷ったら右上の <span class="gd-key">💡 使い方を見る</span> を押すと、各欄の入れ方がふせんで表示されます。'+
       '<div class="gd-tip" style="margin-top:6px;">🤖 <b>AIで読み取って入力</b>：入力画面いちばん上の欄に、企業様からのLINE・メールの文章を貼り付けたり、求人票・在留カード・Excelのスクリーンショットを入れて <span class="gd-key">🤖 読み取って入力する</span> を押すと、下の欄に自動で入ります。入った欄は黄色になるので、内容を確認してから進めてください（空いている欄にだけ入ります）。</div></div>'+
-    '<div class="gd-step"><b class="t">案件共通情報を入力する</b><ul>'+
+    '<div class="gd-step"><b class="t">① 案件の情報を入力する</b><ul>'+
       '<li><b>案件名</b>：例「株式会社〇〇（変更・ベトナム2名）」。会社名・申請種別・国籍・人数が入っていると分かりやすいです。</li>'+
       '<li><b>申請種別</b>：海外から呼ぶ＝<b>認定</b>、日本にいて在留資格を変える＝<b>変更</b>、今の在留資格を延長＝<b>更新</b>。</li>'+
       '<li><b>所属機関</b>：雇用する企業名。<b>希望在留資格</b>（特定技能1号など）と、特定技能の場合は<b>分野</b>も選びます。</li>'+
-      '<li><b>受入れ経験</b>・<b>支援委託費</b>・<b>人材紹介手数料（1人あたり）</b>・<b>案件担当者</b>（貴社のご担当者）を入れます。</li></ul></div>'+
-    '<div class="gd-step"><b class="t">人材を入力する（1回で最大30名）</b><ul>'+
+      '<li><b>受入れ経験</b>・<b>支援委託費</b>・<b>案件担当者</b>（貴社のご担当者）を入れます。</li></ul></div>'+
+    '<div class="gd-step"><b class="t">② 申請する人を入力する（1回で最大30名）</b><ul>'+
       '<li>氏名（パスポートと同じ英語表記）、国籍、現在の在留資格・在留期限、希望在留期間、受取方法を入れます。</li>'+
       '<li><b>変更・更新</b>のときは<b>在留期限が必須</b>です。</li>'+
       '<li>2人目以降は <span class="gd-key">＋ 人材を追加</span>。Excelの一覧がある場合は <span class="gd-key">📋 まとめて貼り付け</span> が便利です。</li></ul></div>'+
-    '<div class="gd-step"><b class="t">備考を書いて「登録する」を押す</b>入社予定日・急ぎの事情・企業様の連絡先など、伝えたいことがあれば備考へ。進めないときは赤いメッセージと赤枠の欄を直してください。</div>'+
+    '<div class="gd-step"><b class="t">③ 人材紹介手数料を入れる（任意）</b><ul>'+
+      '<li>金額は<b>1人あたり</b>で入れます。<b>全員同じ金額</b>／<b>人ごとに違う</b>／<b>なし・未定</b> から選びます。</li>'+
+      '<li>例：2名で合計60万円 → <b>1人あたり 300,000円</b>。合計しか分からないときは <span class="gd-key">🧮 合計しか分からない</span> を押すと人数で割って入ります。</li>'+
+      '<li>「人ごとに違う」を選ぶと、②の表のいちばん右に「紹介料」の欄が出ます。入れた金額の合計はその場で表示されます。</li></ul></div>'+
+    '<div class="gd-step"><b class="t">④ 備考を書いて「登録する」を押す</b>入社予定日・急ぎの事情・企業様の連絡先など、伝えたいことがあれば備考へ。進めないときは赤いメッセージと赤枠の欄を直してください。</div>'+
     '<div class="gd-step"><b class="t">確認画面で見直して「送信する」</b>内容に間違いがなければ送信します。送った内容はあとから「📤 送信した依頼」で確認できます。</div>'+
     '<div class="gd-step"><b class="t">完了画面の2つの文面をコピーして送る</b><ul>'+
       '<li><b>📝 LINE報告用テキスト</b>：大房行政書士法人とのLINEに貼り付けて「ご依頼します」とお送りください。</li>'+
@@ -6787,8 +6860,9 @@ function renderGuide(){
 
   h+=sec('gd-new','＋ 新規案件依頼','',
     '<p>新しい申請のご依頼は、画面上部の <span class="gd-key">＋ 新規案件依頼</span> から送れます。</p><ol>'+
-    '<li><b>案件共通情報</b>を入力します：案件名、申請種別（認定・変更・更新）、所属機関（企業名）、希望在留資格、受入れ経験、支援委託費・人材紹介手数料、案件担当者 など。特定技能の場合は分野も選べます。</li>'+
+    '<li><b>案件共通情報</b>を入力します：案件名、申請種別（認定・変更・更新）、所属機関（企業名）、希望在留資格、受入れ経験、支援委託費、案件担当者 など。特定技能の場合は分野も選べます。</li>'+
     '<li><b>人材</b>を入力します（1回で最大30名）：氏名（英語）、国籍、現在の在留資格・在留期限、希望在留期間、受取方法 など。<span class="gd-key">＋ 人材を追加</span> で行を増やせます。</li>'+
+    '<li><b>人材紹介手数料</b>は<b>1人あたり</b>で入れます（全員同じ／人ごとに違う／なし・未定 から選択）。</li>'+
     '<li>連絡事項があれば <b>備考</b> に記入し、<span class="gd-key">登録する</span> を押します。</li>'+
     '<li>確認画面で内容を見直し、<span class="gd-key">送信する</span> を押すと完了です。</li></ol>'+
     '<div class="gd-tip">💡 <b>📋 まとめて貼り付け</b>：Excelやスプレッドシートの人材一覧をコピーして貼り付けると、氏名・国籍・受取方法・在留期限などを自動で読み取って入力します。列の順番はばらばらでも大丈夫です。</div>'+
@@ -8333,7 +8407,8 @@ function _ncAiApply(d){
     if(!_rf || _rf===_rfTot) _rf=_per;
     _rfMsg='人材紹介手数料：合計 '+_rfTot.toLocaleString()+'円 を '+_nJin+'名で割って、1人あたり '+_rf.toLocaleString()+'円 で入れました。';
   }
-  setTxt('nc_referralFee','人材紹介手数料（1人あたり）',_rf?String(_rf):'');
+  if(_rf && _ncFeeMode()!=='same'){ var _rmS=document.querySelector('input[name="nc_feeMode"][value="same"]'); if(_rmS && _ncFeeMode()==='none') _rmS.checked=true; }
+  if(_ncFeeMode()==='same') setTxt('nc_referralFee','人材紹介手数料（1人あたり）',_rf?String(_rf):''); else if(_rf) skipped.push('人材紹介手数料（人ごとに入力中）');
   if(c.remarks){
     var rm=document.getElementById('nc_remarks');
     if(rm){ if(!String(rm.value||'').trim()){ rm.value=c.remarks; } else if(rm.value.indexOf(c.remarks)<0){ rm.value=rm.value+'\n'+c.remarks; } _ncAiMark(rm); filled.push('備考'); }
@@ -8378,6 +8453,7 @@ function openNewCaseModal(){
   window._ncPractice=false;   // ver.20261019.test01: 通常はいつも本番（練習モードは openNewCasePractice から）
   try{ _ncAiReset(); }catch(_){}   // ver.20261019.test02
   try{ _ncPracticeBannerSync(); }catch(_){}
+  try{ _ncHelpAuto(); }catch(_){}   // ver.20261019.test04: 初めての人には使い方の注釈を表示
   // 初期化
   // ver.20260525.03: 「使用する支援事業所」は拠点から自動マッピングするため削除
   var brEl=document.getElementById('nc_aidemBranch');
@@ -8427,6 +8503,7 @@ function openNewCaseModal(){
   if(feeEl) feeEl.value='';
   var refEl=document.getElementById('nc_referralFee');
   if(refEl) refEl.value='';
+  try{ _ncFeeReset(); }catch(_){}
   var rmEl=document.getElementById('nc_remarks');
   if(rmEl) rmEl.value='';
   document.getElementById('ncError').style.display='none';
@@ -8544,6 +8621,7 @@ function addJinzaiRow(){
         '<span style="font-weight:600;">必要</span>' +
       '</label>' +
     '</td>' +
+    '<td class="nc-fee-col"><input type="text" class="nc-input nc-j-fee" placeholder="例：300000" inputmode="numeric" oninput="_ncFeeSync()" style="text-align:right;"></td>' +   // ver.20261019.test04
     '<td class="nc-row-del"><button class="nc-del-btn" onclick="removeJinzaiRow(\'' + rowId + '\')">✕</button></td>';
   document.getElementById('ncJinzaiBody').appendChild(tr);
   // ver.20260527.16: 「その他」選択時用のメモ展開行（初期は非表示）
@@ -8552,7 +8630,7 @@ function addJinzaiRow(){
   noteTr.style.display = 'none';
   noteTr.innerHTML =
     '<td></td>' +
-    '<td colspan="9" style="padding:6px 4px 10px 4px;">' +
+    '<td colspan="10" style="padding:6px 4px 10px 4px;">' +
       '<div style="display:flex;align-items:center;gap:8px;background:#fff7ed;border-left:3px solid #fb923c;border-radius:4px;padding:6px 10px;">' +
         '<span style="font-size:10.5px;color:#9a3412;font-weight:700;white-space:nowrap;">📝 現在の在留資格 (詳細)</span>' +
         '<input type="text" class="nc-input nc-j-current-note" placeholder="例：在留資格申請中、留学（語学）、永住者の配偶者等" style="flex:1;padding:5px 8px;font-size:11.5px;">' +
@@ -8672,6 +8750,117 @@ function updateJinzaiCount(){
   // ver.20260527.16: データ行のみカウント
   var count = document.querySelectorAll('#ncJinzaiBody > tr:not([id$="_noteRow"])').length;
   document.getElementById('ncJinzaiCount').textContent = '最大' + _NC_MAX_JINZAI + '名';
+  try{ _ncFeeSync(); }catch(_){}
+}
+// ver.20261019.test04: 人材紹介手数料（1人あたり）の表示・計算
+function _ncFeeNum(v){ var t=String(v||'').replace(/[,，円\s]/g,'').replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0xFEE0);}); return /^\d+$/.test(t)?parseInt(t,10):(t?NaN:0); }
+function _ncFeeMode(){ var r=document.querySelector('input[name="nc_feeMode"]:checked'); return r?r.value:'same'; }
+function _ncFeeRows(){ return Array.prototype.slice.call(document.querySelectorAll('#ncJinzaiBody > tr:not([id$="_noteRow"])')); }
+function _ncFeePeople(){ var rs=_ncFeeRows(); var n=rs.filter(function(r){ var a=r.querySelector('.nc-j-name'),b=r.querySelector('.nc-j-nat'); return (a&&a.value.trim())||(b&&b.value); }).length; return n||rs.length||1; }
+function _ncFeeSync(){
+  var mode=_ncFeeMode();
+  var tbl=document.getElementById('ncJinzaiTable'); if(tbl) tbl.classList.toggle('nc-fee-each',mode==='each');
+  var g=function(id){ return document.getElementById(id); };
+  if(g('ncFeeSame')) g('ncFeeSame').style.display=(mode==='same')?'':'none';
+  if(mode!=='same' && g('ncFeeCalc')) g('ncFeeCalc').style.display='none';
+  if(g('ncFeeEachHint')) g('ncFeeEachHint').style.display=(mode==='each')?'':'none';
+  var n=_ncFeePeople(); if(g('ncFeeCalcN')) g('ncFeeCalcN').textContent=n;
+  var sum=g('ncFeeSum'); if(!sum) return;
+  if(mode==='none'){ sum.textContent='人材紹介手数料なし（未定）として送ります'; sum.style.color='#64748b'; return; }
+  sum.style.color='#1F4E79';
+  if(mode==='same'){
+    var v=_ncFeeNum((g('nc_referralFee')||{}).value);
+    if(isNaN(v)){ sum.textContent='⚠️ 数字だけで入れてください（例：300000）'; sum.style.color='#dc2626'; return; }
+    sum.textContent = v ? ('1人あたり '+v.toLocaleString()+'円 × '+n+'名 ＝ 合計 '+(v*n).toLocaleString()+'円') : '';
+    return;
+  }
+  var tot=0, filled=0, bad=false;
+  _ncFeeRows().forEach(function(r){ var e=r.querySelector('.nc-j-fee'); var v=_ncFeeNum(e?e.value:''); if(isNaN(v)) bad=true; else if(v){ tot+=v; filled++; } });
+  if(bad){ sum.textContent='⚠️ 紹介料は数字だけで入れてください（例：300000）'; sum.style.color='#dc2626'; return; }
+  sum.textContent = filled ? (filled+'名分を入力済み ／ 合計 '+tot.toLocaleString()+'円') : '';
+}
+function _ncFeeCalcToggle(){ var c=document.getElementById('ncFeeCalc'); if(!c) return; c.style.display=(c.style.display==='none')?'':'none'; _ncFeeSync(); if(c.style.display===''){ try{ document.getElementById('nc_feeTotalIn').focus(); }catch(_){} } }
+function _ncFeeCalcApply(){
+  var t=_ncFeeNum((document.getElementById('nc_feeTotalIn')||{}).value); var n=_ncFeePeople();
+  if(!t||isNaN(t)){ showNcError('全員分の合計金額を数字で入れてください（例：600000）'); return; }
+  var per=Math.round(t/n);
+  document.getElementById('nc_referralFee').value=String(per);
+  document.getElementById('ncFeeCalc').style.display='none';
+  _ncFeeSync();
+  if(typeof showToast==='function') showToast('💴 合計 '+t.toLocaleString()+'円 ÷ '+n+'名 ＝ 1人あたり '+per.toLocaleString()+'円 を入れました');
+}
+function _ncFeeText(p){
+  var js=(p&&p.jinzaiList)||[];
+  if(p.feeMode==='each'){
+    var arr=js.filter(function(j){ return j.introFee; });
+    if(!arr.length) return ['（未入力）'];
+    var tot=0; var out=js.map(function(j){ if(j.introFee) tot+=Number(j.introFee); return j.name+'：'+(j.introFee?('¥'+Number(j.introFee).toLocaleString()):'（未入力）'); });
+    out.push('合計 ¥'+tot.toLocaleString());
+    return out;
+  }
+  if(p.referralFee){ var v=Number(p.referralFee); return ['1人あたり ¥'+v.toLocaleString()+(js.length>1?('（'+js.length+'名 合計 ¥'+(v*js.length).toLocaleString()+'）'):'')]; }
+  return ['（未入力）'];
+}
+// ver.20261019.test04: 「💡 使い方を見る」各欄に注釈（ふせん）を出す
+var _NC_HELP=[
+  {after:'#ncAiBox', html:'<b>まずはここ（任意）</b>：企業様からのLINE・メールの文章や、求人票・在留カードのスクリーンショットがあれば入れて <b>🤖 読み取って入力する</b>。下の欄に自動で入ります（黄色になった欄を確認してください）。手で入れる場合は飛ばしてOKです。'},
+  {step:1, html:'<b>会社と申請の内容</b>を入れます（申請する人全員に共通）。表は<b>横にスクロール</b>できます。<span style="color:#dc2626;">*</span> は必須です。<ul>'+
+    '<li><b>案件名</b>：例「株式会社〇〇（変更・ベトナム2名）」</li>'+
+    '<li><b>申請種別</b>：海外から呼ぶ＝<b>認定</b>／日本にいて在留資格を変える＝<b>変更</b>／今の在留資格の延長＝<b>更新</b></li>'+
+    '<li><b>所属機関</b>：雇用する会社名。下の <b>TO</b> には企業様のご担当者とメールアドレス（書類のご案内の送り先）</li>'+
+    '<li><b>希望在留資格</b>：特定技能1号など。特定技能を選ぶと<b>分野</b>の欄が出ます</li>'+
+    '<li><b>受入れ経験</b>：その会社が外国人を受け入れたことがあるか</li>'+
+    '<li><b>支援委託費</b>：月額・税抜（数字だけ）／<b>案件担当者</b>：貴社のご担当者</li></ul>'},
+  {step:2, html:'<b>申請する人を1行に1人</b>入れます。<ul>'+
+    '<li><b>氏名</b>はパスポートと同じ<b>英字</b>（例：NGUYEN VAN A）</li>'+
+    '<li><b>変更・更新</b>のときは<b>在留期限が必須</b>です（認定は空欄でOK）</li>'+
+    '<li>2人目からは下の <b>＋ 人材を追加</b>。Excelの一覧があれば <b>📋 まとめて貼り付け</b> が便利です</li></ul>'},
+  {step:3, html:'<b>人材紹介手数料</b>は<b>1人あたり</b>で入れます（任意）。<ul>'+
+    '<li>全員同じなら「全員同じ金額」、人によって違うなら「人ごとに違う」</li>'+
+    '<li>例：2名で合計60万円 → 1人あたり <b>300,000</b>。合計しか分からなければ <b>🧮 合計しか分からない</b></li></ul>'},
+  {step:4, html:'伝えたいこと（入社予定日・急ぎの事情など）があれば書きます。最後に右下の <b>登録する</b> → 確認画面で見直して <b>送信する</b> で完了です。<br>入力に足りない所があると、<b>赤いメッセージ</b>でお知らせします。'}
+];
+function _ncHelpBuild(){
+  var bg=document.getElementById('newCaseModalBg'); if(!bg || bg.getAttribute('data-help-built')) return;
+  var titles={};
+  Array.prototype.forEach.call(bg.querySelectorAll('.nc-section-title'),function(t){ var no=t.querySelector('.nc-stepno'); if(no) titles[no.textContent.trim()]=t; });
+  var k=0;
+  _NC_HELP.forEach(function(h){
+    var anchor = h.after ? bg.querySelector(h.after) : titles[String(h.step)];
+    if(!anchor) return;
+    k++;
+    var d=document.createElement('div'); d.className='nc-help';
+    d.innerHTML='<span class="nc-help-no">'+(h.step||'AI')+'</span>'+h.html;
+    if(h.after){ d.style.paddingLeft='44px'; anchor.classList.add('nc-help-target'); anchor.insertAdjacentElement('afterend',d); }
+    else anchor.insertAdjacentElement('afterend',d);
+  });
+  bg.setAttribute('data-help-built','1');
+}
+function _ncHelpSet(on){
+  _ncHelpBuild();
+  var bg=document.getElementById('newCaseModalBg'); if(!bg) return;
+  bg.classList.toggle('nc-help-on',!!on);
+  var b=document.getElementById('ncHelpBtn');
+  if(b){ b.classList.toggle('on',!!on); b.textContent = on ? '✕ 使い方を閉じる' : '💡 使い方を見る'; }
+}
+function _ncHelpToggle(){
+  var bg=document.getElementById('newCaseModalBg');
+  var on=!(bg && bg.classList.contains('nc-help-on'));
+  _ncHelpSet(on);
+  try{ localStorage.setItem('olink_nc_help_seen','1'); }catch(_){}
+  if(on){ try{ var body=bg.querySelector('.nc-modal-body'); if(body) body.scrollTo({top:0,behavior:'smooth'}); }catch(_){} }
+}
+// 初めて開いた人・練習モードでは自動で表示
+function _ncHelpAuto(){
+  var seen=false; try{ seen=localStorage.getItem('olink_nc_help_seen')==='1'; }catch(_){ seen=true; }
+  _ncHelpSet(!!window._ncPractice || !seen);
+  if(!seen){ try{ localStorage.setItem('olink_nc_help_seen','1'); }catch(_){} }
+}
+function _ncFeeReset(){
+  var r=document.querySelector('input[name="nc_feeMode"][value="same"]'); if(r) r.checked=true;
+  var t=document.getElementById('nc_feeTotalIn'); if(t) t.value='';
+  var c=document.getElementById('ncFeeCalc'); if(c) c.style.display='none';
+  _ncFeeSync();
 }
 
 function showNcError(msg){
@@ -8838,6 +9027,8 @@ async function _submitNewCaseInner(){
     var _sfEl=document.getElementById('nc_supportFee'); if(_sfEl){ _sfEl.focus(); _sfEl.style.borderColor='#dc2626'; }
     return;
   }
+  var _feeMode = _ncFeeMode();   // ver.20261019.test04
+  if(_feeMode!=='same') referralFee='';
   if(referralFee && !/^\d+$/.test(referralFee)){
     showNcError('人材紹介手数料は数字のみで入力してください（例：100000）。現在の入力:「'+referralFee+'」');
     var _rfEl=document.getElementById('nc_referralFee'); if(_rfEl){ _rfEl.focus(); _rfEl.style.borderColor='#dc2626'; }
@@ -8874,6 +9065,15 @@ async function _submitNewCaseInner(){
     // ver.20260525.01: 推薦票要否チェック
     var recEl = rowEl.querySelector('.nc-j-recommend');
     var rec = recEl ? recEl.checked : false;
+    // ver.20261019.test04: 人材紹介手数料（1人あたり）
+    var _feeEl = rowEl.querySelector('.nc-j-fee');
+    var introFee = '';
+    if(_feeMode==='same') introFee = referralFee;
+    else if(_feeMode==='each'){
+      var _fv = _ncFeeNum(_feeEl ? _feeEl.value : '');
+      if(isNaN(_fv)){ showNcError((i+1) + '人目の紹介料は数字だけで入れてください（例：300000）'); try{ _feeEl.focus(); }catch(e){} return; }
+      introFee = _fv ? String(_fv) : '';
+    }
     if(!nm && !nat && !uke){ continue; }
     if(!nm){ showNcError((i+1) + '人目の氏名を入力してください'); return; }
     if(!nat){ showNcError((i+1) + '人目の国籍を選択してください'); return; }
@@ -8894,7 +9094,8 @@ async function _submitNewCaseInner(){
       name: nm, nationality: nat, expire: exp, ukeMethod: uke, recommendLetter: rec,
       currentStatus: cur, currentStatusNote: curNote,
       hopedStayPeriod: hopedStayPeriod,
-      currentStayPeriod: currentStayPeriod
+      currentStayPeriod: currentStayPeriod,
+      introFee: introFee
     });
   }
   if(jinzaiList.length === 0){
@@ -8916,7 +9117,7 @@ async function _submitNewCaseInner(){
     applicantField: applicantField,
     acceptExp: acceptExp,
     aidemBranch: aidemBranch, clientStaff: clientStaff, clientStaffArr: clientStaffArr,
-    supportFee: supportFee, referralFee: referralFee, remarks: remarks, jinzaiList: jinzaiList,
+    supportFee: supportFee, referralFee: referralFee, feeMode: _feeMode, remarks: remarks, jinzaiList: jinzaiList,
     toEmail: toEmail, ccEmail: ccEmail,
     salesPartner: salesPartner
   };
@@ -8972,7 +9173,7 @@ function _renderConfirmBody(p){
   h += '<div><div class="nc-cf-label">受入れ経験</div><div class="nc-cf-value">' + esc(p.acceptExp) + '</div></div>';
   h += '<div><div class="nc-cf-label">支援委託費（税抜・全員に同額適用）</div><div class="nc-cf-value">' + (p.supportFee ? '¥ ' + Number(p.supportFee).toLocaleString() : '（未入力）') + '</div></div>';
   h += '</div>';
-  h += '<div class="nc-cf-label">人材紹介手数料（税抜）</div><div class="nc-cf-value">' + (p.referralFee ? '¥ ' + Number(p.referralFee).toLocaleString() : '（未入力）') + '</div>';
+  h += '<div class="nc-cf-label">人材紹介手数料（税抜・1人あたり）</div><div class="nc-cf-value">' + esc(_ncFeeText(p).join(' ／ ')) + '</div>';
   if(p.remarks){
     h += '<div class="nc-cf-label">備考</div><div class="nc-cf-value" style="white-space:pre-wrap;">' + esc(p.remarks) + '</div>';
   }
@@ -9090,7 +9291,7 @@ async function executeSubmit(){
         current_stay_period: j.currentStayPeriod || '',
         support_staff: '別紙参照',
         support_fee: feeStr,
-        intro_fee: p.referralFee || '',   // ver.20261019.test03: 人材紹介手数料（1人あたり）を申請人ごとに保存（1-16号に自動で入る）
+        intro_fee: (j.introFee != null ? j.introFee : (p.referralFee || '')) || '',   // ver.20261019.test04: 人ごとの金額 / ver.20261019.test03: 人材紹介手数料（1人あたり）を申請人ごとに保存（1-16号に自動で入る）
         delivery_method: dm,
         recommend_letter_required: rec,
         other_support_note: otherNote,
@@ -9188,11 +9389,10 @@ function _buildLineReportText(p){
   lines.push('　氏名：（　　）');
   lines.push('■人材紹介手数料');
   // 人材紹介手数料が入力されていれば反映、無ければ空欄
-  if(p.referralFee){
-    lines.push('　¥' + Number(p.referralFee).toLocaleString());
-  } else {
-    lines.push('　（　　）');
-  }
+  // ver.20261019.test04: 1人あたり（人ごとに違う場合は氏名ごと）
+  var _ft = _ncFeeText(p);
+  if(_ft.length && _ft[0] !== '（未入力）'){ _ft.forEach(function(x){ lines.push('　' + x); }); }
+  else { lines.push('　（　　）'); }
   lines.push('■支援費');
   // 支援委託費が入力されていれば反映、無ければ空欄
   if(p.supportFee){
