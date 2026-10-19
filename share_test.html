@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261019.test01: 使い方ガイドに「🎓 チュートリアル：新規案件依頼」（練習モード＝送信されない新規案件依頼）と「💬 申請の流れ Q&A（よくある質問）」を追加。 -->
 <!-- ver.20261016.test01: 本番 ver.20261016.01 と同じ。変更・更新のときは在留期限を必須に。 -->
 <!-- ver.20261013.test04: サイドメニューに「📖 使い方ガイド」を追加（ログイン・画面の見方・ダッシュボード・案件一覧/詳細・ステータス・新規案件依頼・送信した依頼・申請記録/審査完了・登録支援機関情報・便利な機能・FAQ）。各章から該当画面へ移動可。 -->
 <!-- ver.20261013.test03: 本番 share.html(ver.20261013.02) を丸ごと同期。テスト固有=監査ログ source:'share_test'・バージョン表記 testNN は保持。 -->
@@ -621,7 +622,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261016.test01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261019.test01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1216,6 +1217,16 @@ var NOTIF_LABELS={'申請済(番号待)':'📤 申請済（番号待ち）','受
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20261019.test01',
+    date: '2026-10-19',
+    audience: 'all',
+    notify: true,
+    items: [
+      '🎓 「📖 使い方ガイド」に<b>新しい申請のご依頼方法のチュートリアル</b>を追加しました。手順を1つずつ確認でき、<b>練習モード</b>（入力しても送信されません）で実際の画面を使って練習できます。',
+      '💬 「📖 使い方ガイド」に<b>申請の流れ Q&A（よくあるご質問）</b>を追加しました。申請受理・審査完了の連絡、在留カードの受取、企業様とのお繋ぎ方法などをまとめています。'
+    ]
+  },
   {
     version: 'ver.20261010.test01',
     date: '2026-10-10',
@@ -6550,6 +6561,44 @@ function _gdJump(id){
   var m=document.getElementById('main');
   if(m && m.scrollHeight>m.clientHeight){ m.scrollTop=t.offsetTop-8; } else { t.scrollIntoView({behavior:'smooth',block:'start'}); }
 }
+// ver.20261019.test01: Q&Aの初回メール雛形をコピー
+function _gdCopyIntro(btn){ var el=document.getElementById('gdIntroSample'); if(el) _copyTextFlash(el.textContent, btn); }
+// ver.20261019.test01: 練習モードの新規案件依頼（送信されない）
+window._ncPractice=false;
+function _ncPracticeBannerSync(){
+  var body=document.querySelector('#newCaseModalBg .nc-modal-body'); if(!body) return;
+  var b=document.getElementById('ncPracticeBanner');
+  var ttl=document.querySelector('#newCaseModalBg .nc-modal-title');
+  if(window._ncPractice){
+    if(!b){
+      b=document.createElement('div'); b.id='ncPracticeBanner';
+      b.style.cssText='background:linear-gradient(135deg,#fef3c7,#fde68a);border:1.5px solid #f59e0b;color:#78350f;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12.5px;line-height:1.6;display:flex;align-items:center;gap:10px;flex-wrap:wrap;';
+      b.innerHTML='<div style="flex:1;min-width:200px;">🎓 <b>練習モード</b>です。入力して「登録する」→「送信する」まで進めても、<b>大房行政書士法人には送信されません</b>。</div><button type="button" onclick="_ncPracticeFill()" style="background:#d97706;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;">✏️ 見本を入れる</button>';
+      body.insertBefore(b, body.firstChild);
+    }
+    if(ttl) ttl.textContent='🎓 新規案件依頼（練習モード）';
+  }else{
+    if(b) b.remove();
+    if(ttl) ttl.textContent='＋ 新規案件依頼';
+  }
+}
+function openNewCasePractice(){
+  openNewCaseModal();
+  window._ncPractice=true;
+  _ncPracticeBannerSync();
+}
+function _ncPracticeFill(){
+  var set=function(id,v){ var e=document.getElementById(id); if(e){ e.value=v; try{ e.dispatchEvent(new Event('change',{bubbles:true})); }catch(_){} } };
+  set('nc_caseName','【練習】サンプル株式会社（変更・ベトナム1名）');
+  set('nc_appType','変更');
+  set('nc_company','サンプル株式会社');
+  var row=document.querySelector('#newCaseModalBg tr[id^="ncJ_"]');
+  if(row){
+    var n=row.querySelector('.nc-j-name'); if(n) n.value='NGUYEN VAN A';
+    var nat=row.querySelector('.nc-j-nat'); if(nat){ for(var i=0;i<nat.options.length;i++){ if(nat.options[i].value==='ベトナム'||nat.options[i].text==='ベトナム'){ nat.selectedIndex=i; try{ nat.dispatchEvent(new Event('change',{bubbles:true})); }catch(_){} break; } } }
+  }
+  if(typeof showToast==='function') showToast('✏️ 見本を入れました。残りの欄も入れてみてください');
+}
 function renderGuide(){
   var fb=document.getElementById('filter-bar'); if(fb){ fb.innerHTML=''; fb.style.display='none'; }
   var css='<style>'+
@@ -6572,20 +6621,93 @@ function renderGuide(){
     '.gd-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle;}'+
     '.gd-stl{font-weight:700;white-space:nowrap;font-size:12.5px;}'+
     '.gd-faq dt{font-weight:700;margin-top:10px;color:#1e3a5f;} .gd-faq dd{margin:2px 0 0 0;}'+
+    '.gd-steps{counter-reset:gds;margin:8px 0;}'+
+    '.gd-step{position:relative;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px 10px 46px;margin-bottom:8px;background:#fafbfd;}'+
+    '.gd-step::before{counter-increment:gds;content:counter(gds);position:absolute;left:12px;top:10px;width:24px;height:24px;border-radius:50%;background:#2563eb;color:#fff;font-weight:800;font-size:12.5px;display:flex;align-items:center;justify-content:center;}'+
+    '.gd-step b.t{display:block;color:#1e3a5f;font-size:13.5px;margin-bottom:2px;}'+
+    '.gd-step ul{margin:4px 0 0;}'+
+    '.gd-practice{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(135deg,#fef3c7,#fde68a);border:1.5px solid #f59e0b;border-radius:12px;padding:12px 14px;margin:10px 0;}'+
+    '.gd-practice p{margin:0;flex:1;min-width:220px;font-size:12.5px;color:#78350f;}'+
+    '.gd-practice button{background:#d97706;color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;}'+
+    '.gd-practice button:hover{background:#b45309;}'+
+    '.gd-qa-cat{font-size:12px;font-weight:800;color:#64748b;margin:14px 0 6px;letter-spacing:.03em;}'+
+    '.gd-qa{border:1px solid #e2e8f0;border-radius:10px;margin-bottom:6px;background:#fff;overflow:hidden;}'+
+    '.gd-qa summary{cursor:pointer;padding:10px 12px;font-weight:700;color:#1e3a5f;list-style:none;display:flex;gap:8px;align-items:flex-start;}'+
+    '.gd-qa summary::-webkit-details-marker{display:none;}'+
+    '.gd-qa summary::before{content:"Q";flex:none;width:20px;height:20px;border-radius:50%;background:#1e3a5f;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;margin-top:2px;}'+
+    '.gd-qa summary::after{content:"＋";margin-left:auto;color:#94a3b8;font-weight:800;}'+
+    '.gd-qa[open] summary::after{content:"－";}'+
+    '.gd-qa[open] summary{background:#f8fafc;border-bottom:1px solid #e2e8f0;}'+
+    '.gd-qa .a{padding:10px 12px 12px 40px;position:relative;font-size:13px;}'+
+    '.gd-qa .a::before{content:"A";position:absolute;left:12px;top:11px;width:20px;height:20px;border-radius:50%;background:#16a34a;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}'+
+    '.gd-qa pre{white-space:pre-wrap;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;font-size:12px;line-height:1.7;font-family:inherit;margin:8px 0 0;}'+
+    '.gd-copy{background:#10b981;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;}'+
     '@media(max-width:640px){.gd-sec{padding:14px;} .gd-hero{padding:18px;} .gd-st{grid-template-columns:1fr;}}'+
   '</style>';
   function sec(id,title,open,body){
     return '<div class="gd-sec" id="'+id+'"><h3>'+title+(open?'<button class="gd-open" onclick="_gdGo(\''+open+'\')">この画面を開く →</button>':'')+'</h3>'+body+'</div>';
   }
   var toc=[
+    ['gd-tutorial','🎓 チュートリアル：新規案件依頼'],['gd-flowqa','💬 申請の流れ Q&A'],
     ['gd-login','🔑 ログイン'],['gd-screen','🖥 画面の見方'],['gd-dash','📊 ダッシュボード'],
     ['gd-list','📁 案件一覧・詳細'],['gd-status','🚦 ステータスの見方'],['gd-new','＋ 新規案件依頼'],
     ['gd-intakes','📤 送信した依頼'],['gd-records','📮 申請記録・審査完了'],['gd-org','🏢 登録支援機関情報'],
-    ['gd-tools','🧰 便利な機能'],['gd-faq','❓ よくあるご質問']
+    ['gd-tools','🧰 便利な機能'],['gd-faq','❓ 操作のよくあるご質問']
   ];
   var h=css+'<div class="gd">';
-  h+='<div class="gd-hero"><h2>📖 O-Link 使い方ガイド</h2><p>登録支援機関マイページでできることと、基本の操作をまとめています。各章の「この画面を開く」から、そのまま該当画面へ移動できます。</p></div>';
+  h+='<div class="gd-hero"><h2>📖 O-Link 使い方ガイド</h2><p>登録支援機関マイページでできることと、基本の操作をまとめています。各章の「この画面を開く」から、そのまま該当画面へ移動できます。<br>はじめての方は「🎓 チュートリアル」で、新規案件依頼を<b>練習モード（送信されません）</b>で試せます。</p></div>';
   h+='<div class="gd-toc">'+toc.map(function(t){return '<button onclick="_gdJump(\''+t[0]+'\')">'+t[1]+'</button>';}).join('')+'</div>';
+
+
+  // ver.20261019.test01: チュートリアル（新規案件依頼）＋練習モード
+  h+=sec('gd-tutorial','🎓 チュートリアル：新規案件依頼','',
+    '<p>新しい申請をご依頼するときの手順です。上から順に進めれば完了します。わからないときは、下の<b>練習モード</b>で実際の画面を触ってみてください。</p>'+
+    '<div class="gd-practice"><p>🎓 <b>練習モード</b>：本物と同じ「新規案件依頼」の画面が開きます。最後まで入力して「送信する」を押しても、<b>大房行政書士法人には送信されません</b>。完了画面（LINE報告用テキスト・初回メール文案）まで確認できます。</p><button onclick="openNewCasePractice()">🎓 練習モードで開く</button></div>'+
+    '<div class="gd-steps">'+
+    '<div class="gd-step"><b class="t">画面上部の「＋ 新規案件依頼」を押す</b>入力画面が開きます。上から「📋 案件共通情報」→「👤 人材」→「備考」の順に入力します。</div>'+
+    '<div class="gd-step"><b class="t">案件共通情報を入力する</b><ul>'+
+      '<li><b>案件名</b>：例「株式会社〇〇（変更・ベトナム2名）」。会社名・申請種別・国籍・人数が入っていると分かりやすいです。</li>'+
+      '<li><b>申請種別</b>：海外から呼ぶ＝<b>認定</b>、日本にいて在留資格を変える＝<b>変更</b>、今の在留資格を延長＝<b>更新</b>。</li>'+
+      '<li><b>所属機関</b>：雇用する企業名。<b>希望在留資格</b>（特定技能1号など）と、特定技能の場合は<b>分野</b>も選びます。</li>'+
+      '<li><b>受入れ経験</b>・<b>支援委託費</b>・<b>人材紹介手数料</b>・<b>案件担当者</b>（貴社のご担当者）を入れます。</li></ul></div>'+
+    '<div class="gd-step"><b class="t">人材を入力する（1回で最大30名）</b><ul>'+
+      '<li>氏名（パスポートと同じ英語表記）、国籍、現在の在留資格・在留期限、希望在留期間、受取方法を入れます。</li>'+
+      '<li><b>変更・更新</b>のときは<b>在留期限が必須</b>です。</li>'+
+      '<li>2人目以降は <span class="gd-key">＋ 人材を追加</span>。Excelの一覧がある場合は <span class="gd-key">📋 まとめて貼り付け</span> が便利です。</li></ul></div>'+
+    '<div class="gd-step"><b class="t">備考を書いて「登録する」を押す</b>入社予定日・急ぎの事情・企業様の連絡先など、伝えたいことがあれば備考へ。進めないときは赤いメッセージと赤枠の欄を直してください。</div>'+
+    '<div class="gd-step"><b class="t">確認画面で見直して「送信する」</b>内容に間違いがなければ送信します。送った内容はあとから「📤 送信した依頼」で確認できます。</div>'+
+    '<div class="gd-step"><b class="t">完了画面の2つの文面をコピーして送る</b><ul>'+
+      '<li><b>📝 LINE報告用テキスト</b>：大房行政書士法人とのLINEに貼り付けて「ご依頼します」とお送りください。</li>'+
+      '<li><b>✉️ 企業様への初回メール文案</b>：企業様へ大房行政書士法人をご紹介するメールです。会社名・人材のお名前・ご担当者名は自動で入ります。</li></ul></div>'+
+    '<div class="gd-step"><b class="t">企業様・申請人・弊社の3者をお繋ぎする</b>LINEグループ／Facebook／メールなどでお繋ぎください。以降の必要書類のご案内は、弊社から企業様・申請人へ直接お送りします。</div>'+
+    '</div>'+
+    '<div class="gd-tip">💡 2つの文面は、あとからでも「📤 送信した依頼」の各依頼にある <span class="gd-key">📋 テキスト</span> <span class="gd-key">✉️ 初回メール</span> でコピーできます。</div>');
+
+  // ver.20261019.test01: 申請の流れ Q&A（よくあるご質問）
+  function qa(q,a){ return '<details class="gd-qa"><summary>'+q+'</summary><div class="a">'+a+'</div></details>'; }
+  h+=sec('gd-flowqa','💬 申請の流れ Q&A（よくあるご質問）','',
+    '<p>登録支援機関の皆さまからよくいただくご質問です。質問を押すと答えが開きます。</p>'+
+    '<div class="gd-qa-cat">■ ご依頼・企業様とのお繋ぎ</div>'+
+    qa('企業様（所属機関）と大房行政書士法人は、どのように繋げばいいですか？',
+      '「新規案件依頼」を送信すると、企業様へ大房行政書士法人をご紹介する<b>初回メールの雛形</b>が表示され、そのままコピーできます。あとからでも「📤 送信した依頼」の各依頼にある <span class="gd-key">✉️ 初回メール</span> でコピーできます。所属機関名・人材のお名前・ご担当者名は自動で入ります。<br>LINEグループ／Facebook／メールなどで、貴社・申請人・弊社の3者をお繋ぎいただく形でも大丈夫です。'+
+      '<div style="margin-top:8px;display:flex;align-items:center;gap:8px;"><b style="font-size:12px;">初回メールの雛形（例）</b><button class="gd-copy" onclick="_gdCopyIntro(this)">📋 コピー</button></div><pre id="gdIntroSample">'+esc(_buildIntroMailText('●●株式会社',['●●'],''))+'</pre>')+
+    qa('依頼したあと、何をすればいいですか？',
+      '完了画面の「📝 LINE報告用テキスト」を大房行政書士法人とのLINEにお送りいただき、企業様・申請人・弊社の3者をお繋ぎください。その後の必要書類のご案内（ヒアリングフォーム・書類アップロードURL）は弊社からお送りします。')+
+    '<div class="gd-qa-cat">■ 申請受理・審査完了の連絡</div>'+
+    qa('申請受理メール・審査完了メールは、O-Linkでダウンロードできますか？',
+      'はい、できます。O-Linkの案件ごとのページ（案件詳細）からダウンロードいただけます。')+
+    qa('申請受理・審査完了のとき、登録支援機関に通知は来ますか？都度O-Linkを確認する必要がありますか？',
+      '企業様との案件ごとのグループに、弊社から通知をお送りします。メールのPDFもそこからダウンロードいただけますので、O-Linkを都度ご確認いただかなくても分かります。O-Link上でも 🔔 お知らせに届きます。')+
+    qa('申請受理メール・審査完了メールは、所属機関や外国人本人にも共有されますか？',
+      '共有されます。審査完了メールと、そのメールのPDFを、企業様（所属機関）・申請人が入っている案件ごとのグループにご案内する流れです。')+
+    '<div class="gd-qa-cat">■ 審査完了後・在留カードの受取</div>'+
+    qa('審査完了後、新しい在留カードはどのように受け取りますか？',
+      '弊社で手続きします。登録支援機関様が入管とやり取りしていただく必要はありません。<ol style="margin:6px 0 0;"><li>審査完了メールの中で、在留カードとパスポートの<b>郵送先（弊社住所）</b>をご案内します。</li><li>弊社に届きましたら、弊社で入管での交付手続きを行います。</li><li>交付後、<b>ご指定の住所へ郵送</b>いたします。</li></ol>')+
+    '<div class="gd-qa-cat">■ O-Linkについて</div>'+
+    qa('O-Linkは所属機関（企業様）も見られますか？画面の「貴社」は誰のことですか？',
+      'O-Linkは、現在は<b>登録支援機関様だけ</b>が見られる形で提供しています。そのため画面上の「貴社」は登録支援機関様を指します。所属機関様向けのリンクは、ご希望がある場合のみ発行しています。')+
+    qa('操作を練習したいです。',
+      'この上の「🎓 チュートリアル」にある <span class="gd-key">🎓 練習モードで開く</span> から、本物と同じ新規案件依頼の画面を試せます。練習モードでは送信されません。'));
 
   h+=sec('gd-login','🔑 ログイン','',
     '<ol><li>大房行政書士法人からお送りしている<b>貴社専用のURL</b>を開きます。</li>'+
@@ -6668,7 +6790,7 @@ function renderGuide(){
     '<li><b>📋 申請の流れ</b>：ご依頼から審査完了までの流れと、貴社にご対応いただく部分を図で確認できます（左メニューの下にあります）。</li>'+
     '</ul>');
 
-  h+=sec('gd-faq','❓ よくあるご質問','',
+  h+=sec('gd-faq','❓ 操作のよくあるご質問','',
     '<dl class="gd-faq">'+
     '<dt>Q. 左のメニューに、このガイドで紹介している項目が見当たりません。</dt><dd>A. 表示される項目は貴社の設定により異なります。必要な場合は大房行政書士法人までご相談ください。</dd>'+
     '<dt>Q. スマートフォンでも使えますか？</dt><dd>A. 使えます。スマートフォンではメニューが画面上部に横並びで表示されるので、横にスクロールして選んでください。</dd>'+
@@ -8072,6 +8194,8 @@ function _hfConfirm(){
   if(typeof cb==='function') cb();
 }
 function openNewCaseModal(){
+  window._ncPractice=false;   // ver.20261019.test01: 通常はいつも本番（練習モードは openNewCasePractice から）
+  try{ _ncPracticeBannerSync(); }catch(_){}
   // 初期化
   // ver.20260525.03: 「使用する支援事業所」は拠点から自動マッピングするため削除
   var brEl=document.getElementById('nc_aidemBranch');
@@ -8144,6 +8268,7 @@ function openNewCaseModal(){
 
 function closeNewCaseModal(){
   document.getElementById('newCaseModalBg').classList.remove('open');
+  window._ncPractice=false; try{ _ncPracticeBannerSync(); }catch(_){}   // ver.20261019.test01
 }
 
 // ver.20260908.03: 現在の在留期間プルダウンの選択肢（1ヶ月刻み・1ヶ月〜5年）。value/表示とも「N年Mヶ月」形式に統一
@@ -8619,6 +8744,7 @@ async function _submitNewCaseInner(){
   var _goConfirm=function(){
     _renderConfirmBody(_ncPendingPayload);
     document.getElementById('ncConfirmModalBg').classList.add('open');
+    if(window._ncPractice){ var _pcb=document.getElementById('ncConfirmSendBtn'); if(_pcb) _pcb.textContent='🎓 練習で送信する（実際には送られません）'; }   // ver.20261019.test01
   };
   if(String(appType||'').indexOf('認定')>=0){ _goConfirm(); }
   else { _openHopedFeeConfirm(_ncPendingPayload, _goConfirm); }
@@ -8792,14 +8918,15 @@ async function executeSubmit(){
       };
     });
 
-    var _res = await createOrgIntake(records);
+    var _practice = !!window._ncPractice;   // ver.20261019.test01: 練習モードはDBに保存しない
+    var _res = _practice ? { ok:true, practice:true } : await createOrgIntake(records);
     if(!_res || _res.error){
       console.error('[create_org_intake failed]', _res);
       throw new Error('登録に失敗しました: ' + (_res && _res.error ? _res.error : 'unknown'));
     }
 
     // ver.20260617: リストに無い案件担当者は自動で「案件担当者リスト（新規案件依頼用）」へ追加
-    _autoAddIntakeStaff(p.clientStaffArr);
+    if(!_practice) _autoAddIntakeStaff(p.clientStaffArr);
 
     // 確認モーダルを閉じる
     closeConfirmModal();
@@ -8809,7 +8936,8 @@ async function executeSubmit(){
     document.getElementById('ncBigError').classList.remove('show');
     var bigSuc = document.getElementById('ncBigSuccess');
     document.getElementById('ncBigSuccessText').innerHTML =
-      '<strong>' + p.jinzaiList.length + '名</strong> の案件依頼を送信しました。<br>' +
+      (_practice ? '<div style="background:#fef3c7;border:1.5px solid #f59e0b;color:#78350f;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-weight:700;">🎓 練習モードのため、実際には送信されていません。本番では、この画面が出たら下の2つの文面をコピーしてお送りください。</div>' : '') +
+      '<strong>' + p.jinzaiList.length + '名</strong> の案件依頼を' + (_practice ? '（練習で）' : '') + '送信しました。<br>' +
       '案件名：' + esc(p.caseName);
     // ver.20260527.16: LINE報告用テキストを生成してセット
     var lineText = _buildLineReportText(p);
