@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261020.test01: 新規案件依頼で「変更」「更新」のときは現在の在留期間も必須に（見出しに * 表示、未選択なら送信前にエラー）。認定は従来どおり任意。 -->
 <!-- ver.20261019.test04: 人材紹介手数料を「③ 人材紹介手数料」の独立ボックスへ。全員同じ／人ごとに違う／なし・未定を選び、1人あたり×人数＝合計をその場で表示。合計しか分からない時は「合計から割る」。人ごとの金額は申請人ごとに保存。見出しを①〜④の順番つきに。画面上部「💡 使い方を見る」で各欄に注釈（ふせん）を表示（初めて開いた人には自動で表示） -->
 <!-- ver.20261019.test03: AI読み取りで人材紹介手数料を1人あたりで入れる（合計の場合は人数で割り、割ったことを表示）。欄の見出しも「1人あたり」に。送信時に人材紹介手数料を申請人ごとに依頼データ（intro_fee）へ保存するように（1-16号に自動で入る）。 -->
 <!-- ver.20261019.test02: 新規案件依頼に「🤖 AIで読み取って入力」（文章・スクリーンショットを貼ると、案件情報と人材の欄に自動で入る。空欄だけに入れ、入れた欄は黄色で表示）。 -->
@@ -656,7 +657,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261019.test04</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261020.test01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span>🔔</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -927,7 +928,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
               <th style="width:120px;">国籍 <span style="color:#dc2626;">*</span></th>
               <th style="width:155px;">現在の在留資格</th>
               <th style="width:140px;">在留期限<span class="nc-exp-req" style="color:#dc2626;"> *</span></th>
-              <th style="width:150px;">現在の在留期間</th>
+              <th style="width:150px;">現在の在留期間<span class="nc-exp-req" style="color:#dc2626;"> *</span></th>
               <th style="width:130px;">希望在留期間 <span style="color:#dc2626;">*</span></th>
               <th style="width:120px;">受取方法 <span style="color:#dc2626;">*</span></th>
               <th style="width:80px;text-align:center;">推薦票</th>
@@ -9081,6 +9082,12 @@ async function _submitNewCaseInner(){
     if(appType !== '認定' && !exp){
       showNcError((i+1) + '人目の在留期限を入力してください（変更・更新のときは必須です）');
       try{ rowEl.querySelector('.nc-j-expire').focus(); }catch(e){}
+      return;
+    }
+    // ver.20261020.test01: 変更・更新は現在の在留期間も必須に（認定は空でもよい）
+    if(appType !== '認定' && !currentStayPeriod){
+      showNcError((i+1) + '人目の現在の在留期間を選択してください（変更・更新のときは必須です）');
+      try{ _cpEl.focus(); }catch(e){}
       return;
     }
     // ver.20260828.03: 希望在留期間を必須化
