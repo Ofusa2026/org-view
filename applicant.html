@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>申請人マイページ | 大房行政書士法人</title>
+<!-- ver.20261024.05: 提出期限・申請スケジュールの日数をアンシスの「テンプレート」で編集できるように（settings.deadline_rules を RPC get_deadline_rules で読む。読めなければ既定値）。 -->
 <!-- ver.20261024.04: 申請までのスケジュールに「申請準備」を追加（サイン・押印が済んだら申請目標日までの残りはすべて申請準備）。8言語。 -->
 <!-- ver.20261024.03: 進捗タブに「📅 申請までのスケジュール」（受領→条件書確認→サイン書類作成→サイン・書類提出→申請、各3営業日＝約3週間で申請。在留期限の2週間前が早ければ逆算して前倒し）を8言語で追加。サイン・書類の提出期限は逆算日が早ければそちら（依頼日より前にはしない）。 -->
 <!-- ver.20261024.02: サインの提出期限を「依頼（案シスのステータスがサイン書類返送待ちに変わった日＝status_date）から3営業日」に変更（O-Linkの建設申請スケジュールに合わせた）。在留期限の方が早ければ依頼当日。applicant_view_get に status_date（audit_log由来）を追加。 -->
@@ -209,7 +210,7 @@ details.doc-help-d[open]>summary::after{content:' ▲';}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;flex:none;white-space:nowrap;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title" id="hdrTitle">申請人マイページ</span>
-  <span class="header-ver">ver.20261024.04</span>
+  <span class="header-ver">ver.20261024.05</span>
   <div class="header-right">
     <div id="langSwitch" class="lang-switch"></div>
     <div class="header-org" id="headerName" style="font-size:13px;font-weight:700;opacity:.95;max-width:none;">読み込み中...</div>
@@ -407,7 +408,7 @@ var TR={
  pl_s5:{ja:'申請準備→申請',en:'Prepare → Apply',vi:'Chuẩn bị → Nộp',id:'Persiapan → Pengajuan',zh:'申请准备→申请',km:'រៀបចំ → ដាក់ពាក្យ',my:'ပြင်ဆင် → လျှောက်ထား',th:'เตรียม → ยื่นคำขอ'},
  pl_s4:{ja:'申請',en:'Application',vi:'Nộp hồ sơ',id:'Pengajuan',zh:'提出申请',km:'ដាក់ពាក្យ',my:'လျှောက်ထား',th:'ยื่นคำขอ'},
  pl_late:{ja:'遅れ',en:'Late',vi:'Trễ',id:'Terlambat',zh:'延迟',km:'យឺត',my:'နောက်ကျ',th:'ล่าช้า'},
- pl_note:{ja:'各工程3営業日。サイン・押印が済んだら、申請の目標日までの残りの期間は申請準備です。受領日から約3週間で申請できるように逆算しています。',en:'Each step takes 3 business days, planned backward so we can apply about 3 weeks after receiving your request.',vi:'Mỗi bước 3 ngày làm việc, tính ngược để nộp hồ sơ khoảng 3 tuần sau khi nhận.',id:'Setiap langkah 3 hari kerja, dihitung mundur agar bisa diajukan sekitar 3 minggu setelah diterima.',zh:'每个步骤3个工作日，倒推安排，以便在受理后约3周提出申请。',km:'ជំហាននីមួយៗ 3 ថ្ងៃធ្វើការ គណនាថយក្រោយ ដើម្បីដាក់ពាក្យប្រហែល 3 សប្តាហ៍បន្ទាប់ពីទទួល។',my:'အဆင့်တစ်ခုစီ အလုပ်ရက် ၃ ရက်။ လက်ခံပြီး ၃ ပတ်ခန့်အတွင်း လျှောက်နိုင်ရန် နောက်ပြန်တွက်ထားပါတယ်။',th:'แต่ละขั้นตอน 3 วันทำการ คำนวณย้อนหลังเพื่อยื่นคำขอได้ภายในประมาณ 3 สัปดาห์หลังรับเรื่อง'},
+ pl_note:{ja:'サイン・押印が済んだら、申請の目標日までの残りの期間は申請準備です。受領日から逆算して、目標日に申請できるようにしています。',en:'After signing and the company seal, the remaining time until the target date is for preparing the application. The schedule is planned backward from the receipt date so we can apply by the target date.',vi:'Sau khi ký và đóng dấu, thời gian còn lại đến ngày mục tiêu là để chuẩn bị nộp hồ sơ. Lịch được tính ngược từ ngày nhận để nộp đúng ngày mục tiêu.',id:'Setelah tanda tangan dan cap, sisa waktu sampai tanggal target dipakai untuk persiapan pengajuan. Jadwal dihitung mundur dari tanggal diterima agar bisa diajukan pada tanggal target.',zh:'签名・盖章完成后，到目标日为止的剩余时间用于申请准备。日程从受理日倒推，以便在目标日提出申请。',km:'បន្ទាប់ពីចុះហត្ថលេខា និងបោះត្រា ពេលវេលានៅសល់រហូតដល់ថ្ងៃគោលដៅ គឺសម្រាប់រៀបចំដាក់ពាក្យ។ កាលវិភាគត្រូវបានគណនាថយក្រោយពីថ្ងៃទទួល ដើម្បីដាក់ពាក្យទាន់ថ្ងៃគោលដៅ។',my:'လက်မှတ်နှင့် တံဆိပ်ပြီးနောက် ပစ်မှတ်ရက်အထိ ကျန်ရှိသောကာလသည် လျှောက်ထားရန် ပြင်ဆင်ချိန်ဖြစ်ပါတယ်။ ပစ်မှတ်ရက်တွင် လျှောက်နိုင်ရန် လက်ခံရက်မှ နောက်ပြန်တွက်ထားပါတယ်။',th:'หลังลงชื่อและประทับตราแล้ว เวลาที่เหลือจนถึงวันเป้าหมายใช้สำหรับเตรียมยื่นคำขอ กำหนดการคำนวณย้อนจากวันรับเรื่องเพื่อให้ยื่นได้ทันวันเป้าหมาย'},
  doc_required:{ja:'必須',en:'Required',vi:'Bắt buộc',id:'Wajib',zh:'必须',km:'ចាំបាច់',my:'မဖြစ်မနေ',th:'จำเป็น'},
  note_specialist:{ja:'※ 技能実習をしていた方のみ',en:'* Only for those who did Technical Intern Training (Ginou Jisshu)',vi:'* Chỉ dành cho người từng thực tập kỹ năng (Ginou Jisshu)',id:'* Hanya untuk yang pernah ikut Pemagangan Teknis (Ginou Jisshu)',zh:'※ 仅限曾参加技能实习（技能実習）者',km:'* សម្រាប់តែអ្នកធ្លាប់កម្មសិក្សាជំនាញ (Ginou Jisshu) ប៉ុណ្ណោះ',my:'* နည်းပညာအလုပ်သင် (Ginou Jisshu) လုပ်ခဲ့ဖူးသူများသာ',th:'* เฉพาะผู้ที่เคยฝึกงานทักษะ (Ginou Jisshu) เท่านั้น'},
  temp_return_title:{ja:'🛫 一時帰国',en:'🛫 Temporary Return Home',vi:'🛫 Về nước tạm thời',id:'🛫 Pulang Sementara',zh:'🛫 临时回国',km:'🛫 ត្រឡប់ប្រទេសវិញបណ្ដោះអាសន្ន',my:'🛫 ယာယီပြည်တော်ပြန်',th:'🛫 กลับประเทศชั่วคราว'},
@@ -863,6 +864,21 @@ function _apParse(s){ if(!s) return null; var m=String(s).match(/^(\d{4})[-\/](\
 function _apYmd(d){ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
 function _apAdd(d,n){ var r=new Date(d); r.setDate(r.getDate()+n); return r; }
 function _apAddBiz(d,n){ var r=new Date(d),c=0; while(c<n){ r=_apAdd(r,1); var w=r.getDay(); if(w!==0&&w!==6&&_AP_HOL.indexOf(_apYmd(r))<0) c++; } return r; }
+// ver.20261024.05: 日数はアンシスの「テンプレート」で編集（settings.deadline_rules → RPC get_deadline_rules）。読めなければ既定値
+var AP_RULES={steps:{soufu:3,kakunin:3,sakusei:3,signOuin:3,prep:3},askBiz:3,docsBiz:5,docsBeforeExpire:30,applyBeforeExpire:14,minDocsBiz:2,freshDays:45};
+var _apRulesTried=false;
+function _apRulesLoad(){
+  if(_apRulesTried) return; _apRulesTried=true;
+  callRpc('get_deadline_rules',{}).then(function(r){
+    if(!r||typeof r!=='object') return;
+    function n(v,d){ v=parseInt(v,10); return (isNaN(v)||v<0||v>365)?d:v; }
+    var st=r.steps||{};
+    ['soufu','kakunin','sakusei','signOuin','prep'].forEach(function(k){ AP_RULES.steps[k]=n(st[k],AP_RULES.steps[k]); });
+    ['askBiz','docsBiz','docsBeforeExpire','applyBeforeExpire','minDocsBiz','freshDays'].forEach(function(k){ AP_RULES[k]=n(r[k],AP_RULES[k]); });
+    try{ if(theCase) render(); }catch(e){}
+  }).catch(function(){});
+}
+function _apApplyBiz(){ var S=AP_RULES.steps; return S.soufu+S.kakunin+S.sakusei+S.signOuin+S.prep; }
 function _apMin(a,b){ if(!a) return b; if(!b) return a; return a<b?a:b; }
 // 書類＝受領日+5営業日と在留期限30日前の早いほう／サイン＝受領日+15営業日と在留期限14日前の早いほう（受領日から45日超は在留期限基準のみ）
 function _apDeadlines(){
@@ -871,18 +887,19 @@ function _apDeadlines(){
   var today=new Date(); today.setHours(0,0,0,0);
   var req=_apParse(c.request_date), exp=_apParse(c.expire);
   if(exp && exp<today) exp=null;
-  var fresh=req && Math.round((today-req)/86400000)<=45;
+  _apRulesLoad();
+  var fresh=req && Math.round((today-req)/86400000)<=AP_RULES.freshDays;
   var docs=null, sign=null;
-  if(fresh){ docs=_apAddBiz(req,5); sign=_apAddBiz(req,15); }
-  if(exp){ docs=_apMin(docs,_apAdd(exp,-30)); sign=_apMin(sign,_apAdd(exp,-14)); }
+  if(fresh){ docs=_apAddBiz(req,AP_RULES.docsBiz); sign=_apAddBiz(req,_apApplyBiz()); }
+  if(exp){ docs=_apMin(docs,_apAdd(exp,-AP_RULES.docsBeforeExpire)); sign=_apMin(sign,_apAdd(exp,-AP_RULES.applyBeforeExpire)); }
   // 受領した時点で在留期限が近い案件でも、受領日から2営業日（サインは5営業日）より前にはしない
-  if(fresh){ var m2=_apAddBiz(req,2), m5=_apAddBiz(req,5); if(docs&&docs<m2) docs=m2; if(sign&&sign<m5) sign=m5; }
+  if(fresh){ var m2=_apAddBiz(req,AP_RULES.minDocsBiz), m5=_apAddBiz(req,AP_RULES.askBiz+AP_RULES.minDocsBiz); if(docs&&docs<m2) docs=m2; if(sign&&sign<m5) sign=m5; }
   // 建設の特定活動で国交省の申請前は、入管の書類はまだ集めない（期限を出さない）
   var KO=['申請済み','補正可能','補正完了','補正未着手','完了(許可済)','完了'];
   if(String(c.residence_status||'')==='特定活動' && /建設/.test(String(c.applicant_field||'')) && KO.indexOf(getKokkoStatus(c))<0) docs=null;
   // サイン＝依頼（案シスのステータスがサイン書類返送待ちに変わった日）から3営業日（O-Linkの建設申請スケジュールと同じ）。在留期限の方が早ければ依頼当日
   var sd=_apParse(c.status_date);
-  if(sd){ var ex0=_apParse(c.expire); sign=_apAddBiz(sd,3); if(ex0 && ex0<sign) sign=sd; }
+  if(sd){ var ex0=_apParse(c.expire); sign=_apAddBiz(sd,AP_RULES.askBiz); if(ex0 && ex0<sign) sign=sd; }
   // ver.20261024.03: 3週間スケジュールの逆算日が早ければそちら（依頼日より前にはしない）
   var pl=_apPlan();
   if(pl && pl.signOuin){
@@ -897,11 +914,12 @@ function _apPlan(){
   var c=theCase||{}, today=new Date(); today.setHours(0,0,0,0);
   var req=_apParse(c.request_date), exp=_apParse(c.expire); if(exp && exp<today) exp=null;
   var std=null;
-  if(req){ var a=_apAddBiz(req,3), b=_apAddBiz(a,3), cc=_apAddBiz(b,3), d=_apAddBiz(cc,3), e=_apAddBiz(d,3); std={kakunin:b,sakusei:cc,signOuin:d,app:e}; }
+  _apRulesLoad(); var S=AP_RULES.steps;
+  if(req){ var a=_apAddBiz(req,S.soufu), b=_apAddBiz(a,S.kakunin), cc=_apAddBiz(b,S.sakusei), d=_apAddBiz(cc,S.signOuin), e=_apAddBiz(d,S.prep); std={kakunin:b,sakusei:cc,signOuin:d,app:e}; }
   var target=std?std.app:null, comp=false;
-  if(exp){ var t2=_apAdd(exp,-14); if(!target||t2<target){ target=t2; comp=!!std; } }
+  if(exp){ var t2=_apAdd(exp,-AP_RULES.applyBeforeExpire); if(!target||t2<target){ target=t2; comp=!!std; } }
   if(!target) return null;
-  var bk={app:target}; bk.signOuin=_apSubBiz(target,3); bk.sakusei=_apSubBiz(bk.signOuin,3); bk.kakunin=_apSubBiz(bk.sakusei,3);
+  var bk={app:target}; bk.signOuin=_apSubBiz(target,S.prep); bk.sakusei=_apSubBiz(bk.signOuin,S.signOuin); bk.kakunin=_apSubBiz(bk.sakusei,S.sakusei);
   var out={req:req, compressed:comp};
   ['kakunin','sakusei','signOuin','app'].forEach(function(k){ var v=std?_apMin(std[k],bk[k]):bk[k]; if(req && v<req) v=req; out[k]=v; });
   return out;
