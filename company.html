@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261024.06: 色を整理。黄色・赤は提出期限が迫っている（7日以内＝黄、期限切れ＝赤）ところだけに使い、それ以外は紺・グレー系に統一（対応が必要なタスクのカード・バッジ・ボタン、タスクバー〔期限切れがあるときだけ赤〕、件数バッジ、未提出チップ、進捗ステータスの押印・審査中、国交省ステータス、注意書きボックス）。 -->
 <!-- ver.20261024.05: 提出期限・申請スケジュールの日数をアンシスの「テンプレート」で編集できるように（settings.deadline_rules を RPC get_deadline_rules で読む。読めなければ既定値：各工程3営業日・依頼から3営業日・書類5営業日／在留期限30日前・申請は在留期限14日前・国交省45日／4か月前）。 -->
 <!-- ver.20261024.04: 申請までのスケジュールに「申請準備」を追加。サイン・押印が済んだら申請目標日までの残りの期間はすべて申請準備（企業押印返送待ち・企業書類作成まではサイン・押印、それ以降の書類待ち・スキャン書類作成・★申請などは申請準備）。 -->
 <!-- ver.20261024.03: 3週間（15営業日）で申請できるよう逆算したスケジュールを追加（受領→条件書送付→企業確認→サイン書類作成→サイン・押印・書類→申請、各3営業日。在留期限の2週間前が早ければそこから逆算して前倒し）。人材詳細に「📅 申請までのスケジュール」（建設以外。建設は従来の建設スケジュール）、ご対応待ちの案件に「🎯 申請目標日」。1-6号確認・サイン・押印・書類の提出期限は逆算日が早ければそちら（依頼日より前にはしない）。 -->
@@ -68,7 +69,7 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .tabs{display:flex;gap:4px;background:#fff;border-bottom:1px solid #e2e8f0;padding:0 12px;position:sticky;top:45px;z-index:150;overflow-x:auto;}
 .tab{padding:11px 14px;font-size:12px;font-weight:700;color:#64748b;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;}
 .tab.active{color:#0f2040;border-bottom-color:#0f2040;}
-.tab .badge{display:inline-block;margin-left:5px;background:#dc2626;color:#fff;border-radius:99px;font-size:9px;font-weight:800;padding:1px 6px;}
+.tab .badge{display:inline-block;margin-left:5px;background:#1c3d6e;color:#fff;border-radius:99px;font-size:9px;font-weight:800;padding:1px 6px;}
 .wrap{max-width:1100px;margin:0 auto;padding:16px;}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
 .card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;}
@@ -97,7 +98,7 @@ tr:hover td{background:#fcfcfd;}
 .doc-date{font-size:10px;color:#94a3b8;}
 .doc-state{font-size:10px;font-weight:800;padding:2px 9px;border-radius:99px;flex-shrink:0;}
 .s-done{background:#f0fdf4;color:#15803d;border:1px solid #86efac;}
-.s-todo{background:#fff7ed;color:#ea580c;border:1px solid #fdba74;}
+.s-todo{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;}
 .s-na{background:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0;}
 .s-made{background:#eef4fd;color:#1c3d6e;border:1px solid #b9d0ee;}
 .note{font-size:11px;color:#64748b;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:10px 14px;margin-bottom:14px;line-height:1.6;}
@@ -204,38 +205,38 @@ tr:hover td{background:#fcfcfd;}
 .sb-item.active{background:rgba(99,102,241,.2);color:#a5b4fc;border-left-color:#6366f1;}
 .sb-badge{background:rgba(255,255,255,.15);color:#fff;font-size:10px;padding:1px 7px;border-radius:99px;font-weight:800;}
 .sb-item.active .sb-badge{background:#6366f1;}
-.sb-badge.warn{background:#dc2626;color:#fff;}
+.sb-badge.warn{background:#4f6fa8;color:#fff;}
 /* ver.20260616.04: 依頼事項パネル・所属機関情報行・パスワード説明 */
-.req-card{background:#fff;border:1px solid #fde68a;border-left:4px solid #f59e0b;border-radius:14px;padding:14px 16px;margin-bottom:18px;}
+.req-card{background:#fff;border:1px solid #e2e8f0;border-left:4px solid #1c3d6e;border-radius:14px;padding:14px 16px;margin-bottom:18px;}
 .req-card.ok{border-color:#bbf7d0;border-left-color:#22c55e;}
-.req-head{font-size:13px;font-weight:900;color:#92400e;margin-bottom:10px;}
+.req-head{font-size:13px;font-weight:900;color:#0f2040;margin-bottom:10px;}
 .req-card.ok .req-head{color:#15803d;}
 .req-clear{font-size:12.5px;color:#15803d;font-weight:700;}
-.req-item{display:flex;gap:10px;padding:10px 0;border-top:1px dashed #fde68a;}
+.req-item{display:flex;gap:10px;padding:10px 0;border-top:1px dashed #e2e8f0;}
 .req-item:first-of-type{border-top:none;}
 .req-ic{font-size:18px;flex-shrink:0;line-height:1.4;}
 .req-body{flex:1;min-width:0;}
 .req-ttl{font-size:12.5px;font-weight:800;color:#0f2040;}
 .req-sub{font-size:11px;color:#64748b;margin-top:3px;line-height:1.5;word-break:break-word;}
-.req-btn{display:inline-block;margin-top:8px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:11.5px;font-weight:800;padding:7px 14px;cursor:pointer;text-decoration:none;}
-.req-btn:hover{background:#d97706;}
+.req-btn{display:inline-block;margin-top:8px;background:#1c3d6e;color:#fff;border:none;border-radius:8px;font-size:11.5px;font-weight:800;padding:7px 14px;cursor:pointer;text-decoration:none;}
+.req-btn:hover{background:#0f2040;}
 /* ver.20260617.13: 種類別セクション＋案件入れ子 */
-.req-sec{padding:12px 0;border-top:1px dashed #fde68a;}
+.req-sec{padding:12px 0;border-top:1px dashed #e2e8f0;}
 .req-sec:first-of-type{border-top:none;padding-top:4px;}
 .req-sec-h{font-size:12.5px;font-weight:900;color:#0f2040;display:flex;align-items:center;gap:6px;}
-.req-sec-n{background:#f59e0b;color:#fff;font-size:10px;font-weight:800;padding:1px 8px;border-radius:99px;}
+.req-sec-n{background:#1c3d6e;color:#fff;font-size:10px;font-weight:800;padding:1px 8px;border-radius:99px;}
 .req-sec-note{font-size:11px;color:#64748b;line-height:1.6;margin:5px 0 7px;word-break:break-word;}
-.req-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:5px 0 5px 8px;border-left:2px solid #fde68a;margin:3px 0;}
+.req-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:5px 0 5px 8px;border-left:2px solid #cbd5e1;margin:3px 0;}
 .req-nm{font-size:12.5px;font-weight:700;color:#0f2040;}
 .req-as{font-size:10px;color:#94a3b8;font-weight:600;}
-.req-row-btn{margin-left:auto;background:#f59e0b;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:800;padding:5px 12px;cursor:pointer;text-decoration:none;}
-.req-row-btn:hover{background:#d97706;}
+.req-row-btn{margin-left:auto;background:#1c3d6e;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:800;padding:5px 12px;cursor:pointer;text-decoration:none;}
+.req-row-btn:hover{background:#0f2040;}
 /* ver.20260617.15: 企業ヒアリングフォーム 常時カード */
 .chf-card{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #bfdbfe;border-left:4px solid #2563eb;border-radius:14px;padding:14px 16px;margin-bottom:18px;flex-wrap:wrap;}
 .chf-main{flex:1;min-width:180px;}
 .chf-ttl{font-size:13px;font-weight:900;color:#1e40af;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .chf-tag{font-size:10px;font-weight:800;padding:1px 8px;border-radius:99px;}
-.chf-tag.todo{background:#dc2626;color:#fff;}
+.chf-tag.todo{background:#1c3d6e;color:#fff;}
 .chf-tag.done{background:#dcfce7;color:#15803d;}
 .chf-note{font-size:11px;color:#64748b;line-height:1.6;margin-top:4px;}
 .chf-btn{flex-shrink:0;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:800;padding:9px 16px;cursor:pointer;text-decoration:none;white-space:nowrap;}
@@ -258,13 +259,13 @@ tr:hover td{background:#fcfcfd;}
 .cr-btn:hover{background:#1d4ed8;}
 .cr-btn.cancel{background:#fff;color:#64748b;border:1px solid #cbd5e1;}
 /* ver.20260617.07: ニュース等 */
-.sb-badge-new{background:#dc2626;color:#fff;font-size:10px;padding:1px 7px;border-radius:99px;font-weight:800;}
+.sb-badge-new{background:#2563eb;color:#fff;font-size:10px;padding:1px 7px;border-radius:99px;font-weight:800;}
 .news-wrap{max-width:760px;margin:0 auto;padding:4px 2px 40px;}
 .news-head{font-size:18px;font-weight:800;color:#0f2040;margin:4px 2px 16px;display:flex;align-items:center;gap:8px;}
 .news-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:18px 20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(15,32,64,.06);}
 .news-card.unread{border-color:#fca5a5;box-shadow:0 0 0 2px rgba(220,38,38,.08);}
 .news-c-top{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;}
-.news-new-tag{background:#dc2626;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px;}
+.news-new-tag{background:#2563eb;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px;}
 .news-date{font-size:11.5px;color:#94a3b8;font-weight:700;}
 .news-title{font-size:15.5px;font-weight:800;color:#0f2040;margin:2px 0 10px;line-height:1.5;}
 .news-body{font-size:13.5px;color:#334155;line-height:1.85;white-space:pre-wrap;}
@@ -284,10 +285,12 @@ tr:hover td{background:#fcfcfd;}
 .main-wrap{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
 .main{flex:1;padding:18px 20px;overflow:auto;min-width:0;}
 /* ver.20260922.02: 対応が必要なタスクバー（全タブ共通・sticky） */
-.task-bar{display:none;background:linear-gradient(90deg,#dc2626,#ea580c);color:#fff;font-size:12.5px;font-weight:900;padding:9px 16px;cursor:pointer;align-items:center;gap:8px;position:sticky;top:0;z-index:140;box-shadow:0 2px 10px rgba(220,38,38,.3);}
+.task-bar{display:none;background:#1c3d6e;color:#fff;font-size:12.5px;font-weight:900;padding:9px 16px;cursor:pointer;align-items:center;gap:8px;position:sticky;top:0;z-index:140;box-shadow:0 2px 10px rgba(220,38,38,.3);}
 .task-bar.show{display:flex;}
+.task-bar.urgent{background:#dc2626;}
+.task-bar.urgent .tb-n{color:#dc2626;}
 .task-bar:active{opacity:.85;}
-.task-bar .tb-n{background:#fff;color:#dc2626;border-radius:99px;padding:1px 9px;font-size:12px;}
+.task-bar .tb-n{background:#fff;color:#1c3d6e;border-radius:99px;padding:1px 9px;font-size:12px;}
 .task-bar .tb-go{margin-left:auto;font-size:11px;font-weight:800;opacity:.9;white-space:nowrap;}
 @media(max-width:560px){ .task-bar{top:0;} }
 /* ver.20260922.01: モバイルをアプリ型UIに刷新（下部固定ナビ＋シート） */
@@ -312,7 +315,7 @@ tr:hover td{background:#fcfcfd;}
   .mnav-item:active{opacity:.6;}
   .mnav-item.active{color:#a5b4fc;}
   .mnav-ico{font-size:19px;line-height:1;}
-  .mnav-badge{position:absolute;top:0;right:calc(50% - 22px);background:#dc2626;color:#fff;border-radius:99px;font-size:8.5px;font-weight:800;padding:1px 5px;min-width:14px;text-align:center;}
+  .mnav-badge{position:absolute;top:0;right:calc(50% - 22px);background:#1c3d6e;color:#fff;border-radius:99px;font-size:8.5px;font-weight:800;padding:1px 5px;min-width:14px;text-align:center;}
   .mnav-badge.info{background:#6366f1;}
   /* その他シート */
   #mobileSheet{display:block;position:fixed;inset:0;z-index:500;pointer-events:none;}
@@ -358,7 +361,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261024.05</span>
+  <span class="header-ver">ver.20261024.06</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -494,8 +497,8 @@ var ST_EXTERNAL={
 var ST_EXT_COL={
   '雇用条件作成・企業確認':{bg:'#eff6ff',col:'#2563eb',bor:'#93c5fd'},
   '申請人サイン対応':{bg:'#fdf4ff',col:'#a21caf',bor:'#e9d5ff'},
-  '企業押印ご対応・書類収集・申請準備':{bg:'#fff7ed',col:'#ea580c',bor:'#fed7aa'},
-  '審査中':{bg:'#fef3c7',col:'#b45309',bor:'#fcd34d'},
+  '企業押印ご対応・書類収集・申請準備':{bg:'#eef2ff',col:'#4338ca',bor:'#c7d2fe'},
+  '審査中':{bg:'#ecfeff',col:'#0e7490',bor:'#a5f3fc'},
   '審査完了(受取対応中)':{bg:'#dbeafe',col:'#1d4ed8',bor:'#93c5fd'},
   '新在留カード(または認定証)発行済み':{bg:'#dcfce7',col:'#15803d',bor:'#86efac'}
 };
@@ -515,9 +518,9 @@ function agencyColor(status){
   if(status==='申請可能') return '#0891b2';
   if(status.indexOf('補正')>=0) return '#ef4444';
   if(status==='申請中') return '#2563eb';
-  if(status==='企業確認中') return '#f59e0b';
-  if(status.indexOf('大房')>=0) return '#f59e0b';
-  if(status.indexOf('企業')>=0) return '#ea580c';
+  if(status==='企業確認中') return '#4338ca';
+  if(status.indexOf('大房')>=0) return '#475569';
+  if(status.indexOf('企業')>=0) return '#4338ca';
   return '#64748b';
 }
 
@@ -736,7 +739,7 @@ function _cksPaceBadge(isT1, stage, applied, appActualStr, reqD, expire){
   var appActual=_cksParse(appActualStr);
   if(applied && stage<5){
     var days=appActual?D(today,appActual):null;
-    if(days!=null && days>45) return _cksPill('#92400e','#fef9c3','#f0d060','🟡','審査中（申請から'+days+'日経過）','審査の目安30〜45日を超えています。入管の審査状況によるもので、御社の遅れではありません。');
+    if(days!=null && days>45) return _cksPill('#1c3d6e','#eef4fd','#b9d0ee','🔵','審査中（申請から'+days+'日経過）','審査の目安30〜45日を超えています。入管の審査状況によるもので、御社の遅れではありません。');
     return _cksPill('#1c3d6e','#eef4fd','#b9d0ee','🔵','審査中'+(days!=null?'（申請から'+days+'日経過・目安30〜45日）':''),'');
   }
   if(isT1 || stage>=5){
@@ -803,7 +806,7 @@ function _cksKokkoAxisHtml(reqD, kokko, kokkoApplied){
     {nm:'許可', dt:'審査1〜2ヶ月', done:kyoka}
   ], false, kokko?('現在：'+esc(kokko)):'');
   if(!kokkoApplied){
-    ax+='<div style="font-size:11px;font-weight:800;color:#92400e;background:#fef9e8;border:1px solid #f0d060;border-radius:8px;padding:6px 10px;margin:2px 0 6px;">📌 国交省書類の最終提出期限：<b>特定活動の在留カードが発行されるまで</b>に、すべての書類のご提出が必要です（標準は受領日から45日以内）。</div>';
+    ax+='<div style="font-size:11px;font-weight:800;color:#1c3d6e;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;padding:6px 10px;margin:2px 0 6px;">📌 国交省書類の最終提出期限：<b>特定活動の在留カードが発行されるまで</b>に、すべての書類のご提出が必要です（標準は受領日から45日以内）。</div>';
   }
   return ax;
 }
@@ -822,8 +825,8 @@ function _cksNyukanAxisHtml(expireD, t1Applied){
 }
 // 最終提出期限の注意文（ver.20260921.21: 特定活動の在留カード発行まで基準に変更）
 function _cksFinalDlNote(finalD){
-  return '<div style="background:#fdeeee;border:1px solid #e5a3a3;border-radius:10px;padding:10px 14px;margin:8px 0;font-size:12px;color:#7a1f1f;line-height:1.7;">'
-    +'<b>⚠ 最終提出期限：特定活動の在留カードが発行されるまでに、すべての書類のご提出が必要です。</b><br>'
+  return '<div style="background:#f1f5f9;border:1px solid #cbd5e1;border-radius:10px;padding:10px 14px;margin:8px 0;font-size:12px;color:#1c3d6e;line-height:1.7;">'
+    +'<b>📌 最終提出期限：特定活動の在留カードが発行されるまでに、すべての書類のご提出が必要です。</b><br>'
     +'各期限に間に合わない場合は<b>特定活動の更新申請</b>が必要となり、申請工程が1回増えるため、その分の<b>在留カードの発行に係る費用が追加で発生</b>してしまいます。あらかじめご理解ください。</div>';
 }
 function _cksSchedule(c){
@@ -923,7 +926,7 @@ function _cksSchedule(c){
     h+=row('特定技能1号書類 提出期限','<b>'+_cksFmt(_cksAddM(t1dl,-1))+'</b>（特定技能1号申請の1ヶ月前）');
     h+=row('特定技能1号 申請期限','<b>'+_cksFmt(t1dl)+'</b>（特定活動の在留期限の前日）');
   } else if(!kokkoApplied && !_t1){
-    h+='<div style="background:#fef9e8;border:1px solid #f0d060;border-radius:8px;padding:8px 12px;margin-top:6px;font-size:11.5px;color:#6b4e0a;line-height:1.6;">⏸ 特定技能1号用の企業書類（登記事項証明書・住民票・納税証明書など）は<b>まだ取得しないでください</b>。発行から3ヶ月以内でないと使えず、期限切れで再提出になります。国交省申請後にご案内します。</div>';
+    h+='<div style="background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;padding:8px 12px;margin-top:6px;font-size:11.5px;color:#1c3d6e;line-height:1.6;">⏸ 特定技能1号用の企業書類（登記事項証明書・住民票・納税証明書など）は<b>まだ取得しないでください</b>。発行から3ヶ月以内でないと使えず、期限切れで再提出になります。国交省申請後にご案内します。</div>';
   } else if(_t1 && expire){
     var t1dl2=_cksAdd(expire,-1);
     h+=row('特定技能1号書類 提出期限','<b>'+_cksFmt(_cksAddM(t1dl2,-1))+'</b>（特定技能1号申請の1ヶ月前）');
@@ -960,7 +963,7 @@ function _kokkoDeadlineHtml(){
     : (days<=7 ? '<span style="background:#f59e0b;color:#fff;border-radius:6px;padding:2px 8px;font-weight:900;">⏳ あと'+days+'日</span>'
                : '<span style="background:#eef4fd;color:#1c3d6e;border-radius:6px;padding:2px 8px;font-weight:800;">⏳ あと'+days+'日</span>');
   var label=annaiD?('ご案内日から'+DL_RULES.kokkoDays+'日以内'):('案件受領日から'+DL_RULES.kokkoDays+'日以内');
-  return '<div style="font-size:12px;font-weight:800;color:'+(over?'#b91c1c':'#b45309')+';background:'+(over?'#fdeeee':'#fffbeb')+';border:1px solid '+(over?'#e5a3a3':'#fde68a')+';border-radius:8px;padding:8px 12px;margin:4px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">📄 国交省書類の提出期限 〜'+_cksFmt(due)+'（'+label+'）'+chip+'</div>';
+  return '<div style="font-size:12px;font-weight:800;color:'+(over?'#b91c1c':(days<=7?'#b45309':'#1c3d6e'))+';background:'+(over?'#fdeeee':(days<=7?'#fffbeb':'#f1f5f9'))+';border:1px solid '+(over?'#e5a3a3':(days<=7?'#fde68a':'#cbd5e1'))+';border-radius:8px;padding:8px 12px;margin:4px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">📄 国交省書類の提出期限 〜'+_cksFmt(due)+'（'+label+'）'+chip+'</div>';
 }
 function _lastPdfUrl(arr){ if(Array.isArray(arr)&&arr.length){ var l=arr[arr.length-1]; if(l&&l.url) return l.url; } return ''; }function _pdfChip(label,url,color,icon){
   if(url) return '<a class="pdf-chip" style="background:'+color+';" href="'+esc(url)+'" target="_blank" rel="noopener">'+icon+' '+label+'</a>';
@@ -1041,7 +1044,7 @@ function _renderTaskBar(t){
   var bar=document.getElementById('taskBar');
   if(!bar) return;
   if(t.total>0){
-    bar.className='task-bar show';
+    bar.className='task-bar show'+(window._reqOverdueAny?' urgent':'');
     bar.innerHTML='⚠ 対応が必要なタスク <span class="tb-n">'+t.total+'件</span><span class="tb-go">タップして確認 ›</span>';
   } else {
     bar.className='task-bar';
@@ -1176,8 +1179,8 @@ function toggleDashAlert(){
 function _dashHero(total,soon,expired){
   return '<div class="hero-cards">'
     +'<div class="hero-card"><div class="hl">受入人数</div><div class="hn">'+total+'<small>名</small></div></div>'
-    +'<div class="hero-card '+((soon+expired)>0?'hot':'')+'" onclick="openList(\'soon\')"><div class="hl">在留期限90日以内</div><div class="hn">'+(soon+expired)+'<small>名</small></div></div>'
-    +'<div class="hero-card '+(missingDocCount>0?'hot':'')+'" onclick="switchGroup(\'docs\')"><div class="hl">未提出書類</div><div class="hn">'+missingDocCount+'<small>件</small></div></div>'
+    +'<div class="hero-card '+((expired>0||allCases.some(function(c){ if(!_expireTracked(c)) return false; var i=expInfo(c.expire); return i.days!=null&&i.days<=30; }))?'hot':'')+'" onclick="openList(\'soon\')"><div class="hl">在留期限90日以内</div><div class="hn">'+(soon+expired)+'<small>名</small></div></div>'
+    +'<div class="hero-card '+((missingDocCount>0&&window._reqOverdueAny)?'hot':'')+'" onclick="switchGroup(\'docs\')"><div class="hl">未提出書類</div><div class="hn">'+missingDocCount+'<small>件</small></div></div>'
     +'</div>';
 }
 var _NAT_NORM={'INDONESIA':'インドネシア','VIETNAM':'ベトナム','VIET NAM':'ベトナム','MYANMAR':'ミャンマー','BURMA':'ミャンマー','CAMBODIA':'カンボジア','PHILIPPINES':'フィリピン','NEPAL':'ネパール','CHINA':'中国','THAILAND':'タイ','SRI LANKA':'スリランカ','MONGOLIA':'モンゴル','BANGLADESH':'バングラデシュ','INDIA':'インド','LAOS':'ラオス'};
@@ -1352,7 +1355,7 @@ function _dlChip(due){
   if(!due) return '';
   var today=new Date(); today.setHours(0,0,0,0);
   var days=Math.round((due-today)/86400000);
-  var d='<span style="font-size:10.5px;font-weight:800;color:'+(days<0?'#b91c1c':'#b45309')+';">〜'+(due.getMonth()+1)+'/'+due.getDate()+'</span> ';
+  var d='<span style="font-size:10.5px;font-weight:800;color:'+(days<0?'#b91c1c':(days<=7?'#b45309':'#475569'))+';">〜'+(due.getMonth()+1)+'/'+due.getDate()+'</span> ';
   if(days<0) return d+'<span style="background:#dc2626;color:#fff;border-radius:6px;padding:1px 7px;font-size:10.5px;font-weight:900;">⚠ 提出期限切れ</span>';
   if(days<=7) return d+'<span style="background:#f59e0b;color:#fff;border-radius:6px;padding:1px 7px;font-size:10.5px;font-weight:900;">⏳ あと'+days+'日</span>';
   return d+'<span style="background:#eef4fd;color:#1c3d6e;border-radius:6px;padding:1px 7px;font-size:10.5px;font-weight:800;">⏳ あと'+days+'日</span>';
@@ -1402,7 +1405,7 @@ function renderRequests(){
     if(over) chip='<span style="background:#dc2626;color:#fff;border-radius:6px;padding:2px 8px;font-weight:900;">⚠ 提出期限を'+(-days)+'日超過・至急ご対応ください</span>';
     else if(days<=7) chip='<span style="background:#f59e0b;color:#fff;border-radius:6px;padding:2px 8px;font-weight:900;">⏳ あと'+days+'日</span>';
     else chip='<span style="background:#eef4fd;color:#1c3d6e;border-radius:6px;padding:2px 8px;font-weight:800;">⏳ あと'+days+'日</span>';
-    return '<div style="font-size:11px;font-weight:800;color:'+(over?'#b91c1c':'#b45309')+';margin:2px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">📄 提出期限 〜'+_cksFmt(due)+'（'+label+'）'+chip+'</div>';
+    return '<div style="font-size:11px;font-weight:800;color:'+(over?'#b91c1c':(days<=7?'#b45309':'#475569'))+';margin:2px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">📄 提出期限 〜'+_cksFmt(due)+'（'+label+'）'+chip+'</div>';
   }
   var missing=[];
   Object.keys(coDocs).forEach(function(name){ if(docInList(coDocs[name]) && docState(coDocs[name])==='todo') missing.push(name); });
@@ -1502,12 +1505,14 @@ function renderRequests(){
       +'<button class="req-btn" onclick="switchGroup(\'orginfo\')">所属機関情報を開く</button>'));
   }
   var _title=(_tk.total>0)?('🚨 対応が必要なタスク（'+_tk.total+'件）'):'📌 ご依頼事項';
+  window._reqOverdueAny=_overdueAny; // ver.20261024.06: 提出期限切れがあるときだけタスクバーを赤に
+  try{ var _tb=document.getElementById('taskBar'); if(_tb) _tb.classList.toggle('urgent',!!_overdueAny); }catch(e){}
   var urgentBar=_overdueAny?'<div style="background:#dc2626;color:#fff;font-size:12px;font-weight:900;border-radius:8px;padding:8px 12px;margin:4px 0 10px;">🚨 提出期限を過ぎたご依頼があります。申請スケジュール全体に影響しますので、至急ご対応いただくか、「📅 いつ出せますか？」に日付を入れてください。</div>':'';
   if(!secs.length){
     return '<div class="req-card ok" id="reqCard"><div class="req-head">📌 ご依頼事項</div>'
       +'<div class="req-clear">✅ 現在ご対応いただく依頼事項はありません。</div></div>';
   }
-  return '<div class="req-card" id="reqCard"'+(_overdueAny?' style="border:2px solid #dc2626;"':(_tk.total>0?' style="border:2px solid #ea580c;"':''))+'><div class="req-head">'+_title+'</div>'+urgentBar+secs.join('')+'</div>';
+  return '<div class="req-card" id="reqCard"'+(_overdueAny?' style="border:2px solid #dc2626;"':(_tk.total>0?' style="border:2px solid #1c3d6e;"':''))+'><div class="req-head">'+_title+'</div>'+urgentBar+secs.join('')+'</div>';
 }
 /* ステータス変更日を「（M月D日時点）」表記にする（DBはJST=+09:00シリアライズなので日付部をそのまま使用） */
 function _asOf(v){ if(!v) return ''; var m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})/); if(!m) return ''; return '（'+(+m[2])+'月'+(+m[3])+'日時点）'; }
@@ -1730,7 +1735,7 @@ function _kyoRenderDests(){
   if(!offItems.length){ h+='<div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">就業場所の住所が登録されていません</div>'; }
   offItems.forEach(function(it){ h+='<label style="display:flex;gap:8px;align-items:flex-start;padding:5px 2px;font-size:12px;cursor:pointer;"><input type="checkbox" class="kyoDest" value="'+it.idx+'" style="margin-top:2px;"><span><b>'+esc(it.city)+'</b> <span style="color:#94a3b8;">'+esc(it.sub)+'</span></span></label>'; });
   h+='<div style="font-size:11px;font-weight:700;color:#2563eb;margin:10px 0 4px;">🏠 申請人の住所</div>';
-  h+='<div style="font-size:10.5px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:7px 9px;line-height:1.6;margin-bottom:6px;">⚠️ 提出先は「<b>転入予定先</b>（その市区町村に住む予定）」です。下は申請人の<b>現住所</b>からの推定候補のため、転入予定先と異なる場合があります。必ずご確認ください。</div>';
+  h+='<div style="font-size:10.5px;color:#1c3d6e;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:7px;padding:7px 9px;line-height:1.6;margin-bottom:6px;">⚠️ 提出先は「<b>転入予定先</b>（その市区町村に住む予定）」です。下は申請人の<b>現住所</b>からの推定候補のため、転入予定先と異なる場合があります。必ずご確認ください。</div>';
   if(!perItems.length){ h+='<div style="font-size:11px;color:#94a3b8;">申請人住所が登録されていません</div>'; }
   perItems.forEach(function(it){ h+='<label style="display:flex;gap:8px;align-items:flex-start;padding:5px 2px;font-size:12px;cursor:pointer;"><input type="checkbox" class="kyoDest" value="'+it.idx+'" style="margin-top:2px;"><span><b>'+esc(it.cityName)+'</b> <span style="color:#94a3b8;">'+esc(it.names.slice(0,3).join('・'))+(it.names.length>3?(' 他'+(it.names.length-3)+'名'):'')+'</span></span></label>'; });
   h+='<div style="font-size:11px;font-weight:700;color:#9333ea;margin:12px 0 4px;">✍️ 提出先を直接指定（任意）</div>';

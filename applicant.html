@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>申請人マイページ | 大房行政書士法人</title>
+<!-- ver.20261024.06: 色を整理。黄色・赤は提出期限が迫っている（7日以内＝黄、期限切れ＝赤）ところだけに使い、それ以外は紺・グレー系に統一（あなたへのお願い、未提出チップ、タブのバッジ、一時帰国の案内、進捗ステータスの押印・審査中、国交省ステータス）。 -->
 <!-- ver.20261024.05: 提出期限・申請スケジュールの日数をアンシスの「テンプレート」で編集できるように（settings.deadline_rules を RPC get_deadline_rules で読む。読めなければ既定値）。 -->
 <!-- ver.20261024.04: 申請までのスケジュールに「申請準備」を追加（サイン・押印が済んだら申請目標日までの残りはすべて申請準備）。8言語。 -->
 <!-- ver.20261024.03: 進捗タブに「📅 申請までのスケジュール」（受領→条件書確認→サイン書類作成→サイン・書類提出→申請、各3営業日＝約3週間で申請。在留期限の2週間前が早ければ逆算して前倒し）を8言語で追加。サイン・書類の提出期限は逆算日が早ければそちら（依頼日より前にはしない）。 -->
@@ -36,7 +37,7 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .tabs{display:flex;gap:4px;background:#fff;border-bottom:1px solid #e2e8f0;padding:0 12px;position:sticky;top:45px;z-index:150;overflow-x:auto;}
 .tab{padding:11px 14px;font-size:12px;font-weight:700;color:#64748b;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;}
 .tab.active{color:#0f2040;border-bottom-color:#0f2040;}
-.tab .badge{display:inline-block;margin-left:5px;background:#dc2626;color:#fff;border-radius:99px;font-size:9px;font-weight:800;padding:1px 6px;}
+.tab .badge{display:inline-block;margin-left:5px;background:#1c3d6e;color:#fff;border-radius:99px;font-size:9px;font-weight:800;padding:1px 6px;}
 .wrap{max-width:680px;margin:0 auto;padding:16px;}
 .section-title{font-size:14px;font-weight:800;color:#0f2040;margin:6px 0 10px;line-height:1.5;}
 .phase-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin-bottom:16px;text-align:center;}
@@ -65,7 +66,7 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .sign-btn{display:inline-block;text-align:center;line-height:1.7;background:#7c3aed;color:#fff;font-size:13px;font-weight:800;padding:9px 16px;border-radius:10px;text-decoration:none;}
 .sign-btn.view{background:#0f2040;}
 .sign-meta{padding:0 16px 4px 46px;font-size:11.5px;color:#64748b;line-height:1.6;}
-.sign-saving{display:inline-block;line-height:1.7;font-size:12.5px;font-weight:700;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:8px 12px;}
+.sign-saving{display:inline-block;line-height:1.7;font-size:12.5px;font-weight:700;color:#1c3d6e;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:9px;padding:8px 12px;}
 .doc-help-l{font-size:10.5px;font-weight:800;color:#2563eb;margin-bottom:4px;}
 .doc-help-v{font-size:12px;color:#1e3a5f;line-height:1.65;background:#eff6ff;border-left:3px solid #3b82f6;border-radius:8px;padding:9px 11px;white-space:pre-line;}
 .doc-help-img{margin-top:8px;text-align:left;}
@@ -74,7 +75,7 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .doc-name{flex:1;font-size:12px;font-weight:600;}
 .doc-state{font-size:10px;font-weight:800;padding:2px 9px;border-radius:99px;flex-shrink:0;}
 .s-done{background:#f0fdf4;color:#15803d;border:1px solid #86efac;}
-.s-todo{background:#fff7ed;color:#ea580c;border:1px solid #fdba74;}
+.s-todo{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;}
 .upload-btn{display:inline-block;line-height:1.7;background:#16a34a;color:#fff;text-decoration:none;font-size:12px;font-weight:800;padding:11px 18px;border-radius:10px;margin-bottom:14px;box-shadow:0 2px 6px rgba(22,163,74,.25);}
 .upload-btn:hover{background:#15803d;}
 .pdf-list{display:flex;flex-direction:column;gap:10px;}
@@ -89,13 +90,13 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .todo-state{font-size:10px;font-weight:800;padding:3px 10px;border-radius:99px;flex-shrink:0;}
 .todo-btn{font-size:11px;font-weight:800;padding:5px 12px;border-radius:8px;background:#1F4E79;color:#fff;text-decoration:none;flex-shrink:0;white-space:nowrap;}
 .todo-btn:active{opacity:.8;}
-.next-box{background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:14px 16px;margin-bottom:16px;}
+.next-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:14px 16px;margin-bottom:16px;}
 .next-box.ok{background:#f0fdf4;border-color:#86efac;}
-.next-l{font-size:11px;font-weight:800;color:#92400e;margin-bottom:4px;}
+.next-l{font-size:11px;font-weight:800;color:#1c3d6e;margin-bottom:4px;}
 .next-box.ok .next-l{color:#15803d;}
 .next-t{font-size:13.5px;font-weight:700;color:#0f2040;line-height:1.6;}
 .exp-note{font-size:11px;color:#64748b;margin:-4px 0 14px;padding:0 2px;line-height:1.6;}
-.tr-report{font-size:14.5px;font-weight:800;color:#92400e;background:#fffbeb;border:1.5px solid #fcd34d;border-radius:11px;padding:13px 15px;margin:8px 0 16px;line-height:1.85;}
+.tr-report{font-size:14.5px;font-weight:800;color:#1c3d6e;background:#f1f5f9;border:1.5px solid #cbd5e1;border-radius:11px;padding:13px 15px;margin:8px 0 16px;line-height:1.85;}
 .tr-report rt{font-weight:600;}
 .contact-btns{display:flex;gap:10px;}
 .cbtn{flex:1;display:block;text-align:center;line-height:1.7;text-decoration:none;font-size:13px;font-weight:800;padding:13px;border-radius:11px;color:#fff;}
@@ -169,7 +170,7 @@ body{line-height:1.45;}
 .cr-btn.cancel{background:#f1f5f9;color:#dc2626;border:1px solid #fecaca;}
 .cr-sent-badge{display:inline-block;background:#f0fdf4;color:#15803d;border:1px solid #86efac;border-radius:99px;font-size:10px;font-weight:800;padding:2px 10px;margin-bottom:6px;}
 .cr-sent-at{font-size:11px;color:#94a3b8;margin-bottom:8px;}
-.cr-pending{font-size:11px;color:#b45309;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:7px 10px;margin-top:10px;}
+.cr-pending{font-size:11px;color:#1c3d6e;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;padding:7px 10px;margin-top:10px;}
 .cr-msg{font-size:11.5px;font-weight:700;margin-top:8px;min-height:14px;}
 /* ver.20261002.01: 書類を送りやすく */
 .send-bar{position:fixed;left:0;right:0;bottom:0;z-index:180;background:rgba(255,255,255,.96);border-top:1px solid #e2e8f0;padding:10px 14px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -4px 14px rgba(15,32,64,.08);}
@@ -210,7 +211,7 @@ details.doc-help-d[open]>summary::after{content:' ▲';}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;flex:none;white-space:nowrap;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title" id="hdrTitle">申請人マイページ</span>
-  <span class="header-ver">ver.20261024.05</span>
+  <span class="header-ver">ver.20261024.06</span>
   <div class="header-right">
     <div id="langSwitch" class="lang-switch"></div>
     <div class="header-org" id="headerName" style="font-size:13px;font-weight:700;opacity:.95;max-width:none;">読み込み中...</div>
@@ -624,8 +625,8 @@ var ST_EXTERNAL={
 var ST_EXT_COL={
   '雇用条件作成・企業確認':{bg:'#eff6ff',col:'#2563eb',bor:'#93c5fd'},
   '申請人サイン対応':{bg:'#fdf4ff',col:'#a21caf',bor:'#e9d5ff'},
-  '企業押印ご対応・書類収集・申請準備':{bg:'#fff7ed',col:'#ea580c',bor:'#fed7aa'},
-  '審査中':{bg:'#fef3c7',col:'#b45309',bor:'#fcd34d'},
+  '企業押印ご対応・書類収集・申請準備':{bg:'#eef2ff',col:'#4338ca',bor:'#c7d2fe'},
+  '審査中':{bg:'#ecfeff',col:'#0e7490',bor:'#a5f3fc'},
   '審査完了(受取対応中)':{bg:'#dbeafe',col:'#1d4ed8',bor:'#93c5fd'},
   '新在留カード(または認定証)発行済み':{bg:'#dcfce7',col:'#15803d',bor:'#86efac'}
 };
@@ -644,9 +645,9 @@ function agencyColor(status){
   if(status==='申請可能') return '#0891b2';
   if(status.indexOf('補正')>=0) return '#ef4444';
   if(status==='申請中') return '#2563eb';
-  if(status==='企業確認中') return '#f59e0b';
-  if(status.indexOf('大房')>=0) return '#f59e0b';
-  if(status.indexOf('企業')>=0) return '#ea580c';
+  if(status==='企業確認中') return '#4338ca';
+  if(status.indexOf('大房')>=0) return '#475569';
+  if(status.indexOf('企業')>=0) return '#4338ca';
   return '#64748b';
 }
 
@@ -959,7 +960,7 @@ function _apDlHtml(d){
   var ds=(d.getMonth()+1)+'/'+d.getDate();
   var chip=n<0?'<span style="background:#dc2626;color:#fff;border-radius:6px;padding:1px 7px;font-weight:900;">⚠ '+t('dl_over')+'</span>'
     :'<span style="background:'+(n<=7?'#f59e0b;color:#fff':'#eef4fd;color:#1c3d6e')+';border-radius:6px;padding:1px 7px;font-weight:800;">⏳ '+t('dl_left',{n:n})+'</span>';
-  return '<div style="font-size:11px;font-weight:800;color:'+(n<0?'#b91c1c':'#b45309')+';margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">📄 '+t('dl_by',{d:ds})+' '+chip+'</div>';
+  return '<div style="font-size:11px;font-weight:800;color:'+(n<0?'#b91c1c':(n<=7?'#b45309':'#475569'))+';margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">📄 '+t('dl_by',{d:ds})+' '+chip+'</div>';
 }
 function renderTodo(){
   var hAns=hearingAnswered();
