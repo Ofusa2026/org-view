@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261024.02: 押印のお願い・1-6号のご確認の提出期限を「依頼（案シスのステータスが企業押印返送待ち／1-6企業確認待ちに変わった日＝status_date）から3営業日」に変更（O-Linkの建設申請スケジュールに合わせた）。在留期限の方が早ければ依頼当日。 -->
 <!-- ver.20261024.01: 対応が必要なタスクに提出期限を追加・強化（O-Linkと同じルール）。入管書類（建設以外）＝申請前の案件の「受領日+5営業日と在留期限30日前の早いほう」、国交省書類＝45日ルールに特定活動の在留期限4か月前（推奨）を追加、押印＝申請目標日（受領日+15営業日と在留期限14日前の早いほう）、1-6号確認＝受領日+5営業日。期限切れの書類行に「📅 いつ出せますか？」（取得予定日・yotei::で案シスと連動）。ダッシュボードに「❓ よくある質問」（就労開始・特例期間中の一時帰国・カード交付まで・審査期間＝get_review_stats直近3か月実績）。 -->
 <!-- ver.20261005.01: オープンケア協同組合・グローバルパートナーズの企業には「所属機関（企業）ヒアリングフォーム」を出さない（提出書類タブのボタン・ダッシュボードのカード・対応が必要なタスクの「企業ヒアリング未回答」）。機関名は前方一致（「アライズ様（オープンケア協同組合）」のような括弧内は対象外）。この会社の案件の登録支援機関がすべて該当するときだけ非表示。 -->
 <!-- ver.20261002.01: スマホのUI改修。人材一覧を横スクロールの表→タップしやすいカード（氏名・進捗・在留期限・国籍/種別/在留資格・受付番号）に、検索欄を追加。ダッシュボードの重複カード（全申請件数〜・期限アラート・未提出の注意書き）をスマホでは非表示にして「対応が必要なタスク」→期限が近い人材→人数の順に集約。提出書類タブは画面下に「📤 書類をアップロード（未提出n件）」を固定表示。パソコン表示は従来どおり。 -->
@@ -354,7 +355,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261024.01</span>
+  <span class="header-ver">ver.20261024.02</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -1259,7 +1260,10 @@ function _caseDl(c){
   if(exp){ ny=_dlMin(ny,_cksAdd(exp,-DL_RULES.nyukanBeforeExpire)); ap=_dlMin(ap,_cksAdd(exp,-DL_RULES.applyBeforeExpire)); }
   // 受領した時点で在留期限が近い案件でも、受領日から2営業日（押印は5営業日）より前にはしない
   if(fresh){ var m2=_cksAddBiz(req,2), m5=_cksAddBiz(req,5); if(ny&&ny<m2) ny=m2; if(ap&&ap<m5) ap=m5; }
-  return {nyukan:ny, apply:ap};
+  // 1-6号確認・サイン・押印＝依頼（案シスのステータスが確認待ち／返送待ちに変わった日）から3営業日（O-Linkの建設申請スケジュールと同じ）。在留期限の方が早ければ依頼当日
+  var sd=_cksParse(c.status_date), seal=null;
+  if(sd){ seal=_cksAddBiz(sd,3); var ex0=_cksParse(c.expire); if(ex0 && ex0<seal) seal=sd; }
+  return {nyukan:ny, apply:ap, seal:seal};
 }
 // 期限チップ（あとN日／期限切れ）
 function _dlChip(due){
@@ -1379,14 +1383,14 @@ function renderRequests(){
   var oshi=allCases.filter(function(c){ return String(c.status||'').indexOf('企業押印返送待ち')>=0; });
   if(oshi.length){
     secs.push(_reqSection('🖊️','押印のお願い', oshi.length,
-      oshi.map(function(c){ return _reqRow(c,'<span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;">'+_dlChip(_caseDl(c).apply)+'</span>'); }).join(''),
+      oshi.map(function(c){ return _reqRow(c,'<span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;">'+_dlChip(_caseDl(c).seal)+'</span>'); }).join(''),
       '下記の方の書類に押印のうえ、ご返送をお願いします。'));
   }
   // 1-6企業確認待ち
   var kk=allCases.filter(function(c){ return String(c.status||'').indexOf('1-6企業確認待ち')>=0; });
   if(kk.length){
     secs.push(_reqSection('📑','雇用契約書（参考様式1-6号）のご確認', kk.length,
-      kk.map(function(c){ return _reqRow(c,'<span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;">'+_dlChip(_caseDl(c).nyukan)+'</span>'); }).join(''),
+      kk.map(function(c){ return _reqRow(c,'<span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;">'+_dlChip(_caseDl(c).seal)+'</span>'); }).join(''),
       'お送りした内容をご確認のうえ、問題なければ担当者までご連絡ください。'));
   }
   // 注: ヒアリングフォーム回答待ち(送付済)は「人材(申請人)側」のヒアリングのため、会社の依頼事項には出さない

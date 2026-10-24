@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>申請人マイページ | 大房行政書士法人</title>
+<!-- ver.20261024.02: サインの提出期限を「依頼（案シスのステータスがサイン書類返送待ちに変わった日＝status_date）から3営業日」に変更（O-Linkの建設申請スケジュールに合わせた）。在留期限の方が早ければ依頼当日。applicant_view_get に status_date（audit_log由来）を追加。 -->
 <!-- ver.20261024.01: 進捗タブの「あなたへのお願い」に提出期限を追加（O-Link・所属機関ページと同じルール：書類＝受領日+5営業日と在留期限30日前の早いほう、サイン＝受領日+15営業日と在留期限14日前の早いほう。受領日から45日超は在留期限基準のみ。建設の特定活動で国交省申請前は書類の期限なし）。期限切れは「取得予定日に日付を入れてください」と表示し、提出書類タブの取得予定日入力を赤枠に。サイン書類返送待ちのとき「3. サイン書類にサインして返送」を表示。進捗タブに「❓ よくある質問」（いつから働けるか・審査中の一時帰国・カード交付まで・審査期間＝get_review_stats直近3か月実績）を8言語で追加。applicant_view_get に request_date を追加。 -->
 <!-- ver.20261002.01: スマホで書類を送りやすく。画面下に「📤 書類をアップロード（残n件）」の固定ボタン、提出書類タブは未提出→提出済み（折りたたみ）の順、未提出の各書類に「📤 送る」ボタン、取得方法・説明はタップで開く形に。進捗タブの「必要書類提出」に「書類を見る」ボタン。スマホではヘッダーを小さくし、タブを上に固定。アイコンの二重表示（📄📄・📤📤）を修正。8言語対応。 -->
 <!-- ver.20260928.01: 提出書類タブの未提出書類に「📅取得予定日」入力を追加。入力するとRPC applicant_view_set_yotei で自分の案件のdoc_checkに yotei:: マーカーで保存（案シス・所属機関ページと連動）。8言語対応。 -->
@@ -206,7 +207,7 @@ details.doc-help-d[open]>summary::after{content:' ▲';}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;flex:none;white-space:nowrap;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title" id="hdrTitle">申請人マイページ</span>
-  <span class="header-ver">ver.20261024.01</span>
+  <span class="header-ver">ver.20261024.02</span>
   <div class="header-right">
     <div id="langSwitch" class="lang-switch"></div>
     <div class="header-org" id="headerName" style="font-size:13px;font-weight:700;opacity:.95;max-width:none;">読み込み中...</div>
@@ -866,6 +867,9 @@ function _apDeadlines(){
   // 建設の特定活動で国交省の申請前は、入管の書類はまだ集めない（期限を出さない）
   var KO=['申請済み','補正可能','補正完了','補正未着手','完了(許可済)','完了'];
   if(String(c.residence_status||'')==='特定活動' && /建設/.test(String(c.applicant_field||'')) && KO.indexOf(getKokkoStatus(c))<0) docs=null;
+  // サイン＝依頼（案シスのステータスがサイン書類返送待ちに変わった日）から3営業日（O-Linkの建設申請スケジュールと同じ）。在留期限の方が早ければ依頼当日
+  var sd=_apParse(c.status_date);
+  if(sd){ var ex0=_apParse(c.expire); sign=_apAddBiz(sd,3); if(ex0 && ex0<sign) sign=sd; }
   return {docs:docs, sign:sign};
 }
 function _apOverdue(d){ if(!d) return false; var t=new Date(); t.setHours(0,0,0,0); return d<t; }
