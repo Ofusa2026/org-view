@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>申請人マイページ | 大房行政書士法人</title>
+<!-- ver.20261024.07: ①書類のご案内（案内日＝req::）が入った未提出書類があり、まだ確認していなければ、最初に「📋 提出が必要な書類のご確認」画面（書類名・説明・「◯/◯までに提出してください」・8言語）。「提出が必要な書類を確認しました」で doc_check の docconfirm:: に日時を保存（RPC applicant_view_confirm_docs）して進捗タブへ。確認後に新しく案内された書類があればまた表示。②提出期限の日数を登録支援機関ごとに変えられるように（deadline_rules.orgs）。 -->
 <!-- ver.20261024.06: 色を整理。黄色・赤は提出期限が迫っている（7日以内＝黄、期限切れ＝赤）ところだけに使い、それ以外は紺・グレー系に統一（あなたへのお願い、未提出チップ、タブのバッジ、一時帰国の案内、進捗ステータスの押印・審査中、国交省ステータス）。 -->
 <!-- ver.20261024.05: 提出期限・申請スケジュールの日数をアンシスの「テンプレート」で編集できるように（settings.deadline_rules を RPC get_deadline_rules で読む。読めなければ既定値）。 -->
 <!-- ver.20261024.04: 申請までのスケジュールに「申請準備」を追加（サイン・押印が済んだら申請目標日までの残りはすべて申請準備）。8言語。 -->
@@ -211,7 +212,7 @@ details.doc-help-d[open]>summary::after{content:' ▲';}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;flex:none;white-space:nowrap;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title" id="hdrTitle">申請人マイページ</span>
-  <span class="header-ver">ver.20261024.06</span>
+  <span class="header-ver">ver.20261024.07</span>
   <div class="header-right">
     <div id="langSwitch" class="lang-switch"></div>
     <div class="header-org" id="headerName" style="font-size:13px;font-weight:700;opacity:.95;max-width:none;">読み込み中...</div>
@@ -399,6 +400,12 @@ var TR={
  faq_q4:{ja:'許可が出るまで、どれくらいかかりますか？',en:'How long until permission is granted?',vi:'Mất bao lâu để được cấp phép?',id:'Berapa lama sampai izin keluar?',zh:'到获得许可需要多长时间？',km:'តើត្រូវចំណាយពេលប៉ុន្មាន ទើបទទួលបានការអនុញ្ញាត?',my:'ခွင့်ပြုချက်ရဖို့ ဘယ်လောက်ကြာမလဲ?',th:'ต้องใช้เวลานานเท่าไหร่กว่าจะได้รับอนุญาต?'},
  faq_a4:{ja:'大房行政書士法人の直近3か月の実績では、あなたと同じ種類の申請は<b>ふつう約{m}日</b>、長くても{p}日以内（8割の人）です。入管が込み合う時期は長くなることがあります。',en:'Based on our results for the last 3 months, applications of the same type as yours took <b>about {m} days</b> typically, and within {p} days for 80% of people. It may take longer when Immigration is busy.',vi:'Theo kết quả 3 tháng gần nhất của chúng tôi, hồ sơ cùng loại với bạn <b>thường mất khoảng {m} ngày</b>, 80% người nhận kết quả trong vòng {p} ngày. Có thể lâu hơn khi Cục xuất nhập cảnh đông.',id:'Berdasarkan hasil kami 3 bulan terakhir, permohonan yang sama jenisnya dengan Anda <b>biasanya sekitar {m} hari</b>, dan 80% selesai dalam {p} hari. Bisa lebih lama saat imigrasi sedang ramai.',zh:'根据我们最近3个月的实绩，与您同类的申请<b>通常约{m}天</b>，80%的人在{p}天以内。入管繁忙时期可能会更久。',km:'យោងតាមលទ្ធផល 3 ខែចុងក្រោយរបស់យើង ពាក្យស្នើសុំប្រភេទដូចអ្នក <b>ជាធម្មតាប្រហែល {m} ថ្ងៃ</b> ហើយ 80% បានក្នុងរយៈពេល {p} ថ្ងៃ។ អាចយូរជាងនេះ នៅពេលការិយាល័យអន្តោប្រវេសន៍មមាញឹក។',my:'ကျွန်ုပ်တို့၏ နောက်ဆုံး ၃ လ ရလဒ်အရ သင်နှင့် အမျိုးအစားတူ လျှောက်လွှာများသည် <b>ပုံမှန် ရက် {m} ရက်ခန့်</b> ကြာပြီး ၈၀% မှာ ရက် {p} ရက်အတွင်း ပြီးပါတယ်။ လူဝင်မှုကြီးကြပ်ရေး အလုပ်များချိန်တွင် ပိုကြာနိုင်ပါတယ်။',th:'จากผลงาน 3 เดือนล่าสุดของเรา คำขอประเภทเดียวกับคุณ <b>ปกติใช้เวลาประมาณ {m} วัน</b> และ 80% เสร็จภายใน {p} วัน ช่วงที่ตม.ยุ่งอาจใช้เวลานานกว่านี้'},
  faq_a4_none:{ja:'申請の種類や入管の込み具合によって変わります。担当者に確認してください。',en:'It depends on the type of application and how busy Immigration is. Please ask us.',vi:'Tùy loại hồ sơ và mức độ đông của Cục xuất nhập cảnh. Vui lòng hỏi người phụ trách.',id:'Tergantung jenis permohonan dan kesibukan imigrasi. Silakan tanyakan kepada kami.',zh:'视申请种类和入管繁忙程度而定，请咨询负责人。',km:'អាស្រ័យលើប្រភេទពាក្យស្នើសុំ និងភាពមមាញឹករបស់ការិយាល័យអន្តោប្រវេសន៍។ សូមសួរអ្នកទទួលបន្ទុក។',my:'လျှောက်လွှာအမျိုးအစားနှင့် လူဝင်မှုကြီးကြပ်ရေး အလုပ်များမှုအပေါ် မူတည်ပါတယ်။ တာဝန်ခံကို မေးပါ။',th:'ขึ้นอยู่กับประเภทคำขอและความยุ่งของตม. กรุณาสอบถามผู้รับผิดชอบ'},
+ gate_title:{ja:'📋 提出が必要な書類のご確認',en:'📋 Please check the documents you need to submit',vi:'📋 Vui lòng xem các giấy tờ cần nộp',id:'📋 Silakan periksa dokumen yang perlu diserahkan',zh:'📋 请确认需要提交的材料',km:'📋 សូមពិនិត្យឯកសារដែលត្រូវដាក់',my:'📋 တင်ရန်လိုအပ်သော စာရွက်စာတမ်းများကို စစ်ဆေးပါ',th:'📋 กรุณาตรวจสอบเอกสารที่ต้องส่ง'},
+ gate_intro:{ja:'大房行政書士法人から、提出してほしい書類のご案内が届いています。すべての書類を読んで、最後に「提出が必要な書類を確認しました」を押してください。',en:'Gyosei Ofusa has sent you a list of documents to submit. Please read all of them, then press "I have checked the documents I need to submit" at the bottom.',vi:'Văn phòng Ofusa đã gửi danh sách giấy tờ cần nộp. Vui lòng đọc hết, sau đó bấm "Tôi đã xem các giấy tờ cần nộp" ở cuối trang.',id:'Kantor Ofusa telah mengirim daftar dokumen yang perlu diserahkan. Bacalah semuanya, lalu tekan "Saya sudah memeriksa dokumen yang perlu diserahkan" di bawah.',zh:'大房行政书士法人已发来需要提交的材料清单。请全部阅读后，按下最下方的"我已确认需要提交的材料"。',km:'ការិយាល័យ Ofusa បានផ្ញើបញ្ជីឯកសារដែលត្រូវដាក់។ សូមអានទាំងអស់ រួចចុច «ខ្ញុំបានពិនិត្យឯកសារដែលត្រូវដាក់» នៅខាងក្រោម។',my:'Ofusa ရုံးမှ တင်ရန်လိုအပ်သော စာရွက်စာတမ်းစာရင်း ပို့ထားပါတယ်။ အားလုံးဖတ်ပြီးနောက် အောက်ဆုံးရှိ "တင်ရန်လိုအပ်သော စာရွက်စာတမ်းများကို စစ်ဆေးပြီးပါပြီ" ကို နှိပ်ပါ။',th:'สำนักงาน Ofusa ได้ส่งรายการเอกสารที่ต้องส่งมาแล้ว กรุณาอ่านให้ครบ แล้วกด "ตรวจสอบเอกสารที่ต้องส่งแล้ว" ด้านล่าง'},
+ gate_by:{ja:'{d}までに提出してください',en:'Please submit by {d}',vi:'Vui lòng nộp trước {d}',id:'Mohon serahkan paling lambat {d}',zh:'请在{d}之前提交',km:'សូមដាក់មុនថ្ងៃ {d}',my:'{d} မတိုင်မီ တင်ပါ',th:'กรุณาส่งภายใน {d}'},
+ gate_btn:{ja:'✅ 提出が必要な書類を確認しました',en:'✅ I have checked the documents I need to submit',vi:'✅ Tôi đã xem các giấy tờ cần nộp',id:'✅ Saya sudah memeriksa dokumen yang perlu diserahkan',zh:'✅ 我已确认需要提交的材料',km:'✅ ខ្ញុំបានពិនិត្យឯកសារដែលត្រូវដាក់',my:'✅ တင်ရန်လိုအပ်သော စာရွက်စာတမ်းများကို စစ်ဆေးပြီးပါပြီ',th:'✅ ตรวจสอบเอกสารที่ต้องส่งแล้ว'},
+ gate_after:{ja:'押すと、マイページのトップに進みます。',en:'After pressing, you will go to the top of My Page.',vi:'Sau khi bấm, bạn sẽ đến trang chính.',id:'Setelah ditekan, Anda akan masuk ke halaman utama.',zh:'按下后将进入我的页面首页。',km:'បន្ទាប់ពីចុច អ្នកនឹងទៅទំព័រដើម។',my:'နှိပ်ပြီးနောက် ပင်မစာမျက်နှာသို့ ရောက်ပါမည်။',th:'เมื่อกดแล้วจะไปที่หน้าหลัก'},
+ gate_saving:{ja:'保存しています…',en:'Saving…',vi:'Đang lưu…',id:'Menyimpan…',zh:'正在保存…',km:'កំពុងរក្សាទុក…',my:'သိမ်းနေသည်…',th:'กำลังบันทึก…'},
  pl_title:{ja:'📅 申請までのスケジュール',en:'📅 Schedule until application',vi:'📅 Lịch trình đến khi nộp hồ sơ',id:'📅 Jadwal sampai pengajuan',zh:'📅 到申请为止的日程',km:'📅 កាលវិភាគរហូតដល់ការដាក់ពាក្យ',my:'📅 လျှောက်ထားသည်အထိ အချိန်ဇယား',th:'📅 กำหนดการจนถึงการยื่นคำขอ'},
  pl_target:{ja:'🎯 申請の目標日：{d}',en:'🎯 Target application date: {d}',vi:'🎯 Ngày nộp hồ sơ mục tiêu: {d}',id:'🎯 Target tanggal pengajuan: {d}',zh:'🎯 申请目标日：{d}',km:'🎯 ថ្ងៃគោលដៅដាក់ពាក្យ៖ {d}',my:'🎯 လျှောက်ထားရန် ပစ်မှတ်ရက်: {d}',th:'🎯 วันเป้าหมายยื่นคำขอ: {d}'},
  pl_compressed:{ja:'在留期限が近いため、在留期限の2週間前に申請できるよう前倒ししています。',en:'Because your period of stay ends soon, the schedule is moved earlier so we can apply 2 weeks before it ends.',vi:'Vì hạn lưu trú sắp hết, lịch được đẩy sớm hơn để nộp hồ sơ 2 tuần trước hạn.',id:'Karena masa tinggal hampir habis, jadwal dimajukan agar bisa diajukan 2 minggu sebelum habis.',zh:'由于在留期限临近，日程已提前，以便在期限前2周提出申请。',km:'ដោយសារកំណត់ស្នាក់នៅជិតដល់ កាលវិភាគត្រូវបានធ្វើឲ្យលឿនជាងមុន ដើម្បីដាក់ពាក្យ 2 សប្តាហ៍មុនផុតកំណត់។',my:'နေထိုင်ခွင့်သက်တမ်း နီးလာသောကြောင့် သက်တမ်းမကုန်မီ ၂ ပတ်အလို လျှောက်နိုင်ရန် အချိန်ဇယားကို စောပေးထားပါတယ်။',th:'เนื่องจากใกล้วันหมดอายุการพำนัก จึงเลื่อนกำหนดการให้เร็วขึ้นเพื่อยื่นคำขอก่อนหมดอายุ 2 สัปดาห์'},
@@ -720,7 +727,7 @@ function buildHearingFormUrl(){
 
 function _hasVal(v){ return v!=null && v!=='' && v!=='false'; }
 
-var theCase=null, thePerson={}, cacheDocs=[], doneSet={}, yoteiMap={}, missingDocCount=0, pdfCert='', pdfCustody='', pdfReceipt='', pdfShinsa='', hasHearingForm=false, _passMode='enter', currentTab='status', currentToken='', _correctPass='', applicantChangeReq=null, signRequests=[], pendingSignCount=0;
+var theCase=null, thePerson={}, cacheDocs=[], doneSet={}, yoteiMap={}, reqMap={}, docConfirmAt='', missingDocCount=0, pdfCert='', pdfCustody='', pdfReceipt='', pdfShinsa='', hasHearingForm=false, _passMode='enter', currentTab='status', currentToken='', _correctPass='', applicantChangeReq=null, signRequests=[], pendingSignCount=0;
 
 function savePin(token,pin){
   return callRpc('applicant_view_set_pin',{p_token:token,p_pin:pin}).then(function(r){return !!(r&&r.ok);}).catch(function(){return false;});
@@ -787,13 +794,15 @@ async function loadData(pass){
     var _cu=thePerson.custody_receipt_pdf_urls; if(Array.isArray(_cu)&&_cu.length){ var _l2=_cu[_cu.length-1]; if(_l2&&_l2.url) pdfCustody=_l2.url; }
     hasHearingForm=!!res.has_hearing_form;
     cacheDocs=Array.isArray(res.cache_docs)?res.cache_docs:[];
-    doneSet={}; yoteiMap={};
+    doneSet={}; yoteiMap={}; reqMap={}; docConfirmAt='';
     (res.doc_check||[]).forEach(function(row){
       var idx=row.doc_key.indexOf('::'); if(idx<0) return;
       var prefix=row.doc_key.substring(0,idx); var name=row.doc_key.substring(idx+2);
       var v=row.value; var truthy=(v!=null&&v!==''&&v!=='false');
       if((prefix==='staff'||prefix==='skip')&&truthy) doneSet[name]=true;
       if(prefix==='yotei'&&truthy) yoteiMap[name]=v;  // ver.20260928.01: 取得予定日
+      if(prefix==='req'&&truthy) reqMap[name]=String(v).slice(0,10);  // ver.20261024.07: 案内日
+      if(prefix==='docconfirm'&&truthy) docConfirmAt=String(v);
     });
     computeMissing();
     var nm=theCase.applicant||theCase.name||'';
@@ -825,6 +834,8 @@ function switchTab(t){ currentTab=t; document.querySelectorAll('.tab').forEach(f
 
 function render(){
   var m=document.getElementById('main');
+  // ver.20261024.07: 書類のご案内があり、まだ確認していなければ、まず必要書類の確認画面
+  try{ if(theCase && _apGatePending().length){ m.innerHTML=_apGateHtml(); renderSendBar(); return; } }catch(eG){ console.warn('gate',eG); }
   if(currentTab==='status') m.innerHTML=renderStatus();
   else if(currentTab==='docs') m.innerHTML=renderDocs();
   else if(currentTab==='sign') m.innerHTML=renderSign();
@@ -835,6 +846,38 @@ function render(){
   renderSendBar();
 }
 // ver.20261002.01: 未提出があるあいだ、進捗・提出書類タブの画面下にアップロードボタンを固定表示
+function _apGatePending(){
+  // 手続きが終わっていない案件のときだけ
+  var st=String((theCase||{}).status||''), ext=getExternalStatus(st);
+  if(['審査完了(受取対応中)','新在留カード(または認定証)発行済み'].indexOf(ext)>=0) return [];
+  var cd=docConfirmAt?docConfirmAt.slice(0,10):'';
+  return docDisplayList().filter(function(d){ if(isDocDone(d)) return false; var rq=reqMap[d.l]; if(!rq) return false; return !cd || rq>cd; });
+}
+function _apGateHtml(){
+  var list=_apGatePending();
+  var due=_apDeadlines().docs;
+  if(!due){ var mr=null; list.forEach(function(d){ var r=_apParse(reqMap[d.l]); if(r&&(!mr||r<mr)) mr=r; }); if(mr) due=_apAddBiz(mr,AP_RULES.docsBiz); }
+  var h='<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #1c3d6e;border-radius:14px;padding:16px 16px 18px;margin-bottom:16px;">';
+  h+='<div style="font-size:16px;font-weight:900;color:#0f2040;">'+t('gate_title')+'</div>';
+  h+='<div style="font-size:12.5px;color:#334155;line-height:1.75;margin:8px 0 4px;">'+t('gate_intro')+'</div>';
+  if(due){ var t0=new Date(); t0.setHours(0,0,0,0); var n=Math.round((due-t0)/86400000); var col=n<0?'#b91c1c':(n<=7?'#b45309':'#1c3d6e');
+    h+='<div style="font-size:14px;font-weight:900;color:'+col+';margin:10px 0 6px;">📄 '+t('gate_by',{d:(due.getMonth()+1)+'/'+due.getDate()})+'</div>'; }
+  list.forEach(function(d){
+    var nameHtml=(curLang==='ja')?fz(d.l):esc(d.l), hd=getDocHelp(d.l);
+    h+='<div style="padding:9px 0 9px 10px;border-left:3px solid #cbd5e1;margin:6px 0;"><div style="font-size:13.5px;font-weight:800;color:#0f2040;">'+nameHtml+'</div>'+(hd?docHelpInline(hd).replace('<details class="doc-help-d">','<details class="doc-help-d" open>'):'')+'</div>';
+  });
+  h+='<button id="apGateBtn" onclick="_apGateConfirm()" style="display:block;width:100%;margin-top:16px;background:#1c3d6e;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:900;padding:15px 12px;cursor:pointer;">'+t('gate_btn')+'</button>';
+  h+='<div id="apGateMsg" style="font-size:11.5px;text-align:center;margin-top:6px;color:#64748b;">'+t('gate_after')+'</div>';
+  return h+'</div>';
+}
+function _apGateConfirm(){
+  var b=document.getElementById('apGateBtn'), m=document.getElementById('apGateMsg');
+  if(b){ b.disabled=true; b.textContent=tp('gate_saving'); }
+  callRpc('applicant_view_confirm_docs',{p_token:currentToken,p_pass:_correctPass}).then(function(r){
+    if(r&&r.ok){ docConfirmAt=r.at||new Date().toISOString(); switchTab('status'); try{ window.scrollTo(0,0); }catch(e){} }
+    else { if(b){ b.disabled=false; b.textContent=tp('gate_btn'); } if(m){ m.style.color='#dc2626'; m.textContent='⚠ '+tp('yotei_failed'); } }
+  }).catch(function(){ if(b){ b.disabled=false; b.textContent=tp('gate_btn'); } if(m){ m.style.color='#dc2626'; m.textContent='⚠ '+tp('yotei_failed'); } });
+}
 function renderSendBar(){
   var bar=document.getElementById('sendBar');
   if(!bar){ bar=document.createElement('div'); bar.id='sendBar'; bar.className='send-bar hide'; document.body.appendChild(bar); }
@@ -873,9 +916,14 @@ function _apRulesLoad(){
   callRpc('get_deadline_rules',{}).then(function(r){
     if(!r||typeof r!=='object') return;
     function n(v,d){ v=parseInt(v,10); return (isNaN(v)||v<0||v>365)?d:v; }
-    var st=r.steps||{};
-    ['soufu','kakunin','sakusei','signOuin','prep'].forEach(function(k){ AP_RULES.steps[k]=n(st[k],AP_RULES.steps[k]); });
-    ['askBiz','docsBiz','docsBeforeExpire','applyBeforeExpire','minDocsBiz','freshDays'].forEach(function(k){ AP_RULES[k]=n(r[k],AP_RULES[k]); });
+    function ap(src){ if(!src||typeof src!=='object') return; var st=src.steps||{};
+      ['soufu','kakunin','sakusei','signOuin','prep'].forEach(function(k){ AP_RULES.steps[k]=n(st[k],AP_RULES.steps[k]); });
+      ['askBiz','docsBiz','docsBeforeExpire','applyBeforeExpire','minDocsBiz','freshDays'].forEach(function(k){ AP_RULES[k]=n(src[k],AP_RULES[k]); }); }
+    ap(r);
+    // ver.20261024.07: 登録支援機関ごとの日数（deadline_rules.orgs["機関名"]・前方一致・差分だけ）
+    var org=String((theCase&&theCase.org)||'').trim(), orgs=r.orgs||{}, best='';
+    Object.keys(orgs).forEach(function(k){ if(k && org && (org.indexOf(k)===0||k.indexOf(org)===0) && k.length>best.length) best=k; });
+    if(best) ap(orgs[best]);
     try{ if(theCase) render(); }catch(e){}
   }).catch(function(){});
 }

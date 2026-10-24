@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261024.07: ①書類のご案内（案内日＝req::）が入った未提出書類があり、まだ確認していなければ、マイページを開いたとき最初に「📋 提出が必要な書類のご確認」画面（国交省／入管に分けて書類名・注意事項・「◯月◯日までにご提出をお願いします」）。「提出が必要な書類を確認しました」で co_doc_check の docconfirm:: に日時を保存（RPC company_view_confirm_docs）してメインへ。確認後に新しく案内された書類があればまた表示。案シスから開いたとき（&pass=）・機関リンク（&ot=）では出さない。②提出期限の日数を登録支援機関ごとに変えられるように（deadline_rules.orgs）。③書類の詳細ボックスを黄色からグレーに。 -->
 <!-- ver.20261024.06: 色を整理。黄色・赤は提出期限が迫っている（7日以内＝黄、期限切れ＝赤）ところだけに使い、それ以外は紺・グレー系に統一（対応が必要なタスクのカード・バッジ・ボタン、タスクバー〔期限切れがあるときだけ赤〕、件数バッジ、未提出チップ、進捗ステータスの押印・審査中、国交省ステータス、注意書きボックス）。 -->
 <!-- ver.20261024.05: 提出期限・申請スケジュールの日数をアンシスの「テンプレート」で編集できるように（settings.deadline_rules を RPC get_deadline_rules で読む。読めなければ既定値：各工程3営業日・依頼から3営業日・書類5営業日／在留期限30日前・申請は在留期限14日前・国交省45日／4か月前）。 -->
 <!-- ver.20261024.04: 申請までのスケジュールに「申請準備」を追加。サイン・押印が済んだら申請目標日までの残りの期間はすべて申請準備（企業押印返送待ち・企業書類作成まではサイン・押印、それ以降の書類待ち・スキャン書類作成・★申請などは申請準備）。 -->
@@ -361,7 +362,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261024.06</span>
+  <span class="header-ver">ver.20261024.07</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -638,6 +639,7 @@ async function init(){
     // ver.20260921.11: &ot=（機関トークン）付きは機関スコープ表示（その機関の案件のみ・企業PIN不要）
     _orgToken=(getParam('ot')||'').trim(); _orgPass=(getParam('op')||'').trim();
     if(_orgToken){
+      window._gateStaff=true;
       var lrO=await loadData(null);
       if(lrO&&lrO.ok){ return; }
       document.getElementById('main').innerHTML='<div class="error-box">機関用リンクが無効です。担当者にお問い合わせください。</div>';
@@ -645,6 +647,7 @@ async function init(){
     }
     // ver.20260921.10: &pass= パラメータで自動ログイン（案シスの企業マイページモーダルから直接アクセス用）
     var urlPass=(getParam('pass')||'').trim();
+    if(urlPass) window._gateStaff=true; // ver.20261024.07: 案シスから開いたときは書類確認の画面を出さない
     if(urlPass){
       var lr0=await loadData(urlPass);
       if(lr0&&lr0.ok){
@@ -699,6 +702,7 @@ async function loadData(pass){
       var ex=await callRpc('company_view_extra',_pe);
       _extraByCase={};
       if(ex&&ex.ok&&Array.isArray(ex.cases)) ex.cases.forEach(function(r){ _extraByCase[r.id]=r; });
+      try{ _dlApplyCompany(); }catch(eDl){}
     }catch(e){ _extraByCase={}; }
     _orgScope=res.org_scope||'';
     if(_orgScope && !document.getElementById('orgScopeBanner')){
@@ -1136,6 +1140,8 @@ function expInfo(dateStr){
 
 function render(){
   var m=document.getElementById('main');
+  // ver.20261024.07: 書類のご案内があり、まだ「確認しました」を押していなければ、まず必要書類の確認画面
+  try{ if(!window._gateStaff && _gatePendingDocs().length){ m.innerHTML=_docGateHtml(); try{ _renderCoSendBar(); }catch(e){} return; } }catch(eG){ console.warn('gate',eG); }
   if(currentTab==='docs') m.innerHTML=renderDocs();
   else if(currentTab==='active'||currentTab==='done'||currentTab==='all') m.innerHTML=renderPeople(currentTab);
   else if(currentTab==='flow') m.innerHTML=renderFlow();
@@ -1256,19 +1262,39 @@ function _kokkoDashCard(){
 var DL_RULES={applyBiz:15,nyukanBiz:5,nyukanBeforeExpire:30,applyBeforeExpire:14,kokkoDays:45,kokkoBeforeExpireMonths:4,
   steps:{soufu:3,kakunin:3,sakusei:3,signOuin:3,prep:3}, askBiz:3, minDocsBiz:2, freshDays:45};
 // ver.20261024.05: 日数はアンシスの「テンプレート」で編集（settings.deadline_rules → RPC get_deadline_rules）。読めなければ上の既定値
+var _DL_DEFAULT=JSON.parse(JSON.stringify(DL_RULES)), _dlRaw=null, _dlCache={};
+// ver.20261024.07: 登録支援機関ごとの日数（deadline_rules.orgs["機関名"]＝差分だけ。機関名は前方一致）
+function _dlMerge(base, src){
+  var o=JSON.parse(JSON.stringify(base)); if(!src||typeof src!=='object') return o;
+  function n(v,d){ v=parseInt(v,10); return (isNaN(v)||v<0||v>365)?d:v; }
+  var st=src.steps||{};
+  ['soufu','kakunin','sakusei','signOuin','prep'].forEach(function(k){ o.steps[k]=n(st[k],o.steps[k]); });
+  o.askBiz=n(src.askBiz,o.askBiz); o.nyukanBiz=n(src.docsBiz,o.nyukanBiz);
+  o.nyukanBeforeExpire=n(src.docsBeforeExpire,o.nyukanBeforeExpire); o.applyBeforeExpire=n(src.applyBeforeExpire,o.applyBeforeExpire);
+  o.minDocsBiz=n(src.minDocsBiz,o.minDocsBiz); o.kokkoDays=n(src.kokkoDays,o.kokkoDays);
+  o.kokkoBeforeExpireMonths=n(src.kokkoBeforeExpireMonths,o.kokkoBeforeExpireMonths); o.freshDays=n(src.freshDays,o.freshDays);
+  var S=o.steps; o.applyBiz=S.soufu+S.kakunin+S.sakusei+S.signOuin+S.prep;
+  return o;
+}
+function _rulesFor(org){
+  org=String(org||'').trim();
+  if(_dlCache[org]) return _dlCache[org];
+  var base=_dlMerge(_DL_DEFAULT,_dlRaw), ov=null, orgs=(_dlRaw&&_dlRaw.orgs)||{};
+  Object.keys(orgs).forEach(function(k){ if(k && org && (org.indexOf(k)===0||k.indexOf(org)===0) && (!ov||k.length>ov.k.length)) ov={k:k,v:orgs[k]}; });
+  var r=ov?_dlMerge(base,ov.v):base; _dlCache[org]=r; return r;
+}
+// 会社全体の表示（国交省・書類の提出期限など）は、案件の登録支援機関が1つならその機関の日数
+function _dlApplyCompany(){
+  var orgs={}; (allCases||[]).forEach(function(c){ var o=String(c.org||'').trim(); if(o) orgs[o]=1; });
+  var ks=Object.keys(orgs), r=_rulesFor(ks.length===1?ks[0]:'');
+  Object.keys(r).forEach(function(k){ DL_RULES[k]=JSON.parse(JSON.stringify(r[k])); });
+}
 var _dlRulesTried=false;
 function _dlRulesLoad(){
   if(_dlRulesTried) return; _dlRulesTried=true;
   callRpc('get_deadline_rules',{}).then(function(r){
     if(!r||typeof r!=='object') return;
-    function n(v,d){ v=parseInt(v,10); return (isNaN(v)||v<0||v>365)?d:v; }
-    var st=r.steps||{};
-    ['soufu','kakunin','sakusei','signOuin','prep'].forEach(function(k){ DL_RULES.steps[k]=n(st[k],DL_RULES.steps[k]); });
-    DL_RULES.askBiz=n(r.askBiz,DL_RULES.askBiz); DL_RULES.nyukanBiz=n(r.docsBiz,DL_RULES.nyukanBiz);
-    DL_RULES.nyukanBeforeExpire=n(r.docsBeforeExpire,DL_RULES.nyukanBeforeExpire); DL_RULES.applyBeforeExpire=n(r.applyBeforeExpire,DL_RULES.applyBeforeExpire);
-    DL_RULES.minDocsBiz=n(r.minDocsBiz,DL_RULES.minDocsBiz); DL_RULES.kokkoDays=n(r.kokkoDays,DL_RULES.kokkoDays);
-    DL_RULES.kokkoBeforeExpireMonths=n(r.kokkoBeforeExpireMonths,DL_RULES.kokkoBeforeExpireMonths); DL_RULES.freshDays=n(r.freshDays,DL_RULES.freshDays);
-    var S=DL_RULES.steps; DL_RULES.applyBiz=S.soufu+S.kakunin+S.sakusei+S.signOuin+S.prep;
+    _dlRaw=r; _dlCache={}; _dlApplyCompany();
     try{ render(); }catch(e){}
   }).catch(function(){});
 }
@@ -1280,14 +1306,15 @@ function _dlMin(a,b){ if(!a) return b; if(!b) return a; return a<b?a:b; }
 //   在留期限の2週間前の方が早いときは、そこから逆算して各工程を前倒しする
 function _cksSubBiz(d,n){ var r=new Date(d),c=0; while(c<n){ r=_cksAdd(r,-1); if(_cksIsBiz(r)) c++; } return r; }
 function _plan3w(c){
+  var R=_rulesFor(c.org);
   var today=new Date(); today.setHours(0,0,0,0);
   var req=_cksParse((_extraByCase[c.id]||{}).request_date), exp=_cksParse(c.expire);
   if(exp && exp<today) exp=null;
   var std=null;
-  var S=DL_RULES.steps;
+  var S=R.steps;
   if(req){ var a=_cksAddBiz(req,S.soufu), b=_cksAddBiz(a,S.kakunin), cc=_cksAddBiz(b,S.sakusei), d=_cksAddBiz(cc,S.signOuin), e=_cksAddBiz(d,S.prep); std={soufu:a,kakunin:b,sakusei:cc,signOuin:d,app:e}; }
   var target=std?std.app:null, compressed=false;
-  if(exp){ var t2=_cksAdd(exp,-DL_RULES.applyBeforeExpire); if(!target||t2<target){ target=t2; compressed=!!std; } }
+  if(exp){ var t2=_cksAdd(exp,-R.applyBeforeExpire); if(!target||t2<target){ target=t2; compressed=!!std; } }
   if(!target) return null;
   var bk={app:target}; bk.signOuin=_cksSubBiz(target,S.prep); bk.sakusei=_cksSubBiz(bk.signOuin,S.signOuin); bk.kakunin=_cksSubBiz(bk.sakusei,S.sakusei); bk.soufu=_cksSubBiz(bk.kakunin,S.kakunin);
   var out={req:req, compressed:compressed};
@@ -1324,22 +1351,23 @@ function _planScheduleHtml(c){
       +'<div style="font-size:9.5px;color:'+(late?'#b91c1c':'#94a3b8')+';font-weight:700;">'+(s2.d?((k===0?'':'〜')+(s2.d.getMonth()+1)+'/'+s2.d.getDate()):'—')+(late?'<br>⚠遅れ':'')+'</div></div>';
     if(k<steps.length-1) sh+='<div style="flex:1;min-width:10px;height:2.5px;background:'+(s2.done?'#16a34a':'#e2e8f0')+';margin-top:9px;"></div>';
   });
-  sh+='</div></div><div style="font-size:10px;color:#94a3b8;margin:-4px 0 8px;">サイン・押印が済んだら、申請目標日までの残りの期間は申請準備です。受領日から'+DL_RULES.applyBiz+'営業日で申請できるように逆算しています。</div>';
+  sh+='</div></div><div style="font-size:10px;color:#94a3b8;margin:-4px 0 8px;">サイン・押印が済んだら、申請目標日までの残りの期間は申請準備です。受領日から'+_rulesFor(c.org).applyBiz+'営業日で申請できるように逆算しています。</div>';
   return h+sh;
 }
 function _caseDl(c){
+  var R=_rulesFor(c.org);
   var today=new Date(); today.setHours(0,0,0,0);
   var req=_cksParse((_extraByCase[c.id]||{}).request_date), exp=_cksParse(c.expire);
   if(exp && exp<today) exp=null; // 在留期限を過ぎた案件（止まっている古い案件など）は在留期限基準を使わない
-  var fresh=req && Math.round((today-req)/86400000)<=DL_RULES.freshDays;
+  var fresh=req && Math.round((today-req)/86400000)<=R.freshDays;
   var ny=null, ap=null;
-  if(fresh){ ny=_cksAddBiz(req,DL_RULES.nyukanBiz); ap=_cksAddBiz(req,DL_RULES.applyBiz); }
-  if(exp){ ny=_dlMin(ny,_cksAdd(exp,-DL_RULES.nyukanBeforeExpire)); ap=_dlMin(ap,_cksAdd(exp,-DL_RULES.applyBeforeExpire)); }
+  if(fresh){ ny=_cksAddBiz(req,R.nyukanBiz); ap=_cksAddBiz(req,R.applyBiz); }
+  if(exp){ ny=_dlMin(ny,_cksAdd(exp,-R.nyukanBeforeExpire)); ap=_dlMin(ap,_cksAdd(exp,-R.applyBeforeExpire)); }
   // 受領した時点で在留期限が近い案件でも、受領日から2営業日（押印は5営業日）より前にはしない
-  if(fresh){ var m2=_cksAddBiz(req,DL_RULES.minDocsBiz), m5=_cksAddBiz(req,DL_RULES.askBiz+DL_RULES.minDocsBiz); if(ny&&ny<m2) ny=m2; if(ap&&ap<m5) ap=m5; }
+  if(fresh){ var m2=_cksAddBiz(req,R.minDocsBiz), m5=_cksAddBiz(req,R.askBiz+R.minDocsBiz); if(ny&&ny<m2) ny=m2; if(ap&&ap<m5) ap=m5; }
   // 1-6号確認・サイン・押印＝依頼（案シスのステータスが確認待ち／返送待ちに変わった日）から3営業日（O-Linkの建設申請スケジュールと同じ）。在留期限の方が早ければ依頼当日
   var sd=_cksParse(c.status_date), seal=null;
-  if(sd){ seal=_cksAddBiz(sd,DL_RULES.askBiz); var ex0=_cksParse(c.expire); if(ex0 && ex0<seal) seal=sd; }
+  if(sd){ seal=_cksAddBiz(sd,R.askBiz); var ex0=_cksParse(c.expire); if(ex0 && ex0<seal) seal=sd; }
   // ver.20261024.03: 3週間スケジュールの逆算日が早ければそちら（ただし依頼日より前にはしない）
   var pl=_plan3w(c);
   if(pl){
@@ -1981,6 +2009,68 @@ function _faqCard(){
   h+='</div>';
   return h;
 }
+// ===== ver.20261024.07: 提出が必要な書類の確認（案内日が入った未提出書類 → 「確認しました」でメインへ） =====
+function _gateConfirmedDate(){ var v=(coDocs['']||{})['docconfirm']; return _hasVal(v)?String(v).slice(0,10):''; }
+function _gatePendingDocs(){
+  // 手続きが終わっていない案件があるときだけ
+  if(!(allCases||[]).some(function(c){ return classifyCase(c)!=='done'; })) return [];
+  var cd=_gateConfirmedDate(), out=[];
+  Object.keys(coDocs).forEach(function(n){
+    if(!n) return; var d=coDocs[n]; if(!d||!_hasVal(d.req)) return;
+    if(!docInList(d)||docState(d)!=='todo') return;
+    if(_isOfusaMade(n)) return;
+    var rq=String(d.req).slice(0,10); if(cd && rq<=cd) return;
+    out.push(n);
+  });
+  return out;
+}
+function _gateDue(names, kokko){
+  var minReq=null; names.forEach(function(n){ var r=_cksParse((coDocs[n]||{}).req); if(r&&(!minReq||r<minReq)) minReq=r; });
+  if(kokko){ var base=_kokkoFirstAnnai()||minReq; return base?_cksAdd(base,DL_RULES.kokkoDays):null; }
+  var due=null;
+  allCases.forEach(function(c){ if(_PRE_APPLY_EXT.indexOf(getExternalStatus(c.status))<0) return; due=_dlMin(due,_caseDl(c).nyukan); });
+  if(!due && minReq) due=_cksAddBiz(minReq,DL_RULES.nyukanBiz);
+  return due;
+}
+function _docGateHtml(){
+  var list=_gatePendingDocs();
+  var ko=list.filter(_isKokkoDocName), ny=list.filter(function(n){ return !_isKokkoDocName(n); });
+  var today=new Date(); today.setHours(0,0,0,0);
+  function dueLine(due){
+    if(!due) return '';
+    var days=Math.round((due-today)/86400000), col=days<0?'#b91c1c':(days<=7?'#b45309':'#1c3d6e');
+    var tail=days<0?'（提出期限を過ぎています）':(days<=7?'（あと'+days+'日）':'');
+    return '<div style="font-size:13.5px;font-weight:900;color:'+col+';margin:6px 0 8px;">📄 '+(due.getMonth()+1)+'月'+due.getDate()+'日までにご提出をお願いします'+tail+'</div>';
+  }
+  function rows(names, kokko){
+    return names.map(function(n){
+      var note='';
+      if(kokko){ var mt=(typeof _KOKKO_META!=='undefined')?_KOKKO_META[n]:null; if(mt&&mt.desc) note=mt.desc; }
+      else { var sm=_nyukanMetaFor(n); if(sm&&sm.note) note=sm.note; }
+      return '<div style="padding:9px 0 9px 10px;border-left:3px solid #cbd5e1;margin:6px 0;">'
+        +'<div style="font-size:13px;font-weight:800;color:#0f2040;">'+esc(n)+'</div>'
+        +(note?'<div style="font-size:11.5px;color:#475569;line-height:1.65;margin-top:3px;">'+_linkifyText(note)+'</div>':'')+'</div>';
+    }).join('');
+  }
+  var h='<div style="max-width:720px;margin:0 auto;">';
+  h+='<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #1c3d6e;border-radius:14px;padding:18px 18px 20px;">';
+  h+='<div style="font-size:16px;font-weight:900;color:#0f2040;">📋 提出が必要な書類のご確認</div>';
+  h+='<div style="font-size:12.5px;color:#334155;line-height:1.75;margin:8px 0 6px;">大房行政書士法人から、ご提出いただく書類のご案内が届いています。<br>すべての書類に目を通していただき、最後に<b>「提出が必要な書類を確認しました」</b>を押してください。</div>';
+  if(ko.length){ h+='<div style="margin-top:14px;font-size:14px;font-weight:900;color:#0f2040;">🏗 国交省申請書類（'+ko.length+'件）</div>'+dueLine(_gateDue(ko,true))+rows(ko,true); }
+  if(ny.length){ h+='<div style="margin-top:14px;font-size:14px;font-weight:900;color:#0f2040;">🛂 入管提出書類（'+ny.length+'件）</div>'+dueLine(_gateDue(ny,false))+rows(ny,false); }
+  h+='<button id="gateBtn" onclick="_docGateConfirm()" style="display:block;width:100%;margin-top:18px;background:#1c3d6e;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:900;padding:15px 12px;cursor:pointer;">✅ 提出が必要な書類を確認しました</button>';
+  h+='<div id="gateMsg" style="font-size:11.5px;text-align:center;margin-top:6px;color:#64748b;">押すと、マイページのトップに進みます。書類の見本や取り方は「提出書類」からも見られます。</div>';
+  h+='</div></div>';
+  return h;
+}
+function _docGateConfirm(){
+  var b=document.getElementById('gateBtn'), m=document.getElementById('gateMsg');
+  if(b){ b.disabled=true; b.textContent='保存しています…'; }
+  callRpc('company_view_confirm_docs',{p_token:currentToken,p_pass:_correctPass}).then(function(r){
+    if(r&&r.ok){ if(!coDocs['']) coDocs['']={}; coDocs['']['docconfirm']=r.at; currentTab='dashboard'; try{ renderSidebar(); }catch(e){} render(); try{ window.scrollTo(0,0); }catch(e){} }
+    else { if(b){ b.disabled=false; b.textContent='✅ 提出が必要な書類を確認しました'; } if(m){ m.style.color='#dc2626'; m.textContent='保存できませんでした。時間をおいてもう一度押してください。'; } }
+  }).catch(function(){ if(b){ b.disabled=false; b.textContent='✅ 提出が必要な書類を確認しました'; } if(m){ m.style.color='#dc2626'; m.textContent='保存できませんでした。時間をおいてもう一度押してください。'; } });
+}
 function renderDashboard(){
   var total=allCases.length;
   var done=allCases.filter(function(c){return classifyCase(c)==='done';}).length;
@@ -2249,7 +2339,7 @@ function _nyukanToggle(id){
   d.style.display=open?'none':'block'; if(a) a.textContent=open?'▸':'▾';
 }
 function _nyukanDetailHtml(id, smp){
-  var h='<div id="nyudet_'+id+'" style="display:none;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin:2px 0 8px 30px;font-size:11.5px;color:#92400e;line-height:1.7;">';
+  var h='<div id="nyudet_'+id+'" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;margin:2px 0 8px 30px;font-size:11.5px;color:#334155;line-height:1.7;">';
   if(smp.note){ h+='<div style="margin-bottom:8px;">💡 '+_linkifyText(smp.note)+'</div>'; }
   if(smp.form && smp.form.file){
     h+='<div style="margin-bottom:8px;"><a href="'+esc(smp.form.file)+'" target="_blank" rel="noopener" style="display:inline-block;background:#1a56db;color:#fff;font-size:11px;font-weight:800;border-radius:6px;padding:5px 12px;text-decoration:none;">📝 '+esc(smp.form.label||'取得用の申請書')+'（PDF）</a></div>';
