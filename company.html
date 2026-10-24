@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261024.08: 提出期限の色を段階表示に（2週間を切ったら黄・1週間でオレンジ・3日で赤・期限切れは赤。それ以外は紺）。未提出の書類の件数（PC表示）は提出期限切れがあるときだけ赤。 -->
 <!-- ver.20261024.07: ①書類のご案内（案内日＝req::）が入った未提出書類があり、まだ確認していなければ、マイページを開いたとき最初に「📋 提出が必要な書類のご確認」画面（国交省／入管に分けて書類名・注意事項・「◯月◯日までにご提出をお願いします」）。「提出が必要な書類を確認しました」で co_doc_check の docconfirm:: に日時を保存（RPC company_view_confirm_docs）してメインへ。確認後に新しく案内された書類があればまた表示。案シスから開いたとき（&pass=）・機関リンク（&ot=）では出さない。②提出期限の日数を登録支援機関ごとに変えられるように（deadline_rules.orgs）。③書類の詳細ボックスを黄色からグレーに。 -->
 <!-- ver.20261024.06: 色を整理。黄色・赤は提出期限が迫っている（7日以内＝黄、期限切れ＝赤）ところだけに使い、それ以外は紺・グレー系に統一（対応が必要なタスクのカード・バッジ・ボタン、タスクバー〔期限切れがあるときだけ赤〕、件数バッジ、未提出チップ、進捗ステータスの押印・審査中、国交省ステータス、注意書きボックス）。 -->
 <!-- ver.20261024.05: 提出期限・申請スケジュールの日数をアンシスの「テンプレート」で編集できるように（settings.deadline_rules を RPC get_deadline_rules で読む。読めなければ既定値：各工程3営業日・依頼から3営業日・書類5営業日／在留期限30日前・申請は在留期限14日前・国交省45日／4か月前）。 -->
@@ -362,7 +363,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261024.07</span>
+  <span class="header-ver">ver.20261024.08</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -941,6 +942,14 @@ function _hasVal(v){ return v!=null && v!=='' && v!=='false'; }
 // ver.20260924.04: 国交省書類の「初回案内日」。提出期限はこの日から45日で固定する。
 //   req::（依頼日）は再案内のたびに更新されるため、それを起点にすると期限が後ろにずれてしまう。
 //   案シス側で初回案内時に kokko_annai_first:: が記録される（一度入ったら上書きしない）。
+// ver.20261024.08: 提出期限の色（2週間を切ったら黄・1週間でオレンジ・3日で赤／期限切れも赤。それ以外は紺）
+function _dlTier(days){
+  if(days==null) return {bg:'#eef4fd',col:'#1c3d6e',txt:'#475569',soft:'#f1f5f9',bor:'#cbd5e1',lv:0};
+  if(days<=3) return {bg:'#dc2626',col:'#fff',txt:'#b91c1c',soft:'#fdeeee',bor:'#e5a3a3',lv:3};
+  if(days<=7) return {bg:'#f97316',col:'#fff',txt:'#c2410c',soft:'#fff7ed',bor:'#fdba74',lv:2};
+  if(days<=14) return {bg:'#facc15',col:'#713f12',txt:'#a16207',soft:'#fefce8',bor:'#fde047',lv:1};
+  return {bg:'#eef4fd',col:'#1c3d6e',txt:'#475569',soft:'#f1f5f9',bor:'#cbd5e1',lv:0};
+}
 function _kokkoFirstAnnai(){
   try{
     var v=(coDocs['']||{})['kokko_annai_first'];
@@ -962,12 +971,12 @@ function _kokkoDeadlineHtml(){
   var due=_cksAdd(base,DL_RULES.kokkoDays);
   var days=Math.round((due-today)/86400000);
   var over=days<0;
+  var T=_dlTier(days);
   var chip = over
     ? '<span style="background:#dc2626;color:#fff;border-radius:6px;padding:2px 8px;font-weight:900;">⚠ 提出期限を'+(-days)+'日超過・至急ご提出ください</span>'
-    : (days<=7 ? '<span style="background:#f59e0b;color:#fff;border-radius:6px;padding:2px 8px;font-weight:900;">⏳ あと'+days+'日</span>'
-               : '<span style="background:#eef4fd;color:#1c3d6e;border-radius:6px;padding:2px 8px;font-weight:800;">⏳ あと'+days+'日</span>');
+    : '<span style="background:'+T.bg+';color:'+T.col+';border-radius:6px;padding:2px 8px;font-weight:900;">⏳ '+(days===0?'今日まで':'あと'+days+'日')+'</span>';
   var label=annaiD?('ご案内日から'+DL_RULES.kokkoDays+'日以内'):('案件受領日から'+DL_RULES.kokkoDays+'日以内');
-  return '<div style="font-size:12px;font-weight:800;color:'+(over?'#b91c1c':(days<=7?'#b45309':'#1c3d6e'))+';background:'+(over?'#fdeeee':(days<=7?'#fffbeb':'#f1f5f9'))+';border:1px solid '+(over?'#e5a3a3':(days<=7?'#fde68a':'#cbd5e1'))+';border-radius:8px;padding:8px 12px;margin:4px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">📄 国交省書類の提出期限 〜'+_cksFmt(due)+'（'+label+'）'+chip+'</div>';
+  return '<div style="font-size:12px;font-weight:800;color:'+(T.lv?T.txt:'#1c3d6e')+';background:'+T.soft+';border:1px solid '+T.bor+';border-radius:8px;padding:8px 12px;margin:4px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">📄 国交省書類の提出期限 〜'+_cksFmt(due)+'（'+label+'）'+chip+'</div>';
 }
 function _lastPdfUrl(arr){ if(Array.isArray(arr)&&arr.length){ var l=arr[arr.length-1]; if(l&&l.url) return l.url; } return ''; }function _pdfChip(label,url,color,icon){
   if(url) return '<a class="pdf-chip" style="background:'+color+';" href="'+esc(url)+'" target="_blank" rel="noopener">'+icon+' '+label+'</a>';
@@ -1383,10 +1392,10 @@ function _dlChip(due){
   if(!due) return '';
   var today=new Date(); today.setHours(0,0,0,0);
   var days=Math.round((due-today)/86400000);
-  var d='<span style="font-size:10.5px;font-weight:800;color:'+(days<0?'#b91c1c':(days<=7?'#b45309':'#475569'))+';">〜'+(due.getMonth()+1)+'/'+due.getDate()+'</span> ';
+  var T=_dlTier(days);
+  var d='<span style="font-size:10.5px;font-weight:800;color:'+T.txt+';">〜'+(due.getMonth()+1)+'/'+due.getDate()+'</span> ';
   if(days<0) return d+'<span style="background:#dc2626;color:#fff;border-radius:6px;padding:1px 7px;font-size:10.5px;font-weight:900;">⚠ 提出期限切れ</span>';
-  if(days<=7) return d+'<span style="background:#f59e0b;color:#fff;border-radius:6px;padding:1px 7px;font-size:10.5px;font-weight:900;">⏳ あと'+days+'日</span>';
-  return d+'<span style="background:#eef4fd;color:#1c3d6e;border-radius:6px;padding:1px 7px;font-size:10.5px;font-weight:800;">⏳ あと'+days+'日</span>';
+  return d+'<span style="background:'+T.bg+';color:'+T.col+';border-radius:6px;padding:1px 7px;font-size:10.5px;font-weight:900;">⏳ '+(days===0?'今日まで':'あと'+days+'日')+'</span>';
 }
 // 期限切れの書類行に「いつ出せますか？」（取得予定日。co_doc_check の yotei:: に保存・案シスと連動）
 function _docTaskRow(n, overdue){
@@ -1431,9 +1440,8 @@ function renderRequests(){
     if(over) _overdueAny=true;
     var chip;
     if(over) chip='<span style="background:#dc2626;color:#fff;border-radius:6px;padding:2px 8px;font-weight:900;">⚠ 提出期限を'+(-days)+'日超過・至急ご対応ください</span>';
-    else if(days<=7) chip='<span style="background:#f59e0b;color:#fff;border-radius:6px;padding:2px 8px;font-weight:900;">⏳ あと'+days+'日</span>';
-    else chip='<span style="background:#eef4fd;color:#1c3d6e;border-radius:6px;padding:2px 8px;font-weight:800;">⏳ あと'+days+'日</span>';
-    return '<div style="font-size:11px;font-weight:800;color:'+(over?'#b91c1c':(days<=7?'#b45309':'#475569'))+';margin:2px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">📄 提出期限 〜'+_cksFmt(due)+'（'+label+'）'+chip+'</div>';
+    else { var T=_dlTier(days); chip='<span style="background:'+T.bg+';color:'+T.col+';border-radius:6px;padding:2px 8px;font-weight:900;">⏳ '+(days===0?'今日まで':'あと'+days+'日')+'</span>'; }
+    return '<div style="font-size:11px;font-weight:800;color:'+_dlTier(days).txt+';margin:2px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">📄 提出期限 〜'+_cksFmt(due)+'（'+label+'）'+chip+'</div>';
   }
   var missing=[];
   Object.keys(coDocs).forEach(function(name){ if(docInList(coDocs[name]) && docState(coDocs[name])==='todo') missing.push(name); });
@@ -2038,8 +2046,8 @@ function _docGateHtml(){
   var today=new Date(); today.setHours(0,0,0,0);
   function dueLine(due){
     if(!due) return '';
-    var days=Math.round((due-today)/86400000), col=days<0?'#b91c1c':(days<=7?'#b45309':'#1c3d6e');
-    var tail=days<0?'（提出期限を過ぎています）':(days<=7?'（あと'+days+'日）':'');
+    var days=Math.round((due-today)/86400000), col='#dc2626'; // 「◯月◯日までにご提出をお願いします」は常に赤文字
+    var tail=days<0?'（提出期限を過ぎています）':(days<=14?'（あと'+days+'日）':'');
     return '<div style="font-size:13.5px;font-weight:900;color:'+col+';margin:6px 0 8px;">📄 '+(due.getMonth()+1)+'月'+due.getDate()+'日までにご提出をお願いします'+tail+'</div>';
   }
   function rows(names, kokko){
@@ -2087,7 +2095,7 @@ function renderDashboard(){
   h+='<div class="card" onclick="switchGroup(\'all\')"><div class="lbl">全申請件数</div><div class="num">'+total+'<small> 件</small></div></div>';
   h+='<div class="card" onclick="switchGroup(\'active\')"><div class="lbl">進行中の申請</div><div class="num">'+active+'<small> 件</small></div></div>';
   h+='<div class="card" onclick="switchGroup(\'done\')"><div class="lbl">手続き完了</div><div class="num">'+done+'<small> 件</small></div></div>';
-  h+='<div class="card '+(missingDocCount>0?'warn':'')+'" onclick="switchGroup(\'docs\')"><div class="lbl">未提出の書類</div><div class="num">'+missingDocCount+'<small> 件</small></div></div>';
+  h+='<div class="card '+((missingDocCount>0&&window._reqOverdueAny)?'warn':'')+'" onclick="switchGroup(\'docs\')"><div class="lbl">未提出の書類</div><div class="num">'+missingDocCount+'<small> 件</small></div></div>';
   h+='</div>';
   h+=_faqCard();  // ver.20261024.01: よくある質問（就労開始・一時帰国・審査期間）
   // 大房行政書士法人担当窓口（部署=案件チーム最頻値 / 担当=ofusa_staff）

@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>申請人マイページ | 大房行政書士法人</title>
+<!-- ver.20261024.08: 提出期限の色を段階表示に（2週間を切ったら黄・1週間でオレンジ・3日で赤・期限切れは赤。それ以外は紺）。 -->
 <!-- ver.20261024.07: ①書類のご案内（案内日＝req::）が入った未提出書類があり、まだ確認していなければ、最初に「📋 提出が必要な書類のご確認」画面（書類名・説明・「◯/◯までに提出してください」・8言語）。「提出が必要な書類を確認しました」で doc_check の docconfirm:: に日時を保存（RPC applicant_view_confirm_docs）して進捗タブへ。確認後に新しく案内された書類があればまた表示。②提出期限の日数を登録支援機関ごとに変えられるように（deadline_rules.orgs）。 -->
 <!-- ver.20261024.06: 色を整理。黄色・赤は提出期限が迫っている（7日以内＝黄、期限切れ＝赤）ところだけに使い、それ以外は紺・グレー系に統一（あなたへのお願い、未提出チップ、タブのバッジ、一時帰国の案内、進捗ステータスの押印・審査中、国交省ステータス）。 -->
 <!-- ver.20261024.05: 提出期限・申請スケジュールの日数をアンシスの「テンプレート」で編集できるように（settings.deadline_rules を RPC get_deadline_rules で読む。読めなければ既定値）。 -->
@@ -212,7 +213,7 @@ details.doc-help-d[open]>summary::after{content:' ▲';}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;flex:none;white-space:nowrap;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title" id="hdrTitle">申請人マイページ</span>
-  <span class="header-ver">ver.20261024.07</span>
+  <span class="header-ver">ver.20261024.08</span>
   <div class="header-right">
     <div id="langSwitch" class="lang-switch"></div>
     <div class="header-org" id="headerName" style="font-size:13px;font-weight:700;opacity:.95;max-width:none;">読み込み中...</div>
@@ -388,6 +389,7 @@ var TR={
  st_please:{ja:'お願いします',en:'Please do',vi:'Vui lòng',id:'Mohon',zh:'请处理',km:'សូមធ្វើ',my:'ပြုလုပ်ပေးပါ',th:'กรุณาดำเนินการ'},
  dl_by:{ja:'提出期限 {d}',en:'Deadline {d}',vi:'Hạn nộp {d}',id:'Batas waktu {d}',zh:'提交期限 {d}',km:'ថ្ងៃផុតកំណត់ {d}',my:'နောက်ဆုံးရက် {d}',th:'กำหนดส่ง {d}'},
  dl_left:{ja:'あと{n}日',en:'{n} days left',vi:'còn {n} ngày',id:'sisa {n} hari',zh:'还剩{n}天',km:'នៅសល់ {n} ថ្ងៃ',my:'{n} ရက် ကျန်',th:'เหลือ {n} วัน'},
+ dl_today:{ja:'今日まで',en:'Due today',vi:'Hạn hôm nay',id:'Hari ini terakhir',zh:'今天截止',km:'ផុតកំណត់ថ្ងៃនេះ',my:'ယနေ့ နောက်ဆုံး',th:'วันนี้วันสุดท้าย'},
  dl_over:{ja:'提出期限切れ',en:'Submission deadline passed',vi:'Quá hạn nộp',id:'Lewat batas waktu penyerahan',zh:'已过提交期限',km:'ហួសកំណត់ដាក់ឯកសារ',my:'တင်ရန်နောက်ဆုံးရက် ကျော်',th:'เลยกำหนดส่ง'},
  dl_yotei_ask:{ja:'提出期限を過ぎています。いつ出せるか、「📅 取得予定日」に日付を入れてください。',en:'The submission deadline has passed. Please enter the date you can submit in "📅 Planned date to obtain".',vi:'Đã quá hạn nộp. Vui lòng nhập ngày bạn có thể nộp vào "📅 Ngày dự kiến lấy".',id:'Batas waktu penyerahan sudah lewat. Masukkan tanggal Anda bisa menyerahkan di "📅 Tanggal rencana pengambilan".',zh:'已过提交期限。请在"📅 预计取得日"中填写可以提交的日期。',km:'ហួសកំណត់ដាក់ឯកសារហើយ។ សូមបញ្ចូលថ្ងៃដែលអាចដាក់បាន នៅក្នុង «📅 ថ្ងៃគ្រោងយក»។',my:'တင်ရန်နောက်ဆုံးရက် ကျော်သွားပါပြီ။ တင်နိုင်မည့်ရက်ကို "📅 ရယူရန်ရက်" တွင် ထည့်ပါ။',th:'เลยกำหนดส่งแล้ว กรุณาใส่วันที่ส่งได้ในช่อง "📅 วันที่วางแผนขอรับ"'},
  faq_title:{ja:'❓ よくある質問',en:'❓ FAQ',vi:'❓ Câu hỏi thường gặp',id:'❓ Pertanyaan umum',zh:'❓ 常见问题',km:'❓ សំណួរញឹកញាប់',my:'❓ မေးလေ့ရှိသောမေးခွန်းများ',th:'❓ คำถามที่พบบ่อย'},
@@ -860,7 +862,7 @@ function _apGateHtml(){
   var h='<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #1c3d6e;border-radius:14px;padding:16px 16px 18px;margin-bottom:16px;">';
   h+='<div style="font-size:16px;font-weight:900;color:#0f2040;">'+t('gate_title')+'</div>';
   h+='<div style="font-size:12.5px;color:#334155;line-height:1.75;margin:8px 0 4px;">'+t('gate_intro')+'</div>';
-  if(due){ var t0=new Date(); t0.setHours(0,0,0,0); var n=Math.round((due-t0)/86400000); var col=n<0?'#b91c1c':(n<=7?'#b45309':'#1c3d6e');
+  if(due){ var t0=new Date(); t0.setHours(0,0,0,0); var n=Math.round((due-t0)/86400000); var col='#dc2626'; // 「◯/◯までに提出してください」は常に赤文字
     h+='<div style="font-size:14px;font-weight:900;color:'+col+';margin:10px 0 6px;">📄 '+t('gate_by',{d:(due.getMonth()+1)+'/'+due.getDate()})+'</div>'; }
   list.forEach(function(d){
     var nameHtml=(curLang==='ja')?fz(d.l):esc(d.l), hd=getDocHelp(d.l);
@@ -1001,14 +1003,22 @@ function _apPlanHtml(){
   h+='</div></div><div style="font-size:10px;color:#94a3b8;">'+t('pl_note')+'</div></div>';
   return h;
 }
+// ver.20261024.08: 提出期限の色（2週間を切ったら黄・1週間でオレンジ・3日で赤／期限切れも赤。それ以外は紺）
+function _dlTier(days){
+  if(days==null) return {bg:'#eef4fd',col:'#1c3d6e',txt:'#475569',soft:'#f1f5f9',bor:'#cbd5e1',lv:0};
+  if(days<=3) return {bg:'#dc2626',col:'#fff',txt:'#b91c1c',soft:'#fdeeee',bor:'#e5a3a3',lv:3};
+  if(days<=7) return {bg:'#f97316',col:'#fff',txt:'#c2410c',soft:'#fff7ed',bor:'#fdba74',lv:2};
+  if(days<=14) return {bg:'#facc15',col:'#713f12',txt:'#a16207',soft:'#fefce8',bor:'#fde047',lv:1};
+  return {bg:'#eef4fd',col:'#1c3d6e',txt:'#475569',soft:'#f1f5f9',bor:'#cbd5e1',lv:0};
+}
 function _apOverdue(d){ if(!d) return false; var t=new Date(); t.setHours(0,0,0,0); return d<t; }
 function _apDlHtml(d){
   if(!d) return '';
   var t0=new Date(); t0.setHours(0,0,0,0); var n=Math.round((d-t0)/86400000);
   var ds=(d.getMonth()+1)+'/'+d.getDate();
   var chip=n<0?'<span style="background:#dc2626;color:#fff;border-radius:6px;padding:1px 7px;font-weight:900;">⚠ '+t('dl_over')+'</span>'
-    :'<span style="background:'+(n<=7?'#f59e0b;color:#fff':'#eef4fd;color:#1c3d6e')+';border-radius:6px;padding:1px 7px;font-weight:800;">⏳ '+t('dl_left',{n:n})+'</span>';
-  return '<div style="font-size:11px;font-weight:800;color:'+(n<0?'#b91c1c':(n<=7?'#b45309':'#475569'))+';margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">📄 '+t('dl_by',{d:ds})+' '+chip+'</div>';
+    :'<span style="background:'+_dlTier(n).bg+';color:'+_dlTier(n).col+';border-radius:6px;padding:1px 7px;font-weight:800;">⏳ '+(n===0?t('dl_today'):t('dl_left',{n:n}))+'</span>';
+  return '<div style="font-size:11px;font-weight:800;color:'+_dlTier(n).txt+';margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">📄 '+t('dl_by',{d:ds})+' '+chip+'</div>';
 }
 function renderTodo(){
   var hAns=hearingAnswered();
