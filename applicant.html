@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>申請人マイページ | 大房行政書士法人</title>
+<!-- ver.20261024.09: 申請までのスケジュールを15営業日の流れに（受領→ヒアリング・書類アップ→条件書確認→サイン返送→会社の押印→申請）。日数はアンシス「⏰ 提出期限」の8工程を合計。ヒアリングフォームに提出期限（受領日から3営業日）。hearingSkip（対象＝人材／両方）に当てはまる案件は出さない。 -->
 <!-- ver.20261024.08: 提出期限の色を段階表示に（2週間を切ったら黄・1週間でオレンジ・3日で赤・期限切れは赤。それ以外は紺）。 -->
 <!-- ver.20261024.07: ①書類のご案内（案内日＝req::）が入った未提出書類があり、まだ確認していなければ、最初に「📋 提出が必要な書類のご確認」画面（書類名・説明・「◯/◯までに提出してください」・8言語）。「提出が必要な書類を確認しました」で doc_check の docconfirm:: に日時を保存（RPC applicant_view_confirm_docs）して進捗タブへ。確認後に新しく案内された書類があればまた表示。②提出期限の日数を登録支援機関ごとに変えられるように（deadline_rules.orgs）。 -->
 <!-- ver.20261024.06: 色を整理。黄色・赤は提出期限が迫っている（7日以内＝黄、期限切れ＝赤）ところだけに使い、それ以外は紺・グレー系に統一（あなたへのお願い、未提出チップ、タブのバッジ、一時帰国の案内、進捗ステータスの押印・審査中、国交省ステータス）。 -->
@@ -213,7 +214,7 @@ details.doc-help-d[open]>summary::after{content:' ▲';}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;flex:none;white-space:nowrap;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title" id="hdrTitle">申請人マイページ</span>
-  <span class="header-ver">ver.20261024.08</span>
+  <span class="header-ver">ver.20261024.09</span>
   <div class="header-right">
     <div id="langSwitch" class="lang-switch"></div>
     <div class="header-org" id="headerName" style="font-size:13px;font-weight:700;opacity:.95;max-width:none;">読み込み中...</div>
@@ -418,7 +419,10 @@ var TR={
  pl_s5:{ja:'申請準備→申請',en:'Prepare → Apply',vi:'Chuẩn bị → Nộp',id:'Persiapan → Pengajuan',zh:'申请准备→申请',km:'រៀបចំ → ដាក់ពាក្យ',my:'ပြင်ဆင် → လျှောက်ထား',th:'เตรียม → ยื่นคำขอ'},
  pl_s4:{ja:'申請',en:'Application',vi:'Nộp hồ sơ',id:'Pengajuan',zh:'提出申请',km:'ដាក់ពាក្យ',my:'လျှောက်ထား',th:'ยื่นคำขอ'},
  pl_late:{ja:'遅れ',en:'Late',vi:'Trễ',id:'Terlambat',zh:'延迟',km:'យឺត',my:'နောက်ကျ',th:'ล่าช้า'},
- pl_note:{ja:'サイン・押印が済んだら、申請の目標日までの残りの期間は申請準備です。受領日から逆算して、目標日に申請できるようにしています。',en:'After signing and the company seal, the remaining time until the target date is for preparing the application. The schedule is planned backward from the receipt date so we can apply by the target date.',vi:'Sau khi ký và đóng dấu, thời gian còn lại đến ngày mục tiêu là để chuẩn bị nộp hồ sơ. Lịch được tính ngược từ ngày nhận để nộp đúng ngày mục tiêu.',id:'Setelah tanda tangan dan cap, sisa waktu sampai tanggal target dipakai untuk persiapan pengajuan. Jadwal dihitung mundur dari tanggal diterima agar bisa diajukan pada tanggal target.',zh:'签名・盖章完成后，到目标日为止的剩余时间用于申请准备。日程从受理日倒推，以便在目标日提出申请。',km:'បន្ទាប់ពីចុះហត្ថលេខា និងបោះត្រា ពេលវេលានៅសល់រហូតដល់ថ្ងៃគោលដៅ គឺសម្រាប់រៀបចំដាក់ពាក្យ។ កាលវិភាគត្រូវបានគណនាថយក្រោយពីថ្ងៃទទួល ដើម្បីដាក់ពាក្យទាន់ថ្ងៃគោលដៅ។',my:'လက်မှတ်နှင့် တံဆိပ်ပြီးနောက် ပစ်မှတ်ရက်အထိ ကျန်ရှိသောကာလသည် လျှောက်ထားရန် ပြင်ဆင်ချိန်ဖြစ်ပါတယ်။ ပစ်မှတ်ရက်တွင် လျှောက်နိုင်ရန် လက်ခံရက်မှ နောက်ပြန်တွက်ထားပါတယ်။',th:'หลังลงชื่อและประทับตราแล้ว เวลาที่เหลือจนถึงวันเป้าหมายใช้สำหรับเตรียมยื่นคำขอ กำหนดการคำนวณย้อนจากวันรับเรื่องเพื่อให้ยื่นได้ทันวันเป้าหมาย'},
+ pl_sH:{ja:'ヒアリング・書類アップ',en:'Hearing form & uploads',vi:'Phiếu phỏng vấn & tải hồ sơ',id:'Formulir & unggah dokumen',zh:'问询表・上传文件',km:'ទម្រង់សម្ភាសន៍ និងផ្ទុកឯកសារ',my:'မေးခွန်းလွှာနှင့် စာရွက်တင်',th:'แบบสอบถามและอัปโหลดเอกสาร'},
+ pl_sSign:{ja:'サイン返送',en:'Return signed documents',vi:'Gửi lại giấy tờ đã ký',id:'Kirim kembali dokumen bertanda tangan',zh:'寄回签名文件',km:'ផ្ញើឯកសារចុះហត្ថលេខាត្រឡប់',my:'လက်မှတ်ထိုးစာရွက် ပြန်ပို့',th:'ส่งเอกสารที่ลงชื่อกลับ'},
+ pl_sOuin:{ja:'会社の押印',en:'Company seal',vi:'Công ty đóng dấu',id:'Cap perusahaan',zh:'企业盖章',km:'ក្រុមហ៊ុនបោះត្រា',my:'ကုမ္ပဏီ တံဆိပ်',th:'บริษัทประทับตรา'},
+ pl_note:{ja:'会社の押印が終わったら、書類がそろった日に申請します。受領日から逆算して、目標日に申請できるようにしています。',en:'After the company seal, we apply on the day the documents are ready. The schedule is planned from the receipt date so we can apply by the target date.',vi:'Sau khi công ty đóng dấu, chúng tôi nộp hồ sơ ngay trong ngày giấy tờ đầy đủ. Lịch được tính từ ngày nhận để nộp đúng ngày mục tiêu.',id:'Setelah cap perusahaan, kami mengajukan pada hari dokumen lengkap. Jadwal dihitung dari tanggal penerimaan agar bisa diajukan sesuai target.',zh:'企业盖章完成后，在文件备齐当天提出申请。日程从受理日起推算，以便在目标日前申请。',km:'បន្ទាប់ពីក្រុមហ៊ុនបោះត្រា យើងនឹងដាក់ពាក្យនៅថ្ងៃដែលឯកសាររួចរាល់។ កាលវិភាគត្រូវបានគណនាពីថ្ងៃទទួល ដើម្បីដាក់ពាក្យទាន់ថ្ងៃគោលដៅ។',my:'ကုမ္ပဏီ တံဆိပ်ထုပြီးနောက် စာရွက်စာတမ်းများ ပြည့်စုံသည့်နေ့တွင် လျှောက်ထားပါမည်။ ပစ်မှတ်ရက်အတွင်း လျှောက်ထားနိုင်ရန် လက်ခံသည့်နေ့မှ တွက်ချက်ထားပါသည်။',th:'หลังบริษัทประทับตราแล้ว เราจะยื่นคำขอในวันที่เอกสารครบ กำหนดการคำนวณจากวันที่รับเรื่องเพื่อให้ยื่นได้ทันวันเป้าหมาย'},
  doc_required:{ja:'必須',en:'Required',vi:'Bắt buộc',id:'Wajib',zh:'必须',km:'ចាំបាច់',my:'မဖြစ်မနေ',th:'จำเป็น'},
  note_specialist:{ja:'※ 技能実習をしていた方のみ',en:'* Only for those who did Technical Intern Training (Ginou Jisshu)',vi:'* Chỉ dành cho người từng thực tập kỹ năng (Ginou Jisshu)',id:'* Hanya untuk yang pernah ikut Pemagangan Teknis (Ginou Jisshu)',zh:'※ 仅限曾参加技能实习（技能実習）者',km:'* សម្រាប់តែអ្នកធ្លាប់កម្មសិក្សាជំនាញ (Ginou Jisshu) ប៉ុណ្ណោះ',my:'* နည်းပညာအလုပ်သင် (Ginou Jisshu) လုပ်ခဲ့ဖူးသူများသာ',th:'* เฉพาะผู้ที่เคยฝึกงานทักษะ (Ginou Jisshu) เท่านั้น'},
  temp_return_title:{ja:'🛫 一時帰国',en:'🛫 Temporary Return Home',vi:'🛫 Về nước tạm thời',id:'🛫 Pulang Sementara',zh:'🛫 临时回国',km:'🛫 ត្រឡប់ប្រទេសវិញបណ្ដោះអាសន្ន',my:'🛫 ယာယီပြည်တော်ပြန်',th:'🛫 กลับประเทศชั่วคราว'},
@@ -911,16 +915,20 @@ function _apYmd(d){ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+
 function _apAdd(d,n){ var r=new Date(d); r.setDate(r.getDate()+n); return r; }
 function _apAddBiz(d,n){ var r=new Date(d),c=0; while(c<n){ r=_apAdd(r,1); var w=r.getDay(); if(w!==0&&w!==6&&_AP_HOL.indexOf(_apYmd(r))<0) c++; } return r; }
 // ver.20261024.05: 日数はアンシスの「テンプレート」で編集（settings.deadline_rules → RPC get_deadline_rules）。読めなければ既定値
-var AP_RULES={steps:{soufu:3,kakunin:3,sakusei:3,signOuin:3,prep:3},askBiz:3,docsBiz:5,docsBeforeExpire:30,applyBeforeExpire:14,minDocsBiz:2,freshDays:45};
+// ver.20261024.09: 申請まで15営業日の流れ（ヒアリング回答・書類アップ3→1-6作成2→1-6企業確認2→サイン書類作成1→サイン返送2→押印書類作成1→押印返送2→スキャン書類作成2＝できた日に申請）
+var AP_STEP_KEYS=['hearing','soufu','kakunin','sakusei','sign','ouinSakusei','signOuin','prep'];
+var AP_RULES={steps:{hearing:3,soufu:2,kakunin:2,sakusei:1,sign:2,ouinSakusei:1,signOuin:2,prep:2},askBiz:3,docsBiz:5,docsBeforeExpire:30,applyBeforeExpire:14,minDocsBiz:2,freshDays:45,hearingBiz:3,uploadBiz:3};
+var _apRaw=null;
 var _apRulesTried=false;
 function _apRulesLoad(){
   if(_apRulesTried) return; _apRulesTried=true;
   callRpc('get_deadline_rules',{}).then(function(r){
     if(!r||typeof r!=='object') return;
+    _apRaw=r;
     function n(v,d){ v=parseInt(v,10); return (isNaN(v)||v<0||v>365)?d:v; }
     function ap(src){ if(!src||typeof src!=='object') return; var st=src.steps||{};
-      ['soufu','kakunin','sakusei','signOuin','prep'].forEach(function(k){ AP_RULES.steps[k]=n(st[k],AP_RULES.steps[k]); });
-      ['askBiz','docsBiz','docsBeforeExpire','applyBeforeExpire','minDocsBiz','freshDays'].forEach(function(k){ AP_RULES[k]=n(src[k],AP_RULES[k]); }); }
+      AP_STEP_KEYS.forEach(function(k){ AP_RULES.steps[k]=n(st[k],AP_RULES.steps[k]); });
+      ['askBiz','docsBiz','docsBeforeExpire','applyBeforeExpire','minDocsBiz','freshDays','hearingBiz','uploadBiz'].forEach(function(k){ AP_RULES[k]=n(src[k],AP_RULES[k]); }); }
     ap(r);
     // ver.20261024.07: 登録支援機関ごとの日数（deadline_rules.orgs["機関名"]・前方一致・差分だけ）
     var org=String((theCase&&theCase.org)||'').trim(), orgs=r.orgs||{}, best='';
@@ -929,7 +937,26 @@ function _apRulesLoad(){
     try{ if(theCase) render(); }catch(e){}
   }).catch(function(){});
 }
-function _apApplyBiz(){ var S=AP_RULES.steps; return S.soufu+S.kakunin+S.sakusei+S.signOuin+S.prep; }
+function _apApplyBiz(){ var S=AP_RULES.steps; return AP_STEP_KEYS.reduce(function(a,k){ return a+(S[k]||0); },0); }
+// ver.20261024.09: アンシス「⏰ 提出期限」の hearingSkip（対象＝人材／両方）に当てはまる案件はヒアリングフォーム不要
+function _apHearingSkip(){
+  var c=theCase||{}, sk=(_apRaw&&Array.isArray(_apRaw.hearingSkip))?_apRaw.hearingSkip:[], org=String(c.org||'').trim(), at=String(c.app_type||''), rs=String(c.residence_status||'');
+  return sk.some(function(x){
+    if(!x||(x.target!=='人材'&&x.target!=='両方')) return false;
+    var o=String(x.org||'すべて').trim(); if(o!=='すべて' && !(org && org.indexOf(o)===0)) return false;
+    if(x.appType && x.appType!=='すべて' && at.indexOf(x.appType)<0) return false;
+    if(x.rs && x.rs!=='すべて' && rs!==x.rs) return false;
+    return true;
+  });
+}
+// ヒアリングフォームの提出期限＝受領日から hearingBiz 営業日（受領日から45日を過ぎた案件は出さない）
+function _apHearingDue(){
+  var c=theCase||{}, req=_apParse(c.request_date); if(!req) return null;
+  _apRulesLoad(); if(_apHearingSkip()) return null;
+  var today=new Date(); today.setHours(0,0,0,0);
+  if(Math.round((today-req)/86400000)>AP_RULES.freshDays) return null;
+  return _apAddBiz(req,AP_RULES.hearingBiz);
+}
 function _apMin(a,b){ if(!a) return b; if(!b) return a; return a<b?a:b; }
 // 書類＝受領日+5営業日と在留期限30日前の早いほう／サイン＝受領日+15営業日と在留期限14日前の早いほう（受領日から45日超は在留期限基準のみ）
 function _apDeadlines(){
@@ -954,7 +981,7 @@ function _apDeadlines(){
   // ver.20261024.03: 3週間スケジュールの逆算日が早ければそちら（依頼日より前にはしない）
   var pl=_apPlan();
   if(pl && pl.signOuin){
-    if(sign && pl.signOuin<sign && (!sd || pl.signOuin>=sd)) sign=pl.signOuin;
+    if(sign && pl.sign<sign && (!sd || pl.sign>=sd)) sign=pl.sign;
     if(docs && pl.signOuin<docs && pl.signOuin>=today) docs=pl.signOuin;
   }
   return {docs:docs, sign:sign};
@@ -964,15 +991,15 @@ function _apSubBiz(d,n){ var r=new Date(d),c=0; while(c<n){ r=_apAdd(r,-1); var 
 function _apPlan(){
   var c=theCase||{}, today=new Date(); today.setHours(0,0,0,0);
   var req=_apParse(c.request_date), exp=_apParse(c.expire); if(exp && exp<today) exp=null;
-  var std=null;
-  _apRulesLoad(); var S=AP_RULES.steps;
-  if(req){ var a=_apAddBiz(req,S.soufu), b=_apAddBiz(a,S.kakunin), cc=_apAddBiz(b,S.sakusei), d=_apAddBiz(cc,S.signOuin), e=_apAddBiz(d,S.prep); std={kakunin:b,sakusei:cc,signOuin:d,app:e}; }
+  _apRulesLoad(); var S=AP_RULES.steps, K=AP_STEP_KEYS, std=null;
+  if(req){ std={}; var d=req; K.forEach(function(k){ d=_apAddBiz(d,S[k]||0); std[k]=d; }); std.app=std.prep; }
   var target=std?std.app:null, comp=false;
   if(exp){ var t2=_apAdd(exp,-AP_RULES.applyBeforeExpire); if(!target||t2<target){ target=t2; comp=!!std; } }
   if(!target) return null;
-  var bk={app:target}; bk.signOuin=_apSubBiz(target,S.prep); bk.sakusei=_apSubBiz(bk.signOuin,S.signOuin); bk.kakunin=_apSubBiz(bk.sakusei,S.sakusei);
+  var bk={app:target, prep:target}, e=target;
+  for(var i=K.length-1;i>0;i--){ e=_apSubBiz(e,S[K[i]]||0); bk[K[i-1]]=e; }
   var out={req:req, compressed:comp};
-  ['kakunin','sakusei','signOuin','app'].forEach(function(k){ var v=std?_apMin(std[k],bk[k]):bk[k]; if(req && v<req) v=req; out[k]=v; });
+  K.concat(['app']).forEach(function(k){ var v=std?_apMin(std[k],bk[k]):bk[k]; if(req && v<req) v=req; out[k]=v; });
   return out;
 }
 function _apPlanHtml(){
@@ -980,11 +1007,12 @@ function _apPlanHtml(){
   var PRE=['雇用条件作成・企業確認','申請人サイン対応','企業押印ご対応・書類収集・申請準備'];
   if(PRE.indexOf(ext)<0) return '';
   var pl=_apPlan(); if(!pl) return '';
-  // 0:条件書確認 1:サイン書類作成 2:サイン・押印 3:申請準備（サイン・押印が済んだら申請目標日までの残りはすべて申請準備）
-  var stg=ext===PRE[0]?0:(ext===PRE[1]?(/作成/.test(st)?1:2):(/押印|企業書類作成/.test(st)?2:3));
+  // ver.20261024.09: 0:ヒアリング回答・書類アップ 1:1-6作成・企業確認 2:サイン書類作成・サイン返送 3:押印書類作成・押印返送 4:スキャン書類作成→申請
+  var st2=st.replace(/[\s\u3000]/g,'');
+  var stg=ext===PRE[0]?(/^(未着手|質問票作成|ヒアリング|★ヒアリング)/.test(st2)?0:1):(ext===PRE[1]?2:(/押印|企業書類作成/.test(st2)?3:4));
   var today=new Date(); today.setHours(0,0,0,0);
   var fd=function(d){ return d?((d.getMonth()+1)+'/'+d.getDate()):'—'; };
-  var steps=[['pl_s0',pl.req,true],['pl_s1',pl.kakunin,stg>=1],['pl_s2',pl.sakusei,stg>=2],['pl_s3',pl.signOuin,stg>=3],['pl_s5',pl.app,false]];
+  var steps=[['pl_s0',pl.req,true],['pl_sH',pl.hearing,stg>=1],['pl_s1',pl.kakunin,stg>=2],['pl_sSign',pl.sign,stg>=3],['pl_sOuin',pl.signOuin,stg>=4],['pl_s4',pl.app,false]];
   var cur=-1; for(var k=0;k<steps.length;k++){ if(!steps[k][2]){ cur=k; break; } }
   var h='<div class="section-title">'+t('pl_title')+'</div><div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:16px;">';
   h+='<div style="font-size:12.5px;font-weight:800;color:#1c3d6e;">'+t('pl_target',{d:fd(pl.app)})+'</div>';
@@ -1028,7 +1056,8 @@ function renderTodo(){
   h+='<div class="todo-box">';
   var _hfUrl=hAns?'':buildHearingFormUrl();
   var _hfBtn=(!hAns&&_hfUrl)?'<a class="todo-btn" href="'+_hfUrl+'" target="_blank" rel="noopener">'+t('btn_answer_form')+'</a>':'';
-  h+=_todoRow(t('todo_hearing'),hAns,hAns?t('st_answered'):t('st_unanswered'),_hfBtn);
+  var _hDue=(!hAns&&hearingNagActive())?_apHearingDue():null; // ver.20261024.09: ヒアリングフォームの提出期限
+  h+=_todoRow(t('todo_hearing')+(_hDue?_apDlHtml(_hDue):''),hAns,hAns?t('st_answered'):t('st_unanswered'),_hfBtn);
   var _dBtn=(docDisplayList().length&&!dDone)?'<a class="todo-btn" href="javascript:void(0)" onclick="switchTab(\'docs\');window.scrollTo(0,0);">'+t('btn_see_docs')+'</a>':'';
   var _dl=_apDeadlines();
   var _dLbl=t('todo_docs');

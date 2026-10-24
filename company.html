@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261024.09: 申請までのスケジュールを15営業日の流れに（ヒアリング回答・書類アップ3→1-6作成2→1-6企業確認2→サイン書類作成1→サイン返送2→押印書類作成1→押印返送2→スキャン書類作成2＝できた日に申請）。日数はアンシス「⏰ 提出期限」の8工程を合計。企業ヒアリング不要（hearingSkip）にも対応。 -->
 <!-- ver.20261024.08: 提出期限の色を段階表示に（2週間を切ったら黄・1週間でオレンジ・3日で赤・期限切れは赤。それ以外は紺）。未提出の書類の件数（PC表示）は提出期限切れがあるときだけ赤。 -->
 <!-- ver.20261024.07: ①書類のご案内（案内日＝req::）が入った未提出書類があり、まだ確認していなければ、マイページを開いたとき最初に「📋 提出が必要な書類のご確認」画面（国交省／入管に分けて書類名・注意事項・「◯月◯日までにご提出をお願いします」）。「提出が必要な書類を確認しました」で co_doc_check の docconfirm:: に日時を保存（RPC company_view_confirm_docs）してメインへ。確認後に新しく案内された書類があればまた表示。案シスから開いたとき（&pass=）・機関リンク（&ot=）では出さない。②提出期限の日数を登録支援機関ごとに変えられるように（deadline_rules.orgs）。③書類の詳細ボックスを黄色からグレーに。 -->
 <!-- ver.20261024.06: 色を整理。黄色・赤は提出期限が迫っている（7日以内＝黄、期限切れ＝赤）ところだけに使い、それ以外は紺・グレー系に統一（対応が必要なタスクのカード・バッジ・ボタン、タスクバー〔期限切れがあるときだけ赤〕、件数バッジ、未提出チップ、進捗ステータスの押印・審査中、国交省ステータス、注意書きボックス）。 -->
@@ -363,7 +364,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261024.08</span>
+  <span class="header-ver">ver.20261024.09</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -755,8 +756,8 @@ function _cksPaceBadge(isT1, stage, applied, appActualStr, reqD, expire){
     return _cksPill('#14532d','#f0fdf4','#a7d7b4','🟢','オンタイムで進んでいます','書類の提出期限 '+_cksFmt(due)+'（あと'+d1+'日）');
   }
   if(!reqD) return '';
-  // ver.20260925.01: 全工程 営業日ベース（送付3+確認3+サイン書類作成3+サイン/押印3+申請3＝15営業日・約3週間）
-  var plan=_cksAddBiz(_cksAddBiz(_cksAddBiz(_cksAddBiz(_cksAddBiz(reqD,3),3),3),3),3);
+  // ver.20261024.09: 標準の申請予定日＝受領日からアンシスで設定した営業日数（既定15営業日）
+  var plan=_cksAddBiz(reqD,DL_RULES.applyBiz||15);
   var d=D(plan,today);
   if(d<0) return _cksPill('#7a1f1f','#fdeeee','#e5a3a3','🔴','標準スケジュールより '+(-d)+'日 遅れています','標準の申請予定日 '+_cksFmt(plan)+' を超過。未対応の確認・サイン・押印・書類のご対応で解消できます');
   if(d<3) return _cksPill('#92400e','#fef9c3','#f0d060','🟡','標準の申請予定日まで あと'+d+'日','申請予定 '+_cksFmt(plan)+'。未対応のものがあれば本日中のご対応をお願いします');
@@ -866,11 +867,10 @@ function _cksSchedule(c){
   // ver.20260921.15: 横型ステップライン——各アクションの期限つき。遅れは赤、完了は緑、現在は青
   (function(){
     // ver.20260925.01: 全工程 営業日ベース＋「サイン書類作成」新設・サイン/押印を合わせて3営業日（受領日→15営業日＝約3週間で申請）
-    var soufu=reqD?_cksAddBiz(reqD,3):null;
-    var kakunin=soufu?_cksAddBiz(soufu,3):null;
-    var sakusei=kakunin?_cksAddBiz(kakunin,3):null;
-    var signOuin=sakusei?_cksAddBiz(sakusei,3):null;
-    var appPlan=signOuin?_cksAddBiz(signOuin,3):null;
+    // ver.20261024.09: 日数はアンシス「⏰ 提出期限」の工程（受領→…→1-6企業確認→サイン書類作成→…→押印返送→スキャン→申請）
+    var _S=_rulesFor(c.org).steps, _pd={}, _d0=reqD;
+    if(reqD) DL_STEP_KEYS.forEach(function(k){ _d0=_cksAddBiz(_d0,_S[k]||0); _pd[k]=_d0; });
+    var kakunin=_pd.kakunin||null, sakusei=_pd.sakusei||null, signOuin=_pd.signOuin||null, appPlan=_pd.prep||null;
     var appActual=_cksParse(c.receipt_date);
     var appD=appActual||appPlan;
     var shinsaEnd=appD?_cksAdd(appD,45):null;
@@ -1268,8 +1268,11 @@ function _kokkoDashCard(){
   return h;
 }
 // ver.20261024.01: 提出期限（O-Linkと同じルール）。受領日基準と在留期限基準の早いほう。受領日から45日を過ぎた案件は在留期限基準のみ
+// ver.20261024.09: 申請まで15営業日の流れ（ヒアリング回答・書類アップ3→1-6作成2→1-6企業確認2→サイン書類作成1→サイン返送2→押印書類作成1→押印返送2→スキャン書類作成2＝できた日に申請）
+var DL_STEP_KEYS=['hearing','soufu','kakunin','sakusei','sign','ouinSakusei','signOuin','prep'];
 var DL_RULES={applyBiz:15,nyukanBiz:5,nyukanBeforeExpire:30,applyBeforeExpire:14,kokkoDays:45,kokkoBeforeExpireMonths:4,
-  steps:{soufu:3,kakunin:3,sakusei:3,signOuin:3,prep:3}, askBiz:3, minDocsBiz:2, freshDays:45};
+  steps:{hearing:3,soufu:2,kakunin:2,sakusei:1,sign:2,ouinSakusei:1,signOuin:2,prep:2}, askBiz:3, minDocsBiz:2, freshDays:45,
+  hearingBiz:3, companyHearingBiz:3, uploadBiz:3};
 // ver.20261024.05: 日数はアンシスの「テンプレート」で編集（settings.deadline_rules → RPC get_deadline_rules）。読めなければ上の既定値
 var _DL_DEFAULT=JSON.parse(JSON.stringify(DL_RULES)), _dlRaw=null, _dlCache={};
 // ver.20261024.07: 登録支援機関ごとの日数（deadline_rules.orgs["機関名"]＝差分だけ。機関名は前方一致）
@@ -1277,12 +1280,13 @@ function _dlMerge(base, src){
   var o=JSON.parse(JSON.stringify(base)); if(!src||typeof src!=='object') return o;
   function n(v,d){ v=parseInt(v,10); return (isNaN(v)||v<0||v>365)?d:v; }
   var st=src.steps||{};
-  ['soufu','kakunin','sakusei','signOuin','prep'].forEach(function(k){ o.steps[k]=n(st[k],o.steps[k]); });
+  DL_STEP_KEYS.forEach(function(k){ o.steps[k]=n(st[k],o.steps[k]); });
+  ['hearingBiz','companyHearingBiz','uploadBiz'].forEach(function(k){ o[k]=n(src[k],o[k]); });
   o.askBiz=n(src.askBiz,o.askBiz); o.nyukanBiz=n(src.docsBiz,o.nyukanBiz);
   o.nyukanBeforeExpire=n(src.docsBeforeExpire,o.nyukanBeforeExpire); o.applyBeforeExpire=n(src.applyBeforeExpire,o.applyBeforeExpire);
   o.minDocsBiz=n(src.minDocsBiz,o.minDocsBiz); o.kokkoDays=n(src.kokkoDays,o.kokkoDays);
   o.kokkoBeforeExpireMonths=n(src.kokkoBeforeExpireMonths,o.kokkoBeforeExpireMonths); o.freshDays=n(src.freshDays,o.freshDays);
-  var S=o.steps; o.applyBiz=S.soufu+S.kakunin+S.sakusei+S.signOuin+S.prep;
+  var S=o.steps; o.applyBiz=DL_STEP_KEYS.reduce(function(a,k){ return a+(S[k]||0); },0);
   return o;
 }
 function _rulesFor(org){
@@ -1319,25 +1323,26 @@ function _plan3w(c){
   var today=new Date(); today.setHours(0,0,0,0);
   var req=_cksParse((_extraByCase[c.id]||{}).request_date), exp=_cksParse(c.expire);
   if(exp && exp<today) exp=null;
-  var std=null;
-  var S=R.steps;
-  if(req){ var a=_cksAddBiz(req,S.soufu), b=_cksAddBiz(a,S.kakunin), cc=_cksAddBiz(b,S.sakusei), d=_cksAddBiz(cc,S.signOuin), e=_cksAddBiz(d,S.prep); std={soufu:a,kakunin:b,sakusei:cc,signOuin:d,app:e}; }
+  var S=R.steps, K=DL_STEP_KEYS, std=null;
+  // 各工程の「終わる日」＝受領日から積み上げ（hearing＝ヒアリング回答・書類アップ … prep＝スキャン書類作成→申請）
+  if(req){ std={}; var d=req; K.forEach(function(k){ d=_cksAddBiz(d,S[k]||0); std[k]=d; }); std.app=std.prep; }
   var target=std?std.app:null, compressed=false;
   if(exp){ var t2=_cksAdd(exp,-R.applyBeforeExpire); if(!target||t2<target){ target=t2; compressed=!!std; } }
   if(!target) return null;
-  var bk={app:target}; bk.signOuin=_cksSubBiz(target,S.prep); bk.sakusei=_cksSubBiz(bk.signOuin,S.signOuin); bk.kakunin=_cksSubBiz(bk.sakusei,S.sakusei); bk.soufu=_cksSubBiz(bk.kakunin,S.kakunin);
+  // 在留期限の2週間前から逆算
+  var bk={app:target, prep:target}, e=target;
+  for(var i=K.length-1;i>0;i--){ e=_cksSubBiz(e,S[K[i]]||0); bk[K[i-1]]=e; }
   var out={req:req, compressed:compressed};
-  ['soufu','kakunin','sakusei','signOuin','app'].forEach(function(k){ var v=std?_dlMin(std[k],bk[k]):bk[k]; if(req && v<req) v=req; out[k]=v; });
+  K.concat(['app']).forEach(function(k){ var v=std?_dlMin(std[k],bk[k]):bk[k]; if(req && v<req) v=req; out[k]=v; });
   return out;
 }
-// 申請前の外部ステータス → 今の工程（0:条件書確認 1:サイン書類作成 2:サイン・押印 3:申請準備 4:申請済み）
-// サイン・押印が済んだら、申請目標日までの残りの期間はすべて「申請準備」
+// ver.20261024.09: 申請前の今の工程（0:ヒアリング回答・書類アップ 1:1-6作成・企業確認 2:サイン書類作成・サイン返送 3:押印書類作成・押印返送 4:スキャン書類作成→申請）
 function _planStage(c){
-  var st=String(c.status||''), ext=getExternalStatus(st);
-  if(ext==='雇用条件作成・企業確認') return 0;
-  if(ext==='申請人サイン対応') return /作成/.test(st)?1:2;
-  if(ext==='企業押印ご対応・書類収集・申請準備') return /押印|企業書類作成/.test(st)?2:3;
-  return 4;
+  var st=String(c.status||'').replace(/[\s\u3000]/g,''), ext=getExternalStatus(c.status);
+  if(ext==='雇用条件作成・企業確認') return /^(未着手|質問票作成|ヒアリング|★ヒアリング)/.test(st)?0:1;
+  if(ext==='申請人サイン対応') return 2;
+  if(ext==='企業押印ご対応・書類収集・申請準備') return /押印|企業書類作成/.test(st)?3:4;
+  return 5;
 }
 // 人材詳細：申請までのスケジュール（建設以外。建設は既存の _cksSchedule）
 function _planScheduleHtml(c){
@@ -1345,7 +1350,7 @@ function _planScheduleHtml(c){
   var pl=_plan3w(c); if(!pl) return '';
   var today=new Date(); today.setHours(0,0,0,0);
   var stg=_planStage(c);
-  var steps=[{nm:'案件受領',d:pl.req,done:true},{nm:'条件書確認',d:pl.kakunin,done:stg>=1},{nm:'サイン書類作成',d:pl.sakusei,done:stg>=2},{nm:'サイン・押印',d:pl.signOuin,done:stg>=3},{nm:'申請準備→申請',d:pl.app,done:stg>=4}];
+  var steps=[{nm:'案件受領',d:pl.req,done:true},{nm:'ヒアリング・書類アップ',d:pl.hearing,done:stg>=1},{nm:'1-6企業確認',d:pl.kakunin,done:stg>=2},{nm:'サイン返送',d:pl.sign,done:stg>=3},{nm:'押印返送',d:pl.signOuin,done:stg>=4},{nm:'スキャン→申請',d:pl.app,done:stg>=5}];
   var cur=-1; for(var k=0;k<steps.length;k++){ if(!steps[k].done){ cur=k; break; } }
   var h='<div class="dt-sec">📅 申請までのスケジュール</div>';
   h+='<div style="font-size:12px;color:#1c3d6e;background:#eef4fd;border:1px solid #b9d0ee;border-radius:10px;padding:8px 12px;margin:4px 0 8px;line-height:1.6;">🎯 申請の目標日：<b>'+_cksFmt(pl.app)+'</b>'+(pl.compressed?'<br><span style="color:#b45309;font-weight:700;">在留期限が近いため、在留期限の2週間前に申請できるよう各工程を前倒ししています。</span>':'')+'</div>';
@@ -1360,7 +1365,7 @@ function _planScheduleHtml(c){
       +'<div style="font-size:9.5px;color:'+(late?'#b91c1c':'#94a3b8')+';font-weight:700;">'+(s2.d?((k===0?'':'〜')+(s2.d.getMonth()+1)+'/'+s2.d.getDate()):'—')+(late?'<br>⚠遅れ':'')+'</div></div>';
     if(k<steps.length-1) sh+='<div style="flex:1;min-width:10px;height:2.5px;background:'+(s2.done?'#16a34a':'#e2e8f0')+';margin-top:9px;"></div>';
   });
-  sh+='</div></div><div style="font-size:10px;color:#94a3b8;margin:-4px 0 8px;">サイン・押印が済んだら、申請目標日までの残りの期間は申請準備です。受領日から'+_rulesFor(c.org).applyBiz+'営業日で申請できるように逆算しています。</div>';
+  sh+='</div></div><div style="font-size:10px;color:#94a3b8;margin:-4px 0 8px;">押印のご返送後、スキャン書類ができた日に申請します。受領日から'+_rulesFor(c.org).applyBiz+'営業日で申請できるように逆算しています。</div>';
   return h+sh;
 }
 function _caseDl(c){
@@ -1380,7 +1385,7 @@ function _caseDl(c){
   // ver.20261024.03: 3週間スケジュールの逆算日が早ければそちら（ただし依頼日より前にはしない）
   var pl=_plan3w(c);
   if(pl){
-    var stepD=/1-6/.test(String(c.status||''))?pl.kakunin:pl.signOuin;
+    var stepD=/1-6/.test(String(c.status||''))?pl.kakunin:(/サイン/.test(String(c.status||''))?pl.sign:pl.signOuin);
     if(seal && stepD && stepD<seal && (!sd || stepD>=sd)) seal=stepD;
     if(pl.signOuin && (!ny || pl.signOuin<ny) && pl.signOuin>=today) ny=pl.signOuin;
     ap=pl.app;
@@ -1518,8 +1523,11 @@ function renderRequests(){
   // 企業ヒアリングフォーム（type=company＝会社が回答するもの）が未回答なら依頼として表示
   // 表示対象の会社のみ（フォームがある／フラグでON。昔からの取引先などフォーム無しは出さない）
   if(_showHearing() && !companyHearingDone){
+    // ver.20261024.09: 企業ヒアリングの提出期限＝受領日（申請前の案件で一番早いもの）から companyHearingBiz 営業日（1-6の作成に必要）
+    var _chReq=null; (allCases||[]).forEach(function(c){ if(_PRE_APPLY_EXT.indexOf(getExternalStatus(c.status))<0) return; var r=_cksParse((_extraByCase[c.id]||{}).request_date); if(r && (new Date()-r)/86400000<=DL_RULES.freshDays) _chReq=_dlMin(_chReq,r); });
+    var _chDue=_chReq?_cksAddBiz(_chReq,DL_RULES.companyHearingBiz||3):null;
     secs.push(_reqSection('📋','企業ヒアリングフォームのご回答', 1,
-      _companyHearingRow(),
+      _companyHearingRow()+(_chDue?'<div style="display:flex;align-items:center;gap:6px;margin-top:4px;"><span style="font-size:11px;color:#64748b;">雇用条件書（1-6）の作成に必要です。提出期限：</span>'+_dlChip(_chDue)+'</div>':''),
       '貴社の情報に関するヒアリングフォームにご回答をお願いします。'));
   }
 
@@ -1561,11 +1569,18 @@ function _companyHearingUrl(){
    → フォーム未作成かつ未指定の会社(昔からの取引先など)には出さない。 */
 // ver.20261005.01: 企業ヒアリングフォームを使わない登録支援機関（前方一致）
 var _NO_CO_HEARING_ORGS=['オープンケア協同組合','グローバルパートナーズ'];
+// ver.20261024.09: アンシス「⏰ 提出期限」の hearingSkip（対象＝所属機関／両方・申請種別や在留資格の指定なし）も企業ヒアリング不要として扱う
+function _dlSkipCoOrgs(){
+  var a=_NO_CO_HEARING_ORGS.slice(), sk=(_dlRaw&&Array.isArray(_dlRaw.hearingSkip))?_dlRaw.hearingSkip:[];
+  sk.forEach(function(x){ if(!x||(x.target!=='所属機関'&&x.target!=='両方')) return; if((x.appType&&x.appType!=='すべて')||(x.rs&&x.rs!=='すべて')) return; var o=String(x.org||'').trim(); if(o==='すべて') o=''; a.push(o); });
+  return a;
+}
 function _noHearingOrg(){
   var orgs=[]; (allCases||[]).forEach(function(c){ var o=String((c&&c.org)||'').trim(); if(o && orgs.indexOf(o)<0) orgs.push(o); });
   if(_orgScope) orgs=[String(_orgScope)];
   if(!orgs.length) return false;
-  return orgs.every(function(o){ return _NO_CO_HEARING_ORGS.some(function(k){ return o.indexOf(k)===0; }); });
+  var ks=_dlSkipCoOrgs();
+  return orgs.every(function(o){ return ks.some(function(k){ return k==='' || o.indexOf(k)===0; }); });
 }
 function _showHearing(){
   if(_noHearingOrg()) return false;
