@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261024.01: 対応が必要なタスクに提出期限を追加・強化（O-Linkと同じルール）。入管書類（建設以外）＝申請前の案件の「受領日+5営業日と在留期限30日前の早いほう」、国交省書類＝45日ルールに特定活動の在留期限4か月前（推奨）を追加、押印＝申請目標日（受領日+15営業日と在留期限14日前の早いほう）、1-6号確認＝受領日+5営業日。期限切れの書類行に「📅 いつ出せますか？」（取得予定日・yotei::で案シスと連動）。ダッシュボードに「❓ よくある質問」（就労開始・特例期間中の一時帰国・カード交付まで・審査期間＝get_review_stats直近3か月実績）。 -->
 <!-- ver.20261005.01: オープンケア協同組合・グローバルパートナーズの企業には「所属機関（企業）ヒアリングフォーム」を出さない（提出書類タブのボタン・ダッシュボードのカード・対応が必要なタスクの「企業ヒアリング未回答」）。機関名は前方一致（「アライズ様（オープンケア協同組合）」のような括弧内は対象外）。この会社の案件の登録支援機関がすべて該当するときだけ非表示。 -->
 <!-- ver.20261002.01: スマホのUI改修。人材一覧を横スクロールの表→タップしやすいカード（氏名・進捗・在留期限・国籍/種別/在留資格・受付番号）に、検索欄を追加。ダッシュボードの重複カード（全申請件数〜・期限アラート・未提出の注意書き）をスマホでは非表示にして「対応が必要なタスク」→期限が近い人材→人数の順に集約。提出書類タブは画面下に「📤 書類をアップロード（未提出n件）」を固定表示。パソコン表示は従来どおり。 -->
 <!-- ver.20260930.01: 提出書類タブの「🏗国交省申請書類」見出し直下に提出期限（受領日/ご案内日から45日・残りn日／超過は赤）を表示。会社単位の起算日＝初回案内日→国交省reqの最早→特定活動案件の受領日の最早。これまで期限はご依頼事項・📅スケジュールにしか出ておらず、提出書類タブでは「いつまで」が分からなかったのを解消。 -->
@@ -353,7 +354,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261005.01</span>
+  <span class="header-ver">ver.20261024.01</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -951,7 +952,7 @@ function _kokkoDeadlineHtml(){
   var days=Math.round((due-today)/86400000);
   var over=days<0;
   var chip = over
-    ? '<span style="background:#dc2626;color:#fff;border-radius:6px;padding:2px 8px;font-weight:900;">⚠ '+(-days)+'日超過・至急ご提出ください</span>'
+    ? '<span style="background:#dc2626;color:#fff;border-radius:6px;padding:2px 8px;font-weight:900;">⚠ 提出期限を'+(-days)+'日超過・至急ご提出ください</span>'
     : (days<=7 ? '<span style="background:#f59e0b;color:#fff;border-radius:6px;padding:2px 8px;font-weight:900;">⏳ あと'+days+'日</span>'
                : '<span style="background:#eef4fd;color:#1c3d6e;border-radius:6px;padding:2px 8px;font-weight:800;">⏳ あと'+days+'日</span>');
   var label=annaiD?'ご案内日から45日以内':'案件受領日から45日以内';
@@ -1244,6 +1245,44 @@ function _kokkoDashCard(){
   h+='</div>';
   return h;
 }
+// ver.20261024.01: 提出期限（O-Linkと同じルール）。受領日基準と在留期限基準の早いほう。受領日から45日を過ぎた案件は在留期限基準のみ
+var DL_RULES={applyBiz:15,nyukanBiz:5,nyukanBeforeExpire:30,applyBeforeExpire:14,kokkoDays:45,kokkoBeforeExpireMonths:4};
+var _PRE_APPLY_EXT=['雇用条件作成・企業確認','申請人サイン対応','企業押印ご対応・書類収集・申請準備'];
+function _dlMin(a,b){ if(!a) return b; if(!b) return a; return a<b?a:b; }
+function _caseDl(c){
+  var today=new Date(); today.setHours(0,0,0,0);
+  var req=_cksParse((_extraByCase[c.id]||{}).request_date), exp=_cksParse(c.expire);
+  if(exp && exp<today) exp=null; // 在留期限を過ぎた案件（止まっている古い案件など）は在留期限基準を使わない
+  var fresh=req && Math.round((today-req)/86400000)<=DL_RULES.kokkoDays;
+  var ny=null, ap=null;
+  if(fresh){ ny=_cksAddBiz(req,DL_RULES.nyukanBiz); ap=_cksAddBiz(req,DL_RULES.applyBiz); }
+  if(exp){ ny=_dlMin(ny,_cksAdd(exp,-DL_RULES.nyukanBeforeExpire)); ap=_dlMin(ap,_cksAdd(exp,-DL_RULES.applyBeforeExpire)); }
+  // 受領した時点で在留期限が近い案件でも、受領日から2営業日（押印は5営業日）より前にはしない
+  if(fresh){ var m2=_cksAddBiz(req,2), m5=_cksAddBiz(req,5); if(ny&&ny<m2) ny=m2; if(ap&&ap<m5) ap=m5; }
+  return {nyukan:ny, apply:ap};
+}
+// 期限チップ（あとN日／期限切れ）
+function _dlChip(due){
+  if(!due) return '';
+  var today=new Date(); today.setHours(0,0,0,0);
+  var days=Math.round((due-today)/86400000);
+  var d='<span style="font-size:10.5px;font-weight:800;color:'+(days<0?'#b91c1c':'#b45309')+';">〜'+(due.getMonth()+1)+'/'+due.getDate()+'</span> ';
+  if(days<0) return d+'<span style="background:#dc2626;color:#fff;border-radius:6px;padding:1px 7px;font-size:10.5px;font-weight:900;">⚠ 提出期限切れ</span>';
+  if(days<=7) return d+'<span style="background:#f59e0b;color:#fff;border-radius:6px;padding:1px 7px;font-size:10.5px;font-weight:900;">⏳ あと'+days+'日</span>';
+  return d+'<span style="background:#eef4fd;color:#1c3d6e;border-radius:6px;padding:1px 7px;font-size:10.5px;font-weight:800;">⏳ あと'+days+'日</span>';
+}
+// 期限切れの書類行に「いつ出せますか？」（取得予定日。co_doc_check の yotei:: に保存・案シスと連動）
+function _docTaskRow(n, overdue){
+  var cur=(coDocs[n]&&coDocs[n].yotei)?coDocs[n].yotei:'';
+  var r='<div class="req-row"'+(overdue?' style="border-left-color:#fca5a5;"':'')+'><span class="req-nm">'+esc(n)+'</span>';
+  if(overdue||cur){
+    r+='<span style="display:inline-flex;align-items:center;gap:5px;margin-left:auto;font-size:10.5px;font-weight:800;color:'+(cur?'#475569':'#b91c1c')+';">📅 いつ出せますか？'
+      +'<input type="date" value="'+esc(cur)+'" onchange="saveYoteiCo('+JSON.stringify(n).replace(/"/g,'&quot;')+',this.value,this)" style="font-size:11px;padding:2px 4px;border:1.5px solid '+(cur?'#cbd5e1':'#f87171')+';border-radius:6px;">'
+      +'<span class="yotei-msg" style="font-size:10px;"></span></span>';
+  }
+  return r+'</div>';
+}
+function _isOverdue(due){ if(!due) return false; var t=new Date(); t.setHours(0,0,0,0); return due<t; }
 function renderRequests(){
   var secs=[];
   // ver.20260921.13: 建設案件がある企業は 国交省／入管 に分けて期限付きで表示
@@ -1274,7 +1313,7 @@ function renderRequests(){
     var over=days<0;
     if(over) _overdueAny=true;
     var chip;
-    if(over) chip='<span style="background:#dc2626;color:#fff;border-radius:6px;padding:2px 8px;font-weight:900;">⚠ '+(-days)+'日超過・至急ご対応ください</span>';
+    if(over) chip='<span style="background:#dc2626;color:#fff;border-radius:6px;padding:2px 8px;font-weight:900;">⚠ 提出期限を'+(-days)+'日超過・至急ご対応ください</span>';
     else if(days<=7) chip='<span style="background:#f59e0b;color:#fff;border-radius:6px;padding:2px 8px;font-weight:900;">⏳ あと'+days+'日</span>';
     else chip='<span style="background:#eef4fd;color:#1c3d6e;border-radius:6px;padding:2px 8px;font-weight:800;">⏳ あと'+days+'日</span>';
     return '<div style="font-size:11px;font-weight:800;color:'+(over?'#b91c1c':'#b45309')+';margin:2px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">📄 提出期限 〜'+_cksFmt(due)+'（'+label+'）'+chip+'</div>';
@@ -1305,8 +1344,12 @@ function renderRequests(){
           });
         }
         var _base=_annaiD||minReqD;
-        var kb=dlLine(_base?_cksAdd(_base,45):null, _annaiD?'ご案内日から45日以内':'案件受領日から45日以内')
-          +kokkoMissing.map(function(n){ return '<div class="req-row"><span class="req-nm">'+esc(n)+'</span></div>'; }).join('')
+        // ver.20261024.01: 特定活動の在留期限の4か月前が早ければそちらを期限にする（推奨）
+        var _kDue=_base?_cksAdd(_base,45):null, _kLbl=_annaiD?'ご案内日から45日以内':'案件受領日から45日以内';
+        allCases.forEach(function(c){ if(String(c.residence_status||'')!=='特定活動') return; if(_PRE_APPLY_EXT.indexOf(getExternalStatus(c.status))<0) return; var ex=_cksParse(c.expire); if(!ex) return; var e4=_cksAddM(ex,-DL_RULES.kokkoBeforeExpireMonths); if(_base && e4<_base) return; /* ご案内の時点で4か月前を過ぎていた案件は対象外 */ if(!_kDue||e4<_kDue){ _kDue=e4; _kLbl='特定活動の在留期限の4か月前'; } });
+        var _kOver=_isOverdue(_kDue);
+        var kb=dlLine(_kDue,_kLbl)
+          +kokkoMissing.map(function(n){ return _docTaskRow(n,_kOver); }).join('')
           +'<button class="req-btn" onclick="switchGroup(\'docs\')">提出書類を開く</button>';
         secs.push(_reqSection('🏗','国交省申請書類のご提出', kokkoMissing.length, kb));
       }
@@ -1316,13 +1359,19 @@ function renderRequests(){
     // 🛂 入管：オープン時のみ（クローズ中は依頼として出さない）
     var nyukanMissing=missing.filter(function(n){ return !_isKokkoDocName(n); });
     if(!_nyukanGateClosed() && nyukanMissing.length){
+      var _nOver=_isOverdue(minT1Due);
       var nb=dlLine(minT1Due,'特定技能1号申請の1ヶ月前')
-        +nyukanMissing.map(function(n){ return '<div class="req-row"><span class="req-nm">'+esc(n)+'</span></div>'; }).join('')
+        +nyukanMissing.map(function(n){ return _docTaskRow(n,_nOver); }).join('')
         +'<button class="req-btn" onclick="switchGroup(\'docs\')">提出書類を開く</button>';
       secs.push(_reqSection('🛂','入管提出書類のご提出', nyukanMissing.length, nb));
     }
   } else if(missing.length){
-    var dbody=missing.map(function(n){ return '<div class="req-row"><span class="req-nm">'+esc(n)+'</span></div>'; }).join('')
+    // ver.20261024.01: 入管書類の提出期限＝受領日から5営業日（在留期限の30日前が早ければそちら）。申請前の案件のうち最も早い日
+    var _dDue=null;
+    allCases.forEach(function(c){ if(_PRE_APPLY_EXT.indexOf(getExternalStatus(c.status))<0) return; _dDue=_dlMin(_dDue,_caseDl(c).nyukan); });
+    var _dOver=_isOverdue(_dDue);
+    var dbody=dlLine(_dDue,'受領日から5営業日・在留期限の30日前の早いほう')
+      +missing.map(function(n){ return _docTaskRow(n,_dOver); }).join('')
       +'<button class="req-btn" onclick="switchGroup(\'docs\')">提出書類を開く</button>';
     secs.push(_reqSection('📄','未提出の書類', missing.length, dbody));
   }
@@ -1330,14 +1379,14 @@ function renderRequests(){
   var oshi=allCases.filter(function(c){ return String(c.status||'').indexOf('企業押印返送待ち')>=0; });
   if(oshi.length){
     secs.push(_reqSection('🖊️','押印のお願い', oshi.length,
-      oshi.map(function(c){ return _reqRow(c); }).join(''),
+      oshi.map(function(c){ return _reqRow(c,'<span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;">'+_dlChip(_caseDl(c).apply)+'</span>'); }).join(''),
       '下記の方の書類に押印のうえ、ご返送をお願いします。'));
   }
   // 1-6企業確認待ち
   var kk=allCases.filter(function(c){ return String(c.status||'').indexOf('1-6企業確認待ち')>=0; });
   if(kk.length){
     secs.push(_reqSection('📑','雇用契約書（参考様式1-6号）のご確認', kk.length,
-      kk.map(function(c){ return _reqRow(c); }).join(''),
+      kk.map(function(c){ return _reqRow(c,'<span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;">'+_dlChip(_caseDl(c).nyukan)+'</span>'); }).join(''),
       'お送りした内容をご確認のうえ、問題なければ担当者までご連絡ください。'));
   }
   // 注: ヒアリングフォーム回答待ち(送付済)は「人材(申請人)側」のヒアリングのため、会社の依頼事項には出さない
@@ -1364,7 +1413,7 @@ function renderRequests(){
       +'<button class="req-btn" onclick="switchGroup(\'orginfo\')">所属機関情報を開く</button>'));
   }
   var _title=(_tk.total>0)?('🚨 対応が必要なタスク（'+_tk.total+'件）'):'📌 ご依頼事項';
-  var urgentBar=_overdueAny?'<div style="background:#dc2626;color:#fff;font-size:12px;font-weight:900;border-radius:8px;padding:8px 12px;margin:4px 0 10px;">🚨 期限を過ぎたご依頼があります。申請スケジュール全体に影響しますので、至急のご対応をお願いいたします。</div>':'';
+  var urgentBar=_overdueAny?'<div style="background:#dc2626;color:#fff;font-size:12px;font-weight:900;border-radius:8px;padding:8px 12px;margin:4px 0 10px;">🚨 提出期限を過ぎたご依頼があります。申請スケジュール全体に影響しますので、至急ご対応いただくか、「📅 いつ出せますか？」に日付を入れてください。</div>':'';
   if(!secs.length){
     return '<div class="req-card ok" id="reqCard"><div class="req-head">📌 ご依頼事項</div>'
       +'<div class="req-clear">✅ 現在ご対応いただく依頼事項はありません。</div></div>';
@@ -1815,6 +1864,29 @@ async function _loadCompanyFeedbackHistory(){
     box.innerHTML=hh;
   }catch(e){ box.innerHTML='<div style="font-size:11px;color:#dc2626;">履歴の取得に失敗しました。</div>'; }
 }
+// ver.20261024.01: よくある質問。審査期間は大房の直近3か月の実績（get_review_stats＝四半期ごとに自動更新）
+var _reviewStats=null, _rsTried=false;
+function _rsLoad(){ if(_rsTried) return; _rsTried=true; callRpc('get_review_stats',{}).then(function(r){ if(r&&r.rows){ _reviewStats=r; if(currentTab==='dashboard') render(); } }).catch(function(){}); }
+function _rsGet(k){ if(!_reviewStats) return null; for(var i=0;i<_reviewStats.rows.length;i++) if(_reviewStats.rows[i].key===k) return _reviewStats.rows[i]; return null; }
+function _faqCard(){
+  _rsLoad();
+  function qa(q,a){ return '<details style="border-top:1px solid #f1f5f9;padding:8px 0;"><summary style="font-size:12.5px;font-weight:800;color:#0f2040;cursor:pointer;">Q. '+q+'</summary><div style="font-size:12px;color:#334155;line-height:1.75;margin:6px 0 2px 14px;">'+a+'</div></details>'; }
+  var stats='';
+  if(_reviewStats){
+    var fy=function(x){ var d=_cksParse(x); return d?_cksFmt(d):''; };
+    stats='<div>大房行政書士法人の<b>直近3か月の実績</b>（'+fy(_reviewStats.from)+'〜'+fy(_reviewStats.to)+'に審査が完了した案件）です。</div><div style="margin-top:4px;">';
+    [['tokkatsu','特定活動'],['tg_henkou','特定技能（変更）'],['tg_koushin','特定技能（更新）'],['tg_nintei','特定技能（認定）'],['kokko','国交省（建設の受入計画）']].forEach(function(r){ var st=_rsGet(r[0]); if(!st||!st.n) return;
+      stats+='<div style="display:flex;flex-wrap:wrap;gap:4px 10px;padding:5px 0;border-top:1px solid #f1f5f9;"><span style="min-width:150px;font-weight:700;">'+r[1]+'</span><span>ふつう <b>約'+st.median+'日</b></span><span style="color:#64748b;">長くても '+st.p80+'日以内（8割）</span></div>'; });
+    stats+='</div><div style="font-size:11px;color:#94a3b8;">「ふつう」は真ん中の値、「長くても」は8割の案件が終わる日数です。3か月ごとに自動で更新されます。</div>';
+  } else stats='実績を読み込み中です。';
+  var h='<div class="section-title">❓ よくある質問</div><div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:6px 16px 8px;margin-bottom:18px;">';
+  h+=qa('本人はいつから働けますか？','<b>新しい在留カードを本人が受け取ってから</b>です。許可が出ても、新しい在留カードを受け取る前は新しい仕事では働けません。');
+  h+=qa('特例期間中に一時帰国できますか？','特例期間（在留期限が過ぎても審査中なら日本にいられる期間）中に出国する場合は、<b>特例期間が終わる3週間前までに再入国</b>してください。<br>例）在留期限 2026/7/1 → 特例期間の終わり 2026/9/1 → 再入国は 2026/8/11 まで');
+  h+=qa('許可が出てから、新しい在留カードはいつもらえますか？','<b>通常、営業日で2週間ほど</b>です。<br>受取方法の調整 2日 → 入管の手続き 2日 → 入管からの発送 3日〜1週間 → 大房に届く 2日 → 本人に届く 2日');
+  h+=qa('許可が出るまで、どれくらいかかりますか？',stats+'<div style="font-size:11px;color:#64748b;margin-top:4px;">※ 技能実習の満了日の前後や、入管が込み合う時期は長くなることがあります。</div>');
+  h+='</div>';
+  return h;
+}
 function renderDashboard(){
   var total=allCases.length;
   var done=allCases.filter(function(c){return classifyCase(c)==='done';}).length;
@@ -1833,6 +1905,7 @@ function renderDashboard(){
   h+='<div class="card" onclick="switchGroup(\'done\')"><div class="lbl">手続き完了</div><div class="num">'+done+'<small> 件</small></div></div>';
   h+='<div class="card '+(missingDocCount>0?'warn':'')+'" onclick="switchGroup(\'docs\')"><div class="lbl">未提出の書類</div><div class="num">'+missingDocCount+'<small> 件</small></div></div>';
   h+='</div>';
+  h+=_faqCard();  // ver.20261024.01: よくある質問（就労開始・一時帰国・審査期間）
   // 大房行政書士法人担当窓口（部署=案件チーム最頻値 / 担当=ofusa_staff）
   var teamCount={}; allCases.forEach(function(c){var t=(c.team||'').trim();if(t)teamCount[t]=(teamCount[t]||0)+1;});
   var topTeam='',topN=0; Object.keys(teamCount).forEach(function(t){if(teamCount[t]>topN){topN=teamCount[t];topTeam=t;}});

@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>申請人マイページ | 大房行政書士法人</title>
+<!-- ver.20261024.01: 進捗タブの「あなたへのお願い」に提出期限を追加（O-Link・所属機関ページと同じルール：書類＝受領日+5営業日と在留期限30日前の早いほう、サイン＝受領日+15営業日と在留期限14日前の早いほう。受領日から45日超は在留期限基準のみ。建設の特定活動で国交省申請前は書類の期限なし）。期限切れは「取得予定日に日付を入れてください」と表示し、提出書類タブの取得予定日入力を赤枠に。サイン書類返送待ちのとき「3. サイン書類にサインして返送」を表示。進捗タブに「❓ よくある質問」（いつから働けるか・審査中の一時帰国・カード交付まで・審査期間＝get_review_stats直近3か月実績）を8言語で追加。applicant_view_get に request_date を追加。 -->
 <!-- ver.20261002.01: スマホで書類を送りやすく。画面下に「📤 書類をアップロード（残n件）」の固定ボタン、提出書類タブは未提出→提出済み（折りたたみ）の順、未提出の各書類に「📤 送る」ボタン、取得方法・説明はタップで開く形に。進捗タブの「必要書類提出」に「書類を見る」ボタン。スマホではヘッダーを小さくし、タブを上に固定。アイコンの二重表示（📄📄・📤📤）を修正。8言語対応。 -->
 <!-- ver.20260928.01: 提出書類タブの未提出書類に「📅取得予定日」入力を追加。入力するとRPC applicant_view_set_yotei で自分の案件のdoc_checkに yotei:: マーカーで保存（案シス・所属機関ページと連動）。8言語対応。 -->
 <!-- ver.20260716.03: ヒアリング行を常時表示に変更（未回答なら⬜＋回答ボタン。ステータス段階を過ぎても回答導線を維持）。黄色バナーの督促はヒアリング段階のみ。回答済み表示は送信済み回答の実在時のみ（16.02の厳格化は維持）。 -->
@@ -205,7 +206,7 @@ details.doc-help-d[open]>summary::after{content:' ▲';}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;flex:none;white-space:nowrap;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title" id="hdrTitle">申請人マイページ</span>
-  <span class="header-ver">ver.20261002.01</span>
+  <span class="header-ver">ver.20261024.01</span>
   <div class="header-right">
     <div id="langSwitch" class="lang-switch"></div>
     <div class="header-org" id="headerName" style="font-size:13px;font-weight:700;opacity:.95;max-width:none;">読み込み中...</div>
@@ -377,6 +378,22 @@ var TR={
  yotei_label:{ja:'📅 取得予定日',en:'📅 Planned date to obtain',vi:'📅 Ngày dự kiến lấy',id:'📅 Tanggal rencana pengambilan',zh:'📅 预计取得日',km:'📅 ថ្ងៃគ្រោងយក',my:'📅 ရယူရန်ရက်',th:'📅 วันที่วางแผนขอรับ'},
  yotei_saved:{ja:'保存しました',en:'Saved',vi:'Đã lưu',id:'Tersimpan',zh:'已保存',km:'បានរក្សាទុក',my:'သိမ်းပြီး',th:'บันทึกแล้ว'},
  yotei_failed:{ja:'保存に失敗しました',en:'Failed to save',vi:'Lưu thất bại',id:'Gagal menyimpan',zh:'保存失败',km:'រក្សាទុកបរាជ័យ',my:'သိမ်းမရ',th:'บันทึกไม่สำเร็จ'},
+ todo_sign:{ja:'3. サイン書類にサインして返送',en:'3. Sign and return the documents',vi:'3. Ký và gửi lại giấy tờ',id:'3. Tanda tangani dan kirim kembali dokumen',zh:'3. 在文件上签名并寄回',km:'3. ចុះហត្ថលេខា ហើយផ្ញើឯកសារត្រឡប់មកវិញ',my:'၃။ စာရွက်တွင် လက်မှတ်ထိုး၍ ပြန်ပို့ပါ',th:'3. ลงชื่อในเอกสารแล้วส่งกลับ'},
+ st_please:{ja:'お願いします',en:'Please do',vi:'Vui lòng',id:'Mohon',zh:'请处理',km:'សូមធ្វើ',my:'ပြုလုပ်ပေးပါ',th:'กรุณาดำเนินการ'},
+ dl_by:{ja:'提出期限 {d}',en:'Deadline {d}',vi:'Hạn nộp {d}',id:'Batas waktu {d}',zh:'提交期限 {d}',km:'ថ្ងៃផុតកំណត់ {d}',my:'နောက်ဆုံးရက် {d}',th:'กำหนดส่ง {d}'},
+ dl_left:{ja:'あと{n}日',en:'{n} days left',vi:'còn {n} ngày',id:'sisa {n} hari',zh:'还剩{n}天',km:'នៅសល់ {n} ថ្ងៃ',my:'{n} ရက် ကျန်',th:'เหลือ {n} วัน'},
+ dl_over:{ja:'提出期限切れ',en:'Submission deadline passed',vi:'Quá hạn nộp',id:'Lewat batas waktu penyerahan',zh:'已过提交期限',km:'ហួសកំណត់ដាក់ឯកសារ',my:'တင်ရန်နောက်ဆုံးရက် ကျော်',th:'เลยกำหนดส่ง'},
+ dl_yotei_ask:{ja:'提出期限を過ぎています。いつ出せるか、「📅 取得予定日」に日付を入れてください。',en:'The submission deadline has passed. Please enter the date you can submit in "📅 Planned date to obtain".',vi:'Đã quá hạn nộp. Vui lòng nhập ngày bạn có thể nộp vào "📅 Ngày dự kiến lấy".',id:'Batas waktu penyerahan sudah lewat. Masukkan tanggal Anda bisa menyerahkan di "📅 Tanggal rencana pengambilan".',zh:'已过提交期限。请在"📅 预计取得日"中填写可以提交的日期。',km:'ហួសកំណត់ដាក់ឯកសារហើយ។ សូមបញ្ចូលថ្ងៃដែលអាចដាក់បាន នៅក្នុង «📅 ថ្ងៃគ្រោងយក»។',my:'တင်ရန်နောက်ဆုံးရက် ကျော်သွားပါပြီ။ တင်နိုင်မည့်ရက်ကို "📅 ရယူရန်ရက်" တွင် ထည့်ပါ။',th:'เลยกำหนดส่งแล้ว กรุณาใส่วันที่ส่งได้ในช่อง "📅 วันที่วางแผนขอรับ"'},
+ faq_title:{ja:'❓ よくある質問',en:'❓ FAQ',vi:'❓ Câu hỏi thường gặp',id:'❓ Pertanyaan umum',zh:'❓ 常见问题',km:'❓ សំណួរញឹកញាប់',my:'❓ မေးလေ့ရှိသောမေးခွန်းများ',th:'❓ คำถามที่พบบ่อย'},
+ faq_q1:{ja:'いつから働けますか？',en:'When can I start working?',vi:'Khi nào tôi có thể bắt đầu làm việc?',id:'Kapan saya bisa mulai bekerja?',zh:'什么时候可以开始工作？',km:'តើខ្ញុំអាចចាប់ផ្តើមធ្វើការនៅពេលណា?',my:'ဘယ်အချိန်ကစပြီး အလုပ်လုပ်လို့ရမလဲ?',th:'เริ่มทำงานได้เมื่อไหร่?'},
+ faq_a1:{ja:'<b>新しい在留カードを受け取ってから</b>です。許可が出ても、新しい在留カードを受け取る前は新しい仕事で働けません。',en:'After you <b>receive your new residence card</b>. Even after permission is granted, you cannot work in the new job before you receive the new card.',vi:'Sau khi <b>nhận thẻ cư trú mới</b>. Dù đã được cấp phép, bạn không được làm công việc mới trước khi nhận thẻ mới.',id:'Setelah Anda <b>menerima kartu izin tinggal yang baru</b>. Meskipun izin sudah keluar, Anda tidak boleh bekerja di pekerjaan baru sebelum menerima kartu baru.',zh:'<b>领取新的在留卡之后</b>才可以。即使已获得许可，在领取新在留卡之前也不能从事新的工作。',km:'បន្ទាប់ពី<b>ទទួលបានប័ណ្ណស្នាក់នៅថ្មី</b>។ ទោះបីទទួលបានការអនុញ្ញាតហើយក៏ដោយ មិនអាចធ្វើការងារថ្មីបានទេ មុនពេលទទួលបានប័ណ្ណថ្មី។',my:'<b>နေထိုင်ခွင့်ကတ်အသစ် လက်ခံရရှိပြီးမှ</b> ဖြစ်ပါတယ်။ ခွင့်ပြုချက်ရပြီးသော်လည်း ကတ်အသစ်မရမီ အလုပ်အသစ်တွင် လုပ်ကိုင်၍မရပါ။',th:'หลังจาก<b>ได้รับบัตรไซริวการ์ดใบใหม่</b>แล้ว แม้จะได้รับอนุญาตแล้ว ก็ยังทำงานใหม่ไม่ได้จนกว่าจะได้รับบัตรใบใหม่'},
+ faq_q2:{ja:'審査中に一時帰国できますか？',en:'Can I go back to my country temporarily during the review?',vi:'Tôi có thể tạm về nước trong thời gian xét duyệt không?',id:'Bolehkah saya pulang sementara selama pemeriksaan?',zh:'审查期间可以临时回国吗？',km:'តើខ្ញុំអាចត្រឡប់ទៅប្រទេសបណ្តោះអាសន្នក្នុងពេលពិនិត្យបានទេ?',my:'စိစစ်နေစဉ် ယာယီအိမ်ပြန်လို့ရမလား?',th:'ระหว่างการพิจารณา กลับประเทศชั่วคราวได้ไหม?'},
+ faq_a2:{ja:'在留期限を過ぎて「特例期間」（審査中なら日本にいられる期間）に入っている場合は、<b>特例期間が終わる3週間前までに日本に戻ってください</b>。<br>例）在留期限 2026/7/1 → 特例期間の終わり 2026/9/1 → 日本に戻るのは 2026/8/11 まで<br>出国する前に、必ず担当者に連絡してください。',en:'If your period of stay has expired and you are in the "special period" (the period you may stay in Japan while under review), <b>return to Japan at least 3 weeks before the special period ends</b>.<br>Example: period of stay 2026/7/1 → special period ends 2026/9/1 → return by 2026/8/11<br>Always contact us before leaving Japan.',vi:'Nếu đã quá hạn lưu trú và đang trong "thời gian đặc lệ" (thời gian được ở Nhật trong khi xét duyệt), <b>hãy quay lại Nhật chậm nhất 3 tuần trước khi thời gian đặc lệ kết thúc</b>.<br>Ví dụ: hạn lưu trú 2026/7/1 → kết thúc đặc lệ 2026/9/1 → quay lại trước 2026/8/11<br>Nhất định liên hệ người phụ trách trước khi xuất cảnh.',id:'Jika masa tinggal sudah lewat dan Anda berada di "masa khusus" (masa boleh tinggal di Jepang selama pemeriksaan), <b>kembalilah ke Jepang paling lambat 3 minggu sebelum masa khusus berakhir</b>.<br>Contoh: masa tinggal 2026/7/1 → masa khusus berakhir 2026/9/1 → kembali paling lambat 2026/8/11<br>Pastikan menghubungi penanggung jawab sebelum keluar Jepang.',zh:'如果已超过在留期限、处于"特例期间"（审查中可留在日本的期间），<b>请在特例期间结束前3周之前回到日本</b>。<br>例：在留期限 2026/7/1 → 特例期间结束 2026/9/1 → 最晚 2026/8/11 回到日本<br>出境前请务必联系负责人。',km:'ប្រសិនបើផុតកំណត់ស្នាក់នៅ ហើយស្ថិតក្នុង «រយៈពេលពិសេស» (រយៈពេលអាចស្នាក់នៅជប៉ុនពេលកំពុងពិនិត្យ) <b>សូមត្រឡប់មកជប៉ុនវិញយ៉ាងហោចណាស់ 3 សប្តាហ៍មុនរយៈពេលពិសេសបញ្ចប់</b>។<br>ឧ. កំណត់ស្នាក់នៅ 2026/7/1 → រយៈពេលពិសេសបញ្ចប់ 2026/9/1 → ត្រឡប់មកវិញត្រឹម 2026/8/11<br>សូមទាក់ទងអ្នកទទួលបន្ទុកជាមុនសិន មុនចេញពីជប៉ុន។',my:'နေထိုင်ခွင့်သက်တမ်းကျော်ပြီး "အထူးကာလ" (စိစစ်နေစဉ် ဂျပန်မှာနေခွင့်ရှိသောကာလ) ထဲရောက်နေပါက <b>အထူးကာလ ပြီးဆုံးခြင်း၏ ၃ ပတ်အလို နောက်ဆုံးထား ဂျပန်သို့ ပြန်လာပါ</b>။<br>ဥပမာ - သက်တမ်း 2026/7/1 → အထူးကာလပြီးဆုံး 2026/9/1 → 2026/8/11 အထိ ပြန်လာရမည်<br>ထွက်ခွာမီ တာဝန်ခံထံ မဖြစ်မနေ ဆက်သွယ်ပါ။',th:'หากเลยวันหมดอายุการพำนักและอยู่ใน "ช่วงพิเศษ" (ช่วงที่อยู่ญี่ปุ่นได้ระหว่างการพิจารณา) <b>ต้องกลับมาญี่ปุ่นอย่างน้อย 3 สัปดาห์ก่อนช่วงพิเศษสิ้นสุด</b><br>ตัวอย่าง: วันหมดอายุ 2026/7/1 → ช่วงพิเศษสิ้นสุด 2026/9/1 → กลับภายใน 2026/8/11<br>ก่อนออกนอกประเทศ ต้องติดต่อผู้รับผิดชอบทุกครั้ง'},
+ faq_q3:{ja:'許可が出てから、新しい在留カードはいつもらえますか？',en:'After permission, when will I get my new residence card?',vi:'Sau khi được cấp phép, khi nào tôi nhận được thẻ cư trú mới?',id:'Setelah izin keluar, kapan saya menerima kartu baru?',zh:'获得许可后，什么时候能拿到新的在留卡？',km:'បន្ទាប់ពីទទួលបានការអនុញ្ញាត តើពេលណាទើបទទួលបានប័ណ្ណស្នាក់នៅថ្មី?',my:'ခွင့်ပြုချက်ရပြီးနောက် ကတ်အသစ်ကို ဘယ်တော့ရမလဲ?',th:'หลังได้รับอนุญาต จะได้บัตรใบใหม่เมื่อไหร่?'},
+ faq_a3:{ja:'<b>通常、営業日で2週間ほど</b>です（土日・祝日を除く）。',en:'<b>Usually about 2 weeks (business days)</b>, excluding weekends and holidays.',vi:'<b>Thường khoảng 2 tuần (ngày làm việc)</b>, không tính thứ Bảy, Chủ nhật và ngày lễ.',id:'<b>Biasanya sekitar 2 minggu (hari kerja)</b>, tidak termasuk Sabtu, Minggu, dan hari libur.',zh:'<b>通常约2周（工作日）</b>，不含周末和节假日。',km:'<b>ជាធម្មតាប្រហែល 2 សប្តាហ៍ (ថ្ងៃធ្វើការ)</b> មិនរាប់ថ្ងៃសៅរ៍ អាទិត្យ និងថ្ងៃឈប់សម្រាក។',my:'<b>ပုံမှန်အားဖြင့် အလုပ်ရက် ၂ ပတ်ခန့်</b> (စနေ၊ တနင်္ဂနွေ၊ ရုံးပိတ်ရက်မပါ) ကြာပါတယ်။',th:'<b>ปกติประมาณ 2 สัปดาห์ (วันทำการ)</b> ไม่รวมเสาร์ อาทิตย์ และวันหยุด'},
+ faq_q4:{ja:'許可が出るまで、どれくらいかかりますか？',en:'How long until permission is granted?',vi:'Mất bao lâu để được cấp phép?',id:'Berapa lama sampai izin keluar?',zh:'到获得许可需要多长时间？',km:'តើត្រូវចំណាយពេលប៉ុន្មាន ទើបទទួលបានការអនុញ្ញាត?',my:'ခွင့်ပြုချက်ရဖို့ ဘယ်လောက်ကြာမလဲ?',th:'ต้องใช้เวลานานเท่าไหร่กว่าจะได้รับอนุญาต?'},
+ faq_a4:{ja:'大房行政書士法人の直近3か月の実績では、あなたと同じ種類の申請は<b>ふつう約{m}日</b>、長くても{p}日以内（8割の人）です。入管が込み合う時期は長くなることがあります。',en:'Based on our results for the last 3 months, applications of the same type as yours took <b>about {m} days</b> typically, and within {p} days for 80% of people. It may take longer when Immigration is busy.',vi:'Theo kết quả 3 tháng gần nhất của chúng tôi, hồ sơ cùng loại với bạn <b>thường mất khoảng {m} ngày</b>, 80% người nhận kết quả trong vòng {p} ngày. Có thể lâu hơn khi Cục xuất nhập cảnh đông.',id:'Berdasarkan hasil kami 3 bulan terakhir, permohonan yang sama jenisnya dengan Anda <b>biasanya sekitar {m} hari</b>, dan 80% selesai dalam {p} hari. Bisa lebih lama saat imigrasi sedang ramai.',zh:'根据我们最近3个月的实绩，与您同类的申请<b>通常约{m}天</b>，80%的人在{p}天以内。入管繁忙时期可能会更久。',km:'យោងតាមលទ្ធផល 3 ខែចុងក្រោយរបស់យើង ពាក្យស្នើសុំប្រភេទដូចអ្នក <b>ជាធម្មតាប្រហែល {m} ថ្ងៃ</b> ហើយ 80% បានក្នុងរយៈពេល {p} ថ្ងៃ។ អាចយូរជាងនេះ នៅពេលការិយាល័យអន្តោប្រវេសន៍មមាញឹក។',my:'ကျွန်ုပ်တို့၏ နောက်ဆုံး ၃ လ ရလဒ်အရ သင်နှင့် အမျိုးအစားတူ လျှောက်လွှာများသည် <b>ပုံမှန် ရက် {m} ရက်ခန့်</b> ကြာပြီး ၈၀% မှာ ရက် {p} ရက်အတွင်း ပြီးပါတယ်။ လူဝင်မှုကြီးကြပ်ရေး အလုပ်များချိန်တွင် ပိုကြာနိုင်ပါတယ်။',th:'จากผลงาน 3 เดือนล่าสุดของเรา คำขอประเภทเดียวกับคุณ <b>ปกติใช้เวลาประมาณ {m} วัน</b> และ 80% เสร็จภายใน {p} วัน ช่วงที่ตม.ยุ่งอาจใช้เวลานานกว่านี้'},
+ faq_a4_none:{ja:'申請の種類や入管の込み具合によって変わります。担当者に確認してください。',en:'It depends on the type of application and how busy Immigration is. Please ask us.',vi:'Tùy loại hồ sơ và mức độ đông của Cục xuất nhập cảnh. Vui lòng hỏi người phụ trách.',id:'Tergantung jenis permohonan dan kesibukan imigrasi. Silakan tanyakan kepada kami.',zh:'视申请种类和入管繁忙程度而定，请咨询负责人。',km:'អាស្រ័យលើប្រភេទពាក្យស្នើសុំ និងភាពមមាញឹករបស់ការិយាល័យអន្តោប្រវេសន៍។ សូមសួរអ្នកទទួលបន្ទុក។',my:'လျှောက်လွှာအမျိုးအစားနှင့် လူဝင်မှုကြီးကြပ်ရေး အလုပ်များမှုအပေါ် မူတည်ပါတယ်။ တာဝန်ခံကို မေးပါ။',th:'ขึ้นอยู่กับประเภทคำขอและความยุ่งของตม. กรุณาสอบถามผู้รับผิดชอบ'},
  doc_required:{ja:'必須',en:'Required',vi:'Bắt buộc',id:'Wajib',zh:'必须',km:'ចាំបាច់',my:'မဖြစ်မနေ',th:'จำเป็น'},
  note_specialist:{ja:'※ 技能実習をしていた方のみ',en:'* Only for those who did Technical Intern Training (Ginou Jisshu)',vi:'* Chỉ dành cho người từng thực tập kỹ năng (Ginou Jisshu)',id:'* Hanya untuk yang pernah ikut Pemagangan Teknis (Ginou Jisshu)',zh:'※ 仅限曾参加技能实习（技能実習）者',km:'* សម្រាប់តែអ្នកធ្លាប់កម្មសិក្សាជំនាញ (Ginou Jisshu) ប៉ុណ្ណោះ',my:'* နည်းပညာအလုပ်သင် (Ginou Jisshu) လုပ်ခဲ့ဖူးသူများသာ',th:'* เฉพาะผู้ที่เคยฝึกงานทักษะ (Ginou Jisshu) เท่านั้น'},
  temp_return_title:{ja:'🛫 一時帰国',en:'🛫 Temporary Return Home',vi:'🛫 Về nước tạm thời',id:'🛫 Pulang Sementara',zh:'🛫 临时回国',km:'🛫 ត្រឡប់ប្រទេសវិញបណ្ដោះអាសន្ន',my:'🛫 ယာယီပြည်တော်ပြန်',th:'🛫 กลับประเทศชั่วคราว'},
@@ -826,6 +843,40 @@ function _todoRow(label,done,stateTxt,actionHtml){
     +(actionHtml||'')
     +'<span class="todo-state '+(done?'s-done':'s-todo')+'">'+stateTxt+'</span></div>';
 }
+// ver.20261024.01: 提出期限（O-Link・所属機関ページと同じルール）
+var _AP_HOL=['2026-01-01','2026-01-12','2026-02-11','2026-02-23','2026-03-20','2026-04-29','2026-05-03','2026-05-04','2026-05-05','2026-05-06','2026-07-20','2026-08-11','2026-09-21','2026-09-22','2026-09-23','2026-10-12','2026-11-03','2026-11-23','2027-01-01','2027-01-11','2027-02-11','2027-02-23','2027-03-21','2027-03-22','2027-04-29','2027-05-03','2027-05-04','2027-05-05','2027-07-19','2027-08-11','2027-09-20','2027-09-23','2027-10-11','2027-11-03','2027-11-23'];
+function _apParse(s){ if(!s) return null; var m=String(s).match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/); return m?new Date(+m[1],+m[2]-1,+m[3]):null; }
+function _apYmd(d){ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+function _apAdd(d,n){ var r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function _apAddBiz(d,n){ var r=new Date(d),c=0; while(c<n){ r=_apAdd(r,1); var w=r.getDay(); if(w!==0&&w!==6&&_AP_HOL.indexOf(_apYmd(r))<0) c++; } return r; }
+function _apMin(a,b){ if(!a) return b; if(!b) return a; return a<b?a:b; }
+// 書類＝受領日+5営業日と在留期限30日前の早いほう／サイン＝受領日+15営業日と在留期限14日前の早いほう（受領日から45日超は在留期限基準のみ）
+function _apDeadlines(){
+  var c=theCase||{}, ext=getExternalStatus(c.status);
+  if(['雇用条件作成・企業確認','申請人サイン対応','企業押印ご対応・書類収集・申請準備'].indexOf(ext)<0) return {};
+  var today=new Date(); today.setHours(0,0,0,0);
+  var req=_apParse(c.request_date), exp=_apParse(c.expire);
+  if(exp && exp<today) exp=null;
+  var fresh=req && Math.round((today-req)/86400000)<=45;
+  var docs=null, sign=null;
+  if(fresh){ docs=_apAddBiz(req,5); sign=_apAddBiz(req,15); }
+  if(exp){ docs=_apMin(docs,_apAdd(exp,-30)); sign=_apMin(sign,_apAdd(exp,-14)); }
+  // 受領した時点で在留期限が近い案件でも、受領日から2営業日（サインは5営業日）より前にはしない
+  if(fresh){ var m2=_apAddBiz(req,2), m5=_apAddBiz(req,5); if(docs&&docs<m2) docs=m2; if(sign&&sign<m5) sign=m5; }
+  // 建設の特定活動で国交省の申請前は、入管の書類はまだ集めない（期限を出さない）
+  var KO=['申請済み','補正可能','補正完了','補正未着手','完了(許可済)','完了'];
+  if(String(c.residence_status||'')==='特定活動' && /建設/.test(String(c.applicant_field||'')) && KO.indexOf(getKokkoStatus(c))<0) docs=null;
+  return {docs:docs, sign:sign};
+}
+function _apOverdue(d){ if(!d) return false; var t=new Date(); t.setHours(0,0,0,0); return d<t; }
+function _apDlHtml(d){
+  if(!d) return '';
+  var t0=new Date(); t0.setHours(0,0,0,0); var n=Math.round((d-t0)/86400000);
+  var ds=(d.getMonth()+1)+'/'+d.getDate();
+  var chip=n<0?'<span style="background:#dc2626;color:#fff;border-radius:6px;padding:1px 7px;font-weight:900;">⚠ '+t('dl_over')+'</span>'
+    :'<span style="background:'+(n<=7?'#f59e0b;color:#fff':'#eef4fd;color:#1c3d6e')+';border-radius:6px;padding:1px 7px;font-weight:800;">⏳ '+t('dl_left',{n:n})+'</span>';
+  return '<div style="font-size:11px;font-weight:800;color:'+(n<0?'#b91c1c':'#b45309')+';margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">📄 '+t('dl_by',{d:ds})+' '+chip+'</div>';
+}
 function renderTodo(){
   var hAns=hearingAnswered();
   var dDone=docsAllDone();
@@ -836,7 +887,12 @@ function renderTodo(){
   var _hfBtn=(!hAns&&_hfUrl)?'<a class="todo-btn" href="'+_hfUrl+'" target="_blank" rel="noopener">'+t('btn_answer_form')+'</a>':'';
   h+=_todoRow(t('todo_hearing'),hAns,hAns?t('st_answered'):t('st_unanswered'),_hfBtn);
   var _dBtn=(docDisplayList().length&&!dDone)?'<a class="todo-btn" href="javascript:void(0)" onclick="switchTab(\'docs\');window.scrollTo(0,0);">'+t('btn_see_docs')+'</a>':'';
-  h+=_todoRow(t('todo_docs'),dDone,dState,_dBtn);
+  var _dl=_apDeadlines();
+  var _dLbl=t('todo_docs');
+  if(docDisplayList().length&&!dDone&&_dl.docs){ _dLbl+=_apDlHtml(_dl.docs); if(_apOverdue(_dl.docs)) _dLbl+='<div style="font-size:10.5px;color:#b91c1c;font-weight:700;margin-top:2px;">'+t('dl_yotei_ask')+'</div>'; }
+  h+=_todoRow(_dLbl,dDone,dState,_dBtn);
+  // ver.20261024.01: サイン書類の返送待ちのときは「サインして返送」を表示
+  if(_isSignReturnStatus(theCase.status)) h+=_todoRow(t('todo_sign')+_apDlHtml(_dl.sign),false,t('st_please'),'');
   h+='</div>';
   return h;
 }
@@ -861,6 +917,23 @@ function renderNextAction(){
   return '<div class="next-box ok"><div class="next-l">'+t('next_ok_title')+'</div><div class="next-t">'+t('next_ok_body')+'</div></div>';
 }
 
+// ver.20261024.01: よくある質問（就労開始・一時帰国・カード交付・審査期間＝get_review_stats直近3か月実績）
+var _reviewStats=null, _rsTried=false;
+function _rsLoad(){ if(_rsTried) return; _rsTried=true; callRpc('get_review_stats',{}).then(function(r){ if(r&&r.rows){ _reviewStats=r; if(currentTab==='status') render(); } }).catch(function(){}); }
+function _apStatKey(){ var c=theCase||{}, rs=String(c.residence_status||''), at=String(c.app_type||'');
+  if(/^特定活動/.test(rs)) return 'tokkatsu';
+  if(/^特定技能/.test(rs)){ if(/認定/.test(at)) return 'tg_nintei'; if(/変更/.test(at)) return 'tg_henkou'; if(/更新/.test(at)) return 'tg_koushin'; }
+  return ''; }
+function _apFaqHtml(){
+  _rsLoad();
+  function qa(q,a){ return '<details style="border-top:1px solid #f1f5f9;padding:9px 0;"><summary style="font-size:13px;font-weight:800;color:#0f2040;cursor:pointer;">Q. '+t(q)+'</summary><div style="font-size:12.5px;color:#334155;line-height:1.75;margin:6px 0 2px 14px;">'+a+'</div></details>'; }
+  var st=null, k=_apStatKey();
+  if(_reviewStats&&k){ for(var i=0;i<_reviewStats.rows.length;i++) if(_reviewStats.rows[i].key===k) st=_reviewStats.rows[i]; }
+  var a4=(st&&st.n)?tp('faq_a4',{m:st.median,p:st.p80}):tp('faq_a4_none');
+  var h='<div class="section-title">'+t('faq_title')+'</div><div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:4px 16px 8px;margin-bottom:16px;">';
+  h+=qa('faq_q1',tp('faq_a1'))+qa('faq_q2',tp('faq_a2'))+qa('faq_q3',tp('faq_a3'))+qa('faq_q4',a4);
+  return h+'</div>';
+}
 function renderStatus(){
   var c=theCase;
   var h=renderNextAction()+renderTodo();
@@ -909,6 +982,7 @@ function renderStatus(){
   h+='<div class="dt-row"><span class="dt-l">'+t('info_receipt')+'</span><span class="dt-v">'+_dv(c.receipt_no)+'</span></div>';
   h+='<div class="dt-row"><span class="dt-l">'+t('info_shinsa')+'</span><span class="dt-v">'+_dv(c.shinsa_date)+'</span></div>';
   h+='</div>';
+  h+=_apFaqHtml(); // ver.20261024.01
   // 大房行政書士法人担当
   if(c.team||c.staff){
     h+='<div class="section-title" style="margin-top:16px;">'+t('contact_title')+'</div>';
@@ -1299,7 +1373,8 @@ function docHelpInline(d){
 function renderDocs(){
   var h='';
   if(docDisplayList().length>0 && !docsAllDone()){
-    h+='<div class="next-box"><div class="next-l">'+t('next_ask_title')+'</div><div class="next-t">'+t('next_docs',{n:missingDocCount})+'</div></div>';
+    var _dlD=_apDeadlines().docs;
+    h+='<div class="next-box"><div class="next-l">'+t('next_ask_title')+'</div><div class="next-t">'+t('next_docs',{n:missingDocCount})+_apDlHtml(_dlD)+(_apOverdue(_dlD)?'<div style="font-size:11px;color:#b91c1c;font-weight:700;margin-top:3px;">'+t('dl_yotei_ask')+'</div>':'')+'</div></div>';
   }
   h+='<div class="section-title">'+t('docs_title')+'</div>';
   h+='<div class="note">'+t('docs_note')+'</div>';
@@ -1331,10 +1406,11 @@ function _docItemsHtml(list, upUrl){
     // ver.20260928.01: 未提出の書類に「取得予定日」入力を表示
     if(!done){
       var _yv=yoteiMap[d.l]||'';
+      var _yRed=!_yv && _apOverdue(_apDeadlines().docs);
       var _yid='yotei_'+encodeURIComponent(d.l).replace(/[^a-zA-Z0-9]/g,'');
       h+='<div class="doc-yotei" style="display:flex;align-items:center;gap:8px;padding:2px 16px 8px 46px;flex-wrap:wrap;">'
         +'<span style="font-size:11px;color:#64748b;font-weight:700;">'+t('yotei_label')+'</span>'
-        +'<input type="date" value="'+esc(_yv)+'" onchange="saveYotei('+JSON.stringify(d.l).replace(/"/g,'&quot;')+',this.value,this)" style="font-size:12px;padding:4px 8px;border:1px solid #cbd5e1;border-radius:6px;color:#334155;">'
+        +'<input type="date" value="'+esc(_yv)+'" onchange="saveYotei('+JSON.stringify(d.l).replace(/"/g,'&quot;')+',this.value,this)" style="font-size:12px;padding:4px 8px;border:'+(_yRed?'1.5px solid #f87171;background:#fef2f2':'1px solid #cbd5e1')+';border-radius:6px;color:#334155;">'
         +'<span class="yotei-msg" style="font-size:10.5px;font-weight:700;"></span>'
         +'</div>';
     }
