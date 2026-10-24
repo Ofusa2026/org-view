@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261024.03: 3週間（15営業日）で申請できるよう逆算したスケジュールを追加（受領→条件書送付→企業確認→サイン書類作成→サイン・押印・書類→申請、各3営業日。在留期限の2週間前が早ければそこから逆算して前倒し）。人材詳細に「📅 申請までのスケジュール」（建設以外。建設は従来の建設スケジュール）、ご対応待ちの案件に「🎯 申請目標日」。1-6号確認・サイン・押印・書類の提出期限は逆算日が早ければそちら（依頼日より前にはしない）。 -->
 <!-- ver.20261024.02: 押印のお願い・1-6号のご確認の提出期限を「依頼（案シスのステータスが企業押印返送待ち／1-6企業確認待ちに変わった日＝status_date）から3営業日」に変更（O-Linkの建設申請スケジュールに合わせた）。在留期限の方が早ければ依頼当日。 -->
 <!-- ver.20261024.01: 対応が必要なタスクに提出期限を追加・強化（O-Linkと同じルール）。入管書類（建設以外）＝申請前の案件の「受領日+5営業日と在留期限30日前の早いほう」、国交省書類＝45日ルールに特定活動の在留期限4か月前（推奨）を追加、押印＝申請目標日（受領日+15営業日と在留期限14日前の早いほう）、1-6号確認＝受領日+5営業日。期限切れの書類行に「📅 いつ出せますか？」（取得予定日・yotei::で案シスと連動）。ダッシュボードに「❓ よくある質問」（就労開始・特例期間中の一時帰国・カード交付まで・審査期間＝get_review_stats直近3か月実績）。 -->
 <!-- ver.20261005.01: オープンケア協同組合・グローバルパートナーズの企業には「所属機関（企業）ヒアリングフォーム」を出さない（提出書類タブのボタン・ダッシュボードのカード・対応が必要なタスクの「企業ヒアリング未回答」）。機関名は前方一致（「アライズ様（オープンケア協同組合）」のような括弧内は対象外）。この会社の案件の登録支援機関がすべて該当するときだけ非表示。 -->
@@ -355,7 +356,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261024.02</span>
+  <span class="header-ver">ver.20261024.03</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -1250,6 +1251,56 @@ function _kokkoDashCard(){
 var DL_RULES={applyBiz:15,nyukanBiz:5,nyukanBeforeExpire:30,applyBeforeExpire:14,kokkoDays:45,kokkoBeforeExpireMonths:4};
 var _PRE_APPLY_EXT=['雇用条件作成・企業確認','申請人サイン対応','企業押印ご対応・書類収集・申請準備'];
 function _dlMin(a,b){ if(!a) return b; if(!b) return a; return a<b?a:b; }
+// ver.20261024.03: 3週間（15営業日）で申請できるように逆算したスケジュール（O-Linkの建設申請スケジュールと同じ3営業日刻み）
+//   受領 →(3)条件書送付 →(3)企業確認 →(3)サイン書類作成 →(3)サイン・押印・書類 →(3)申請
+//   在留期限の2週間前の方が早いときは、そこから逆算して各工程を前倒しする
+function _cksSubBiz(d,n){ var r=new Date(d),c=0; while(c<n){ r=_cksAdd(r,-1); if(_cksIsBiz(r)) c++; } return r; }
+function _plan3w(c){
+  var today=new Date(); today.setHours(0,0,0,0);
+  var req=_cksParse((_extraByCase[c.id]||{}).request_date), exp=_cksParse(c.expire);
+  if(exp && exp<today) exp=null;
+  var std=null;
+  if(req){ var a=_cksAddBiz(req,3), b=_cksAddBiz(a,3), cc=_cksAddBiz(b,3), d=_cksAddBiz(cc,3), e=_cksAddBiz(d,3); std={soufu:a,kakunin:b,sakusei:cc,signOuin:d,app:e}; }
+  var target=std?std.app:null, compressed=false;
+  if(exp){ var t2=_cksAdd(exp,-DL_RULES.applyBeforeExpire); if(!target||t2<target){ target=t2; compressed=!!std; } }
+  if(!target) return null;
+  var bk={app:target}; bk.signOuin=_cksSubBiz(target,3); bk.sakusei=_cksSubBiz(bk.signOuin,3); bk.kakunin=_cksSubBiz(bk.sakusei,3); bk.soufu=_cksSubBiz(bk.kakunin,3);
+  var out={req:req, compressed:compressed};
+  ['soufu','kakunin','sakusei','signOuin','app'].forEach(function(k){ var v=std?_dlMin(std[k],bk[k]):bk[k]; if(req && v<req) v=req; out[k]=v; });
+  return out;
+}
+// 申請前の外部ステータス → 今の工程（0:条件書確認 1:サイン書類作成 2:サイン・押印・書類 3:申請済み）
+function _planStage(c){
+  var st=String(c.status||''), ext=getExternalStatus(st);
+  if(ext==='雇用条件作成・企業確認') return 0;
+  if(ext==='申請人サイン対応') return /作成/.test(st)?1:2;
+  if(ext==='企業押印ご対応・書類収集・申請準備') return 2;
+  return 3;
+}
+// 人材詳細：申請までのスケジュール（建設以外。建設は既存の _cksSchedule）
+function _planScheduleHtml(c){
+  if(_PRE_APPLY_EXT.indexOf(getExternalStatus(c.status))<0) return '';
+  var pl=_plan3w(c); if(!pl) return '';
+  var today=new Date(); today.setHours(0,0,0,0);
+  var stg=_planStage(c);
+  var steps=[{nm:'案件受領',d:pl.req,done:true},{nm:'条件書確認',d:pl.kakunin,done:stg>=1},{nm:'サイン書類作成',d:pl.sakusei,done:stg>=2},{nm:'サイン・押印・書類',d:pl.signOuin,done:stg>=3},{nm:'申請',d:pl.app,done:stg>=3}];
+  var cur=-1; for(var k=0;k<steps.length;k++){ if(!steps[k].done){ cur=k; break; } }
+  var h='<div class="dt-sec">📅 申請までのスケジュール（3週間で申請）</div>';
+  h+='<div style="font-size:12px;color:#1c3d6e;background:#eef4fd;border:1px solid #b9d0ee;border-radius:10px;padding:8px 12px;margin:4px 0 8px;line-height:1.6;">🎯 申請の目標日：<b>'+_cksFmt(pl.app)+'</b>'+(pl.compressed?'<br><span style="color:#b45309;font-weight:700;">在留期限が近いため、在留期限の2週間前に申請できるよう各工程を前倒ししています。</span>':'')+'</div>';
+  var sh='<div style="overflow-x:auto;margin:4px 0 10px;"><div style="display:flex;align-items:flex-start;min-width:430px;">';
+  steps.forEach(function(s2,k){
+    var late=!s2.done && s2.d && s2.d<today, isCur=(k===cur);
+    var col=s2.done?'#16a34a':late?'#dc2626':isCur?'#2563eb':'#cbd5e1', mark=s2.done?'✓':late?'!':'';
+    var txtCol=s2.done?'#166534':late?'#b91c1c':isCur?'#1d4ed8':'#94a3b8';
+    sh+='<div style="display:flex;flex-direction:column;align-items:center;width:78px;flex:none;">'
+      +'<div style="width:20px;height:20px;border-radius:50%;background:'+(s2.done||late?col:'#fff')+';border:2.5px solid '+col+';color:#fff;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;">'+mark+'</div>'
+      +'<div style="font-size:10px;font-weight:'+(isCur||late?'900':'700')+';color:'+txtCol+';margin-top:4px;text-align:center;line-height:1.3;">'+s2.nm+'</div>'
+      +'<div style="font-size:9.5px;color:'+(late?'#b91c1c':'#94a3b8')+';font-weight:700;">'+(s2.d?((k===0?'':'〜')+_cksFmt(s2.d)):'—')+(late?'<br>⚠遅れ':'')+'</div></div>';
+    if(k<steps.length-1) sh+='<div style="flex:1;min-width:10px;height:2.5px;background:'+(s2.done?'#16a34a':'#e2e8f0')+';margin-top:9px;"></div>';
+  });
+  sh+='</div></div><div style="font-size:10px;color:#94a3b8;margin:-4px 0 8px;">各工程3営業日。受領日から15営業日（約3週間）で申請できるように逆算しています。</div>';
+  return h+sh;
+}
 function _caseDl(c){
   var today=new Date(); today.setHours(0,0,0,0);
   var req=_cksParse((_extraByCase[c.id]||{}).request_date), exp=_cksParse(c.expire);
@@ -1263,6 +1314,14 @@ function _caseDl(c){
   // 1-6号確認・サイン・押印＝依頼（案シスのステータスが確認待ち／返送待ちに変わった日）から3営業日（O-Linkの建設申請スケジュールと同じ）。在留期限の方が早ければ依頼当日
   var sd=_cksParse(c.status_date), seal=null;
   if(sd){ seal=_cksAddBiz(sd,3); var ex0=_cksParse(c.expire); if(ex0 && ex0<seal) seal=sd; }
+  // ver.20261024.03: 3週間スケジュールの逆算日が早ければそちら（ただし依頼日より前にはしない）
+  var pl=_plan3w(c);
+  if(pl){
+    var stepD=/1-6/.test(String(c.status||''))?pl.kakunin:pl.signOuin;
+    if(seal && stepD && stepD<seal && (!sd || stepD>=sd)) seal=stepD;
+    if(pl.signOuin && (!ny || pl.signOuin<ny) && pl.signOuin>=today) ny=pl.signOuin;
+    ap=pl.app;
+  }
   return {nyukan:ny, apply:ap, seal:seal};
 }
 // 期限チップ（あとN日／期限切れ）
@@ -1406,7 +1465,10 @@ function renderRequests(){
   var _tk=_companyTasks();
   if(_tk.ball>0){
     var bb=_tk.ballCases.map(function(x){
-      return '<div class="req-row"><span class="req-nm">'+esc(x.applicant)+'</span><span style="font-size:10.5px;font-weight:800;color:#1c3d6e;background:#eef4fd;border-radius:5px;padding:2px 8px;white-space:nowrap;">'+esc(x.status)+'</span></div>';
+      var _c0=null; for(var i=0;i<allCases.length;i++){ if(allCases[i].id===x.id){ _c0=allCases[i]; break; } }
+      var _pl=_c0?_plan3w(_c0):null;
+      return '<div class="req-row"><span class="req-nm">'+esc(x.applicant)+'</span><span style="font-size:10.5px;font-weight:800;color:#1c3d6e;background:#eef4fd;border-radius:5px;padding:2px 8px;white-space:nowrap;">'+esc(x.status)+'</span>'
+        +(_pl&&_pl.app?(function(){ var t0=new Date(); t0.setHours(0,0,0,0); var late=_pl.app<t0; return '<span style="margin-left:auto;font-size:10.5px;font-weight:800;color:'+(late?'#b91c1c':'#475569')+';">🎯 申請目標 '+(_pl.app.getMonth()+1)+'/'+_pl.app.getDate()+(late?'（遅れています）':'')+'</span>'; })():'')+'</div>';
     }).join('')
     +'<div style="font-size:11px;color:#64748b;margin-top:4px;">お送りしている書類のご確認・サイン・押印・ご返送をお願いいたします。ご不明点は担当者まで。</div>';
     secs.push(_reqSection('⚽','御社のご対応待ちの案件', _tk.ball, bb));
@@ -2481,7 +2543,7 @@ function renderDetail(c,p){
   var ti=_tokureiTracked(c)?expInfo(_tokureiDate(c)):null;
   var h='<div class="dt-name">'+esc(nm)+'</div>';
   h+='<div class="dt-sub">'+_dv(p.applicant_name_en)+' / '+_dv(p.nationality||c.nationality)+'</div>';
-  h+=_cksSchedule(c);  // ver.20260921.10
+  var _ks=_cksSchedule(c); h+=_ks||_planScheduleHtml(c);  // ver.20260921.10 / ver.20261024.03: 建設以外は3週間スケジュール
   h+='<div class="dt-sec">基本情報</div>';
   h+=row('生年月日',_dv(p.birthdate));
   h+=row('性別',_dv(p.gender));

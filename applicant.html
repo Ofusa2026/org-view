@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>申請人マイページ | 大房行政書士法人</title>
+<!-- ver.20261024.03: 進捗タブに「📅 申請までのスケジュール」（受領→条件書確認→サイン書類作成→サイン・書類提出→申請、各3営業日＝約3週間で申請。在留期限の2週間前が早ければ逆算して前倒し）を8言語で追加。サイン・書類の提出期限は逆算日が早ければそちら（依頼日より前にはしない）。 -->
 <!-- ver.20261024.02: サインの提出期限を「依頼（案シスのステータスがサイン書類返送待ちに変わった日＝status_date）から3営業日」に変更（O-Linkの建設申請スケジュールに合わせた）。在留期限の方が早ければ依頼当日。applicant_view_get に status_date（audit_log由来）を追加。 -->
 <!-- ver.20261024.01: 進捗タブの「あなたへのお願い」に提出期限を追加（O-Link・所属機関ページと同じルール：書類＝受領日+5営業日と在留期限30日前の早いほう、サイン＝受領日+15営業日と在留期限14日前の早いほう。受領日から45日超は在留期限基準のみ。建設の特定活動で国交省申請前は書類の期限なし）。期限切れは「取得予定日に日付を入れてください」と表示し、提出書類タブの取得予定日入力を赤枠に。サイン書類返送待ちのとき「3. サイン書類にサインして返送」を表示。進捗タブに「❓ よくある質問」（いつから働けるか・審査中の一時帰国・カード交付まで・審査期間＝get_review_stats直近3か月実績）を8言語で追加。applicant_view_get に request_date を追加。 -->
 <!-- ver.20261002.01: スマホで書類を送りやすく。画面下に「📤 書類をアップロード（残n件）」の固定ボタン、提出書類タブは未提出→提出済み（折りたたみ）の順、未提出の各書類に「📤 送る」ボタン、取得方法・説明はタップで開く形に。進捗タブの「必要書類提出」に「書類を見る」ボタン。スマホではヘッダーを小さくし、タブを上に固定。アイコンの二重表示（📄📄・📤📤）を修正。8言語対応。 -->
@@ -207,7 +208,7 @@ details.doc-help-d[open]>summary::after{content:' ▲';}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;flex:none;white-space:nowrap;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title" id="hdrTitle">申請人マイページ</span>
-  <span class="header-ver">ver.20261024.02</span>
+  <span class="header-ver">ver.20261024.03</span>
   <div class="header-right">
     <div id="langSwitch" class="lang-switch"></div>
     <div class="header-org" id="headerName" style="font-size:13px;font-weight:700;opacity:.95;max-width:none;">読み込み中...</div>
@@ -395,6 +396,16 @@ var TR={
  faq_q4:{ja:'許可が出るまで、どれくらいかかりますか？',en:'How long until permission is granted?',vi:'Mất bao lâu để được cấp phép?',id:'Berapa lama sampai izin keluar?',zh:'到获得许可需要多长时间？',km:'តើត្រូវចំណាយពេលប៉ុន្មាន ទើបទទួលបានការអនុញ្ញាត?',my:'ခွင့်ပြုချက်ရဖို့ ဘယ်လောက်ကြာမလဲ?',th:'ต้องใช้เวลานานเท่าไหร่กว่าจะได้รับอนุญาต?'},
  faq_a4:{ja:'大房行政書士法人の直近3か月の実績では、あなたと同じ種類の申請は<b>ふつう約{m}日</b>、長くても{p}日以内（8割の人）です。入管が込み合う時期は長くなることがあります。',en:'Based on our results for the last 3 months, applications of the same type as yours took <b>about {m} days</b> typically, and within {p} days for 80% of people. It may take longer when Immigration is busy.',vi:'Theo kết quả 3 tháng gần nhất của chúng tôi, hồ sơ cùng loại với bạn <b>thường mất khoảng {m} ngày</b>, 80% người nhận kết quả trong vòng {p} ngày. Có thể lâu hơn khi Cục xuất nhập cảnh đông.',id:'Berdasarkan hasil kami 3 bulan terakhir, permohonan yang sama jenisnya dengan Anda <b>biasanya sekitar {m} hari</b>, dan 80% selesai dalam {p} hari. Bisa lebih lama saat imigrasi sedang ramai.',zh:'根据我们最近3个月的实绩，与您同类的申请<b>通常约{m}天</b>，80%的人在{p}天以内。入管繁忙时期可能会更久。',km:'យោងតាមលទ្ធផល 3 ខែចុងក្រោយរបស់យើង ពាក្យស្នើសុំប្រភេទដូចអ្នក <b>ជាធម្មតាប្រហែល {m} ថ្ងៃ</b> ហើយ 80% បានក្នុងរយៈពេល {p} ថ្ងៃ។ អាចយូរជាងនេះ នៅពេលការិយាល័យអន្តោប្រវេសន៍មមាញឹក។',my:'ကျွန်ုပ်တို့၏ နောက်ဆုံး ၃ လ ရလဒ်အရ သင်နှင့် အမျိုးအစားတူ လျှောက်လွှာများသည် <b>ပုံမှန် ရက် {m} ရက်ခန့်</b> ကြာပြီး ၈၀% မှာ ရက် {p} ရက်အတွင်း ပြီးပါတယ်။ လူဝင်မှုကြီးကြပ်ရေး အလုပ်များချိန်တွင် ပိုကြာနိုင်ပါတယ်။',th:'จากผลงาน 3 เดือนล่าสุดของเรา คำขอประเภทเดียวกับคุณ <b>ปกติใช้เวลาประมาณ {m} วัน</b> และ 80% เสร็จภายใน {p} วัน ช่วงที่ตม.ยุ่งอาจใช้เวลานานกว่านี้'},
  faq_a4_none:{ja:'申請の種類や入管の込み具合によって変わります。担当者に確認してください。',en:'It depends on the type of application and how busy Immigration is. Please ask us.',vi:'Tùy loại hồ sơ và mức độ đông của Cục xuất nhập cảnh. Vui lòng hỏi người phụ trách.',id:'Tergantung jenis permohonan dan kesibukan imigrasi. Silakan tanyakan kepada kami.',zh:'视申请种类和入管繁忙程度而定，请咨询负责人。',km:'អាស្រ័យលើប្រភេទពាក្យស្នើសុំ និងភាពមមាញឹករបស់ការិយាល័យអន្តោប្រវេសន៍។ សូមសួរអ្នកទទួលបន្ទុក។',my:'လျှောက်လွှာအမျိုးအစားနှင့် လူဝင်မှုကြီးကြပ်ရေး အလုပ်များမှုအပေါ် မူတည်ပါတယ်။ တာဝန်ခံကို မေးပါ။',th:'ขึ้นอยู่กับประเภทคำขอและความยุ่งของตม. กรุณาสอบถามผู้รับผิดชอบ'},
+ pl_title:{ja:'📅 申請までのスケジュール',en:'📅 Schedule until application',vi:'📅 Lịch trình đến khi nộp hồ sơ',id:'📅 Jadwal sampai pengajuan',zh:'📅 到申请为止的日程',km:'📅 កាលវិភាគរហូតដល់ការដាក់ពាក្យ',my:'📅 လျှောက်ထားသည်အထိ အချိန်ဇယား',th:'📅 กำหนดการจนถึงการยื่นคำขอ'},
+ pl_target:{ja:'🎯 申請の目標日：{d}',en:'🎯 Target application date: {d}',vi:'🎯 Ngày nộp hồ sơ mục tiêu: {d}',id:'🎯 Target tanggal pengajuan: {d}',zh:'🎯 申请目标日：{d}',km:'🎯 ថ្ងៃគោលដៅដាក់ពាក្យ៖ {d}',my:'🎯 လျှောက်ထားရန် ပစ်မှတ်ရက်: {d}',th:'🎯 วันเป้าหมายยื่นคำขอ: {d}'},
+ pl_compressed:{ja:'在留期限が近いため、在留期限の2週間前に申請できるよう前倒ししています。',en:'Because your period of stay ends soon, the schedule is moved earlier so we can apply 2 weeks before it ends.',vi:'Vì hạn lưu trú sắp hết, lịch được đẩy sớm hơn để nộp hồ sơ 2 tuần trước hạn.',id:'Karena masa tinggal hampir habis, jadwal dimajukan agar bisa diajukan 2 minggu sebelum habis.',zh:'由于在留期限临近，日程已提前，以便在期限前2周提出申请。',km:'ដោយសារកំណត់ស្នាក់នៅជិតដល់ កាលវិភាគត្រូវបានធ្វើឲ្យលឿនជាងមុន ដើម្បីដាក់ពាក្យ 2 សប្តាហ៍មុនផុតកំណត់។',my:'နေထိုင်ခွင့်သက်တမ်း နီးလာသောကြောင့် သက်တမ်းမကုန်မီ ၂ ပတ်အလို လျှောက်နိုင်ရန် အချိန်ဇယားကို စောပေးထားပါတယ်။',th:'เนื่องจากใกล้วันหมดอายุการพำนัก จึงเลื่อนกำหนดการให้เร็วขึ้นเพื่อยื่นคำขอก่อนหมดอายุ 2 สัปดาห์'},
+ pl_s0:{ja:'案件受領',en:'Request received',vi:'Nhận hồ sơ',id:'Permintaan diterima',zh:'受理委托',km:'ទទួលសំណើ',my:'လက်ခံရရှိ',th:'รับเรื่อง'},
+ pl_s1:{ja:'条件書確認',en:'Employment terms check',vi:'Kiểm tra điều kiện làm việc',id:'Cek syarat kerja',zh:'确认雇用条件书',km:'ពិនិត្យលក្ខខណ្ឌការងារ',my:'အလုပ်အခြေအနေ စစ်ဆေး',th:'ตรวจเงื่อนไขการจ้าง'},
+ pl_s2:{ja:'サイン書類作成',en:'Signing documents prepared',vi:'Soạn giấy tờ ký',id:'Dokumen tanda tangan disiapkan',zh:'制作签名文件',km:'រៀបចំឯកសារចុះហត្ថលេខា',my:'လက်မှတ်စာရွက် ပြင်ဆင်',th:'จัดทำเอกสารลงชื่อ'},
+ pl_s3:{ja:'サイン・書類提出',en:'Sign & submit documents',vi:'Ký & nộp giấy tờ',id:'Tanda tangan & serahkan dokumen',zh:'签名・提交材料',km:'ចុះហត្ថលេខា និងដាក់ឯកសារ',my:'လက်မှတ်ထိုး၍ စာရွက်တင်',th:'ลงชื่อและส่งเอกสาร'},
+ pl_s4:{ja:'申請',en:'Application',vi:'Nộp hồ sơ',id:'Pengajuan',zh:'提出申请',km:'ដាក់ពាក្យ',my:'လျှောက်ထား',th:'ยื่นคำขอ'},
+ pl_late:{ja:'遅れ',en:'Late',vi:'Trễ',id:'Terlambat',zh:'延迟',km:'យឺត',my:'နောက်ကျ',th:'ล่าช้า'},
+ pl_note:{ja:'各工程3営業日。受領日から約3週間で申請できるように逆算しています。',en:'Each step takes 3 business days, planned backward so we can apply about 3 weeks after receiving your request.',vi:'Mỗi bước 3 ngày làm việc, tính ngược để nộp hồ sơ khoảng 3 tuần sau khi nhận.',id:'Setiap langkah 3 hari kerja, dihitung mundur agar bisa diajukan sekitar 3 minggu setelah diterima.',zh:'每个步骤3个工作日，倒推安排，以便在受理后约3周提出申请。',km:'ជំហាននីមួយៗ 3 ថ្ងៃធ្វើការ គណនាថយក្រោយ ដើម្បីដាក់ពាក្យប្រហែល 3 សប្តាហ៍បន្ទាប់ពីទទួល។',my:'အဆင့်တစ်ခုစီ အလုပ်ရက် ၃ ရက်။ လက်ခံပြီး ၃ ပတ်ခန့်အတွင်း လျှောက်နိုင်ရန် နောက်ပြန်တွက်ထားပါတယ်။',th:'แต่ละขั้นตอน 3 วันทำการ คำนวณย้อนหลังเพื่อยื่นคำขอได้ภายในประมาณ 3 สัปดาห์หลังรับเรื่อง'},
  doc_required:{ja:'必須',en:'Required',vi:'Bắt buộc',id:'Wajib',zh:'必须',km:'ចាំបាច់',my:'မဖြစ်မနေ',th:'จำเป็น'},
  note_specialist:{ja:'※ 技能実習をしていた方のみ',en:'* Only for those who did Technical Intern Training (Ginou Jisshu)',vi:'* Chỉ dành cho người từng thực tập kỹ năng (Ginou Jisshu)',id:'* Hanya untuk yang pernah ikut Pemagangan Teknis (Ginou Jisshu)',zh:'※ 仅限曾参加技能实习（技能実習）者',km:'* សម្រាប់តែអ្នកធ្លាប់កម្មសិក្សាជំនាញ (Ginou Jisshu) ប៉ុណ្ណោះ',my:'* နည်းပညာအလုပ်သင် (Ginou Jisshu) လုပ်ခဲ့ဖူးသူများသာ',th:'* เฉพาะผู้ที่เคยฝึกงานทักษะ (Ginou Jisshu) เท่านั้น'},
  temp_return_title:{ja:'🛫 一時帰国',en:'🛫 Temporary Return Home',vi:'🛫 Về nước tạm thời',id:'🛫 Pulang Sementara',zh:'🛫 临时回国',km:'🛫 ត្រឡប់ប្រទេសវិញបណ្ដោះអាសន្ន',my:'🛫 ယာယီပြည်တော်ပြန်',th:'🛫 กลับประเทศชั่วคราว'},
@@ -870,7 +881,55 @@ function _apDeadlines(){
   // サイン＝依頼（案シスのステータスがサイン書類返送待ちに変わった日）から3営業日（O-Linkの建設申請スケジュールと同じ）。在留期限の方が早ければ依頼当日
   var sd=_apParse(c.status_date);
   if(sd){ var ex0=_apParse(c.expire); sign=_apAddBiz(sd,3); if(ex0 && ex0<sign) sign=sd; }
+  // ver.20261024.03: 3週間スケジュールの逆算日が早ければそちら（依頼日より前にはしない）
+  var pl=_apPlan();
+  if(pl && pl.signOuin){
+    if(sign && pl.signOuin<sign && (!sd || pl.signOuin>=sd)) sign=pl.signOuin;
+    if(docs && pl.signOuin<docs && pl.signOuin>=today) docs=pl.signOuin;
+  }
   return {docs:docs, sign:sign};
+}
+// ver.20261024.03: 3週間（15営業日）で申請できるよう逆算したスケジュール（所属機関ページ・O-Linkと同じ）
+function _apSubBiz(d,n){ var r=new Date(d),c=0; while(c<n){ r=_apAdd(r,-1); var w=r.getDay(); if(w!==0&&w!==6&&_AP_HOL.indexOf(_apYmd(r))<0) c++; } return r; }
+function _apPlan(){
+  var c=theCase||{}, today=new Date(); today.setHours(0,0,0,0);
+  var req=_apParse(c.request_date), exp=_apParse(c.expire); if(exp && exp<today) exp=null;
+  var std=null;
+  if(req){ var a=_apAddBiz(req,3), b=_apAddBiz(a,3), cc=_apAddBiz(b,3), d=_apAddBiz(cc,3), e=_apAddBiz(d,3); std={kakunin:b,sakusei:cc,signOuin:d,app:e}; }
+  var target=std?std.app:null, comp=false;
+  if(exp){ var t2=_apAdd(exp,-14); if(!target||t2<target){ target=t2; comp=!!std; } }
+  if(!target) return null;
+  var bk={app:target}; bk.signOuin=_apSubBiz(target,3); bk.sakusei=_apSubBiz(bk.signOuin,3); bk.kakunin=_apSubBiz(bk.sakusei,3);
+  var out={req:req, compressed:comp};
+  ['kakunin','sakusei','signOuin','app'].forEach(function(k){ var v=std?_apMin(std[k],bk[k]):bk[k]; if(req && v<req) v=req; out[k]=v; });
+  return out;
+}
+function _apPlanHtml(){
+  var c=theCase||{}, st=String(c.status||''), ext=getExternalStatus(st);
+  var PRE=['雇用条件作成・企業確認','申請人サイン対応','企業押印ご対応・書類収集・申請準備'];
+  if(PRE.indexOf(ext)<0) return '';
+  var pl=_apPlan(); if(!pl) return '';
+  var stg=ext===PRE[0]?0:(ext===PRE[1]?(/作成/.test(st)?1:2):2);
+  var today=new Date(); today.setHours(0,0,0,0);
+  var fd=function(d){ return d?((d.getMonth()+1)+'/'+d.getDate()):'—'; };
+  var steps=[['pl_s0',pl.req,true],['pl_s1',pl.kakunin,stg>=1],['pl_s2',pl.sakusei,stg>=2],['pl_s3',pl.signOuin,false],['pl_s4',pl.app,false]];
+  var cur=-1; for(var k=0;k<steps.length;k++){ if(!steps[k][2]){ cur=k; break; } }
+  var h='<div class="section-title">'+t('pl_title')+'</div><div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:16px;">';
+  h+='<div style="font-size:12.5px;font-weight:800;color:#1c3d6e;">'+t('pl_target',{d:fd(pl.app)})+'</div>';
+  if(pl.compressed) h+='<div style="font-size:11px;color:#b45309;font-weight:700;margin-top:3px;">'+t('pl_compressed')+'</div>';
+  h+='<div style="overflow-x:auto;margin:10px 0 4px;"><div style="display:flex;align-items:flex-start;min-width:360px;">';
+  steps.forEach(function(s2,k){
+    var done=s2[2], late=!done && s2[1] && s2[1]<today, isCur=(k===cur);
+    var col=done?'#16a34a':late?'#dc2626':isCur?'#2563eb':'#cbd5e1', mark=done?'✓':late?'!':'';
+    var tc=done?'#166534':late?'#b91c1c':isCur?'#1d4ed8':'#94a3b8';
+    h+='<div style="display:flex;flex-direction:column;align-items:center;width:66px;flex:none;">'
+      +'<div style="width:18px;height:18px;border-radius:50%;background:'+(done||late?col:'#fff')+';border:2.5px solid '+col+';color:#fff;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;">'+mark+'</div>'
+      +'<div style="font-size:9.5px;font-weight:'+(isCur||late?'900':'700')+';color:'+tc+';margin-top:4px;text-align:center;line-height:1.3;">'+t(s2[0])+'</div>'
+      +'<div style="font-size:9.5px;color:'+(late?'#b91c1c':'#94a3b8')+';font-weight:700;">'+(k===0?'':'〜')+fd(s2[1])+(late?'<br>⚠'+t('pl_late'):'')+'</div></div>';
+    if(k<steps.length-1) h+='<div style="flex:1;min-width:8px;height:2.5px;background:'+(done?'#16a34a':'#e2e8f0')+';margin-top:8px;"></div>';
+  });
+  h+='</div></div><div style="font-size:10px;color:#94a3b8;">'+t('pl_note')+'</div></div>';
+  return h;
 }
 function _apOverdue(d){ if(!d) return false; var t=new Date(); t.setHours(0,0,0,0); return d<t; }
 function _apDlHtml(d){
@@ -940,7 +999,7 @@ function _apFaqHtml(){
 }
 function renderStatus(){
   var c=theCase;
-  var h=renderNextAction()+renderTodo();
+  var h=renderNextAction()+renderTodo()+_apPlanHtml(); // ver.20261024.03: 申請までのスケジュール
   h+='<div class="phase-card">';
   h+='<div class="phase-lbl">'+t('cur_progress')+'</div>';
   h+='<div class="phase-st" style="'+stExtStyle(getExternalStatus(c.status))+'">'+extStatusHtml(c)+'</div>';
