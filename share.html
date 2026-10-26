@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261026.01: 審査完了画面のステータス列で、案件が「郵送交付／★郵送交付／郵送交付中／窓口受取／★窓口受取／窓口受取（本人）」のときは「新在留カード発行済み」ではなく実際のステータスを表示（★は外す）。それ以外は従来どおり。 -->
 <!-- ver.20261024.01: 画面の絵文字をすべて削除（share_test ver.20261024.test01 を本番反映）。通知ボタンのベルは「通知」の文字に、印紙代の列見出しの💴は削除。閉じる（✕）・メニュー（☰）・チェック（✓✔）・★（ステータス名の一部）は記号として残す。 -->
 <!-- ver.20261016.01: 新規案件依頼で、申請種別が「変更」「更新」のときは人材の「在留期限」を必須に（見出しに * を表示・未入力なら「○人目の在留期限を入力してください」で止める）。認定は今までどおり空でもよい。 -->
 <!-- ver.20261013.02: 【再修正】「登録する」を押してもモーダルが閉じるだけでエラーも出ない問題。(1)submitNewCase全体をtry/catchで包み、どこで例外が出ても必ずトーストで原因表示、(2)「登録する」ボタンのonclickにevent.stopPropagation()+return falseで背景clickイベント伝播を遮断、(3)エラーメッセージに現在の入力値を併記（例：支援委託費が「aaa」なら『現在の入力:「aaa」』と表示）＋該当欄に赤枠フォーカス、(4)console.logでsubmitNewCase開始/内部エラーを記録。 -->
@@ -619,7 +620,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261024.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261026.01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -3659,6 +3660,13 @@ function _buildShinsaTable(rows, dimmed){
     }
     // === ステータス（審査完了は新在留カード(または認定証)発行済みバッジ） ===
     var stBadge='<span class="st-badge" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">✓ 新在留カード(または認定証)発行済み</span>';
+    // ver.20261026.01: 案件が受取段階（郵送交付・窓口受取系）のときは実際のステータスを表示（★は外す）
+    var _rcvSt=String(r.status||'').replace(/^★/,'');
+    if(/^郵送交付/.test(_rcvSt)){
+      stBadge='<span class="st-badge" style="background:#f0f9ff;color:#0369a1;border-color:#bae6fd;">'+esc(_rcvSt)+'</span>';
+    }else if(/^窓口受取/.test(_rcvSt)){
+      stBadge='<span class="st-badge" style="background:#fef3c7;color:#92400e;border-color:#fcd34d;">'+esc(_rcvSt)+'</span>';
+    }
     h+='<td style="white-space:nowrap;">'+stBadge+'</td>';
     // === 在留期限 / 特例 ===
     var expHtml='—';
