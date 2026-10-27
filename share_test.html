@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261027.test04: 新規案件依頼モーダル「送り出し機関」セクションに「送り出し機関未使用」トグルボタンを追加。押すとセクションの入力エリアが折りたたまれ「送り出し機関を使用しない案件として登録します」のバナーに切替。必須バリデーションもスキップ。再度押すと入力モードに戻る。senddashi_org/senddashi_payment は {not_used:true} として保存。 -->
 <!-- ver.20261027.test03: 残っていた絵文字を削除（コメント・要望の送信結果の✅❌など）。お知らせ（ニュース）のタイトル・本文の絵文字も表示しない。チェック（✓✔）・メニュー（☰）・閉じる（✕）は記号として残す。 -->
 <!-- ver.20261027.test02: 送り出し機関セクションを認定申請なら常に表示に変更。受入れ経験「無」=必須／「有」=任意（入力してもしなくても良い）。見出しに動的な「必須」/「任意」バッジ、各ラベルの*マークを動的に出し分け、認定×無のバリデーション（名称・所在国・所在地・電話・支払った人・金額）を追加。 -->
 <!-- ver.20261027.test01: サイドバーに「送り出し機関情報」を追加（独立ページ）。氏名又は名称／所在国／所在地／電話番号の4項目で複数登録可。新規案件依頼モーダルで申請種別「認定」×受入れ経験「無」のときのみ「送り出し機関」セクションを表示し、登録済みから選択 or 新規入力＋支払い情報（申請人／所属機関／支払なし＋金額）を入力可能に。DB: support_org_senddashi 新テーブル＋list/upsert/delete_senddashi_org RPC、intake_requests に senddashi_org / senddashi_payment (jsonb) カラム追加、create_org_intake RPC拡張。 -->
@@ -662,7 +663,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261027.test03</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261027.test04</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -925,7 +926,16 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
             <span>送り出し機関</span>
             <span id="nc_senddashiReqBadge" style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;background:#fee2e2;color:#991b1b;">必須</span>
             <span style="font-size:10.5px;color:#166534;font-weight:600;">（認定申請の案件のみ）</span>
+            <!-- ver.20261027.test03: 送り出し機関を使っていないケース用の省略トグル -->
+            <button type="button" id="nc_senddashiNotUsedBtn" onclick="_ncToggleSenddashiNotUsed()" style="margin-left:auto;background:#fff;color:#166534;border:1.5px solid #86efac;border-radius:6px;padding:4px 12px;font-size:11px;font-weight:800;cursor:pointer;">送り出し機関未使用</button>
           </div>
+          <!-- 未使用時の表示用バナー -->
+          <div id="nc_senddashiNotUsedBanner" style="display:none;background:#fff;border:1.5px dashed #16a34a;border-radius:8px;padding:10px 14px;color:#166534;font-size:12px;line-height:1.6;">
+            <b>送り出し機関を使用しない</b>案件として登録します。<br>
+            <span style="color:#475569;font-size:11px;">※ 戻すには右上の「使用する」ボタンを押してください</span>
+          </div>
+          <!-- 入力エリア本体 -->
+          <div id="nc_senddashiInputArea">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-bottom:8px;">
             <div>
               <label style="font-size:10.5px;color:#166534;font-weight:700;display:block;margin-bottom:3px;">登録済みから選ぶ</label>
@@ -968,6 +978,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
               </div>
             </div>
           </div>
+          </div><!-- /nc_senddashiInputArea -->
         </div>
 
         <div class="nc-section-title">
@@ -8668,6 +8679,34 @@ var _senddashiCache = []; // サイドバー＋モーダル共用キャッシュ
 function _ncResetSenddashi(){
   var ids=['nc_senddashiSel','nc_senddashiName','nc_senddashiCountry','nc_senddashiAddress','nc_senddashiTel','nc_senddashiPayer','nc_senddashiAmount'];
   ids.forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  // ver.20261027.test03: 未使用トグルも初期化
+  window._ncSenddashiNotUsed=false;
+  _ncApplyNotUsedUI();
+}
+// ver.20261027.test03: 送り出し機関「未使用」トグル
+function _ncToggleSenddashiNotUsed(){
+  window._ncSenddashiNotUsed = !window._ncSenddashiNotUsed;
+  _ncApplyNotUsedUI();
+}
+function _ncApplyNotUsedUI(){
+  var notUsed = !!window._ncSenddashiNotUsed;
+  var inputArea=document.getElementById('nc_senddashiInputArea');
+  var banner=document.getElementById('nc_senddashiNotUsedBanner');
+  var btn=document.getElementById('nc_senddashiNotUsedBtn');
+  var badge=document.getElementById('nc_senddashiReqBadge');
+  if(inputArea) inputArea.style.display = notUsed ? 'none' : '';
+  if(banner) banner.style.display = notUsed ? '' : 'none';
+  if(btn){
+    btn.textContent = notUsed ? '使用する' : '送り出し機関未使用';
+    btn.style.background = notUsed ? '#16a34a' : '#fff';
+    btn.style.color = notUsed ? '#fff' : '#166534';
+    btn.style.borderColor = notUsed ? '#16a34a' : '#86efac';
+  }
+  if(notUsed && badge){
+    badge.textContent='未使用';
+    badge.style.background='#f1f5f9';
+    badge.style.color='#64748b';
+  }
 }
 function _ncUpdateSenddashiVisibility(){
   var wrap=document.getElementById('nc_senddashiWrap'); if(!wrap) return;
@@ -8679,10 +8718,15 @@ function _ncUpdateSenddashiVisibility(){
   wrap.style.display = show ? '' : 'none';
   if(!show) return;
   var required = (exp==='無');
-  // バッジ切替
+  // ver.20261027.test03: 未使用トグルがONなら必須/任意バッジより「未使用」が優先
+  var notUsed = !!window._ncSenddashiNotUsed;
   var badge=document.getElementById('nc_senddashiReqBadge');
   if(badge){
-    if(required){
+    if(notUsed){
+      badge.textContent='未使用';
+      badge.style.background='#f1f5f9';
+      badge.style.color='#64748b';
+    } else if(required){
       badge.textContent='必須';
       badge.style.background='#fee2e2';
       badge.style.color='#991b1b';
@@ -8692,9 +8736,9 @@ function _ncUpdateSenddashiVisibility(){
       badge.style.color='#1e40af';
     }
   }
-  // 各ラベルの * マーク表示切替
+  // 各ラベルの * マーク表示切替（未使用時は非表示）
   document.querySelectorAll('#nc_senddashiWrap .nc-sd-req').forEach(function(el){
-    el.style.display = required ? '' : 'none';
+    el.style.display = (required && !notUsed) ? '' : 'none';
   });
 }
 function _ncFillSenddashiOptions(){
@@ -8820,6 +8864,10 @@ async function deleteSenddashi(btn){
 function _ncCollectSenddashiPayload(){
   var wrap=document.getElementById('nc_senddashiWrap');
   if(!wrap || wrap.style.display==='none') return {org:null, payment:null};
+  // ver.20261027.test03: 未使用トグルがONなら「使用しない」マーカーで保存
+  if(window._ncSenddashiNotUsed){
+    return {org:{not_used:true}, payment:{not_used:true}};
+  }
   var name=(document.getElementById('nc_senddashiName')||{}).value||'';
   var country=(document.getElementById('nc_senddashiCountry')||{}).value||'';
   var address=(document.getElementById('nc_senddashiAddress')||{}).value||'';
@@ -9323,7 +9371,8 @@ async function _submitNewCaseInner(){
   }
   if(!acceptExp){ showNcError('受入れ経験を選択してください'); return; }
   // ver.20261027.test02: 送り出し機関バリデーション（認定×受入経験「無」のときのみ必須）
-  if(appType==='認定' && acceptExp==='無'){
+  // ver.20261027.test03: 「未使用」トグルがONならバリデーションスキップ
+  if(appType==='認定' && acceptExp==='無' && !window._ncSenddashiNotUsed){
     var _sdName=((document.getElementById('nc_senddashiName')||{}).value||'').trim();
     var _sdCountry=((document.getElementById('nc_senddashiCountry')||{}).value||'').trim();
     var _sdAddress=((document.getElementById('nc_senddashiAddress')||{}).value||'').trim();
