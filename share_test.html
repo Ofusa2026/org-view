@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261027.test02: 送り出し機関セクションを認定申請なら常に表示に変更。受入れ経験「無」=必須／「有」=任意（入力してもしなくても良い）。見出しに動的な「必須」/「任意」バッジ、各ラベルの*マークを動的に出し分け、認定×無のバリデーション（名称・所在国・所在地・電話・支払った人・金額）を追加。 -->
 <!-- ver.20261027.test01: サイドバーに「送り出し機関情報」を追加（独立ページ）。氏名又は名称／所在国／所在地／電話番号の4項目で複数登録可。新規案件依頼モーダルで申請種別「認定」×受入れ経験「無」のときのみ「送り出し機関」セクションを表示し、登録済みから選択 or 新規入力＋支払い情報（申請人／所属機関／支払なし＋金額）を入力可能に。DB: support_org_senddashi 新テーブル＋list/upsert/delete_senddashi_org RPC、intake_requests に senddashi_org / senddashi_payment (jsonb) カラム追加、create_org_intake RPC拡張。 -->
 <!-- ver.20261024.test01: 画面の絵文字をすべて削除（見出し・ボタン・バッジ・通知・ガイド・トースト等）。通知ボタンのベルは「通知」の文字に、印紙代の列見出しの💴は削除。閉じる（✕）・メニュー（☰）・チェック（✓✔）・★（ステータス名の一部）は記号として残す。 -->
 <!-- ver.20261023.test01: 新規案件依頼の案件名を自動作成（例：【第1弾】有限会社枝川建設（変更・インドネシア2名）／国籍が複数なら（変更・ベトナム1名・インドネシア1名））。第○弾はその会社の既存案件＋確認待ち依頼の数＋1。所属機関・申請種別・人材（国籍・人数）を入れると自動で入り、手で書き換えたら自動更新を止める（「自動作成に戻す」リンク・空にすると自動に戻る）。 -->
@@ -660,7 +661,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261027.test01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261027.test02</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -917,9 +918,13 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
           </select>
         </div>
 
-        <!-- ver.20261027.test01: 送り出し機関（受入れ経験=「無」かつ 申請種別=「認定」のときのみ表示） -->
+        <!-- ver.20261027.test01: 送り出し機関（申請種別=「認定」のとき表示）／受入れ経験「無」なら必須・「有」なら任意 -->
         <div id="nc_senddashiWrap" style="display:none;margin-bottom:12px;background:#f0fdf4;border-left:3px solid #16a34a;border-radius:4px;padding:10px 14px;">
-          <div style="font-size:11.5px;color:#166534;font-weight:800;margin-bottom:8px;">🌏 送り出し機関（認定×受入れ経験なしの場合）</div>
+          <div style="font-size:11.5px;color:#166534;font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span>🌏 送り出し機関</span>
+            <span id="nc_senddashiReqBadge" style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;background:#fee2e2;color:#991b1b;">必須</span>
+            <span style="font-size:10.5px;color:#166534;font-weight:600;">（認定申請の案件のみ）</span>
+          </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-bottom:8px;">
             <div>
               <label style="font-size:10.5px;color:#166534;font-weight:700;display:block;margin-bottom:3px;">登録済みから選ぶ</label>
@@ -928,19 +933,19 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
               </select>
             </div>
             <div>
-              <label style="font-size:10.5px;color:#166534;font-weight:700;display:block;margin-bottom:3px;">氏名又は名称</label>
+              <label style="font-size:10.5px;color:#166534;font-weight:700;display:block;margin-bottom:3px;">氏名又は名称<span class="nc-sd-req" style="color:#dc2626;"> *</span></label>
               <input type="text" class="nc-input" id="nc_senddashiName" style="background:white;" placeholder="例：PT XXX INDONESIA">
             </div>
             <div>
-              <label style="font-size:10.5px;color:#166534;font-weight:700;display:block;margin-bottom:3px;">所在国</label>
+              <label style="font-size:10.5px;color:#166534;font-weight:700;display:block;margin-bottom:3px;">所在国<span class="nc-sd-req" style="color:#dc2626;"> *</span></label>
               <input type="text" class="nc-input" id="nc_senddashiCountry" style="background:white;" placeholder="例：インドネシア">
             </div>
             <div>
-              <label style="font-size:10.5px;color:#166534;font-weight:700;display:block;margin-bottom:3px;">電話番号</label>
+              <label style="font-size:10.5px;color:#166534;font-weight:700;display:block;margin-bottom:3px;">電話番号<span class="nc-sd-req" style="color:#dc2626;"> *</span></label>
               <input type="text" class="nc-input" id="nc_senddashiTel" style="background:white;" placeholder="例：+62-21-XXXXXXXX">
             </div>
             <div style="grid-column:1 / -1;">
-              <label style="font-size:10.5px;color:#166534;font-weight:700;display:block;margin-bottom:3px;">所在地</label>
+              <label style="font-size:10.5px;color:#166534;font-weight:700;display:block;margin-bottom:3px;">所在地<span class="nc-sd-req" style="color:#dc2626;"> *</span></label>
               <input type="text" class="nc-input" id="nc_senddashiAddress" style="background:white;" placeholder="所在地（住所）">
             </div>
           </div>
@@ -948,7 +953,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
             <div style="font-size:10.5px;color:#166534;font-weight:700;margin-bottom:5px;">送り出し機関への支払い</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;">
               <div>
-                <label style="font-size:10.5px;color:#166534;font-weight:700;display:block;margin-bottom:3px;">支払った人</label>
+                <label style="font-size:10.5px;color:#166534;font-weight:700;display:block;margin-bottom:3px;">支払った人<span class="nc-sd-req" style="color:#dc2626;"> *</span></label>
                 <select class="nc-select" id="nc_senddashiPayer" style="background:white;">
                   <option value="">-- 選択 --</option>
                   <option value="申請人">申請人</option>
@@ -957,8 +962,8 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                 </select>
               </div>
               <div>
-                <label style="font-size:10.5px;color:#166534;font-weight:700;display:block;margin-bottom:3px;">金額（円）</label>
-                <input type="text" class="nc-input" id="nc_senddashiAmount" style="background:white;" placeholder="例：200000" inputmode="numeric">
+                <label style="font-size:10.5px;color:#166534;font-weight:700;display:block;margin-bottom:3px;">金額（円）<span class="nc-sd-req" style="color:#dc2626;"> *</span></label>
+                <input type="text" class="nc-input" id="nc_senddashiAmount" style="background:white;" placeholder="例：200000（支払なしなら 0）" inputmode="numeric">
               </div>
             </div>
           </div>
@@ -8665,8 +8670,28 @@ function _ncUpdateSenddashiVisibility(){
   var appType=(document.getElementById('nc_appType')||{}).value||'';
   var expEl=document.querySelector('input[name="nc_acceptExp"]:checked');
   var exp=expEl?expEl.value:'';
-  var show=(appType==='認定' && exp==='無');
+  // ver.20261027.test02: 「認定」なら必ず表示。受入経験「無」で必須、「有」で任意
+  var show = (appType==='認定');
   wrap.style.display = show ? '' : 'none';
+  if(!show) return;
+  var required = (exp==='無');
+  // バッジ切替
+  var badge=document.getElementById('nc_senddashiReqBadge');
+  if(badge){
+    if(required){
+      badge.textContent='必須';
+      badge.style.background='#fee2e2';
+      badge.style.color='#991b1b';
+    } else {
+      badge.textContent='任意';
+      badge.style.background='#dbeafe';
+      badge.style.color='#1e40af';
+    }
+  }
+  // 各ラベルの * マーク表示切替
+  document.querySelectorAll('#nc_senddashiWrap .nc-sd-req').forEach(function(el){
+    el.style.display = required ? '' : 'none';
+  });
 }
 function _ncFillSenddashiOptions(){
   var sel=document.getElementById('nc_senddashiSel'); if(!sel) return;
@@ -9293,6 +9318,21 @@ async function _submitNewCaseInner(){
     return;
   }
   if(!acceptExp){ showNcError('受入れ経験を選択してください'); return; }
+  // ver.20261027.test02: 送り出し機関バリデーション（認定×受入経験「無」のときのみ必須）
+  if(appType==='認定' && acceptExp==='無'){
+    var _sdName=((document.getElementById('nc_senddashiName')||{}).value||'').trim();
+    var _sdCountry=((document.getElementById('nc_senddashiCountry')||{}).value||'').trim();
+    var _sdAddress=((document.getElementById('nc_senddashiAddress')||{}).value||'').trim();
+    var _sdTel=((document.getElementById('nc_senddashiTel')||{}).value||'').trim();
+    var _sdPayer=((document.getElementById('nc_senddashiPayer')||{}).value||'').trim();
+    var _sdAmount=String((document.getElementById('nc_senddashiAmount')||{}).value||'').replace(/[,，円\s]/g,'').trim();
+    if(!_sdName){ showNcError('送り出し機関の「氏名又は名称」を入力してください（認定×受入れ経験なしのため必須）'); var _e=document.getElementById('nc_senddashiName'); if(_e){ _e.focus(); _e.style.borderColor='#dc2626'; } return; }
+    if(!_sdCountry){ showNcError('送り出し機関の「所在国」を入力してください'); var _e=document.getElementById('nc_senddashiCountry'); if(_e){ _e.focus(); _e.style.borderColor='#dc2626'; } return; }
+    if(!_sdAddress){ showNcError('送り出し機関の「所在地」を入力してください'); var _e=document.getElementById('nc_senddashiAddress'); if(_e){ _e.focus(); _e.style.borderColor='#dc2626'; } return; }
+    if(!_sdTel){ showNcError('送り出し機関の「電話番号」を入力してください'); var _e=document.getElementById('nc_senddashiTel'); if(_e){ _e.focus(); _e.style.borderColor='#dc2626'; } return; }
+    if(!_sdPayer){ showNcError('送り出し機関への支払いの「支払った人」を選択してください'); var _e=document.getElementById('nc_senddashiPayer'); if(_e){ _e.focus(); _e.style.borderColor='#dc2626'; } return; }
+    if(_sdAmount==='' || !/^\d+$/.test(_sdAmount)){ showNcError('送り出し機関への「金額」を数字で入力してください（支払なしの場合は 0）。現在の入力:「'+_sdAmount+'」'); var _e=document.getElementById('nc_senddashiAmount'); if(_e){ _e.focus(); _e.style.borderColor='#dc2626'; } return; }
+  }
   var _isAidemOrg=(orgName==='株式会社アイデム');
   if(_isAidemOrg && !aidemBranch){ showNcError('アイデム拠点を選択してください'); return; }
   // ver.20260525.02: 担当者必須は「東」のみ。西/高育チームは入力欄ごと非表示
