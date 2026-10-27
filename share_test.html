@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261027.test03: 残っていた絵文字を削除（コメント・要望の送信結果の✅❌など）。お知らせ（ニュース）のタイトル・本文の絵文字も表示しない。チェック（✓✔）・メニュー（☰）・閉じる（✕）は記号として残す。 -->
 <!-- ver.20261027.test02: 送り出し機関セクションを認定申請なら常に表示に変更。受入れ経験「無」=必須／「有」=任意（入力してもしなくても良い）。見出しに動的な「必須」/「任意」バッジ、各ラベルの*マークを動的に出し分け、認定×無のバリデーション（名称・所在国・所在地・電話・支払った人・金額）を追加。 -->
 <!-- ver.20261027.test01: サイドバーに「送り出し機関情報」を追加（独立ページ）。氏名又は名称／所在国／所在地／電話番号の4項目で複数登録可。新規案件依頼モーダルで申請種別「認定」×受入れ経験「無」のときのみ「送り出し機関」セクションを表示し、登録済みから選択 or 新規入力＋支払い情報（申請人／所属機関／支払なし＋金額）を入力可能に。DB: support_org_senddashi 新テーブル＋list/upsert/delete_senddashi_org RPC、intake_requests に senddashi_org / senddashi_payment (jsonb) カラム追加、create_org_intake RPC拡張。 -->
 <!-- ver.20261024.test01: 画面の絵文字をすべて削除（見出し・ボタン・バッジ・通知・ガイド・トースト等）。通知ボタンのベルは「通知」の文字に、印紙代の列見出しの💴は削除。閉じる（✕）・メニュー（☰）・チェック（✓✔）・★（ステータス名の一部）は記号として残す。 -->
@@ -661,7 +662,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261027.test02</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261027.test03</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -921,7 +922,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
         <!-- ver.20261027.test01: 送り出し機関（申請種別=「認定」のとき表示）／受入れ経験「無」なら必須・「有」なら任意 -->
         <div id="nc_senddashiWrap" style="display:none;margin-bottom:12px;background:#f0fdf4;border-left:3px solid #16a34a;border-radius:4px;padding:10px 14px;">
           <div style="font-size:11.5px;color:#166534;font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <span>🌏 送り出し機関</span>
+            <span>送り出し機関</span>
             <span id="nc_senddashiReqBadge" style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;background:#fee2e2;color:#991b1b;">必須</span>
             <span style="font-size:10.5px;color:#166534;font-weight:600;">（認定申請の案件のみ）</span>
           </div>
@@ -2763,6 +2764,9 @@ async function loadNews(){
     //   その機関のマイページにだけ表示される（空配列のお知らせは従来どおり全機関に表示）。
     var data=await sbRpc('news_list',{p_audiences:auds, p_org_id:(currentOrgId||null)});
     allNews=Array.isArray(data)?data:[];
+    // ver.20261027.test03: お知らせ本文・タイトルの絵文字も表示しない
+    var _EMO=/(?:[\u{1F000}-\u{1FAFF}\u{2600}-\u{2604}\u{2607}-\u{262F}\u{2631}-\u{26FF}\u{2702}-\u{2712}\u{2716}-\u{27BF}\u{23E9}-\u{23FA}\u{2B50}\u{2B55}\u{2139}][\u{FE0F}\u{200D}]*)+ ?/gu;
+    allNews.forEach(function(a){ ['title','body','summary','content'].forEach(function(k){ if(typeof a[k]==='string') a[k]=a[k].replace(_EMO,''); }); });
   }catch(e){ console.warn('[news load failed]', e&&e.message); allNews=[]; }
 }
 function _newsLastSeen(){ try{ return parseInt(localStorage.getItem(NEWS_SEEN_KEY)||'0',10)||0; }catch(e){ return 0; } }
@@ -4241,13 +4245,13 @@ async function submitOrgFeedback(){
   try{
     var res=await sbRpc('submit_org_feedback',{p_token:currentToken,p_pass:(currentPass||null),p_case_id:(caseId||null),p_body:body});
     if(res && res.ok){
-      if(msg){ msg.style.color='#16a34a'; msg.textContent='\u2705 送信しました。大房側で確認いたします。'; }
+      if(msg){ msg.style.color='#16a34a'; msg.textContent='送信しました。大房側で確認いたします。'; }
       var bEl=document.getElementById('fbBody'); if(bEl) bEl.value='';
       _loadFeedbackHistory();
     }else{
-      if(msg){ msg.style.color='#dc2626'; msg.textContent='\u274c 送信に失敗しました'+(res&&res.error?'（'+res.error+'）':'')+'。'; }
+      if(msg){ msg.style.color='#dc2626'; msg.textContent='送信に失敗しました'+(res&&res.error?'（'+res.error+'）':'')+'。'; }
     }
-  }catch(e){ if(msg){ msg.style.color='#dc2626'; msg.textContent='\u274c 送信エラー: '+((e&&e.message)||e); } }
+  }catch(e){ if(msg){ msg.style.color='#dc2626'; msg.textContent='送信エラー: '+((e&&e.message)||e); } }
   if(btn){ btn.disabled=false; btn.textContent='送信'; }
 }
 async function _loadFeedbackHistory(){
@@ -8729,7 +8733,7 @@ async function renderSenddashiPage(){
   await _loadSenddashiCache(true);
   var html=''
     +'<div style="max-width:960px;margin:0 auto;padding:18px 20px;">'
-    +'<h2 style="font-size:18px;font-weight:800;color:#0f2040;margin:0 0 6px;">🌏 送り出し機関情報</h2>'
+    +'<h2 style="font-size:18px;font-weight:800;color:#0f2040;margin:0 0 6px;">送り出し機関情報</h2>'
     +'<div style="font-size:12px;color:#475569;margin-bottom:14px;line-height:1.6;">'
     +'ここに登録した送り出し機関は、<b>新規案件依頼（申請種別「認定」×受入れ経験「無」）</b>のときに選択できます。'
     +'よく使う送り出し機関を事前に登録しておくと入力の手間が省けます。'
@@ -8787,7 +8791,7 @@ async function saveSenddashi(btn){
     });
     if(!res || res.error){ throw new Error((res&&res.error)||'保存失敗'); }
     card.setAttribute('data-id', res.id);
-    btn.textContent='✅ 保存しました';
+    btn.textContent='保存しました';
     setTimeout(function(){ btn.textContent='保存'; btn.disabled=false; }, 1500);
     await _loadSenddashiCache(true);
   }catch(e){
