@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261028.02: アップデートのお知らせに送り出し機関（新規案件依頼の入力欄・送り出し機関情報ページ）を追加（audience:'all'／notify:true）。 -->
 <!-- ver.20261028.01: 送り出し機関機能を本番反映（share_test ver.20261027.test01〜ver.20261028.test01 のうち送り出し機関関連のみ）。(1) サイドバーに「送り出し機関情報」ページ（独立ページ・氏名/所在国/所在地/電話番号・複数登録可）。(2) 新規案件依頼モーダルに「送り出し機関」セクション（申請種別「認定」のときのみ表示／受入れ経験「無」=必須・「有」=任意／登録済みから選択 or 新規入力＋支払い情報（申請人・所属機関・支払なし＋金額））。(3) 省略ラジオ（「送り出し機関省略」）で必須モードでも入力スキップ可。(4) DB: support_org_senddashi テーブル＋list/upsert/delete_senddashi_org RPC（適用済み）、intake_requests に senddashi_org / senddashi_payment (jsonb) 追加（適用済み）、create_org_intake RPC拡張（適用済み）。 -->
 <!-- ver.20261026.01: 審査完了画面のステータス列で、案件が「郵送交付／★郵送交付／郵送交付中／窓口受取／★窓口受取／窓口受取（本人）」のときは「新在留カード発行済み」ではなく実際のステータスを表示（★は外す）。それ以外は従来どおり。 -->
 <!-- ver.20261024.01: 画面の絵文字をすべて削除（share_test ver.20261024.test01 を本番反映）。通知ボタンのベルは「通知」の文字に、印紙代の列見出しの💴は削除。閉じる（✕）・メニュー（☰）・チェック（✓✔）・★（ステータス名の一部）は記号として残す。 -->
@@ -621,7 +622,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261028.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261028.02</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1287,6 +1288,17 @@ var NOTIF_LABELS={'申請済(番号待)':'申請済（番号待ち）','受付�
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20261028.02',
+    date: '2026-10-28',
+    audience: 'all',
+    notify: true,
+    items: [
+      '新規案件依頼で、申請種別が「認定」のときに<b>「送り出し機関」</b>の欄が表示されるようになりました。送り出し機関の名称・所在国・所在地・電話番号と、<b>送り出し機関へ費用を支払った方（申請人／所属機関／支払なし）・金額</b>をご入力ください。<br>受入れ経験が「無」の場合は必須、「有」の場合は任意です。送り出し機関を利用しない場合は「送り出し機関省略」を選んでください。',
+      '左のメニューに<b>「送り出し機関情報」</b>を追加しました。よく利用する送り出し機関を登録しておくと、新規案件依頼の「登録済みから選ぶ」から選べるため、毎回の入力が不要になります。',
+      'ご入力いただいた内容は、申請書類（支払費用の同意書及び費用明細書など）の作成に使用いたします。また、大房行政書士法人でも内容を確認・修正させていただく場合があります。'
+    ]
+  },
   {
     version: 'ver.20261010.01',
     date: '2026-10-10',
