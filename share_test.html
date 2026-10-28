@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261028.test04: ①企業詳細ポップアップを広げ、タブ（概要／提出書類（国交省）／提出書類（入管）／人材一覧）で書類チェックリスト（初回案内・催促履歴つき）と人材一覧を表示。人材一覧から人材詳細へ移動可。②申請スケジュールの「特定活動申請のデッドライン」は申請済みなら表示しない。 -->
 <!-- ver.20261028.test03: 新規案件依頼モーダルの申請種別プルダウンを「-- 選択 --」でデフォルト未選択に変更。モーダルオープン時も空のまま。送信時バリデーションを追加（未選択なら赤枠＋エラー表示）。 -->
 <!-- ver.20261028.test02: ①新規案件依頼の「AIで読み取って入力」を常に開いた状態にし、「NEW」「新機能」バッジで目立たせる。②人材詳細の書類チェックリストで「受領 true」を出さないよう修正。「案内」を「初回案内」と「催促」（最新の催促日）に分け、2回以上催促した書類は「催促履歴」ボタンで全履歴を表示（RPC get_org_doc_req_history・audit_logから取得）。③人材詳細ポップアップを項目ごとのタブ（案件情報／申請スケジュール／人材情報／書類PDF／提出書類（人材）／提出書類（企業））に分け、未受領の件数をタブに表示。 -->
 <!-- ver.20261028.test01: 省略ラジオのラベル文言を「送り出し機関省略」に統一（必須/任意モード共通）。文脈はバッジ（必須/任意）と展開バナーで示す。 -->
@@ -668,7 +669,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261028.test03</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261028.test04</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1687,7 +1688,7 @@ function _rqDatesFor(d,hist){
   ['req0','req'].forEach(function(k){ var v=String((d&&d[k])||'').slice(0,10); if(/^\d{4}-\d{2}-\d{2}$/.test(v)) set[v]=1; });
   return Object.keys(set).sort();
 }
-var _reqHistCache={}, _reqHistLoading={};
+var _reqHistCache={}, _reqHistLoading={}, _gcmOpen=null, _gcmTab='';
 function _loadReqHist(caseId){
   if(_reqHistCache[caseId]||_reqHistLoading[caseId]) return;
   _reqHistLoading[caseId]=1;
@@ -1697,6 +1698,7 @@ function _loadReqHist(caseId){
     _reqHistCache[caseId]={p:r.p||{},c:r.c||{}};
     var bg=document.getElementById('personModalBg');
     if(bg&&bg.classList.contains('open')&&_pmOpenCase===caseId) openPersonModal(caseId,true);
+    if(_gcmOpen&&_gcmOpen.caseId===caseId&&document.getElementById('gpCoModal')) openGpCoModal(_gcmOpen.companyId,true);
   }).catch(function(){ _reqHistLoading[caseId]=0; });
 }
 function _docChecklistHtml(docMap, docFiles, reqHist){  // ver.20261028.test01: reqHist={書類名:[案内日…]}（初回案内・催促履歴）
@@ -1871,7 +1873,10 @@ function _gpCoBtn(c){
   return ' <button onclick="event.stopPropagation();openGpCoModal(\''+esc(c.companyId)+'\')" style="background:#eef4fd;color:#1c3d6e;border:1px solid #b9d0ee;border-radius:6px;font-size:10.5px;font-weight:800;padding:3px 8px;cursor:pointer;">企業詳細</button>';
 }
 function closeGpCoModal(){ var m=document.getElementById('gpCoModal'); if(m) m.remove(); }
-function openGpCoModal(companyId){
+function openGpCoModal(companyId, _keep){
+  // ver.20261028.test04: 企業詳細にも提出書類（国交省・入管）と人材一覧をタブで表示
+  var _oldSc=0; var _om=document.getElementById('gpCoModal'); if(_keep&&_om){ var _ob=_om.querySelector('.gcm-body'); if(_ob) _oldSc=_ob.scrollTop; }
+  if(!_gcmOpen||_gcmOpen.companyId!==companyId) _gcmTab='';
   closeGpCoModal();
   var e={name:'',active:0,done:0,staff:{},minKokkoDl:null};
   allCases.forEach(function(c){
@@ -1884,7 +1889,11 @@ function openGpCoModal(companyId){
       if(_KS_KOKKO_APPLIED_G.indexOf(c.kokkoStatus||'')<0){ var d=_ksParse(c.requestDate); if(d){ var dl=_ksAdd(d,45); if(!e.minKokkoDl||dl<e.minKokkoDl) e.minKokkoDl=dl; } } }
   });
   var linksReady=(_gpCoLinks!==null);
-  if(!linksReady){ _gpLoadCoLinks().then(function(){ if(document.getElementById('gpCoModal')) openGpCoModal(companyId); }); }
+  if(!linksReady){ _gpLoadCoLinks().then(function(){ if(document.getElementById('gpCoModal')) openGpCoModal(companyId,true); }); }
+  var _coCases=allCases.filter(function(c){ return c.companyId===companyId; });
+  var _hcid=_coCases.length?_coCases[0].id:'';
+  _gcmOpen={companyId:companyId,caseId:_hcid};
+  var _rhC=(_hcid&&_reqHistCache[_hcid])?_reqHistCache[_hcid].c:null;
   var m=(linksReady?_gpCoLinks:[]).find(function(x){return x.company_id===companyId;});
   var kokkoMap=(coDocsAll[companyId]||{});
   var recv=0; requiredDocsCoKokko.forEach(function(d){ var v=kokkoMap[d]; if(v&&v.staff&&v.staff!=='false'&&v.staff!=='') recv++; });
@@ -1902,19 +1911,52 @@ function openGpCoModal(companyId){
     : (linksReady?'<span style="color:#94a3b8;font-size:11.5px;">企業マイページ未発行</span>':'<span style="color:#cbd5e1;">読込中…</span>');
   function row(l,v){ return '<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid #eef1f5;font-size:12.5px;"><span style="width:110px;flex:none;color:#64748b;font-weight:700;">'+l+'</span><span style="flex:1;">'+v+'</span></div>'; }
   var html='<div id="gpCoModal" onclick="if(event.target.id===\'gpCoModal\')closeGpCoModal();" style="position:fixed;inset:0;background:rgba(15,32,64,.55);z-index:600;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;">'
-    +'<div style="background:#fff;border-radius:14px;max-width:560px;width:100%;padding:20px 22px;">'
+    +'<div style="background:#fff;border-radius:14px;max-width:760px;width:100%;padding:20px 22px;">'
     +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">'
     +'<div style="font-size:16px;font-weight:900;color:#0f2040;">'+esc(e.name||companyId)+'</div>'
     +'<button onclick="closeGpCoModal()" style="background:#f1f5f9;border:none;border-radius:8px;font-size:13px;font-weight:800;padding:6px 10px;cursor:pointer;">✕</button></div>'
+    ;
+  var _ov=''
     +row('貴社担当者','<span style="cursor:pointer;border-bottom:1px dashed #94a3b8;" onclick="_gpEditStaff(\''+esc(companyId)+'\')">'+(gpStaff?esc(gpStaff):'<span style="color:#94a3b8;">未設定 ✎</span>')+'</span>')
     +row('Ofusa担当',esc(Object.keys(e.staff).join('・')||'—'))
     +row('案件','進行中 <b>'+e.active+'</b>／完了 '+e.done)
     +row('国交省書類',kokkoLine)
     +row('企業ログインPIN',pinTxt)
     +'<div style="margin-top:14px;">'+openBtn+'</div>'
-    +'<div style="font-size:10.5px;color:#94a3b8;margin-top:6px;">「開く」で表示される企業ページには、貴社が支援している案件のみが表示されます。</div>'
-    +'</div></div>';
+    +'<div style="font-size:10.5px;color:#94a3b8;margin-top:6px;">「開く」で表示される企業ページには、貴社が支援している案件のみが表示されます。</div>';
+  // ---- タブ：概要／提出書類（国交省）／提出書類（入管）／人材一覧
+  var _coMap=coDocsAll[companyId]||{}, _koMap={}, _nyMap={};
+  Object.keys(_coMap).forEach(function(nm){ if(requiredDocsCoKokko.indexOf(nm)>=0) _koMap[nm]=_coMap[nm]; else _nyMap[nm]=_coMap[nm]; });
+  var _pl=_coCases.map(function(c){
+    var st=getExternalStatus(c.status)||c.status||'';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px solid #f1f5f9;">'
+      +'<div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:700;color:#0f2040;">'+esc(c.name||c.applicant||'')+'</div>'
+      +'<div style="font-size:10.5px;color:#64748b;">'+esc(c.applicant||'')+(st?'　<span style="color:#4338ca;">'+esc(st)+'</span>':'')+'</div></div>'
+      +'<button onclick="closeGpCoModal();openPersonModal(\''+esc(c.id)+'\')" style="flex-shrink:0;background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;font-size:10.5px;font-weight:800;padding:3px 9px;cursor:pointer;">人材詳細</button></div>';
+  }).join('');
+  var _panes=[{label:'概要',html:_ov}];
+  var _koH=Object.keys(_koMap).length?_docChecklistHtml(_koMap,null,_rhC):'', _nyH=Object.keys(_nyMap).length?_docChecklistHtml(_nyMap,null,_rhC):'';
+  if(_koH && _koH.indexOf('書類データはありません')<0) _panes.push({label:'提出書類（国交省）',html:_koH});
+  if(_nyH && _nyH.indexOf('書類データはありません')<0) _panes.push({label:'提出書類（入管）',html:_nyH});
+  if(_pl) _panes.push({label:'人材一覧（'+_coCases.length+'）',html:_pl});
+  if(!_panes.some(function(x){return x.label===_gcmTab;})) _gcmTab=_panes[0].label;
+  var _tabs='<div style="display:flex;gap:4px;overflow-x:auto;border-bottom:2px solid #e2e8f0;margin:4px 0 10px;">', _bodies='';
+  _panes.forEach(function(x,i){
+    var on=(x.label===_gcmTab), miss=(x.html.match(/>未受領<\/span>/g)||[]).length;
+    _tabs+='<button type="button" class="gcm-tab" onclick="_gcmSel('+i+')" style="flex-shrink:0;white-space:nowrap;font-size:12px;font-weight:800;padding:7px 12px;border:none;border-bottom:3px solid '+(on?'#0f2040':'transparent')+';margin-bottom:-2px;background:'+(on?'#f1f5f9':'transparent')+';color:'+(on?'#0f2040':'#64748b')+';border-radius:8px 8px 0 0;cursor:pointer;">'+esc(x.label)
+      +(miss?' <span style="font-size:10px;font-weight:800;color:#c2410c;background:#fff7ed;border:1px solid #fed7aa;border-radius:999px;padding:0 6px;">未'+miss+'</span>':'')+'</button>';
+    _bodies+='<div class="gcm-pane" data-label="'+esc(x.label)+'" style="display:'+(on?'block':'none')+';">'+x.html+'</div>';
+  });
+  _tabs+='</div>';
+  html+=_tabs+'<div class="gcm-body" style="max-height:62vh;overflow-y:auto;">'+_bodies+'</div></div></div>';
   document.body.insertAdjacentHTML('beforeend',html);
+  if(_keep){ var _nb=document.querySelector('#gpCoModal .gcm-body'); if(_nb) _nb.scrollTop=_oldSc; }
+  if(_hcid) _loadReqHist(_hcid);
+}
+function _gcmSel(i){
+  var m=document.getElementById('gpCoModal'); if(!m) return;
+  m.querySelectorAll('.gcm-tab').forEach(function(t,j){ var on=(j===i); t.style.borderBottomColor=on?'#0f2040':'transparent'; t.style.background=on?'#f1f5f9':'transparent'; t.style.color=on?'#0f2040':'#64748b'; });
+  m.querySelectorAll('.gcm-pane').forEach(function(p,j){ p.style.display=(j===i)?'block':'none'; if(j===i) _gcmTab=p.getAttribute('data-label'); });
 }
 function _gpEditStaff(companyId){
   var m=(_gpCoLinks||[]).find(function(x){return x.company_id===companyId;});
@@ -2054,8 +2096,8 @@ function _ksScheduleHtml(c,p,caseId){
   h+=_personSectionTitle('申請スケジュール（建設特定技能）');
   // ver.20260921.10: 進み具合（標準スケジュール比のオンタイム/遅延を見える化）
   h+=_ksPaceBadge(c, _ksT1, stage, N, appActual, expire);
-  // デッドラインバナー
-  if(dl){
+  // デッドラインバナー（ver.20261028.test04: 申請済みなら表示しない）
+  if(dl && !(stage>=3||appActual)){
     var dlNote='';
     if(stage>=0&&stage<3&&appDate){
       dlNote = (appDate<=dl)
