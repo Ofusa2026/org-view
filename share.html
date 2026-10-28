@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261028.04: WHATS_NEW にver.20261028.03（申請種別デフォルト未選択化）のお知らせを追加（audience:all／notify:true）。 -->
 <!-- ver.20261028.03: 新規案件依頼モーダルの申請種別プルダウンを「-- 選択 --」でデフォルト未選択に変更。モーダルオープン時も空のまま。送信時バリデーションを追加（未選択なら赤枠＋エラー表示）。 -->
 <!-- ver.20261028.02: アップデートのお知らせに送り出し機関（新規案件依頼の入力欄・送り出し機関情報ページ）を追加（audience:'all'／notify:true）。 -->
 <!-- ver.20261028.01: 送り出し機関機能を本番反映（share_test ver.20261027.test01〜ver.20261028.test01 のうち送り出し機関関連のみ）。(1) サイドバーに「送り出し機関情報」ページ（独立ページ・氏名/所在国/所在地/電話番号・複数登録可）。(2) 新規案件依頼モーダルに「送り出し機関」セクション（申請種別「認定」のときのみ表示／受入れ経験「無」=必須・「有」=任意／登録済みから選択 or 新規入力＋支払い情報（申請人・所属機関・支払なし＋金額））。(3) 省略ラジオ（「送り出し機関省略」）で必須モードでも入力スキップ可。(4) DB: support_org_senddashi テーブル＋list/upsert/delete_senddashi_org RPC（適用済み）、intake_requests に senddashi_org / senddashi_payment (jsonb) 追加（適用済み）、create_org_intake RPC拡張（適用済み）。 -->
@@ -623,7 +624,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261028.03</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261028.04</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1290,6 +1291,15 @@ var NOTIF_LABELS={'申請済(番号待)':'申請済（番号待ち）','受付�
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20261028.03',
+    date: '2026-10-28',
+    audience: 'all',
+    notify: true,
+    items: [
+      '新規案件依頼モーダルの<b>「申請種別」</b>をデフォルト未選択に変更しました。これまでは「認定」が自動で選ばれていましたが、意図しない「認定」での依頼送信を防ぐため、プルダウンから「認定／変更／更新」のいずれかを明示的にお選びいただく運用になりました。未選択のまま「登録する」を押した場合は、エラーメッセージと赤枠でお知らせします。'
+    ]
+  },
   {
     version: 'ver.20261028.02',
     date: '2026-10-28',
