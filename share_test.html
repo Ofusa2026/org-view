@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261028.test03: 新規案件依頼モーダルの申請種別プルダウンを「-- 選択 --」でデフォルト未選択に変更。モーダルオープン時も空のまま。送信時バリデーションを追加（未選択なら赤枠＋エラー表示）。 -->
 <!-- ver.20261028.test02: ①新規案件依頼の「AIで読み取って入力」を常に開いた状態にし、「NEW」「新機能」バッジで目立たせる。②人材詳細の書類チェックリストで「受領 true」を出さないよう修正。「案内」を「初回案内」と「催促」（最新の催促日）に分け、2回以上催促した書類は「催促履歴」ボタンで全履歴を表示（RPC get_org_doc_req_history・audit_logから取得）。③人材詳細ポップアップを項目ごとのタブ（案件情報／申請スケジュール／人材情報／書類PDF／提出書類（人材）／提出書類（企業））に分け、未受領の件数をタブに表示。 -->
 <!-- ver.20261028.test01: 省略ラジオのラベル文言を「送り出し機関省略」に統一（必須/任意モード共通）。文脈はバッジ（必須/任意）と展開バナーで示す。 -->
 <!-- ver.20261027.test06: 送り出し機関の省略ラジオの文体を状況に応じて切替。認定×受入経験「無」=「送り出し機関を使用しないため省略」、認定×受入経験「有」=「受入れ経験ありのため省略（入力不要）」。省略時バナーの文章も同様に文体切替。 -->
@@ -667,7 +668,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261028.test02</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261028.test03</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -824,6 +825,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                 <td><input type="text" class="nc-input" id="nc_caseName" placeholder="所属機関などを入れると自動で作成されます"><div id="nc_caseNameHint" style="font-size:10px;color:#64748b;margin-top:3px;line-height:1.4;"></div></td>
                 <td>
                   <select class="nc-select" id="nc_appType" onchange="_ncApplyUkeRule();_ncUpdateSenddashiVisibility()">
+                    <option value="">-- 選択 --</option>
                     <option value="認定">認定</option>
                     <option value="変更">変更</option>
                     <option value="更新">更新</option>
@@ -8717,7 +8719,7 @@ function openNewCaseModal(){
   document.getElementById('nc_caseName').value='';
   document.getElementById('nc_caseName').dataset.manual=''; _ncCaseAutoLast=''; // ver.20261023.test01
   setTimeout(_ncCaseNameHint,0);
-  document.getElementById('nc_appType').value='認定';
+  document.getElementById('nc_appType').value=''; // ver.20261028.test03: 申請種別はデフォルト未選択
   document.getElementById('nc_company').value='';
   var _toW=document.getElementById('nc_toRows'); if(_toW){ _toW.innerHTML=''; _ncAddToRow(); }
   var _ccW=document.getElementById('nc_ccRows'); if(_ccW){ _ccW.innerHTML=''; _ncAddCcRow(); }
@@ -9465,6 +9467,7 @@ async function _submitNewCaseInner(){
   document.getElementById('ncError').style.display='none';
 
   if(!caseName){ showNcError('案件名を入力してください'); return; }
+  if(!appType){ showNcError('申請種別を選択してください'); var _at=document.getElementById('nc_appType'); if(_at){ _at.focus(); _at.style.borderColor='#dc2626'; } return; } // ver.20261028.test03: 申請種別未選択チェック
   if(!company){ showNcError('所属機関（企業名）を入力してください'); return; }
   if(!desiredStatus){ showNcError('希望在留資格を選択してください'); return; }
   // ver.20260828.01: 分野は特定技能選択時のみ必須（分野セクションが表示されているときのみチェック）
