@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>申請人マイページ | 大房行政書士法人</title>
+<!-- ver.20261028.01: ヒアリングフォーム回答済みのとき「回答内容を見る」ボタンを追加。回答内容を閲覧のみで表示（編集不可）し、「間違いがあれば担当者までご連絡ください」と表示（8言語）。RPC applicant_view_hearing。 -->
 <!-- ver.20261024.09: 申請までのスケジュールを15営業日の流れに（受領→ヒアリング・書類アップ→条件書確認→サイン返送→会社の押印→申請）。日数はアンシス「⏰ 提出期限」の8工程を合計。ヒアリングフォームに提出期限（受領日から3営業日）。hearingSkip（対象＝人材／両方）に当てはまる案件は出さない。 -->
 <!-- ver.20261024.08: 提出期限の色を段階表示に（2週間を切ったら黄・1週間でオレンジ・3日で赤・期限切れは赤。それ以外は紺）。 -->
 <!-- ver.20261024.07: ①書類のご案内（案内日＝req::）が入った未提出書類があり、まだ確認していなければ、最初に「📋 提出が必要な書類のご確認」画面（書類名・説明・「◯/◯までに提出してください」・8言語）。「提出が必要な書類を確認しました」で doc_check の docconfirm:: に日時を保存（RPC applicant_view_confirm_docs）して進捗タブへ。確認後に新しく案内された書類があればまた表示。②提出期限の日数を登録支援機関ごとに変えられるように（deadline_rules.orgs）。 -->
@@ -214,7 +215,7 @@ details.doc-help-d[open]>summary::after{content:' ▲';}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;flex:none;white-space:nowrap;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title" id="hdrTitle">申請人マイページ</span>
-  <span class="header-ver">ver.20261024.09</span>
+  <span class="header-ver">ver.20261028.01</span>
   <div class="header-right">
     <div id="langSwitch" class="lang-switch"></div>
     <div class="header-org" id="headerName" style="font-size:13px;font-weight:700;opacity:.95;max-width:none;">読み込み中...</div>
@@ -337,6 +338,13 @@ var TR={
  todo_title:{ja:'📌 依頼事項',en:'📌 To-do',vi:'📌 Việc cần làm',id:'📌 Tugas',zh:'📌 待办事项',km:'📌 ការងារត្រូវធ្វើ',my:'📌 လုပ်ရန်စာရင်း',th:'📌 สิ่งที่ต้องทำ'},
  todo_hearing:{ja:'1. ヒアリングフォーム回答',en:'1. Answer the hearing form',vi:'1. Trả lời phiếu phỏng vấn',id:'1. Isi formulir wawancara',zh:'1. 回答问询表',km:'1. ឆ្លើយសំណួរសម្ភាសន៍',my:'1. အင်တာဗျူးပုံစံကိုဖြေပါ',th:'1. ตอบแบบฟอร์มสัมภาษณ์'},
  btn_answer_form:{ja:'✍️ 回答する',en:'✍️ Answer now',vi:'✍️ Trả lời ngay',id:'✍️ Isi sekarang',zh:'✍️ 立即回答',km:'✍️ ឆ្លើយឥឡូវនេះ',my:'✍️ ယခုဖြေပါ',th:'✍️ ตอบตอนนี้'},
+ btn_view_answers:{ja:'回答内容を見る',en:'View my answers',vi:'Xem câu trả lời',id:'Lihat jawaban',zh:'查看回答内容',km:'មើលចម្លើយ',my:'ဖြေဆိုချက်ကြည့်ရန်',th:'ดูคำตอบ'},
+ hv_title:{ja:'ヒアリングフォームの回答内容',en:'Your hearing form answers',vi:'Nội dung trả lời phiếu phỏng vấn',id:'Jawaban formulir wawancara',zh:'问询表回答内容',km:'ចម្លើយទម្រង់សម្ភាសន៍',my:'မေးခွန်းလွှာ ဖြေဆိုချက်',th:'คำตอบแบบฟอร์มสัมภาษณ์'},
+ hv_note:{ja:'この画面では内容を変更できません。間違いがあれば担当者までご連絡ください。',en:'You cannot edit your answers here. If anything is wrong, please contact your representative.',vi:'Không thể sửa nội dung tại đây. Nếu có sai sót, vui lòng liên hệ người phụ trách.',id:'Jawaban tidak dapat diubah di sini. Jika ada yang salah, silakan hubungi petugas.',zh:'此页面无法修改内容。如有错误，请联系负责人。',km:'មិនអាចកែប្រែនៅទីនេះបានទេ។ ប្រសិនបើមានកំហុស សូមទាក់ទងអ្នកទទួលបន្ទុក។',my:'ဤနေရာတွင် ပြင်ဆင်၍မရပါ။ မှားယွင်းမှုရှိပါက တာဝန်ခံထံ ဆက်သွယ်ပါ။',th:'ไม่สามารถแก้ไขได้ในหน้านี้ หากมีข้อผิดพลาด กรุณาติดต่อผู้รับผิดชอบ'},
+ hv_sub:{ja:'回答日',en:'Submitted',vi:'Ngày trả lời',id:'Tanggal kirim',zh:'回答日期',km:'កាលបរិច្ឆេទឆ្លើយ',my:'ဖြေဆိုသည့်နေ့',th:'วันที่ตอบ'},
+ hv_loading:{ja:'読み込み中…',en:'Loading…',vi:'Đang tải…',id:'Memuat…',zh:'加载中…',km:'កំពុងផ្ទុក…',my:'ဖွင့်နေသည်…',th:'กำลังโหลด…'},
+ hv_none:{ja:'回答内容が見つかりませんでした。',en:'No answers found.',vi:'Không tìm thấy câu trả lời.',id:'Jawaban tidak ditemukan.',zh:'未找到回答内容。',km:'រកមិនឃើញចម្លើយ។',my:'ဖြေဆိုချက် မတွေ့ပါ။',th:'ไม่พบคำตอบ'},
+ hv_close:{ja:'閉じる',en:'Close',vi:'Đóng',id:'Tutup',zh:'关闭',km:'បិទ',my:'ပိတ်ရန်',th:'ปิด'},
  todo_docs:{ja:'2. 必要書類提出',en:'2. Submit required documents',vi:'2. Nộp hồ sơ cần thiết',id:'2. Serahkan dokumen yang diperlukan',zh:'2. 提交必要材料',km:'2. ដាក់ឯកសារដែលត្រូវការ',my:'2. လိုအပ်သောစာရွက်စာတမ်းတင်ပါ',th:'2. ยื่นเอกสารที่จำเป็น'},
  st_answered:{ja:'回答済み',en:'Answered',vi:'Đã trả lời',id:'Sudah dijawab',zh:'已回答',km:'បានឆ្លើយ',my:'ဖြေပြီး',th:'ตอบแล้ว'},
  btn_send_doc:{ja:'📤 送る',en:'📤 Send',vi:'📤 Gửi',id:'📤 Kirim',zh:'📤 发送',km:'📤 ផ្ញើ',my:'📤 ပို့ရန်',th:'📤 ส่ง'},
@@ -901,6 +909,78 @@ function hearingAnswered(){ return hasHearingForm; }
 //（ヒアリング段階のみ督促。段階を過ぎた案件は行に⬜未回答＋ボタンは出すが、バナーでは急かさない）。
 function hearingNagActive(){ return PRE_HEARING.indexOf(theCase.status||'')>=0; }
 function docsAllDone(){ return docDisplayList().length>0 && missingDocCount===0; }
+// ver.20261028.01: ヒアリングフォームの回答内容を表示（閲覧のみ・編集不可）
+var _HV_LABELS={applicantNameEn:'氏名（パスポート表記） / Name',name:'氏名 / Name',birthdate:'生年月日 / Date of birth',nationality:'国籍 / Nationality',birthPlace:'出生地 / Place of birth',
+ married:'結婚 / Married',email:'メールアドレス / Email',address:'現住所（日本） / Address in Japan',addressStatus:'日本の住所 / Address in Japan',
+ residenceCard:'在留カード番号 / Residence card No.',residenceCardStatus:'在留カード / Residence card',passport:'パスポート番号 / Passport No.',passportExpiry:'パスポート有効期限 / Passport expiry',
+ hasFamily:'在日親族 / Family in Japan',familyMembers:'在日親族 / Family in Japan',
+ skillEvalType:'技能の証明 / Skill proof',skillExam1:'技能試験① / Skill test ①',skillExamLoc1:'技能試験①の受験地 / Test location ①',skillExam2:'技能試験② / Skill test ②',skillExamLoc2:'技能試験②の受験地 / Test location ②',
+ jpEvalType:'日本語の証明 / Japanese proof',jpExam1:'日本語試験① / Japanese test ①',jpExamLoc1:'日本語試験①の受験地 / Test location ①',jpExam2:'日本語試験② / Japanese test ②',jpExamLoc2:'日本語試験②の受験地 / Test location ②',
+ gijutsuType:'技能実習2号の職種 / TITP job',gijutsuWork:'技能実習2号の作業 / TITP work',gijutsuProof:'技能実習2号修了の証明 / TITP proof',
+ firstEntry:'特定技能で初めて日本に来た日 / First entry as SSW',entryCount:'来日回数 / Times entered Japan',coeCount:'COEの申請回数 / COE applications',coeDenied:'うち不許可 / Denied',
+ tempReturnStatus:'一時帰国の予定 / Temporary return',tempReturn:'一時帰国（出国）予定日 / Departure date',tempReturnIn:'再入国予定日 / Return date',tempReturnInTBD:'再入国予定日 / Return date',
+ lastEntryFrom:'前回の在留（開始） / Last stay (from)',lastEntryTo:'前回の在留（終了） / Last stay (to)',tenshutsuDate:'転出届の提出日 / Moving-out notice date',
+ vnFamilyAddress:'ベトナムの家族の住所 / Family address (VN)',vnFamilyTel:'ベトナムの家族の電話番号 / Family phone (VN)',vnSendingOrg:'送出機関 / Sending organization',
+ education:'最終学歴 / Education',eduCountry:'卒業した学校の国 / School country',schoolName:'学校名 / School',major:'専攻 / Major',completionDate:'卒業年月日 / Graduation date',
+ gijinkokuExpStatus:'実務経験 / Work experience',gijinkokuExpYears:'実務経験（年） / Years',gijinkokuExpMonths:'実務経験（月） / Months',gijinkokuWorkHistory:'職歴 / Work history',
+ gijinkokuTitleStatus:'資格 / Qualifications',gijinkokuTitle:'資格名 / Qualification',gijinkokuJpTest:'日本語試験 / Japanese test',
+ jpAddress:'在留カードの受取住所 / Delivery address',jpPostalCode:'郵便番号 / Postal code',recipientName:'受取人 / Recipient',
+ relation:'続柄 / Relation',liveTogether:'同居 / Living together',workplace:'勤務先・学校 / Workplace',birth:'生年月日 / Date of birth'};
+var _HV_FORMS={card_delivery:'在留カードの受取先 / Card delivery',kazoku_koushin:'家族 / Family',kazoku_nintei:'家族 / Family'};
+var _HV_ORDER=['applicantNameEn','name','birthdate','nationality','birthPlace','passport','passportExpiry','residenceCardStatus','residenceCard','addressStatus','address','email','married','hasFamily','familyMembers'];
+function _hvVal(v){
+  if(v===true) return 'はい / Yes'; if(v===false) return 'いいえ / No';
+  if(v==='yes') return 'はい / Yes'; if(v==='no') return 'いいえ / No';
+  return esc(String(v)).replace(/\n/g,'<br>');
+}
+function _hvRows(obj){
+  var keys=Object.keys(obj||{}), h='';
+  keys.sort(function(a,b){ var ia=_HV_ORDER.indexOf(a), ib=_HV_ORDER.indexOf(b); if(ia<0) ia=999; if(ib<0) ib=999; return ia-ib; });
+  keys.forEach(function(k){
+    var v=obj[k]; if(v==null||v===''||(Array.isArray(v)&&!v.length)) return;
+    if(k==='tempReturnInTBD'&&obj.tempReturnIn) return;
+    var lab=_HV_LABELS[k]||k, val;
+    if(Array.isArray(v)){
+      val=v.map(function(it,i){ if(it&&typeof it==='object'){ var r='<div style="border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;margin:3px 0;background:#f8fafc;">'; Object.keys(it).forEach(function(kk){ if(it[kk]==null||it[kk]==='') return; r+='<div style="font-size:12px;"><span style="color:#64748b;">'+esc(_HV_LABELS[kk]||kk)+'：</span>'+_hvVal(it[kk])+'</div>'; }); return r+'</div>'; } return _hvVal(it); }).join('');
+    } else if(typeof v==='object'){ val=Object.keys(v).filter(function(kk){return v[kk]!=null&&v[kk]!=='';}).map(function(kk){ return esc(_HV_LABELS[kk]||kk)+'：'+_hvVal(v[kk]); }).join('<br>'); }
+    else val=_hvVal(v);
+    if(!val) return;
+    h+='<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;flex-wrap:wrap;">'
+      +'<div style="flex:0 0 180px;font-size:11.5px;color:#64748b;font-weight:700;">'+esc(lab)+'</div>'
+      +'<div style="flex:1;min-width:160px;font-size:13px;color:#0f172a;word-break:break-word;">'+val+'</div></div>';
+  });
+  return h;
+}
+function closeHearingView(){ var m=document.getElementById('hvModal'); if(m) m.remove(); }
+function openHearingView(){
+  closeHearingView();
+  var m=document.createElement('div'); m.id='hvModal';
+  m.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto;';
+  m.onclick=function(e){ if(e.target===m) closeHearingView(); };
+  m.innerHTML='<div style="background:#fff;border-radius:14px;max-width:640px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.25);overflow:hidden;">'
+    +'<div style="background:#0f2040;color:#fff;padding:14px 18px;display:flex;align-items:center;gap:10px;"><div style="flex:1;font-size:15px;font-weight:800;">'+t('hv_title')+'</div>'
+    +'<button onclick="closeHearingView()" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;">✕</button></div>'
+    +'<div style="margin:14px 18px 0;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 12px;font-size:12.5px;font-weight:700;color:#b91c1c;line-height:1.6;">'+t('hv_note')+'</div>'
+    +'<div id="hvBody" style="padding:6px 18px 4px;font-size:13px;color:#64748b;"><div style="padding:20px 0;text-align:center;">'+t('hv_loading')+'</div></div>'
+    +'<div style="padding:12px 18px 16px;text-align:center;"><button onclick="closeHearingView()" style="background:#0f2040;color:#fff;border:none;border-radius:8px;padding:9px 28px;font-size:13px;font-weight:800;cursor:pointer;">'+t('hv_close')+'</button></div>'
+    +'</div>';
+  document.body.appendChild(m);
+  callRpc('applicant_view_hearing',{p_token:currentToken,p_pass:_correctPass}).then(function(r){
+    var b=document.getElementById('hvBody'); if(!b) return;
+    var forms=(r&&r.ok&&Array.isArray(r.forms))?r.forms:[];
+    if(!forms.length){ b.innerHTML='<div style="padding:20px 0;text-align:center;">'+t('hv_none')+'</div>'; return; }
+    var h='';
+    forms.forEach(function(f){
+      var rows=_hvRows(f.response||{}); if(!rows) return;
+      var d=String(f.submitted_at||'').slice(0,10).replace(/-/g,'/');
+      h+='<div style="margin-top:12px;">'
+        +(_HV_FORMS[f.form_type]?'<div style="font-size:13px;font-weight:800;color:#0f2040;margin-bottom:2px;">'+esc(_HV_FORMS[f.form_type])+'</div>':'')
+        +(d?'<div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">'+t('hv_sub')+'：'+esc(d)+'</div>':'')
+        +rows+'</div>';
+    });
+    b.innerHTML=h||'<div style="padding:20px 0;text-align:center;">'+t('hv_none')+'</div>';
+  }).catch(function(){ var b=document.getElementById('hvBody'); if(b) b.innerHTML='<div style="padding:20px 0;text-align:center;">'+t('hv_none')+'</div>'; });
+}
 function _todoRow(label,done,stateTxt,actionHtml){
   return '<div class="todo-row '+(done?'done':'todo')+'">'
     +'<span class="todo-check">'+(done?'✅':'⬜')+'</span>'
@@ -1056,6 +1136,7 @@ function renderTodo(){
   h+='<div class="todo-box">';
   var _hfUrl=hAns?'':buildHearingFormUrl();
   var _hfBtn=(!hAns&&_hfUrl)?'<a class="todo-btn" href="'+_hfUrl+'" target="_blank" rel="noopener">'+t('btn_answer_form')+'</a>':'';
+  if(hAns) _hfBtn='<a class="todo-btn" href="javascript:void(0)" onclick="openHearingView();return false;">'+t('btn_view_answers')+'</a>';  // ver.20261028.01: 回答内容を閲覧（編集不可）
   var _hDue=(!hAns&&hearingNagActive())?_apHearingDue():null; // ver.20261024.09: ヒアリングフォームの提出期限
   h+=_todoRow(t('todo_hearing')+(_hDue?_apDlHtml(_hDue):''),hAns,hAns?t('st_answered'):t('st_unanswered'),_hfBtn);
   var _dBtn=(docDisplayList().length&&!dDone)?'<a class="todo-btn" href="javascript:void(0)" onclick="switchTab(\'docs\');window.scrollTo(0,0);">'+t('btn_see_docs')+'</a>':'';

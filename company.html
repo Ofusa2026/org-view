@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261028.01: 提出書類チェックリストの「取得予定日」を改行せず書類と同じ行に表示。説明・見本が見られることが分かるよう、小さい▸を「説明・見本を見る ▼」ボタンに変更（開くと「閉じる ▲」）。 -->
 <!-- ver.20261024.09: 申請までのスケジュールを15営業日の流れに（ヒアリング回答・書類アップ3→1-6作成2→1-6企業確認2→サイン書類作成1→サイン返送2→押印書類作成1→押印返送2→スキャン書類作成2＝できた日に申請）。日数はアンシス「⏰ 提出期限」の8工程を合計。企業ヒアリング不要（hearingSkip）にも対応。 -->
 <!-- ver.20261024.08: 提出期限の色を段階表示に（2週間を切ったら黄・1週間でオレンジ・3日で赤・期限切れは赤。それ以外は紺）。未提出の書類の件数（PC表示）は提出期限切れがあるときだけ赤。 -->
 <!-- ver.20261024.07: ①書類のご案内（案内日＝req::）が入った未提出書類があり、まだ確認していなければ、マイページを開いたとき最初に「📋 提出が必要な書類のご確認」画面（国交省／入管に分けて書類名・注意事項・「◯月◯日までにご提出をお願いします」）。「提出が必要な書類を確認しました」で co_doc_check の docconfirm:: に日時を保存（RPC company_view_confirm_docs）してメインへ。確認後に新しく案内された書類があればまた表示。案シスから開いたとき（&pass=）・機関リンク（&ot=）では出さない。②提出期限の日数を登録支援機関ごとに変えられるように（deadline_rules.orgs）。③書類の詳細ボックスを黄色からグレーに。 -->
@@ -94,7 +95,14 @@ tr:hover td{background:#fcfcfd;}
 .exp.danger{color:#dc2626;}
 .exp.none{color:#cbd5e1;font-weight:600;}
 .doc-co{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:6px 0;}
-.doc-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f1f5f9;}
+.doc-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f1f5f9;flex-wrap:wrap;}
+/* ver.20261028.01: 「説明・見本を見る」ボタンと取得予定日（同じ行に表示） */
+.doc-more{display:inline-flex;align-items:center;gap:3px;margin-left:8px;font-size:10.5px;font-weight:800;color:#1a56db;background:#eff6ff;border:1.5px solid #93c5fd;border-radius:99px;padding:2px 10px;white-space:nowrap;vertical-align:middle;}
+.doc-row:hover .doc-more{background:#dbeafe;}
+.doc-more.open{color:#fff;background:#1a56db;border-color:#1a56db;}
+.yotei-inline{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;cursor:default;}
+.yotei-inline .yl{font-size:10.5px;color:#64748b;font-weight:700;white-space:nowrap;}
+.yotei-inline input{font-size:12px;padding:3px 6px;border:1px solid #cbd5e1;border-radius:6px;color:#334155;}
 .doc-row:last-child{border-bottom:none;}
 .doc-ico{font-size:15px;width:20px;text-align:center;flex-shrink:0;}
 .doc-name{flex:1;font-size:12px;font-weight:600;}
@@ -364,7 +372,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261024.09</span>
+  <span class="header-ver">ver.20261028.01</span>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -2185,11 +2193,12 @@ function _linkifyText(t){
 // ver.20260928.01: 企業書類の「取得予定日」入力（未提出のみ）。co_doc_check の yotei:: に保存
 function _yoteiInputHtml(name){
   var cur=(coDocs[name]&&coDocs[name].yotei)?coDocs[name].yotei:'';
-  return '<div style="display:flex;align-items:center;gap:8px;padding:2px 16px 8px 46px;flex-wrap:wrap;">'
-    +'<span style="font-size:11px;color:#64748b;font-weight:700;">📅 取得予定日</span>'
-    +'<input type="date" value="'+esc(cur)+'" onchange="saveYoteiCo('+JSON.stringify(name).replace(/"/g,'&quot;')+',this.value,this)" style="font-size:12px;padding:4px 8px;border:1px solid #cbd5e1;border-radius:6px;color:#334155;">'
+  // ver.20261028.01: 改行せず書類と同じ行に表示（行タップで説明が開かないよう伝播を止める）
+  return '<span class="yotei-inline" onclick="event.stopPropagation()">'
+    +'<span class="yl">取得予定日</span>'
+    +'<input type="date" value="'+esc(cur)+'" onchange="saveYoteiCo('+JSON.stringify(name).replace(/"/g,'&quot;')+',this.value,this)">'
     +'<span class="yotei-msg" style="font-size:10.5px;font-weight:700;"></span>'
-    +'</div>';
+    +'</span>';
 }
 function saveYoteiCo(doc, val, el){
   var msg=el&&el.parentNode?el.parentNode.querySelector('.yotei-msg'):null;
@@ -2213,11 +2222,11 @@ function _docRowsHtml(names){
     var uid=++_docRowUid;
     s+='<div class="doc-row"'+(meta?' style="cursor:pointer;" onclick="_nyukanToggle('+uid+')"':'')+'>';
     s+='<span class="doc-ico">'+ico+'</span>';
-    s+='<div class="doc-name">'+esc(name)+(meta?' <span id="nyuarw_'+uid+'" style="color:#94a3b8;font-size:11px;">▸</span>':'')+'</div>';
+    s+='<div class="doc-name">'+esc(name)+(meta?'<span id="nyuarw_'+uid+'" class="doc-more">説明・見本を見る ▼</span>':'')+'</div>';
+    if(st!=='done'){ s+=_yoteiInputHtml(name); }  // ver.20260928.01: 未提出に取得予定日（ver.20261028.01: 同じ行に）
     s+='<span class="doc-state '+stCls+'">'+stTxt+'</span>';
     s+='</div>';
     if(meta){ s+=_nyukanDetailHtml(uid, meta); }
-    if(st!=='done'){ s+=_yoteiInputHtml(name); }  // ver.20260928.01: 未提出に取得予定日
   });
   return s;
 }
@@ -2359,7 +2368,7 @@ function _nyukanMetaFor(label){ var k=_nyukanSampleKey(label); return k?_NYUKAN_
 function _nyukanToggle(id){
   var d=document.getElementById('nyudet_'+id), a=document.getElementById('nyuarw_'+id);
   if(!d) return; var open=d.style.display!=='none';
-  d.style.display=open?'none':'block'; if(a) a.textContent=open?'▸':'▾';
+  d.style.display=open?'none':'block'; if(a){ a.textContent=open?'説明・見本を見る ▼':'閉じる ▲'; a.classList.toggle('open',!open); }
 }
 function _nyukanDetailHtml(id, smp){
   var h='<div id="nyudet_'+id+'" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;margin:2px 0 8px 30px;font-size:11.5px;color:#334155;line-height:1.7;">';
@@ -2391,7 +2400,7 @@ function _kokkoToggle(i){
   if(!d) return;
   var open=d.style.display!=='none';
   d.style.display=open?'none':'block';
-  if(a) a.textContent=open?'▸':'▾';
+  if(a){ a.textContent=open?'説明・見本を見る ▼':'閉じる ▲'; a.classList.toggle('open',!open); }
 }
 function _kokkoRowsHtml(){
   var s='';
@@ -2406,7 +2415,8 @@ function _kokkoRowsHtml(){
     else { ico='⬜'; stTxt='未提出'; stCls='s-todo'; }
     s+='<div class="doc-row"'+(meta?' style="cursor:pointer;" onclick="_kokkoToggle('+i+')"':'')+'>';
     s+='<span class="doc-ico">'+ico+'</span>';
-    s+='<div class="doc-name">'+esc(name)+(meta?' <span id="kokarw_'+i+'" style="color:#94a3b8;font-size:11px;">▸</span>'+(meta.slow?' <span style="font-size:10px;font-weight:800;color:#b45309;background:#fef3c7;border-radius:4px;padding:1px 5px;">★取得に時間がかかります</span>':''):'')+'</div>';
+    s+='<div class="doc-name">'+esc(name)+(meta?'<span id="kokarw_'+i+'" class="doc-more">説明・見本を見る ▼</span>'+(meta.slow?' <span style="font-size:10px;font-weight:800;color:#b45309;background:#fef3c7;border-radius:4px;padding:1px 5px;">★取得に時間がかかります</span>':''):'')+'</div>';
+    if(!made && !done){ s+=_yoteiInputHtml(name); }  // ver.20260928.01: 未提出（大房作成以外）に取得予定日（ver.20261028.01: 同じ行に）
     s+='<span class="doc-state '+stCls+'">'+stTxt+'</span>';
     s+='</div>';
     if(meta){
@@ -2418,7 +2428,6 @@ function _kokkoRowsHtml(){
         +(meta.sample?'<div style="margin-top:6px;"><a href="'+_KOKKO_SAMPLE_BASE+esc(meta.sample)+'" target="_blank" rel="noopener" style="display:inline-block;background:#0f2040;color:#fff;font-size:11px;font-weight:800;border-radius:6px;padding:5px 12px;text-decoration:none;">🖼 見本を見る</a></div>':'')
         +'</div>';
     }
-    if(!made && !done){ s+=_yoteiInputHtml(name); }  // ver.20260928.01: 未提出（大房作成以外）に取得予定日
   });
   return s;
 }
