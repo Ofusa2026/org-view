@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261029.test10: 使い方の表示をSalesforce型のウォークスルーに統一。画面を暗くして説明する場所だけを明るく抜き、横に「ステップ n / N」のカード（タイトル・説明・進み具合の点・戻る／次へ／✕）を出す。← → Escキーでも操作可。「このページの見方」（一覧）と新規案件依頼の「使い方を見る」（①〜⑤）の両方に適用（左右カード・黄色の番号表示は廃止）。 使い方ガイドの「練習モード」（送信されない新規案件依頼）は廃止し、ガイドの案内も「使い方を見る」に変更。 案件が1件もない機関には、サンプル（架空の案件・企業・人材：株式会社サンプル建設／株式会社みほん食品など4件）を表示し、上部に「サンプル表示」の帯を出す（?demo=1 でいつでも表示）。サンプルの案件では保存処理は行わない。 サンプルの申請受付番号には、以前作成した見本の受付番号通知PDFを表示（受付番号PDFボタン・申請記録）。 -->
+<!-- ver.20261029.test09: 一覧の上に「このページの見方」ボタンを追加（各列・人材詳細／企業詳細ボタン・PDFボタンに黄色い番号と枠を付け、右下に①〜の説明を表示。スクロールに追従、閉じる／Escで終了）。サイドバーのいちばん上に「O-Link使い方ガイド」を移動（黄色で目立たせる）。使い方ガイドの「案件一覧・詳細」から一覧の見方を表示できるボタンを追加。 -->
+<!-- ver.20261029.test08: 新規案件依頼の「使い方を見る」を作り直し。各欄の長いふせんをやめ、ポップアップの左右の余白に「依頼の仕方」①〜⑤（AI読み取り／案件の情報／申請する人／人材紹介手数料／登録する）を短い文のカードで置き、黄色い線で各欄（⑤は登録するボタン）につなぐ。スクロールに追従し、見えていない欄のカードは薄く表示。押すとその欄へ移動。画面内の番号もAI読み取りを1にして①〜⑤と一致。画面が狭いときは下にまとめて表示。 あわせて、AI読み取りの入力欄を見やすくした（書体を通常の文字に、案内文を3行の短い文に、点線の貼り付け枠に）。 -->
 <!-- ver.20261029.test07: 「⚠️書類未提出企業」の依頼日の条件を、案件の受領日（request_date）ではなく企業の国交省書類の依頼日（co_doc_check の req::）が入っているかで判定するよう修正。 -->
 <!-- ver.20261029.test06: 国交省書類リスト（required_docs_co_kokko）を全機関で案シスの設定から読み込むよう修正。これまでGP以外の機関では初期値の「16. 技能者ID」まで国交省書類として扱われ、書類未提出企業などに出ていた。 -->
 <!-- ver.20261029.test05: 「⚠️書類未提出企業」を変更。依頼日（request_date）が入っている案件のみ対象。国交省書類の提出期限（残り/超過）を企業名の横に移動。前回の申請の受付番号が「EU」（特定活動更新済み）の人材は「更新不可」として依頼日がなくても表示し、企業カード右上に「更新不可」を表示して一番上に並べる。 -->
@@ -282,6 +285,8 @@ th[data-col-key="name"],th[data-col-key="company"],th[data-col-key="_mlit"]{whit
 .sb-item{padding:10px 14px;cursor:pointer;font-size:11px;font-weight:600;color:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:space-between;gap:6px;border-left:3px solid transparent;transition:.1s;}
 .sb-item:hover{background:rgba(255,255,255,.07);color:white;}
 .sb-item.active{background:rgba(99,102,241,.2);color:#a5b4fc;border-left-color:#6366f1;}
+.sb-guide{background:rgba(253,224,71,.12);color:#fde047 !important;font-weight:800;}
+.sb-guide.active{background:#fde047;color:#422006 !important;}
 .sb-badge{background:rgba(255,255,255,.15);color:white;font-size:10px;padding:1px 6px;border-radius:99px;font-weight:700;}
 .sb-item.active .sb-badge{background:#6366f1;}
 .sb-divider{height:1px;background:rgba(255,255,255,.08);margin:6px 0;}
@@ -471,6 +476,52 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 .nc-help-on .nc-help{display:block;animation:_ncHelpIn .25s ease-out;}
 .nc-help-on .nc-help-target{outline:2px dashed #facc15;outline-offset:3px;border-radius:8px;}
 @keyframes _ncHelpIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
+/* ver.20261029.test10: ウォークスルー（Salesforce型） */
+#wtLayer{position:fixed;inset:0;z-index:3000;pointer-events:none;}  /* 案内中もそのまま入力・操作できるよう、カード以外はクリックを通す */
+#wtPop{pointer-events:auto;}
+#wtHole{position:fixed;border-radius:8px;box-shadow:0 0 0 9999px rgba(3,16,38,.62);outline:2px solid #fff;transition:all .25s ease;pointer-events:none;}
+#wtPop{position:fixed;background:#fff;border-radius:10px;box-shadow:0 18px 48px rgba(0,0,0,.35);font-family:inherit;transition:top .25s ease,left .25s ease;}
+#wtPop .wt-arrow{position:absolute;width:16px;height:16px;background:#fff;transform:rotate(45deg);}
+#wtPop .wt-x{position:absolute;top:10px;right:10px;background:none;border:none;color:#747474;font-size:16px;cursor:pointer;padding:4px 6px;}
+#wtPop .wt-body{padding:18px 20px 4px;}
+#wtPop .wt-step{font-size:11px;font-weight:700;color:#0176d3;letter-spacing:.06em;}
+#wtPop .wt-title{font-size:17px;font-weight:800;color:#181818;margin-top:6px;}
+#wtPop .wt-text{font-size:13px;color:#444;line-height:1.75;margin-top:8px;}
+#wtPop .wt-text b{color:#181818;}
+#wtPop .wt-foot{display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid #e5e5e5;margin-top:14px;background:#fafaf9;border-radius:0 0 10px 10px;}
+#wtPop .wt-dots{display:flex;gap:5px;flex:1;flex-wrap:wrap;}
+#wtPop .wt-dot{width:7px;height:7px;border-radius:50%;background:#c9c9c9;cursor:pointer;}
+#wtPop .wt-dot.on{background:#0176d3;}
+#wtPop .wt-btn{border-radius:6px;padding:8px 16px;font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit;}
+#wtPop .wt-back{border:1px solid #c9c9c9;background:#fff;color:#0176d3;}
+#wtPop .wt-next{border:none;background:#0176d3;color:#fff;}
+#wtPop .wt-next:hover{background:#014486;}
+/* ver.20261029.test08: AI読み取りの入力欄を見やすく（文字は通常の書体・薄い案内文・点線の貼り付け枠） */
+.nc-ai-ta::placeholder{color:#94a3b8;font-weight:600;}
+.nc-ai-ta:focus{outline:none;border-color:#6366f1;border-style:solid;box-shadow:0 0 0 3px rgba(99,102,241,.15);}
+/* ver.20261029.test08: 依頼の仕方＝ポップアップの左右の余白に①〜⑤のカードを置き、線で各欄につなぐ */
+#ncGuide{display:none;position:fixed;inset:0;pointer-events:none;z-index:6;}
+.nc-help-on #ncGuide{display:block;}
+.nc-help-on .nc-modal{max-width:min(1340px,calc(100vw - 520px));}
+#ncGuideSvg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;}
+.nc-gstep{position:absolute;width:220px;display:flex;gap:10px;align-items:flex-start;background:#fff;border:2px solid #facc15;border-radius:12px;padding:10px 12px;box-shadow:0 10px 30px rgba(0,0,0,.35);pointer-events:auto;cursor:pointer;transition:top .15s ease,opacity .15s ease;}
+.nc-gstep.off{opacity:.45;}
+.nc-gstep.on{background:#fefce8;}
+.nc-gno{flex-shrink:0;width:30px;height:30px;border-radius:50%;background:#0f2040;color:#fff;font-size:15px;font-weight:900;display:flex;align-items:center;justify-content:center;}
+.nc-gstep.opt .nc-gno{background:#6366f1;}
+.nc-gstep.last .nc-gno{background:#16a34a;}
+.nc-gt{font-size:13px;font-weight:900;color:#0f2040;line-height:1.35;}
+.nc-gt small{font-size:10px;font-weight:700;color:#6366f1;margin-left:4px;}
+.nc-gd{font-size:11.5px;color:#475569;line-height:1.5;margin-top:2px;}
+.nc-gd b{color:#0f2040;}
+.nc-flash{animation:_ncFlash 1.2s ease-out;}
+@keyframes _ncFlash{0%{box-shadow:0 0 0 4px #facc15;}100%{box-shadow:0 0 0 0 rgba(250,204,21,0);}}
+/* 画面が狭いとき：左右に置けないので下にまとめて表示（線なし） */
+/* 画面が狭いとき：入力の邪魔にならないよう、入力画面のいちばん上に横並び（横スクロール）で表示 */
+#ncGuide.narrow{position:static;display:flex;gap:8px;overflow-x:auto;pointer-events:auto;margin:0 0 12px;padding:2px 2px 6px;}
+#ncGuide.narrow .nc-gstep{position:static;flex:0 0 200px;width:200px !important;box-shadow:none;opacity:1;}
+#ncGuide.narrow #ncGuideSvg{display:none;}
+@media (max-width:1100px){ .nc-help-on .nc-modal{max-width:96vw;} }
 /* ver.20261019.test04: 手順番号・紹介料ボックス */
 .nc-stepno{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#1F4E79;color:#fff;font-size:11px;font-weight:800;flex:0 0 auto;}
 .nc-sec-sub{font-size:10.5px;font-weight:600;color:#64748b;}
@@ -684,7 +735,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261029.test07</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261029.test10</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -803,11 +854,11 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <span style="font-size:11px;font-weight:900;color:#fff;background:#e11d48;border-radius:999px;padding:3px 10px;letter-spacing:.5px;">NEW</span>
             <span style="font-size:11px;font-weight:800;color:#4f46e5;background:#fff;border:1.5px solid #6366f1;border-radius:999px;padding:2px 10px;">新機能</span>
-            <div style="font-size:15px;font-weight:900;color:#3730a3;">AIで読み取って入力</div>
+            <span class="nc-stepno" style="background:#6366f1;">1</span><div style="font-size:15px;font-weight:900;color:#3730a3;">AIで読み取って入力</div>
             <div style="font-size:11.5px;color:#4f46e5;flex:1;min-width:180px;font-weight:600;">LINE・メールの文章や、求人票・在留カード・Excelのスクリーンショットを入れるだけで、下の欄に自動で入ります</div>
           </div>
           <div id="ncAiBody" style="margin-top:10px;">
-            <textarea id="ncAiText" placeholder="ここに文章を貼り付け（例：株式会社〇〇で、ベトナム人2名の特定技能1号への変更をお願いします。NGUYEN VAN A 在留期限2027/1/31 技能実習2号…）&#10;&#10;スクリーンショットは、この欄で Ctrl+V（スマホは下のボタン）で追加できます" style="width:100%;min-height:96px;padding:9px 10px;border:1px solid #c7d2fe;border-radius:8px;font-size:12.5px;line-height:1.6;resize:vertical;background:#fff;box-sizing:border-box;"></textarea>
+            <textarea id="ncAiText" class="nc-ai-ta" placeholder="ここに貼り付け（Ctrl+V）&#10;・LINE・メールの文章&#10;・求人票・在留カードなどのスクリーンショット" style="width:100%;min-height:92px;padding:12px 14px;border:2px dashed #a5b4fc;border-radius:10px;font-family:inherit;font-size:13.5px;line-height:1.7;color:#0f172a;resize:vertical;background:#fff;box-sizing:border-box;"></textarea>
             <div id="ncAiThumbs" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;"></div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;">
               <label style="display:inline-flex;align-items:center;gap:4px;padding:7px 12px;background:#fff;border:1.5px solid #a5b4fc;border-radius:8px;font-size:12px;font-weight:700;color:#4338ca;cursor:pointer;">スクリーンショットを選ぶ<input type="file" id="ncAiFile" accept="image/*" multiple style="display:none;" onchange="_ncAiAddFiles(this.files);this.value='';"></label>
@@ -818,7 +869,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
           </div>
         </div>
 
-        <div class="nc-section-title"><span class="nc-stepno">1</span>案件の情報 <span class="nc-sec-sub">会社・申請の種類など（全員共通）</span></div>
+        <div class="nc-section-title"><span class="nc-stepno">2</span>案件の情報 <span class="nc-sec-sub">会社・申請の種類など（全員共通）</span></div>
         <div style="font-size:10.5px;color:#94a3b8;margin:-4px 0 8px;">→ 横スクロールで各項目を入力できます</div>
         <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:6px;">
           <table class="nc-common-table">
@@ -1016,7 +1067,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
         </div>
 
         <div class="nc-section-title">
-          <span class="nc-stepno">2</span>申請する人 <span class="nc-sec-sub">1行に1人</span>
+          <span class="nc-stepno">3</span>申請する人 <span class="nc-sec-sub">1行に1人</span>
           <button type="button" class="nc-paste-btn" onclick="openPasteModal()">まとめて貼り付け</button>
           <span class="nc-jinzai-count" id="ncJinzaiCount">最大30名</span>
         </div>
@@ -1044,11 +1095,11 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
         <button type="button" class="nc-add-jinzai-btn" onclick="addJinzaiRow()">＋ 人材を追加</button>
 
         <!-- ver.20261019.test04: 人材紹介手数料（1人あたり）を独立ボックスに -->
-        <div class="nc-section-title"><span class="nc-stepno">3</span>人材紹介手数料 <span class="nc-sec-sub">任意・税抜・<b>1人あたり</b>で入れます</span></div>
+        <div class="nc-section-title"><span class="nc-stepno">4</span>人材紹介手数料 <span class="nc-sec-sub">任意・税抜・<b>1人あたり</b>で入れます</span></div>
         <div id="ncFeeBox" class="nc-fee-box">
           <div class="nc-fee-modes">
             <label class="nc-fee-mode"><input type="radio" name="nc_feeMode" value="same" checked onchange="_ncFeeSync()"><span><b>全員同じ金額</b><small>1人あたりの金額を1つ入れる</small></span></label>
-            <label class="nc-fee-mode"><input type="radio" name="nc_feeMode" value="each" onchange="_ncFeeSync()"><span><b>人ごとに違う</b><small>②の表に「紹介料」の欄が出ます</small></span></label>
+            <label class="nc-fee-mode"><input type="radio" name="nc_feeMode" value="each" onchange="_ncFeeSync()"><span><b>人ごとに違う</b><small>③の表に「紹介料」の欄が出ます</small></span></label>
             <label class="nc-fee-mode"><input type="radio" name="nc_feeMode" value="none" onchange="_ncFeeSync()"><span><b>なし・未定</b><small>あとで連絡する場合も</small></span></label>
           </div>
           <div id="ncFeeSame" class="nc-fee-row">
@@ -1063,12 +1114,12 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
             円 ÷ <b id="ncFeeCalcN">1</b>名
             <button type="button" class="nc-fee-calc-go" onclick="_ncFeeCalcApply()">1人あたりにして入れる</button>
           </div>
-          <div id="ncFeeEachHint" class="nc-fee-hint" style="display:none;">②の表のいちばん右「紹介料（1人あたり）」に、1人ずつ金額を入れてください。</div>
+          <div id="ncFeeEachHint" class="nc-fee-hint" style="display:none;">③の表のいちばん右「紹介料（1人あたり）」に、1人ずつ金額を入れてください。</div>
           <div id="ncFeeSum" class="nc-fee-sum"></div>
           <div class="nc-fee-hint">例：2名で合計60万円 → <b>1人あたり 300,000円</b>。書類（雇用の経緯に係る説明書）には1人ずつの金額が入ります。</div>
         </div>
 
-        <div class="nc-section-title"><span class="nc-stepno">4</span>備考</div>
+        <div class="nc-section-title"><span class="nc-stepno">5</span>備考</div>
         <textarea id="nc_remarks" class="nc-input" placeholder="その他、連絡事項があればご記入ください（任意）" style="width:100%;box-sizing:border-box;min-height:72px;resize:vertical;font-family:inherit;padding:8px 10px;"></textarea>
 
       </div>
@@ -1156,7 +1207,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 var SUPABASE_URL='https://ehwlgbwpycglmopiqyty.supabase.co';
 var SUPABASE_KEY='sb_publishable_3ptyILIpGIcNA5sUBhFMbA_n0VxpY2u';
 function sbFetch(p,opts){return fetch(SUPABASE_URL+'/rest/v1/'+p,Object.assign({headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'}},opts||{}));}
-function sbRpc(fn,body){return fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(body||{})}).then(function(r){return r.json();});}
+function sbRpc(fn,body){ if(typeof _demoMode!=='undefined' && _demoMode && /^(save_|set_|upsert_|confirm_|toggle|submit_|mark_|delete_|org_set)/.test(fn) && JSON.stringify(body||{}).indexOf('demo_')>=0){ return Promise.resolve({ok:false,demo:true}); } return fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(body||{})}).then(function(r){return r.json();});}
 function saveOrgSetting(key,value){return sbRpc('set_org_setting',{p_token:currentToken,p_pass:(currentPass||null),p_key:key,p_value:value});}
 function confirmOrgNotifs(ids,confirmed){return sbRpc('confirm_org_notifications',{p_token:currentToken,p_pass:(currentPass||null),p_ids:ids,p_confirmed:!!confirmed});}
 function createOrgIntake(records){return sbRpc('create_org_intake',{p_token:currentToken,p_pass:(currentPass||null),p_records:records});}
@@ -1432,7 +1483,7 @@ var WHATS_NEW = [
     audience: 'all',
     notify: true,
     items: [
-      '「使い方ガイド」に<b>新しい申請のご依頼方法のチュートリアル</b>を追加しました。手順を1つずつ確認でき、<b>練習モード</b>（入力しても送信されません）で実際の画面を使って練習できます。',
+      '「使い方ガイド」に<b>新しい申請のご依頼方法のチュートリアル</b>を追加しました。手順を1つずつ確認できます。',
       '「使い方ガイド」に<b>申請の流れ Q&A（よくあるご質問）</b>を追加しました。申請受理・審査完了の連絡、在留カードの受取、企業様とのお繋ぎ方法などをまとめています。'
     ]
   },
@@ -3376,6 +3427,8 @@ async function renderKyoryoku(){
 
 function renderSidebar(){
   var h='';
+  // ver.20261029.test09: O-Link使い方ガイドをサイドバーのいちばん上に
+  h+='<div class="sb-item sb-guide'+(currentGroup==='guide'?' active':'')+'" onclick="switchGroup(\'guide\')"><span>O-Link使い方ガイド</span></div><div class="sb-divider"></div>';
   // ver.20260518.13: ダッシュボードはバッジ無し、その他はgroupCasesの件数
   // ver.20260525.09: アイデムは「ダッシュボード」を非表示
   // ver.20260525.12: 進捗URLカスタマイズで各項目を表示/非表示制御
@@ -3448,8 +3501,7 @@ function renderSidebar(){
   h+='<div class="sb-divider"></div>';
   h+='<div class="sb-item'+(currentGroup==='zuiji'?' active':'')+'" onclick="switchGroup(\'zuiji\')">随時届出チェッカー</div>';
   // ver.20261013.test04: 使い方ガイド
-  h+='<div class="sb-divider"></div>';
-  h+='<div class="sb-item'+(currentGroup==='guide'?' active':'')+'" onclick="switchGroup(\'guide\')">使い方ガイド</div>';
+
   if(isSidebarItemVisible('flow')){
     h+='<div class="sb-divider"></div>';
     h+='<div class="flow-sb-item" onclick="openFlowModal()">申請の流れ <span style="margin-left:auto;font-size:10px;"></span></div>';
@@ -3682,7 +3734,154 @@ function toggleSort(key){
   renderMain();
 }
 
-function setView(v){currentView=v;renderMain();}
+
+
+// ===== ver.20261029.test10: サンプル表示（架空の案件・企業・人材） =====
+var _demoMode=false;
+function _demoD(n){ var d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()+n); var m=d.getMonth()+1, dd=d.getDate(); return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(dd<10?'0':'')+dd; }
+function _demoApply(){
+  var force=/[?&]demo=1\b/.test(location.search);
+  if(!force && allCases.length) { _demoMode=false; _demoBanner(); return; }
+  _demoMode=true;
+  var C1='demo_co_1', C2='demo_co_2';
+  function cs(o){ return Object.assign({id:'',applicant:'',name:'',company:'',companyId:'',residenceStatus:'特定技能1号',status:'',expire:'',tokureiDate:'',staff:'大房　太郎',team:'',appType:'変更',receiptNo:'',receiptDate:'',requestDate:'',tempReturn:'',applicantField:'',madoguchiDate:'',madoguchiReceiveDate:'',clientStaff:'見本　花子',deliveryMethod:'mail',otherAgencies:{},updated_at:'',kokkoStatus:''},o); }
+  allCases=[
+    cs({id:'demo_case_1',applicant:'NGUYEN VAN AN',name:'【第1弾】株式会社サンプル建設（変更・ベトナム2名）',company:'株式会社サンプル建設',companyId:C1,status:'企業書類待ち',expire:_demoD(85),requestDate:_demoD(-6),applicantField:'建設分野（特定技能１号）'}),
+    cs({id:'demo_case_2',applicant:'TRAN THI BINH',name:'【第1弾】株式会社サンプル建設（変更・ベトナム2名）',company:'株式会社サンプル建設',companyId:C1,status:'審査中',expire:_demoD(40),tokureiDate:_demoD(100),receiptNo:'東オンCU00000001',receiptDate:_demoD(-12),requestDate:_demoD(-40),applicantField:'建設分野（特定技能１号）'}),
+    cs({id:'demo_case_3',applicant:'BUDI SANTOSO',name:'【第1弾】株式会社みほん食品（更新・インドネシア1名）',company:'株式会社みほん食品',companyId:C2,appType:'更新',status:'人材書類待ち',expire:_demoD(55),requestDate:_demoD(-3),applicantField:'飲食料品製造業分野（特定技能１号）'}),
+    cs({id:'demo_case_4',applicant:'SITI RAHAYU',name:'【第1弾】株式会社みほん食品（認定・インドネシア1名）',company:'株式会社みほん食品',companyId:C2,appType:'認定',status:'完了',receiptNo:'東オンAU00000002',receiptDate:_demoD(-50),requestDate:_demoD(-80),applicantField:'飲食料品製造業分野（特定技能１号）'})
+  ];
+  allPersons={
+    demo_case_1:{case_id:'demo_case_1',applicant_name_en:'NGUYEN VAN AN',nationality:'ベトナム',gender:'男',birthdate:'1999-04-12',residence_status:'技能実習2号',expire:_demoD(85)},
+    demo_case_2:{case_id:'demo_case_2',applicant_name_en:'TRAN THI BINH',nationality:'ベトナム',gender:'女',birthdate:'2000-08-03',residence_status:'技能実習2号',expire:_demoD(40)},
+    demo_case_3:{case_id:'demo_case_3',applicant_name_en:'BUDI SANTOSO',nationality:'インドネシア',gender:'男',birthdate:'1997-11-21',residence_status:'特定技能1号',expire:_demoD(55)},
+    demo_case_4:{case_id:'demo_case_4',applicant_name_en:'SITI RAHAYU',nationality:'インドネシア',gender:'女',birthdate:'2001-02-15'}
+  };
+  function dk(req,staff,req0){ var o={req:req}; if(req0) o.req0=req0; if(staff) o.staff=staff; return o; }
+  personDocsAll={
+    demo_case_1:{'パスポート':dk(_demoD(-6),_demoD(-4)),'在留カード（表）':dk(_demoD(-6),_demoD(-4)),'在留カード（裏）':dk(_demoD(-6),_demoD(-4)),'健康診断票':dk(_demoD(-1),'',_demoD(-6)),'課税証明書':dk(_demoD(-1),'',_demoD(-6))},
+    demo_case_3:{'パスポート':dk(_demoD(-3)),'在留カード（表）':dk(_demoD(-3)),'源泉徴収票':dk(_demoD(-3))}
+  };
+  coDocsAll={};
+  coDocsAll[C1]={'1. 履歴事項全部証明書':dk(_demoD(-6),_demoD(-5)),'2. 建設業許可':dk(_demoD(-6),_demoD(-5)),'3. 標準報酬決定通知書':dk(_demoD(-1),'',_demoD(-6)),'登記事項証明書（履歴事項全部証明書）':dk(_demoD(-6))};
+  coDocsAll[C2]={'登記事項証明書（履歴事項全部証明書）':dk(_demoD(-3),_demoD(-2)),'納税証明書（その3）':dk(_demoD(-3))};
+  // 申請受付番号のイメージ：以前作った見本の受付番号通知PDF（AKIRA OFUSA の見本）を表示
+  var _RCPT_SAMPLE='https://drive.google.com/file/d/1LIqM5Z6vaSzmA4vzybsmajFMOGVHIVXm/view';
+  function rc(cid){ var c=allCases.find(function(x){return x.id===cid;})||{}; return {id:'demo_r_'+cid,case_id:cid,name:c.applicant||'',date:c.receiptDate+' 10:00',caseNo:c.receiptNo,sub:'',applicationDate:c.receiptDate,reported:true,driveUrl:_RCPT_SAMPLE,pdfDone:true,company:c.company,caseName:c.name,status:c.status,appType:c.appType,expire:c.expire,tokureiDate:c.tokureiDate,tempReturn:'',team:''}; }
+  allReceipts=[rc('demo_case_2'),rc('demo_case_4')];
+  allShinsa=[];
+  _demoBanner();
+}
+function _demoBanner(){
+  var b=document.getElementById('demoBanner'), m=document.getElementById('main');
+  if(!_demoMode){ if(b) b.remove(); return; }
+  if(!b && m){ b=document.createElement('div'); b.id='demoBanner'; m.parentNode.insertBefore(b,m); }
+  if(b) b.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#eff6ff;border-bottom:1px solid #bfdbfe;padding:9px 18px;font-size:12.5px;color:#1e3a8a;">'
+    +'<span style="font-size:11px;font-weight:900;color:#fff;background:#2563eb;border-radius:4px;padding:2px 8px;">サンプル表示</span>'
+    +'<span>まだ案件がないため、<b>架空の案件・企業・人材</b>で画面のイメージを表示しています。実際にご依頼いただくと、ここに貴社の案件が表示されます。</span>'
+    +'<button onclick="if(currentGroup!==\'active\'&&currentGroup!==\'all\'&&currentGroup!==\'done\'){switchGroup(\'active\');} setTimeout(_pvOpen,250);" style="margin-left:auto;padding:5px 12px;background:#0176d3;color:#fff;border:none;border-radius:6px;font-size:11.5px;font-weight:800;cursor:pointer;">このページの見方</button></div>';
+}
+// ===== ver.20261029.test10: ウォークスルー（Salesforce型）共通エンジン =====
+// 画面を暗くして対象だけを明るく抜き、横に「ステップ n / N」のカードを出す。戻る／次へ／✕・← → Esc で操作。
+var _wt=null;
+function _wtStart(steps, opt){
+  _wtEnd(true);
+  steps=(steps||[]).filter(function(st){ return !!_wtEl(st); });
+  if(!steps.length) return;
+  _wt={steps:steps,i:0,opt:opt||{}};
+  var o=document.createElement('div'); o.id='wtLayer';
+  o.innerHTML='<div id="wtHole"></div><div id="wtPop" role="dialog"></div>';
+  document.body.appendChild(o);
+  if(!window._wtBound){
+    window._wtBound=true;
+    document.addEventListener('keydown',function(e){ if(!_wt) return; if(e.key==='Escape') _wtEnd(); else if(e.key==='ArrowRight') _wtGo(1); else if(e.key==='ArrowLeft') _wtGo(-1); });
+    window.addEventListener('resize',function(){ if(_wt) _wtPlace(); });
+    document.addEventListener('scroll',function(){ if(_wt) _wtPlace(); },true);
+  }
+  _wtShow();
+}
+function _wtEl(st){ try{ return (typeof st.el==='function')?st.el():document.querySelector(st.el); }catch(e){ return null; } }
+function _wtGo(d){ if(!_wt) return; var n=_wt.i+d; if(n<0) return; if(n>=_wt.steps.length){ _wtEnd(); return; } _wt.i=n; _wtShow(); }
+function _wtEnd(silent){
+  var o=document.getElementById('wtLayer'); if(o) o.remove();
+  var cb=_wt&&_wt.opt&&_wt.opt.onEnd; _wt=null;
+  if(cb && !silent) cb();
+}
+function _wtShow(){
+  var st=_wt.steps[_wt.i], el=_wtEl(st), n=_wt.steps.length;
+  if(el){ try{ el.scrollIntoView({block:'center',inline:'nearest',behavior:'smooth'}); }catch(e){} }
+  var dots=''; for(var k=0;k<n;k++) dots+='<span class="wt-dot'+(k===_wt.i?' on':'')+'" onclick="_wtGo('+(k-_wt.i)+')"></span>';
+  var last=(_wt.i===n-1);
+  document.getElementById('wtPop').innerHTML='<div class="wt-arrow"></div>'
+    +'<button class="wt-x" onclick="_wtEnd()" aria-label="閉じる">✕</button>'
+    +'<div class="wt-body"><div class="wt-step">ステップ '+(_wt.i+1)+' / '+n+'</div>'
+    +'<div class="wt-title">'+st.title+'</div><div class="wt-text">'+st.body+'</div></div>'
+    +'<div class="wt-foot"><div class="wt-dots">'+dots+'</div>'
+    +(_wt.i>0?'<button class="wt-btn wt-back" onclick="_wtGo(-1)">戻る</button>':'')
+    +'<button class="wt-btn wt-next" onclick="_wtGo(1)">'+(last?'完了':'次へ')+'</button></div>';
+  _wtPlace(); setTimeout(_wtPlace,350);
+}
+function _wtPlace(){
+  if(!_wt) return;
+  var st=_wt.steps[_wt.i], el=_wtEl(st), hole=document.getElementById('wtHole'), pop=document.getElementById('wtPop'); if(!el||!hole||!pop) return;
+  var r=el.getBoundingClientRect(), pad=6, W=window.innerWidth, H=window.innerHeight;
+  hole.style.left=(r.left-pad)+'px'; hole.style.top=(r.top-pad)+'px'; hole.style.width=(r.width+pad*2)+'px'; hole.style.height=(r.height+pad*2)+'px';
+  var pw=Math.min(380,W-24), ph=pop.offsetHeight||200; pop.style.width=pw+'px';
+  var below=(r.bottom+16+ph<=H-8), above=(r.top-16-ph>=8);
+  var top, arrowTop;
+  if(below||!above){ top=Math.min(r.bottom+16,H-ph-8); arrowTop=true; } else { top=r.top-16-ph; arrowTop=false; }
+  var left=Math.max(12,Math.min(r.left,W-pw-12));
+  pop.style.left=left+'px'; pop.style.top=Math.max(8,top)+'px';
+  var a=pop.querySelector('.wt-arrow'); if(a){ var ax=Math.max(16,Math.min(r.left+Math.min(r.width/2,40)-left,pw-32)); a.style.left=ax+'px'; a.style.top=arrowTop?'-8px':''; a.style.bottom=arrowTop?'':'-8px'; }
+}
+// ===== ver.20261029.test09: このページの見方（一覧） =====
+var _PV_DESC={
+  '確認':'確認したらチェック',
+  '受注ID':'グローバルパートナーズの受注ID',
+  '案件名 / 申請者':'案件名と申請人の名前です。赤い点は、まだ貴社で確認していない動きがある案件です。',
+  '所属機関':'雇用する会社',
+  '案件受領日':'大房が依頼を受けた日',
+  '種別':'変更・更新・認定 と 希望在留資格',
+  '担当':'上が貴社のご担当者、下が大房行政書士法人の担当者です。',
+  'ステータス':'今どの段階か',
+  '他機関申請':'国交省の進み具合',
+  '在留期限 / 特例':'赤字は期限が近い。特例＝申請中も在留できる期限',
+  '受付番号':'入管の受付番号と受取方法',
+  '帰国予定':'一時帰国の予定日',
+  '受取方法':'郵送か窓口か',
+  'PDF':'色付きのボタンは押すと開けます（受付番号・審査完了・申請中証明・預かり証）'
+};
+var _pvOn=false;
+function _pvItems(){
+  var main=document.getElementById('main'); if(!main) return [];
+  var tbl=main.querySelector('table'); if(!tbl) return [];
+  var out=[];
+  Array.prototype.forEach.call(tbl.querySelectorAll('thead tr:first-child th'),function(th){
+    var t=(th.textContent||'').replace(/[⇅↑↓▲▼⬍]/g,'').replace(/\s+/g,' ').trim();
+    var key=Object.keys(_PV_DESC).filter(function(k){ return t.indexOf(k)===0; })[0];
+    if(key && th.getBoundingClientRect().width>0) out.push({el:th,t:key,d:_PV_DESC[key]});
+  });
+  // ボタン類（1行目）
+  var b1=Array.prototype.filter.call(tbl.querySelectorAll('tbody button'),function(b){ return /人材詳細/.test(b.textContent); })[0];
+  var _ni=0; out.forEach(function(x,k){ if(x.t==='案件名 / 申請者') _ni=k+1; });
+  if(b1) out.splice(_ni++,0,{el:b1,t:'人材詳細',d:'押すと人材・提出書類・申請スケジュールが見られます'});
+  var b2=Array.prototype.filter.call(tbl.querySelectorAll('tbody button'),function(b){ return /企業詳細/.test(b.textContent); })[0];
+  if(b2) out.splice(_ni++,0,{el:b2,t:'企業詳細',d:'押すと会社の提出書類・人材一覧が見られます'});
+  var pdf=Array.prototype.filter.call(tbl.querySelectorAll('tbody a'),function(a){ return /PDF/.test(a.textContent); })[0];
+  if(pdf) out.push({el:pdf,t:'PDFボタン',d:'押すとPDFが開きます（灰色はまだありません）'});
+  return out;
+}
+function _pvNo(i){ return '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'.charAt(i)||String(i+1); }
+function _pvClose(){ if(_pvOn){ _pvOn=false; _wtEnd(true); } }
+function _pvToggle(){ if(_pvOn) _pvClose(); else _pvOpen(); }
+function _pvOpen(){
+  // ver.20261029.test10: 1項目ずつのウォークスルー（Salesforce型）に変更
+  if(currentView!=='list'){ currentView='list'; renderMain(); }
+  var items=_pvItems(); if(!items.length) return;
+  _pvOn=true;
+  _wtStart(items.map(function(it){ var e=it.el; return {el:function(){ return e; }, title:esc(it.t), body:esc(it.d)}; }), {onEnd:function(){ _pvOn=false; }});
+}
+function setView(v){currentView=v;_pvClose();renderMain();}
 
 function renderFilterBar(){
   var baseAll=currentGroup==='all'?allCases:allCases.filter(function(c){return classify(c)===currentGroup;});
@@ -3727,8 +3926,10 @@ function renderFilterBar(){
   if(isGpMode || isGpPartner){
     h+='<button onclick="exportGpCsv()" style="padding:6px 12px;background:#0f2040;color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">CSV出力 ('+cases.length+'件)</button>';
   }
+  // ver.20261029.test09: このページの見方（一覧の各列・ボタンに番号を出して説明）
+  h+='<button onclick="_pvToggle()" style="margin-left:auto;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;">このページの見方</button>';
   // ビュー切り替えボタン
-  h+='<div style="display:flex;gap:3px;background:#f1f5f9;border-radius:8px;padding:3px;margin-left:auto;">';
+  h+='<div style="display:flex;gap:3px;background:#f1f5f9;border-radius:8px;padding:3px;">';
   h+='<button onclick="setView(\'list\')" style="padding:4px 10px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;'+(currentView==='list'?'background:white;color:#0f2040;box-shadow:0 1px 3px rgba(0,0,0,.1);':'background:none;color:#94a3b8;')+'">☰ リスト</button>';
   h+='<button onclick="setView(\'kanban\')" style="padding:4px 10px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;'+(currentView==='kanban'?'background:white;color:#0f2040;box-shadow:0 1px 3px rgba(0,0,0,.1);':'background:none;color:#94a3b8;')+'">▦ カンバン</button>';
   h+='</div>';
@@ -7123,31 +7324,30 @@ function renderGuide(){
     ['gd-tools','便利な機能'],['gd-faq','操作のよくあるご質問']
   ];
   var h=css+'<div class="gd">';
-  h+='<div class="gd-hero"><h2>O-Link 使い方ガイド</h2><p>登録支援機関マイページでできることと、基本の操作をまとめています。各章の「この画面を開く」から、そのまま該当画面へ移動できます。<br>はじめての方は「チュートリアル」で、新規案件依頼を<b>練習モード（送信されません）</b>で試せます。</p></div>';
+  h+='<div class="gd-hero"><h2>O-Link 使い方ガイド</h2><p>登録支援機関マイページでできることと、基本の操作をまとめています。各章の「この画面を開く」から、そのまま該当画面へ移動できます。<br>各画面の <b>このページの見方</b>・<b>使い方を見る</b> を押すと、画面の上で1ステップずつ案内します。</p></div>';
   h+='<div class="gd-toc">'+toc.map(function(t){return '<button onclick="_gdJump(\''+t[0]+'\')">'+t[1]+'</button>';}).join('')+'</div>';
 
 
-  // ver.20261019.test01: チュートリアル（新規案件依頼）＋練習モード
+  // ver.20261019.test01: チュートリアル（新規案件依頼）／ver.20261029.test10: 練習モードは廃止
   h+=sec('gd-tutorial','チュートリアル：新規案件依頼','',
-    '<p>新しい申請をご依頼するときの手順です。上から順に進めれば完了します。わからないときは、下の<b>練習モード</b>で実際の画面を触ってみてください。</p>'+
-    '<div class="gd-practice"><p><b>練習モード</b>：本物と同じ「新規案件依頼」の画面が開きます。最後まで入力して「送信する」を押しても、<b>大房行政書士法人には送信されません</b>。完了画面（LINE報告用テキスト・初回メール文案）まで確認できます。</p><button onclick="openNewCasePractice()">練習モードで開く</button></div>'+
+    '<p>新しい申請をご依頼するときの手順です。上から順に進めれば完了します。入力画面の右上の <span class="gd-key">使い方を見る</span> を押すと、入れる場所を1ステップずつ案内します。</p>'+
     '<div class="gd-steps">'+
-    '<div class="gd-step"><b class="t">画面上部の「＋ 新規案件依頼」を押す</b>入力画面が開きます。番号どおり「① 案件の情報」→「② 申請する人」→「③ 人材紹介手数料」→「④ 備考」の順に入力します。迷ったら右上の <span class="gd-key">使い方を見る</span> を押すと、各欄の入れ方がふせんで表示されます。'+
+    '<div class="gd-step"><b class="t">画面上部の「＋ 新規案件依頼」を押す</b>入力画面が開きます。番号どおり「① AIで読み取り（任意）」→「② 案件の情報」→「③ 申請する人」→「④ 人材紹介手数料」→「⑤ 備考」の順に入力します。迷ったら右上の <span class="gd-key">使い方を見る</span> を押すと、①〜⑤の順に、入れる場所を1ステップずつ案内します。'+
       '<div class="gd-tip" style="margin-top:6px;"><b>AIで読み取って入力</b>：入力画面いちばん上の欄に、企業様からのLINE・メールの文章を貼り付けたり、求人票・在留カード・Excelのスクリーンショットを入れて <span class="gd-key">読み取って入力する</span> を押すと、下の欄に自動で入ります。入った欄は黄色になるので、内容を確認してから進めてください（空いている欄にだけ入ります）。</div></div>'+
-    '<div class="gd-step"><b class="t">① 案件の情報を入力する</b><ul>'+
+    '<div class="gd-step"><b class="t">② 案件の情報を入力する</b><ul>'+
       '<li><b>案件名</b>：所属機関・申請種別・希望在留資格・人材（国籍・人数）を入れると<b>自動で作成</b>されます（例「【第1弾】株式会社〇〇（変更・ベトナム2名）」）。必要なら書き換えもできます。</li>'+
       '<li><b>申請種別</b>：海外から呼ぶ＝<b>認定</b>、日本にいて在留資格を変える＝<b>変更</b>、今の在留資格を延長＝<b>更新</b>。</li>'+
       '<li><b>所属機関</b>：雇用する企業名。<b>希望在留資格</b>（特定技能1号など）と、特定技能の場合は<b>分野</b>も選びます。</li>'+
       '<li><b>受入れ経験</b>・<b>支援委託費</b>・<b>案件担当者</b>（貴社のご担当者）を入れます。</li></ul></div>'+
-    '<div class="gd-step"><b class="t">② 申請する人を入力する（1回で最大30名）</b><ul>'+
+    '<div class="gd-step"><b class="t">③ 申請する人を入力する（1回で最大30名）</b><ul>'+
       '<li>氏名（パスポートと同じ英語表記）、国籍、現在の在留資格・在留期限、希望在留期間、受取方法を入れます。</li>'+
       '<li><b>変更・更新</b>のときは<b>在留期限が必須</b>です。</li>'+
       '<li>2人目以降は <span class="gd-key">＋ 人材を追加</span>。Excelの一覧がある場合は <span class="gd-key">まとめて貼り付け</span> が便利です。</li></ul></div>'+
-    '<div class="gd-step"><b class="t">③ 人材紹介手数料を入れる（任意）</b><ul>'+
+    '<div class="gd-step"><b class="t">④ 人材紹介手数料を入れる（任意）</b><ul>'+
       '<li>金額は<b>1人あたり</b>で入れます。<b>全員同じ金額</b>／<b>人ごとに違う</b>／<b>なし・未定</b> から選びます。</li>'+
       '<li>例：2名で合計60万円 → <b>1人あたり 300,000円</b>。合計しか分からないときは <span class="gd-key">合計しか分からない</span> を押すと人数で割って入ります。</li>'+
-      '<li>「人ごとに違う」を選ぶと、②の表のいちばん右に「紹介料」の欄が出ます。入れた金額の合計はその場で表示されます。</li></ul></div>'+
-    '<div class="gd-step"><b class="t">④ 備考を書いて「登録する」を押す</b>入社予定日・急ぎの事情・企業様の連絡先など、伝えたいことがあれば備考へ。進めないときは赤いメッセージと赤枠の欄を直してください。</div>'+
+      '<li>「人ごとに違う」を選ぶと、③の表のいちばん右に「紹介料」の欄が出ます。入れた金額の合計はその場で表示されます。</li></ul></div>'+
+    '<div class="gd-step"><b class="t">⑤ 備考を書いて「登録する」を押す</b>入社予定日・急ぎの事情・企業様の連絡先など、伝えたいことがあれば備考へ。進めないときは赤いメッセージと赤枠の欄を直してください。</div>'+
     '<div class="gd-step"><b class="t">確認画面で見直して「送信する」</b>内容に間違いがなければ送信します。送った内容はあとから「送信した依頼」で確認できます。</div>'+
     '<div class="gd-step"><b class="t">完了画面の2つの文面をコピーして送る</b><ul>'+
       '<li><b>LINE報告用テキスト</b>：大房行政書士法人とのLINEに貼り付けて「ご依頼します」とお送りください。</li>'+
@@ -7179,8 +7379,8 @@ function renderGuide(){
     '<div class="gd-qa-cat">■ O-Linkについて</div>'+
     qa('O-Linkは所属機関（企業様）も見られますか？画面の「貴社」は誰のことですか？',
       'O-Linkは、現在は<b>登録支援機関様だけ</b>が見られる形で提供しています。そのため画面上の「貴社」は登録支援機関様を指します。所属機関様向けのリンクは、ご希望がある場合のみ発行しています。')+
-    qa('操作を練習したいです。',
-      'この上の「チュートリアル」にある <span class="gd-key">練習モードで開く</span> から、本物と同じ新規案件依頼の画面を試せます。練習モードでは送信されません。'));
+    qa('入力のしかたが分かりません。',
+      '新規案件依頼の画面右上の <span class="gd-key">使い方を見る</span> を押すと、①〜⑤の順に入れる場所を1ステップずつ案内します。'));
 
   h+=sec('gd-login','ログイン','',
     '<ol><li>大房行政書士法人からお送りしている<b>貴社専用のURL</b>を開きます。</li>'+
@@ -7208,6 +7408,7 @@ function renderGuide(){
     '<li><b>ステータス</b>・<b>所属機関</b>・<b>担当</b> のプルダウンで絞り込み、<span class="gd-key">✕ クリア</span> で元に戻せます。</li>'+
     '<li><span class="gd-key">☰ リスト</span> と <span class="gd-key">▦ カンバン</span> で表示を切り替えられます。カンバンは進み具合ごとに列で並びます。</li>'+
     '<li><span class="gd-key">CSV出力</span> で、表示中の一覧をExcel等で開けるファイルに書き出せます。</li></ul>'+
+    '<div class="gd-tip" style="margin:8px 0;">一覧の上の <span class="gd-key">このページの見方</span> を押すと、一覧の各列・ボタンに番号が付き、何が書いてあるかが表示されます。<button onclick="switchGroup(\'active\');setTimeout(_pvOpen,300);" style="margin-left:8px;padding:4px 12px;background:#0f2040;color:#fff;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;">進行中の一覧で見方を表示</button></div>'+
     '<h4>案件の詳細を見る</h4><ul>'+
     '<li>一覧の案件を押すと詳細が開き、<b>案件情報</b>（担当・受付番号・受取方法・在留期限など）、<b>人材情報</b>、<b>書類PDF</b>、<b>書類チェックリスト</b>（ご提出いただく書類の状況）が確認できます。</li>'+
     '<li>一覧の <b>PDF</b> 欄から、作成済みの書類をダウンロードできます。</li>'+
@@ -7322,6 +7523,7 @@ function switchGroup(gid){
   }
   currentGroup=gid;
   if(gid==='news') markNewsSeen();
+  _pvClose();  // ver.20261029.test09
   renderSidebar();
   renderCurrent();
   // ver.20260519.24: タブ切替で .main のスクロール位置をトップに戻す
@@ -8334,6 +8536,8 @@ async function loadData(){
       if(idata && Array.isArray(idata.intakes)) allIntakes=idata.intakes;
     }catch(e){ console.warn('[get_org_intakes failed]', e); }
 
+    // ver.20261029.test10: 案件が1件もない機関には、サンプル（架空の案件）を表示して画面のイメージをつかめるように（?demo=1 でいつでも確認可）
+    _demoApply();
     await loadNews();
     renderSidebar();
     renderCurrent();
@@ -9478,54 +9682,100 @@ function _ncFeeText(p){
   if(p.referralFee){ var v=Number(p.referralFee); return ['1人あたり ¥'+v.toLocaleString()+(js.length>1?('（'+js.length+'名 合計 ¥'+(v*js.length).toLocaleString()+'）'):'')]; }
   return ['（未入力）'];
 }
-// ver.20261019.test04: 「使い方を見る」各欄に注釈（ふせん）を出す
-var _NC_HELP=[
-  {after:'#ncAiBox', html:'<b>まずはここ（任意）</b>：企業様からのLINE・メールの文章や、求人票・在留カードのスクリーンショットがあれば入れて <b>読み取って入力する</b>。下の欄に自動で入ります（黄色になった欄を確認してください）。手で入れる場合は飛ばしてOKです。'},
-  {step:1, html:'<b>会社と申請の内容</b>を入れます（申請する人全員に共通）。表は<b>横にスクロール</b>できます。<span style="color:#dc2626;">*</span> は必須です。<ul>'+
-    '<li><b>案件名</b>：自動で作成されます（例「【第1弾】株式会社〇〇（変更・ベトナム2名）」）。書き換えもできます</li>'+
-    '<li><b>申請種別</b>：海外から呼ぶ＝<b>認定</b>／日本にいて在留資格を変える＝<b>変更</b>／今の在留資格の延長＝<b>更新</b></li>'+
-    '<li><b>所属機関</b>：雇用する会社名。下の <b>TO</b> には企業様のご担当者とメールアドレス（書類のご案内の送り先）</li>'+
-    '<li><b>希望在留資格</b>：特定技能1号など。特定技能を選ぶと<b>分野</b>の欄が出ます</li>'+
-    '<li><b>受入れ経験</b>：その会社が外国人を受け入れたことがあるか</li>'+
-    '<li><b>支援委託費</b>：月額・税抜（数字だけ）／<b>案件担当者</b>：貴社のご担当者</li></ul>'},
-  {step:2, html:'<b>申請する人を1行に1人</b>入れます。<ul>'+
-    '<li><b>氏名</b>はパスポートと同じ<b>英字</b>（例：NGUYEN VAN A）</li>'+
-    '<li><b>変更・更新</b>のときは<b>在留期限が必須</b>です（認定は空欄でOK）</li>'+
-    '<li>2人目からは下の <b>＋ 人材を追加</b>。Excelの一覧があれば <b>まとめて貼り付け</b> が便利です</li></ul>'},
-  {step:3, html:'<b>人材紹介手数料</b>は<b>1人あたり</b>で入れます（任意）。<ul>'+
-    '<li>全員同じなら「全員同じ金額」、人によって違うなら「人ごとに違う」</li>'+
-    '<li>例：2名で合計60万円 → 1人あたり <b>300,000</b>。合計しか分からなければ <b>合計しか分からない</b></li></ul>'},
-  {step:4, html:'伝えたいこと（入社予定日・急ぎの事情など）があれば書きます。最後に右下の <b>登録する</b> → 確認画面で見直して <b>送信する</b> で完了です。<br>入力に足りない所があると、<b>赤いメッセージ</b>でお知らせします。'}
+// ver.20261029.test08: 「使い方を見る」＝ポップアップの左右の余白に①〜⑤のカードを置き、線で各欄につなぐ。
+// 押すとその欄までスクロール。欄が見えていないときはカードを薄く。画面が狭いときは下にまとめて表示。
+var _NC_GUIDE=[
+  {no:'①', t:'AIで読み取り', opt:true, d:'LINE・メール・画像を貼って<b>読み取って入力する</b>', body:'企業様からのLINE・メールの文章や、求人票・在留カードのスクリーンショットを貼り付けて<b>読み取って入力する</b>を押すと、下の欄に自動で入ります。入った欄は黄色になるので、必ず確認してください。', go:'#ncAiBox', side:'L'},
+  {no:'②', t:'案件の情報', d:'会社名・<b>申請種別</b>・<b>希望在留資格</b>（*は必須）', body:'所属機関（会社名）・<b>申請種別</b>・<b>希望在留資格</b>などを入れます。<span style="color:#dc2626">*</span> は必須です。表は横にスクロールできます。案件名は自動で作られます。', go:2, side:'R'},
+  {no:'③', t:'申請する人', d:'1行に1人。氏名は<b>英字</b>。変更・更新は<b>在留期限</b>も', body:'1行に1人入れます。氏名はパスポートと同じ<b>英字</b>です。変更・更新のときは<b>在留期限</b>と<b>現在の在留期間</b>も必須です。Excelの一覧があれば<b>まとめて貼り付け</b>が便利です。', go:3, side:'L'},
+  {no:'④', t:'人材紹介手数料', opt:true, d:'<b>1人あたり</b>の金額', body:'金額は<b>1人あたり</b>で入れます。全員同じ／人ごとに違う／なし・未定 から選びます。合計しか分からないときは<b>合計しか分からない</b>を押すと人数で割って入ります。', go:4, side:'R'},
+  {no:'⑤', t:'備考 → 登録する', last:true, d:'<b>登録する</b> → 確認して<b>送信する</b>', body:'伝えたいことがあれば備考に書き、<b>登録する</b>を押します。確認画面で見直して<b>送信する</b>で完了です。足りない所があると赤いメッセージでお知らせします。', go:'#ncSubmitBtn', side:'R'}
 ];
+function _ncGuideTarget(g){
+  var bg=document.getElementById('newCaseModalBg'); if(!bg) return null;
+  if(typeof g.go==='string') return bg.querySelector(g.go);
+  var t=null; Array.prototype.forEach.call(bg.querySelectorAll('.nc-section-title'),function(x){ var no=x.querySelector('.nc-stepno'); if(no&&no.textContent.trim()===String(g.go)) t=x; });
+  return t;
+}
+function _ncGuideGo(i){
+  var el=_ncGuideTarget(_NC_GUIDE[i]); if(!el) return;
+  if(i<_NC_GUIDE.length-1) el.scrollIntoView({behavior:'smooth',block:'start'});
+  el.classList.remove('nc-flash'); void el.offsetWidth; el.classList.add('nc-flash');
+}
+function _ncGuideLayout(){
+  var bg=document.getElementById('newCaseModalBg'), gd=document.getElementById('ncGuide');
+  if(!bg||!gd||!bg.classList.contains('nc-help-on')) return;
+  var modal=bg.querySelector('.nc-modal'), body=bg.querySelector('.nc-modal-body'); if(!modal||!body) return;
+  var mr=modal.getBoundingClientRect(), br=body.getBoundingClientRect();
+  var cards=gd.querySelectorAll('.nc-gstep'), svg=document.getElementById('ncGuideSvg');
+  var roomL=mr.left-24, roomR=window.innerWidth-mr.right-24;
+  var narrow=(roomL<200||roomR<200);
+  gd.classList.toggle('narrow',narrow);
+  if(narrow){
+    if(gd.parentNode!==body) body.insertBefore(gd, body.firstChild);  // 狭い画面は入力画面の上に入れる（下の登録ボタンなどを隠さない）
+    svg.innerHTML=''; Array.prototype.forEach.call(cards,function(c){ c.style.left=c.style.top=''; c.style.display=''; c.classList.remove('off'); }); return;
+  }
+  if(gd.parentNode!==bg) bg.appendChild(gd);
+  var lines='', placed={L:-1e9,R:-1e9};
+  _NC_GUIDE.forEach(function(g,i){
+    var c=cards[i], el=_ncGuideTarget(g); if(!c||!el) return;
+    var er=el.getBoundingClientRect();
+    var isBtn=(g.go==='#ncSubmitBtn');
+    var visible=isBtn ? true : (er.top>=br.top-4 && er.top<=br.bottom-20);
+    var w=Math.min(220,(g.side==='L'?roomL:roomR)-8); c.style.width=w+'px';
+    var h=c.offsetHeight;
+    var ty=isBtn ? (er.top+er.height/2) : (Math.max(br.top,Math.min(er.top,br.bottom-20))+10);
+    var top=ty-20; top=Math.max(placed[g.side]+8, top); top=Math.max(8,Math.min(top,window.innerHeight-h-8));
+    c.style.display='';
+    placed[g.side]=top+h;
+    var left = g.side==='L' ? (mr.left-16-w) : (mr.right+16);
+    c.style.left=left+'px'; c.style.top=top+'px';
+    c.classList.toggle('off',!visible);
+    if(visible){
+      var x1 = g.side==='L' ? left+w : left, y1=top+20;
+      var x2 = isBtn ? (g.side==='L'?er.left:er.right) : (g.side==='L' ? mr.left+6 : mr.right-6), y2=ty;
+      var mx=(x1+x2)/2;
+      lines+='<path d="M'+x1+','+y1+' C'+mx+','+y1+' '+mx+','+y2+' '+x2+','+y2+'" fill="none" stroke="#facc15" stroke-width="3" stroke-linecap="round"/>'
+           +'<circle cx="'+x2+'" cy="'+y2+'" r="5" fill="#facc15"/>';
+    }
+  });
+  svg.innerHTML=lines;
+  // 画面が低くてカードが重なったら、見えていない欄のカードを隠す
+  ['L','R'].forEach(function(sd){
+    var arr=Array.prototype.filter.call(cards,function(x){ return x.getAttribute('data-side')===sd; });
+    for(var k=0;k<arr.length-1;k++){
+      var a1=arr[k], a2=arr[k+1];
+      if(a1.style.display==='none') continue;
+      if(parseFloat(a1.style.top)+a1.offsetHeight>parseFloat(a2.style.top)+2){ if(a1.classList.contains('off')) a1.style.display='none'; else if(a2.classList.contains('off')) a2.style.display='none'; }
+    }
+  });
+}
 function _ncHelpBuild(){
   var bg=document.getElementById('newCaseModalBg'); if(!bg || bg.getAttribute('data-help-built')) return;
-  var titles={};
-  Array.prototype.forEach.call(bg.querySelectorAll('.nc-section-title'),function(t){ var no=t.querySelector('.nc-stepno'); if(no) titles[no.textContent.trim()]=t; });
-  var k=0;
-  _NC_HELP.forEach(function(h){
-    var anchor = h.after ? bg.querySelector(h.after) : titles[String(h.step)];
-    if(!anchor) return;
-    k++;
-    var d=document.createElement('div'); d.className='nc-help';
-    d.innerHTML='<span class="nc-help-no">'+(h.step||'AI')+'</span>'+h.html;
-    if(h.after){ d.style.paddingLeft='44px'; anchor.classList.add('nc-help-target'); anchor.insertAdjacentElement('afterend',d); }
-    else anchor.insertAdjacentElement('afterend',d);
+  var d=document.createElement('div'); d.id='ncGuide';
+  var h='<svg id="ncGuideSvg"></svg>';
+  _NC_GUIDE.forEach(function(g,i){
+    h+='<div class="nc-gstep'+(g.opt?' opt':'')+(g.last?' last':'')+'" data-side="'+g.side+'" onclick="_ncGuideGo('+i+')">'
+      +'<span class="nc-gno">'+g.no+'</span><div><div class="nc-gt">'+g.t+(g.opt?'<small>任意</small>':'')+'</div><div class="nc-gd">'+g.d+'</div></div></div>';
   });
+  d.innerHTML=h;
+  bg.appendChild(d);
+  var body=bg.querySelector('.nc-modal-body'); if(body) body.addEventListener('scroll',_ncGuideLayout,{passive:true});
+  bg.addEventListener('scroll',_ncGuideLayout,{passive:true});
+  window.addEventListener('resize',_ncGuideLayout);
   bg.setAttribute('data-help-built','1');
 }
 function _ncHelpSet(on){
-  _ncHelpBuild();
-  var bg=document.getElementById('newCaseModalBg'); if(!bg) return;
-  bg.classList.toggle('nc-help-on',!!on);
+  // ver.20261029.test10: 依頼の仕方はウォークスルー（Salesforce型・1ステップずつ）で表示
   var b=document.getElementById('ncHelpBtn');
   if(b){ b.classList.toggle('on',!!on); b.textContent = on ? '✕ 使い方を閉じる' : '使い方を見る'; }
+  if(!on){ if(_wt) _wtEnd(true); return; }
+  _wtStart(_NC_GUIDE.map(function(g){ return {el:function(){ return _ncGuideTarget(g); }, title:g.no+' '+g.t+(g.opt?'（任意）':''), body:g.body||g.d}; }),
+    {onEnd:function(){ var b2=document.getElementById('ncHelpBtn'); if(b2){ b2.classList.remove('on'); b2.textContent='使い方を見る'; } }});
 }
 function _ncHelpToggle(){
-  var bg=document.getElementById('newCaseModalBg');
-  var on=!(bg && bg.classList.contains('nc-help-on'));
-  _ncHelpSet(on);
+  _ncHelpSet(!_wt);
   try{ localStorage.setItem('olink_nc_help_seen','1'); }catch(_){}
-  if(on){ try{ var body=bg.querySelector('.nc-modal-body'); if(body) body.scrollTo({top:0,behavior:'smooth'}); }catch(_){} }
 }
 // 初めて開いた人・練習モードでは自動で表示
 function _ncHelpAuto(){
