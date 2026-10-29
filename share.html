@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261029.03: share_test ver.20261029.test03 の「⚠️書類未提出企業」だけを本番に反映（オープンケア系のみ表示）。①国交省申請前×希望在留資格 特定技能1号×在留期限まで3ヶ月以内で企業の国交省書類が未提出の企業、②国交省申請済み×特定技能1号×在留期限まで2ヶ月以内で企業の入管書類が未提出の企業を一覧表示。あわせて、画面左上に「\n」という文字が出ていた不具合（コメントの改行記号の誤り）を修正。 -->
 <!-- ver.20261029.02: 新規案件依頼・まとめて貼り付けのポップアップは背景クリックで閉じないよう変更（✕・キャンセルのみで閉じる）。 -->
 <!-- ver.20261029.01: ポップアップ（新規案件依頼ほか全7種）で、入力欄内でマウスを押したまま枠外で離すと背景クリック扱いで閉じてしまう不具合を修正。押下と離した位置が両方背景のときだけ閉じる。 -->
 <!-- ver.20261028.04: WHATS_NEW にver.20261028.03（申請種別デフォルト未選択化）のお知らせを追加（audience:all／notify:true）。 -->
@@ -35,7 +36,8 @@
 <!-- ver.20260921.06: グローバルパートナーズ機関のO-Linkに「🏢 企業マイページを開く」ボタンを追加（人材詳細モーダルの企業書類セクション上・org_company_links RPCでトークン取得・PIN有無バッジ付き）。 -->
 <!-- ver.20260921.05: 企業・国交省書類の提出期限を「案件受領日から着手7日以内・提出45日以内」に変更（request_date基準・全ステージ共通表示）。 -->
 <!-- ver.20260921.04: 書類チェックリスト（人材）を「人材・特定活動」（パスポート/顔写真/在留カード/合格証/専門級）と「人材・特定技能1号」（税書類・健康診断票等）に分割表示（対象3機関×特活×建設のみ）。特定技能1号分は国交省申請前は⏸グレーアウト。国交省申請済み判定を人材/企業で共通化。 -->
-<!-- ver.20260921.03: 書類チェックリスト（人材/企業・国交省/企業・入管）の各見出しに提出期限バッジを追加（対象3機関×特活×建設のみ。特活中=特活申請まで、特活完了後=特定技能1号申請1ヶ月前・国交省は審査3ヶ月逆算の目安）。既存の受領済/未受領表示・⏸グレーアウト仕様は変更なし。 -->\n<!-- ver.20260921.02: 申請スケジュール（建設特定技能）の起点日の呼称を「依頼日」→「案件受領日」に統一（使用フィールドは request_date のまま）。 -->
+<!-- ver.20260921.03: 書類チェックリスト（人材/企業・国交省/企業・入管）の各見出しに提出期限バッジを追加（対象3機関×特活×建設のみ。特活中=特活申請まで、特活完了後=特定技能1号申請1ヶ月前・国交省は審査3ヶ月逆算の目安）。既存の受領済/未受領表示・⏸グレーアウト仕様は変更なし。 -->
+<!-- ver.20260921.02: 申請スケジュール（建設特定技能）の起点日の呼称を「依頼日」→「案件受領日」に統一（使用フィールドは request_date のまま）。 -->
 <!-- ver.20260921.01: 人材詳細モーダルに「申請スケジュール（建設特定技能）」セクションを追加。希望在留資格「特定活動」×建設分野の案件で、案件受領日・受付日・在留期限・一時帰国・ステータス・国交省ステータスから各工程の期限/実績/現在地を自動表示し、書類チェックリスト（doc_check/co_doc_check）の受領状況と連動した進捗チップを表示。申請デッドライン（在留期限前日/出国日前日）バナー付き。表示対象はオープンケア協同組合・REMONTADA株式会社・グローバルパートナーズ様の3機関のみ（orgName前方一致。アライズ様は対象外）。WHATS_NEWにorgs指定（機関名リスト）によるaudience制御を追加。 -->
 <!-- ver.20260916.01: 希望在留期間確認モーダルの決済手数料注記を動的化。3年以上(3年/5年)を選ぶと550円/件、それ以外330円/件、混在時は両方明示。 -->
 <!-- ver.20260915.01: 【不具合修正】新規案件依頼の「希望在留期間」が依頼テキスト（本人ステータス）に出力されていなかったのを修正。_buildLineReportText の本人ブロックに「希望在留期間」行を追加し、過去依頼の再コピー経路（_intakeGroupToPayload）でも hoped_stay_period をマップするようにした。 -->
@@ -634,7 +636,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261029.02</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261029.03</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1672,6 +1674,92 @@ function _gpLoadCoLinks(){
   }).catch(function(){ _gpCoLinks=[]; return _gpCoLinks; });
 }
 // ver.20260921.07: 支援企業リスト（GP専用ビュー）
+// ===== ver.20261029.03: ⚠️書類未提出企業 =====
+// A: 国交省申請前 × 希望在留資格「特定技能1号」× 在留期限まで3ヶ月以内 → 企業の国交省書類で未提出のもの（大房作成の6・8・12・15は除く）
+// B: 国交省申請済み × 希望在留資格「特定技能1号」× 在留期限まで2ヶ月以内 → 企業の入管書類で未提出のもの
+function _mdDays(ymd){ var m=String(ymd||'').match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if(!m) return null; var d=new Date(+m[1],+m[2]-1,+m[3]); var t=new Date(); t.setHours(0,0,0,0); return Math.round((d-t)/86400000); }
+// 国交省ステータス：案件に紐づく国交省案件（kokko_cases）の実ステータス
+function _mdKokko(c){ var k=c.kokkoStatus||getMlitStatus(c)||''; return (k==='未設定'||k==='未紐付')?'':k; }
+// 今日から nヶ月後（暦月）までの日数
+function _mdMonthDays(n){ var t=new Date(); t.setHours(0,0,0,0); var e=new Date(t); e.setMonth(e.getMonth()+n); return Math.round((e-t)/86400000); }
+function _mdActive(c){ if(c.status==='完了'||c.status==='審査完了'||c.status==='審査中') return false; if(_hasV(c.receiptNo)) return false; return true; }
+function _mdMissing(map, names){
+  var out=[];
+  names.forEach(function(nm){
+    var d=(map&&map[nm])||{};
+    if(_hasV(d.skip)||_hasV(d.autoskip)) return;
+    if(_hasV(d.staff)) return;
+    out.push(nm);
+  });
+  return out;
+}
+function _mdCollect(){
+  var A={}, B={}, nA=0, nB=0;
+  allCases.forEach(function(c){
+    if(!c.companyId || c.residenceStatus!=='特定技能1号' || !_mdActive(c)) return;
+    var _oa=c.otherAgencies||{}; if(!_oa.kokkoSho || _oa.kokkoSho_fuyo) return;  // 国交省申請の対象案件（建設）のみ
+    var days=_mdDays(c.expire); if(days===null) return;
+    var ks=_mdKokko(c); var applied=_KS_KOKKO_APPLIED_G.indexOf(ks)>=0;
+    var map=coDocsAll[c.companyId]||{};
+    if(!applied && days<=_mdMonthDays(3)){  // 在留期限まで3ヶ月以内
+      var ko=requiredDocsCoKokko.filter(function(n){ return !/^(6|8|12|15)[.．]/.test(String(n).trim()); });
+      var miss=_mdMissing(map, ko);
+      if(miss.length){ var e=A[c.companyId]||(A[c.companyId]={id:c.companyId,name:c.company,cases:[],miss:miss,minDays:days}); e.cases.push({c:c,days:days}); if(days<e.minDays) e.minDays=days; }
+    }
+    if(applied && days<=_mdMonthDays(2)){  // 在留期限まで2ヶ月以内
+      var ny=Object.keys(map).filter(function(nm){
+        if(requiredDocsCoKokko.indexOf(nm)>=0) return false;
+        var d=map[nm]||{};
+        if(!_hasV(d.staff)&&!_hasV(d.req)&&!_hasV(d.sashimodoshi)) return false;  // 案内していない内部フラグのみの項目は除外
+        if(/\.(jpe?g|png|gif|webp|pdf|heic|heif|bmp|tiff?)$/i.test(nm)) return false;
+        return true;
+      });
+      var miss2=_mdMissing(map, ny);
+      if(miss2.length){ var e2=B[c.companyId]||(B[c.companyId]={id:c.companyId,name:c.company,cases:[],miss:miss2,minDays:days}); e2.cases.push({c:c,days:days}); if(days<e2.minDays) e2.minDays=days; }
+    }
+  });
+  function arr(o){ return Object.keys(o).map(function(k){return o[k];}).sort(function(a,b){return a.minDays-b.minDays;}); }
+  var a=arr(A), b=arr(B);
+  var all={}; a.concat(b).forEach(function(e){ all[e.id]=1; });
+  return {A:a,B:b,total:Object.keys(all).length};
+}
+function _mdDaysBadge(d){
+  var col=d<0?'#b91c1c':(d<=14?'#dc2626':(d<=30?'#c2410c':'#a16207'));
+  var bg=d<0?'#fee2e2':(d<=14?'#fef2f2':(d<=30?'#fff7ed':'#fefce8'));
+  return '<span style="font-size:10.5px;font-weight:800;color:'+col+';background:'+bg+';border-radius:999px;padding:1px 8px;white-space:nowrap;">'+(d<0?('期限切れ '+(-d)+'日'):('あと'+d+'日'))+'</span>';
+}
+function _mdSection(title, sub, list, kind){
+  var h='<div style="margin:18px 0 8px;"><div style="font-size:14px;font-weight:900;color:#0f2040;">'+title+'（'+list.length+'社）</div><div style="font-size:11px;color:#64748b;margin-top:2px;">'+sub+'</div></div>';
+  if(!list.length) return h+'<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;font-size:12px;color:#15803d;font-weight:700;">該当する企業はありません</div>';
+  list.forEach(function(e){
+    h+='<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid '+(e.minDays<=30?'#dc2626':'#f59e0b')+';border-radius:10px;padding:12px 14px;margin-bottom:10px;">';
+    h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><div style="font-size:14px;font-weight:900;color:#0f2040;flex:1;min-width:160px;">'+esc(e.name||e.id)+'</div>'
+      +(_gpIsGpOrg()?'<button onclick="openGpCoModal(\''+esc(e.id)+'\')" style="background:#eef4fd;color:#1c3d6e;border:1px solid #b9d0ee;border-radius:6px;font-size:11px;font-weight:800;padding:4px 10px;cursor:pointer;">企業詳細</button>':'')+'</div>';
+    h+='<div style="font-size:11px;color:#64748b;font-weight:700;margin:8px 0 4px;">未提出の'+(kind==='ko'?'国交省':'入管')+'書類（'+e.miss.length+'件）</div><div style="display:flex;flex-wrap:wrap;gap:5px;">';
+    e.miss.forEach(function(n){ h+='<span style="font-size:11px;font-weight:700;color:#9a3412;background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:2px 8px;">'+esc(n)+'</span>'; });
+    h+='</div><div style="font-size:11px;color:#64748b;font-weight:700;margin:10px 0 2px;">対象の人材（'+e.cases.length+'名）</div>';
+    e.cases.sort(function(x,y){return x.days-y.days;}).forEach(function(x){
+      var c=x.c;
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid #f1f5f9;flex-wrap:wrap;">'
+        +'<div style="flex:1;min-width:180px;font-size:12px;color:#0f2040;font-weight:600;">'+esc(c.applicant||c.name||'')+'<span style="font-size:10.5px;color:#94a3b8;font-weight:500;">　'+esc(c.name||'')+'</span></div>'
+        +'<span style="font-size:11px;color:#475569;">在留期限 '+esc(String(c.expire).slice(0,10).replace(/-/g,'/'))+'</span>'+_mdDaysBadge(x.days)
+        +'<span style="font-size:10.5px;color:#64748b;">国交省：'+esc(_mdKokko(c)||'未登録')+'</span>'
+        +'<button onclick="openPersonModal(\''+esc(c.id)+'\')" style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;font-size:10.5px;font-weight:800;padding:3px 9px;cursor:pointer;">人材詳細</button></div>';
+    });
+    h+='</div>';
+  });
+  return h;
+}
+function renderMissingDocs(){
+  var fb=document.getElementById('filter-bar'); if(fb) fb.innerHTML='';
+  var main=document.getElementById('main'); if(!main) return;
+  var md=_mdCollect();
+  var h='<div style="font-size:16px;font-weight:900;margin-bottom:4px;">⚠️書類未提出企業</div>'
+    +'<div style="font-size:11.5px;color:#64748b;">国交省申請の対象（建設）で希望在留資格が特定技能1号の案件のうち、在留期限が近いのに企業の書類がそろっていない企業です。在留期限が近い順に並んでいます。</div>';
+  h+=_mdSection('① 国交省 申請前','国交省の申請前 × 在留期限まで3ヶ月以内 → 企業の国交省書類で未提出のもの（大房行政書士法人が作成する6・8・12・15は除く）',md.A,'ko');
+  h+=_mdSection('② 国交省 申請済み','国交省は申請済み × 在留期限まで2ヶ月以内 → 企業の入管書類で未提出のもの',md.B,'ny');
+  main.innerHTML='<div style="padding:4px 2px 30px;max-width:980px;">'+h+'</div>';
+}
 function renderGpCompanies(){
   var fb=document.getElementById('filter-bar'); if(fb) fb.innerHTML='';
   var main=document.getElementById('main');
@@ -3077,6 +3165,12 @@ function renderSidebar(){
     var _nu=newsUnreadCount();
     h+='<div class="sb-item'+(currentGroup==='news'?' active':'')+'" onclick="switchGroup(\'news\')"><span>ニュース等</span>'+(_nu>0?'<span class="sb-badge-new">'+_nu+'</span>':'')+'</div>';
   }
+  // ver.20261029.03: ⚠️書類未提出企業（オープンケア系のみ）
+  if(_ksOrgAllowed()){
+    var _md=_mdCollect();
+    h+='<div class="sb-divider"></div>';
+    h+='<div class="sb-item'+(currentGroup==='missingdocs'?' active':'')+'" onclick="switchGroup(\'missingdocs\')"><span>⚠️書類未提出企業</span>'+(_md.total>0?'<span class="sb-badge-new">'+_md.total+'</span>':'')+'</div>';
+  }
   // ver.20260921.07: グローバルパートナーズ専用 支援企業リスト
   if(_gpIsGpOrg()){
     var _gpCoN={}; allCases.forEach(function(c){ if(c.companyId) _gpCoN[c.companyId]=1; });
@@ -4396,6 +4490,7 @@ function renderMain(){
   // ver.20260611.10: 送信した依頼ビュー（アイデム専用）
   if(currentGroup==='intakes'){ renderIntakes(); return; }
   if(currentGroup==='gpcompanies'){ renderGpCompanies(); return; }  // ver.20260921.07
+  if(currentGroup==='missingdocs'){ renderMissingDocs(); return; }  // ver.20261029.03
   if(currentGroup==='orgprofile'){ renderOrgProfile(); return; }
   if(currentGroup==='senddashi'){ renderSenddashiPage(); return; } // ver.20261028.01
   if(currentGroup==='quiz'){ renderQuiz(); return; }  // ver.20261005.02
