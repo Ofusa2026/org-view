@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261030.01: 登録支援機関O-Linkと同じSalesforce型の案内を追加（ログインのたびに自動で表示。「もう表示しない」を押すとそのブラウザでは出ない）。マイページを開いたとき、まだご対応いただくこと（書類・確認・押印・ヒアリング等）があれば、提出期限つきの「ご対応のお願い」ポップアップを表示。ヘッダーの「このページの見方」とサイドバーのダッシュボードの上の「O-Link使い方ガイド」で、対応が必要なタスク・ダッシュボード・案件一覧・提出書類・申請の流れ・所属機関情報・協力確認書を1ステップずつ案内（画面を暗くして対象だけ明るく、ステップ n / N・戻る／次へ）。 -->
 <!-- ver.20261028.01: 提出書類チェックリストの「取得予定日」を改行せず書類と同じ行に表示。説明・見本が見られることが分かるよう、小さい▸を「説明・見本を見る ▼」ボタンに変更（開くと「閉じる ▲」）。 -->
 <!-- ver.20261024.09: 申請までのスケジュールを15営業日の流れに（ヒアリング回答・書類アップ3→1-6作成2→1-6企業確認2→サイン書類作成1→サイン返送2→押印書類作成1→押印返送2→スキャン書類作成2＝できた日に申請）。日数はアンシス「⏰ 提出期限」の8工程を合計。企業ヒアリング不要（hearingSkip）にも対応。 -->
 <!-- ver.20261024.08: 提出期限の色を段階表示に（2週間を切ったら黄・1週間でオレンジ・3日で赤・期限切れは赤。それ以外は紺）。未提出の書類の件数（PC表示）は提出期限切れがあるときだけ赤。 -->
@@ -365,6 +366,36 @@ tr:hover td{background:#fcfcfd;}
 .co-send-bar{display:none;position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom));z-index:390;padding:8px 12px;background:rgba(241,245,249,.96);border-top:1px solid #e2e8f0;}
 .co-send-bar a{display:block;text-align:center;background:#16a34a;color:#fff;text-decoration:none;font-size:15px;font-weight:900;padding:13px 10px;border-radius:12px;box-shadow:0 2px 8px rgba(22,163,74,.35);}
 .co-send-bar a:active{background:#15803d;}
+
+/* ver.20261030.01: 開いたときの「ご対応のお願い」ポップアップ */
+#tpBg{position:fixed;inset:0;background:rgba(3,16,38,.55);z-index:2900;display:flex;align-items:flex-start;justify-content:center;padding:40px 12px;overflow-y:auto;}
+#tpBox{background:#fff;border-radius:12px;max-width:640px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.35);overflow:hidden;font-family:inherit;}
+#tpBox .tp-h{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid #e5e5e5;}
+#tpBox .tp-t{flex:1;font-size:17px;font-weight:800;color:#181818;}
+#tpBox .tp-s{font-size:12.5px;color:#444;padding:12px 20px 0;line-height:1.7;}
+#tpBox .tp-b{padding:10px 16px 6px;max-height:60vh;overflow-y:auto;}
+#tpBox .tp-f{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid #e5e5e5;background:#fafaf9;}
+#tpBox .tp-btn{border:none;background:#0176d3;color:#fff;border-radius:6px;padding:9px 20px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;}
+/* ver.20261030.01: ウォークスルー（Salesforce型） */
+#wtLayer{position:fixed;inset:0;z-index:3000;pointer-events:none;}  /* 案内中もそのまま入力・操作できるよう、カード以外はクリックを通す */
+#wtPop{pointer-events:auto;}
+#wtHole{position:fixed;border-radius:8px;box-shadow:0 0 0 9999px rgba(3,16,38,.62);outline:2px solid #fff;transition:all .25s ease;pointer-events:none;}
+#wtPop{position:fixed;background:#fff;border-radius:10px;box-shadow:0 18px 48px rgba(0,0,0,.35);font-family:inherit;transition:top .25s ease,left .25s ease;}
+#wtPop .wt-arrow{position:absolute;width:16px;height:16px;background:#fff;transform:rotate(45deg);}
+#wtPop .wt-x{position:absolute;top:10px;right:10px;background:none;border:none;color:#747474;font-size:16px;cursor:pointer;padding:4px 6px;}
+#wtPop .wt-body{padding:18px 20px 4px;}
+#wtPop .wt-step{font-size:11px;font-weight:700;color:#0176d3;letter-spacing:.06em;}
+#wtPop .wt-title{font-size:17px;font-weight:800;color:#181818;margin-top:6px;}
+#wtPop .wt-text{font-size:13px;color:#444;line-height:1.75;margin-top:8px;}
+#wtPop .wt-text b{color:#181818;}
+#wtPop .wt-foot{display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid #e5e5e5;margin-top:14px;background:#fafaf9;border-radius:0 0 10px 10px;}
+#wtPop .wt-dots{display:flex;gap:5px;flex:1;flex-wrap:wrap;}
+#wtPop .wt-dot{width:7px;height:7px;border-radius:50%;background:#c9c9c9;cursor:pointer;}
+#wtPop .wt-dot.on{background:#0176d3;}
+#wtPop .wt-btn{border-radius:6px;padding:8px 16px;font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit;}
+#wtPop .wt-back{border:1px solid #c9c9c9;background:#fff;color:#0176d3;}
+#wtPop .wt-next{border:none;background:#0176d3;color:#fff;}
+#wtPop .wt-next:hover{background:#014486;}
 </style>
 </head>
 <body>
@@ -372,7 +403,8 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261028.01</span>
+  <span class="header-ver">ver.20261030.01</span>
+  <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -1117,6 +1149,113 @@ function _mnavSheet(open){
   }
 }
 function _mnavGo(g){ _mnavSheet(false); switchGroup(g); }
+// ===== ver.20261030.01: ウォークスルー（Salesforce型）共通エンジン =====
+// 画面を暗くして対象だけを明るく抜き、横に「ステップ n / N」のカードを出す。戻る／次へ／✕・← → Esc で操作。
+var _wt=null;
+var _WT_L={ja:{step:'ステップ',back:'戻る',next:'次へ',done:'完了',close:'閉じる',never:'もう表示しない'}};
+function _wtL(k){ var lg=(typeof curLang!=='undefined'&&_WT_L[curLang])?curLang:'ja'; return (_WT_L[lg]&&_WT_L[lg][k])||_WT_L.ja[k]; }
+function _wtStart(steps, opt){
+  _wtEnd(true);
+  var _all=steps;
+  steps=(steps||[]).filter(function(st){ var e=_wtEl(st); if(!e) return false; var r=e.getBoundingClientRect(); return r.width>0&&r.height>0; });
+  if(!steps.length) return;
+  _wt={steps:steps,all:_all,i:0,opt:opt||{}};
+  if(window._wtNeverKey){ _wt.opt.neverKey=window._wtNeverKey; window._wtNeverKey=null; }  // 自動表示のときだけ「もう表示しない」を出す
+  var o=document.createElement('div'); o.id='wtLayer';
+  o.innerHTML='<div id="wtHole"></div><div id="wtPop" role="dialog"></div>';
+  document.body.appendChild(o);
+  if(!window._wtBound){
+    window._wtBound=true;
+    document.addEventListener('keydown',function(e){ if(!_wt) return; if(e.key==='Escape') _wtEnd(); else if(e.key==='ArrowRight') _wtGo(1); else if(e.key==='ArrowLeft') _wtGo(-1); });
+    window.addEventListener('resize',function(){ if(_wt) _wtPlace(); });
+    document.addEventListener('scroll',function(){ if(_wt) _wtPlace(); },true);
+  }
+  _wtShow();
+}
+function _wtEl(st){ try{ return (typeof st.el==='function')?st.el():document.querySelector(st.el); }catch(e){ return null; } }
+function _wtGo(d){ if(!_wt) return; var n=_wt.i+d; if(n<0) return; if(n>=_wt.steps.length){ _wtEnd(); return; } _wt.i=n; _wtShow(); }
+function _wtNever(){ try{ if(_wt&&_wt.opt.neverKey) localStorage.setItem(_wt.opt.neverKey,'1'); }catch(e){} _wtEnd(); }
+function _wtEnd(silent){
+  var o=document.getElementById('wtLayer'); if(o) o.remove();
+  var cb=_wt&&_wt.opt&&_wt.opt.onEnd; _wt=null;
+  if(cb && !silent) cb();
+}
+function _wtShow(){
+  var st=_wt.steps[_wt.i], el=_wtEl(st), n=_wt.steps.length;
+  if(el){ try{ el.scrollIntoView({block:'center',inline:'nearest',behavior:'smooth'}); }catch(e){} }
+  var dots=''; for(var k=0;k<n;k++) dots+='<span class="wt-dot'+(k===_wt.i?' on':'')+'" onclick="_wtGo('+(k-_wt.i)+')"></span>';
+  var last=(_wt.i===n-1);
+  document.getElementById('wtPop').innerHTML='<div class="wt-arrow"></div>'
+    +'<button class="wt-x" onclick="_wtEnd()" aria-label="'+_wtL('close')+'">✕</button>'
+    +'<div class="wt-body"><div class="wt-step">'+_wtL('step')+' '+(_wt.i+1)+' / '+n+'</div>'
+    +'<div class="wt-title">'+st.title+'</div><div class="wt-text">'+st.body+'</div></div>'
+    +(_wt.opt.neverKey?'<div style="padding:0 20px;"><button class="wt-never" onclick="_wtNever()" style="background:none;border:none;color:#747474;font-size:11.5px;text-decoration:underline;cursor:pointer;padding:6px 0 0;font-family:inherit;">'+_wtL('never')+'</button></div>':'')
+    +'<div class="wt-foot"><div class="wt-dots">'+dots+'</div>'
+    +(_wt.i>0?'<button class="wt-btn wt-back" onclick="_wtGo(-1)">'+_wtL('back')+'</button>':'')
+    +'<button class="wt-btn wt-next" onclick="_wtGo(1)">'+(last?_wtL('done'):_wtL('next'))+'</button></div>';
+  _wtPlace(); setTimeout(_wtPlace,350);
+}
+function _wtPlace(){
+  if(!_wt) return;
+  var st=_wt.steps[_wt.i], el=_wtEl(st), hole=document.getElementById('wtHole'), pop=document.getElementById('wtPop'); if(!el||!hole||!pop) return;
+  var r=el.getBoundingClientRect(), pad=6, W=window.innerWidth, H=window.innerHeight;
+  hole.style.left=(r.left-pad)+'px'; hole.style.top=(r.top-pad)+'px'; hole.style.width=(r.width+pad*2)+'px'; hole.style.height=(r.height+pad*2)+'px';
+  var pw=Math.min(380,W-24), ph=pop.offsetHeight||200; pop.style.width=pw+'px';
+  var below=(r.bottom+16+ph<=H-8), above=(r.top-16-ph>=8);
+  var top, arrowTop;
+  if(below||!above){ top=Math.min(r.bottom+16,H-ph-8); arrowTop=true; } else { top=r.top-16-ph; arrowTop=false; }
+  var left=Math.max(12,Math.min(r.left,W-pw-12));
+  pop.style.left=left+'px'; pop.style.top=Math.max(8,top)+'px';
+  var a=pop.querySelector('.wt-arrow'); if(a){ var ax=Math.max(16,Math.min(r.left+Math.min(r.width/2,40)-left,pw-32)); a.style.left=ax+'px'; a.style.top=arrowTop?'-8px':''; a.style.bottom=arrowTop?'':'-8px'; }
+}
+
+// ver.20261030.01: 所属機関マイページの見方（1ステップずつ）
+function _coSb(txt){ return function(){ var a=Array.prototype.filter.call(document.querySelectorAll('#sidebar .sb-item'),function(e){ return e.textContent.indexOf(txt)>=0; })[0]; if(a&&a.getBoundingClientRect().width>0) return a; return Array.prototype.filter.call(document.querySelectorAll('#mobileNav *'),function(e){ return e.children.length===0 && e.textContent.trim().indexOf(txt)===0; })[0]||a; }; }
+
+
+// ver.20261030.01: 開いたときに、まだご対応いただくことがあればポップアップで知らせる（提出期限つき）
+var _tpDone=false, _tpAfter=null;
+function _taskPopup(title, sub, bodyHtml, btn){
+  if(_tpDone) return false; _tpDone=true;
+  if(typeof _wt!=='undefined' && _wt){ var _st=_wt.all||_wt.steps, _op=_wt.opt; _wtEnd(true); _tpAfter=function(){ _wtStart(_st,_op); }; }  // 案内が先に始まっていたら、お願いを閉じてから続ける
+  var bg=document.createElement('div'); bg.id='tpBg';
+  bg.innerHTML='<div id="tpBox" role="dialog"><div class="tp-h"><span style="width:10px;height:10px;border-radius:50%;background:#dc2626;flex-shrink:0;"></span><div class="tp-t">'+title+'</div>'
+    +'<button onclick="_taskPopupClose()" style="background:none;border:none;font-size:18px;color:#747474;cursor:pointer;">✕</button></div>'
+    +(sub?'<div class="tp-s">'+sub+'</div>':'')+'<div class="tp-b">'+bodyHtml+'</div>'
+    +'<div class="tp-f"><button class="tp-btn" onclick="_taskPopupClose()">'+btn+'</button></div></div>';
+  bg.addEventListener('click',function(e){ if(e.target===bg) _taskPopupClose(); var a=e.target.closest&&e.target.closest('#tpBox .tp-b a, #tpBox .tp-b button'); if(a) setTimeout(_taskPopupClose,0); });
+  document.body.appendChild(bg);
+  return true;
+}
+function _taskPopupClose(){ var b=document.getElementById('tpBg'); if(b) b.remove(); if(_tpAfter){ var f=_tpAfter; _tpAfter=null; setTimeout(f,300); } }
+// ver.20261030.01: ログインのたびに使い方ガイド（ウォークスルー）を自動で表示（「もう表示しない」で止められる・ブラウザごと）
+var _autoTourDone=false;
+function _autoTour(key, fn){
+  // ver.20261030.01: ログインのたびに自動で表示。案内の「もう表示しない」を押すと、そのブラウザでは出なくなる
+  if(_autoTourDone) return; _autoTourDone=true;
+  var never=false; try{ never=localStorage.getItem(key)==='1'; }catch(e){ never=false; }
+  if(never) return;
+  var go=function(){ window._wtNeverKey=key; fn(); };
+  var ready=function(){ var e=document.querySelector('#sidebar .sb-item'); return !!(e && e.getBoundingClientRect().width>0) || !!document.querySelector('#mobileNav *'); };
+  var tries=0;
+  (function wait(){ tries++; if(!ready() && tries<40){ setTimeout(wait,300); return; }  // 画面の読み込みが終わってから
+    setTimeout(function(){ if(document.getElementById('tpBg')){ _tpAfter=go; return; } go(); }, 600); })();
+}
+function _coTour(){
+  if(currentTab!=='dashboard'){ try{ switchGroup('dashboard'); }catch(e){} }
+  setTimeout(function(){
+    _wtStart([
+      {el:'#taskBar', title:'対応が必要なタスク', body:'貴社にお願いしたいことと<b>提出期限</b>がここに出ます。押すと該当の画面に移動します。'},
+      {el:_coSb('ダッシュボード'), title:'ダッシュボード', body:'いま進んでいる案件と、お願いしたいことをまとめて見られます。'},
+      {el:_coSb('進行中'), title:'案件の一覧', body:'<b>進行中</b>・<b>発行済み・完了</b>・<b>すべて</b>で、申請中の人材ごとの進み具合を確認できます。'},
+      {el:_coSb('提出書類'), title:'提出書類', body:'ご提出いただく書類の一覧です。<b>説明・見本を見る</b>で書き方や見本を確認でき、まだの書類には<b>取得予定日</b>を入れられます。'},
+      {el:_coSb('申請の流れ'), title:'申請の流れ', body:'ご依頼から許可・在留カードの交付までの流れと、おおよその日数です。'},
+      {el:_coSb('所属機関情報'), title:'所属機関情報', body:'登録している貴社の情報です。変更があればここからご連絡ください。'},
+      {el:_coSb('協力確認書'), title:'協力確認書', body:'特定技能で必要な協力確認書を作成できます。'},
+      {el:'#headerOrg', title:'わからないときは', body:'もう一度見たいときは、上の<b>このページの見方</b>か、左上の<b>O-Link使い方ガイド</b>を押してください。'}
+    ]);
+  },250);
+}
 function switchGroup(g){ currentTab=g; if(g==='news'&&typeof markNewsSeen==='function') markNewsSeen(); renderSidebar(); render(); var mw=document.querySelector('.main-wrap'); if(mw) mw.scrollTop=0; try{window.scrollTo({top:0,behavior:'instant'});}catch(e){window.scrollTo(0,0);} }
 function renderSidebar(){
   var nDone=0; allCases.forEach(function(c){ if(classifyCase(c)==='done') nDone++; });
@@ -1129,6 +1268,7 @@ function renderSidebar(){
   _renderTaskBar(_tasks);
   var h='<div class="sb-head"><div class="sb-head-co">🏢 '+esc(companyName||'')+' 様</div>'
     +(supportOrgName?'<div class="sb-head-org">登録支援機関<b>'+esc(supportOrgName)+'</b></div>':'')+'</div>';
+  h+='<div class="sb-item" onclick="_coTour()" style="color:#fde047;background:rgba(253,224,71,.12);"><span>O-Link使い方ガイド</span></div>';  // ver.20261030.01: ダッシュボードの上
   h+=item('dashboard','ダッシュボード',(_tasks.total>0?_tasks.total:null),_tasks.total>0);
   h+='<div class="sb-divider"></div>';
   h+=item('active','進行中',nActive);
@@ -1159,6 +1299,8 @@ function render(){
   var m=document.getElementById('main');
   // ver.20261024.07: 書類のご案内があり、まだ「確認しました」を押していなければ、まず必要書類の確認画面
   try{ if(!window._gateStaff && _gatePendingDocs().length){ m.innerHTML=_docGateHtml(); try{ _renderCoSendBar(); }catch(e){} return; } }catch(eG){ console.warn('gate',eG); }
+  try{ if(!_tpDone && _companyTasks().total>0){ _taskPopup('ご対応のお願い','まだご対応いただいていないことがあります。<b>提出期限</b>までにご対応をお願いいたします。', renderRequests().replace('id="reqCard"',''), '確認しました'); } }catch(eP){ console.warn('taskpop',eP); }
+  try{ _autoTour('olink_tour_never_co_'+currentToken, _coTour); }catch(eT){}  // ver.20261030.01: ログインのたびに表示（書類の確認画面のあと・「もう表示しない」まで）
   if(currentTab==='docs') m.innerHTML=renderDocs();
   else if(currentTab==='active'||currentTab==='done'||currentTab==='all') m.innerHTML=renderPeople(currentTab);
   else if(currentTab==='flow') m.innerHTML=renderFlow();

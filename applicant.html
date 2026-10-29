@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>申請人マイページ | 大房行政書士法人</title>
+<!-- ver.20261030.01: 登録支援機関O-Linkと同じSalesforce型の案内を追加（8言語・ログインのたびに自動で表示。「もう表示しない」を押すとそのブラウザでは出ない）。マイページを開いたとき、まだ対応していないこと（ヒアリング回答・書類提出・サイン返送）があれば、提出期限つきの「ご対応のお願い」ポップアップを表示（8言語）。ヘッダーの「使い方」ボタンで、タブ・いまやること・依頼事項・現在の進捗・在留期限・提出書類・言語・お問い合わせを1ステップずつ案内。 -->
 <!-- ver.20261028.01: ヒアリングフォーム回答済みのとき「回答内容を見る」ボタンを追加。回答内容を閲覧のみで表示（編集不可）し、「間違いがあれば担当者までご連絡ください」と表示（8言語）。RPC applicant_view_hearing。 -->
 <!-- ver.20261024.09: 申請までのスケジュールを15営業日の流れに（受領→ヒアリング・書類アップ→条件書確認→サイン返送→会社の押印→申請）。日数はアンシス「⏰ 提出期限」の8工程を合計。ヒアリングフォームに提出期限（受領日から3営業日）。hearingSkip（対象＝人材／両方）に当てはまる案件は出さない。 -->
 <!-- ver.20261024.08: 提出期限の色を段階表示に（2週間を切ったら黄・1週間でオレンジ・3日で赤・期限切れは赤。それ以外は紺）。 -->
@@ -208,6 +209,36 @@ details.doc-help-d[open]>summary::after{content:' ▲';}
   .doc-help,.doc-subnote{padding-left:40px;padding-right:12px;}
   .doc-yotei{padding-left:40px !important;padding-right:12px !important;}
 }
+
+/* ver.20261030.01: 開いたときの「ご対応のお願い」ポップアップ */
+#tpBg{position:fixed;inset:0;background:rgba(3,16,38,.55);z-index:2900;display:flex;align-items:flex-start;justify-content:center;padding:40px 12px;overflow-y:auto;}
+#tpBox{background:#fff;border-radius:12px;max-width:640px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.35);overflow:hidden;font-family:inherit;}
+#tpBox .tp-h{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid #e5e5e5;}
+#tpBox .tp-t{flex:1;font-size:17px;font-weight:800;color:#181818;}
+#tpBox .tp-s{font-size:12.5px;color:#444;padding:12px 20px 0;line-height:1.7;}
+#tpBox .tp-b{padding:10px 16px 6px;max-height:60vh;overflow-y:auto;}
+#tpBox .tp-f{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid #e5e5e5;background:#fafaf9;}
+#tpBox .tp-btn{border:none;background:#0176d3;color:#fff;border-radius:6px;padding:9px 20px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;}
+/* ver.20261030.01: ウォークスルー（Salesforce型） */
+#wtLayer{position:fixed;inset:0;z-index:3000;pointer-events:none;}  /* 案内中もそのまま入力・操作できるよう、カード以外はクリックを通す */
+#wtPop{pointer-events:auto;}
+#wtHole{position:fixed;border-radius:8px;box-shadow:0 0 0 9999px rgba(3,16,38,.62);outline:2px solid #fff;transition:all .25s ease;pointer-events:none;}
+#wtPop{position:fixed;background:#fff;border-radius:10px;box-shadow:0 18px 48px rgba(0,0,0,.35);font-family:inherit;transition:top .25s ease,left .25s ease;}
+#wtPop .wt-arrow{position:absolute;width:16px;height:16px;background:#fff;transform:rotate(45deg);}
+#wtPop .wt-x{position:absolute;top:10px;right:10px;background:none;border:none;color:#747474;font-size:16px;cursor:pointer;padding:4px 6px;}
+#wtPop .wt-body{padding:18px 20px 4px;}
+#wtPop .wt-step{font-size:11px;font-weight:700;color:#0176d3;letter-spacing:.06em;}
+#wtPop .wt-title{font-size:17px;font-weight:800;color:#181818;margin-top:6px;}
+#wtPop .wt-text{font-size:13px;color:#444;line-height:1.75;margin-top:8px;}
+#wtPop .wt-text b{color:#181818;}
+#wtPop .wt-foot{display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid #e5e5e5;margin-top:14px;background:#fafaf9;border-radius:0 0 10px 10px;}
+#wtPop .wt-dots{display:flex;gap:5px;flex:1;flex-wrap:wrap;}
+#wtPop .wt-dot{width:7px;height:7px;border-radius:50%;background:#c9c9c9;cursor:pointer;}
+#wtPop .wt-dot.on{background:#0176d3;}
+#wtPop .wt-btn{border-radius:6px;padding:8px 16px;font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit;}
+#wtPop .wt-back{border:1px solid #c9c9c9;background:#fff;color:#0176d3;}
+#wtPop .wt-next{border:none;background:#0176d3;color:#fff;}
+#wtPop .wt-next:hover{background:#014486;}
 </style>
 </head>
 <body>
@@ -215,8 +246,9 @@ details.doc-help-d[open]>summary::after{content:' ▲';}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;flex:none;white-space:nowrap;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title" id="hdrTitle">申請人マイページ</span>
-  <span class="header-ver">ver.20261028.01</span>
+  <span class="header-ver">ver.20261030.01</span>
   <div class="header-right">
+    <button type="button" id="apTourBtn" onclick="_apTour()" style="padding:5px 11px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">？</button>
     <div id="langSwitch" class="lang-switch"></div>
     <div class="header-org" id="headerName" style="font-size:13px;font-weight:700;opacity:.95;max-width:none;">読み込み中...</div>
   </div>
@@ -566,6 +598,7 @@ function setLang(l){
 function applyStaticI18n(){
   document.documentElement.lang=curLang;
   var ht=document.getElementById('hdrTitle'); if(ht) ht.innerHTML=t('header_title');
+  try{ _apTourLabel(); }catch(e){}  // ver.20261030.01
   var logo=document.querySelector('.header-logo'); if(logo) logo.innerHTML=(curLang==='ja')?fz('大房行政書士法人'):'大房行政書士法人';
   var map={status:'tab_status',docs:'tab_docs',pdf:'tab_pdf',info:'tab_info',office:'tab_office',flow:'tab_flow',sign:'tab_sign'};
   document.querySelectorAll('.tab').forEach(function(btn){
@@ -844,12 +877,152 @@ function computeMissing(){
   if(sb){ if(signedCount>0){ sb.textContent=signedCount; sb.classList.remove('hide'); } else { sb.classList.add('hide'); } }
 }
 
+// ===== ver.20261030.01: ウォークスルー（Salesforce型）共通エンジン =====
+// 画面を暗くして対象だけを明るく抜き、横に「ステップ n / N」のカードを出す。戻る／次へ／✕・← → Esc で操作。
+var _wt=null;
+var _WT_L={ja:{step:'ステップ',back:'戻る',next:'次へ',done:'完了',close:'閉じる',never:'もう表示しない'}};
+function _wtL(k){ var lg=(typeof curLang!=='undefined'&&_WT_L[curLang])?curLang:'ja'; return (_WT_L[lg]&&_WT_L[lg][k])||_WT_L.ja[k]; }
+function _wtStart(steps, opt){
+  _wtEnd(true);
+  var _all=steps;
+  steps=(steps||[]).filter(function(st){ var e=_wtEl(st); if(!e) return false; var r=e.getBoundingClientRect(); return r.width>0&&r.height>0; });
+  if(!steps.length) return;
+  _wt={steps:steps,all:_all,i:0,opt:opt||{}};
+  if(window._wtNeverKey){ _wt.opt.neverKey=window._wtNeverKey; window._wtNeverKey=null; }  // 自動表示のときだけ「もう表示しない」を出す
+  var o=document.createElement('div'); o.id='wtLayer';
+  o.innerHTML='<div id="wtHole"></div><div id="wtPop" role="dialog"></div>';
+  document.body.appendChild(o);
+  if(!window._wtBound){
+    window._wtBound=true;
+    document.addEventListener('keydown',function(e){ if(!_wt) return; if(e.key==='Escape') _wtEnd(); else if(e.key==='ArrowRight') _wtGo(1); else if(e.key==='ArrowLeft') _wtGo(-1); });
+    window.addEventListener('resize',function(){ if(_wt) _wtPlace(); });
+    document.addEventListener('scroll',function(){ if(_wt) _wtPlace(); },true);
+  }
+  _wtShow();
+}
+function _wtEl(st){ try{ return (typeof st.el==='function')?st.el():document.querySelector(st.el); }catch(e){ return null; } }
+function _wtGo(d){ if(!_wt) return; var n=_wt.i+d; if(n<0) return; if(n>=_wt.steps.length){ _wtEnd(); return; } _wt.i=n; _wtShow(); }
+function _wtNever(){ try{ if(_wt&&_wt.opt.neverKey) localStorage.setItem(_wt.opt.neverKey,'1'); }catch(e){} _wtEnd(); }
+function _wtEnd(silent){
+  var o=document.getElementById('wtLayer'); if(o) o.remove();
+  var cb=_wt&&_wt.opt&&_wt.opt.onEnd; _wt=null;
+  if(cb && !silent) cb();
+}
+function _wtShow(){
+  var st=_wt.steps[_wt.i], el=_wtEl(st), n=_wt.steps.length;
+  if(el){ try{ el.scrollIntoView({block:'center',inline:'nearest',behavior:'smooth'}); }catch(e){} }
+  var dots=''; for(var k=0;k<n;k++) dots+='<span class="wt-dot'+(k===_wt.i?' on':'')+'" onclick="_wtGo('+(k-_wt.i)+')"></span>';
+  var last=(_wt.i===n-1);
+  document.getElementById('wtPop').innerHTML='<div class="wt-arrow"></div>'
+    +'<button class="wt-x" onclick="_wtEnd()" aria-label="'+_wtL('close')+'">✕</button>'
+    +'<div class="wt-body"><div class="wt-step">'+_wtL('step')+' '+(_wt.i+1)+' / '+n+'</div>'
+    +'<div class="wt-title">'+st.title+'</div><div class="wt-text">'+st.body+'</div></div>'
+    +(_wt.opt.neverKey?'<div style="padding:0 20px;"><button class="wt-never" onclick="_wtNever()" style="background:none;border:none;color:#747474;font-size:11.5px;text-decoration:underline;cursor:pointer;padding:6px 0 0;font-family:inherit;">'+_wtL('never')+'</button></div>':'')
+    +'<div class="wt-foot"><div class="wt-dots">'+dots+'</div>'
+    +(_wt.i>0?'<button class="wt-btn wt-back" onclick="_wtGo(-1)">'+_wtL('back')+'</button>':'')
+    +'<button class="wt-btn wt-next" onclick="_wtGo(1)">'+(last?_wtL('done'):_wtL('next'))+'</button></div>';
+  _wtPlace(); setTimeout(_wtPlace,350);
+}
+function _wtPlace(){
+  if(!_wt) return;
+  var st=_wt.steps[_wt.i], el=_wtEl(st), hole=document.getElementById('wtHole'), pop=document.getElementById('wtPop'); if(!el||!hole||!pop) return;
+  var r=el.getBoundingClientRect(), pad=6, W=window.innerWidth, H=window.innerHeight;
+  hole.style.left=(r.left-pad)+'px'; hole.style.top=(r.top-pad)+'px'; hole.style.width=(r.width+pad*2)+'px'; hole.style.height=(r.height+pad*2)+'px';
+  var pw=Math.min(380,W-24), ph=pop.offsetHeight||200; pop.style.width=pw+'px';
+  var below=(r.bottom+16+ph<=H-8), above=(r.top-16-ph>=8);
+  var top, arrowTop;
+  if(below||!above){ top=Math.min(r.bottom+16,H-ph-8); arrowTop=true; } else { top=r.top-16-ph; arrowTop=false; }
+  var left=Math.max(12,Math.min(r.left,W-pw-12));
+  pop.style.left=left+'px'; pop.style.top=Math.max(8,top)+'px';
+  var a=pop.querySelector('.wt-arrow'); if(a){ var ax=Math.max(16,Math.min(r.left+Math.min(r.width/2,40)-left,pw-32)); a.style.left=ax+'px'; a.style.top=arrowTop?'-8px':''; a.style.bottom=arrowTop?'':'-8px'; }
+}
+
+// ver.20261030.01: 申請人マイページの見方（1ステップずつ・8言語）
+_WT_L.en={step:'Step',back:'Back',next:'Next',done:'Done',close:'Close',never:'Don\'t show again'};
+_WT_L.vi={step:'Bước',back:'Quay lại',next:'Tiếp',done:'Xong',close:'Đóng',never:'Không hiển thị lại'};
+_WT_L.id={step:'Langkah',back:'Kembali',next:'Lanjut',done:'Selesai',close:'Tutup',never:'Jangan tampilkan lagi'};
+_WT_L.zh={step:'步骤',back:'上一步',next:'下一步',done:'完成',close:'关闭',never:'不再显示'};
+_WT_L.km={step:'ជំហាន',back:'ថយក្រោយ',next:'បន្ទាប់',done:'រួចរាល់',close:'បិទ',never:'កុំបង្ហាញម្តងទៀត'};
+_WT_L.my={step:'အဆင့်',back:'နောက်သို့',next:'ရှေ့သို့',done:'ပြီးပါပြီ',close:'ပိတ်ရန်',never:'နောက်ထပ်မပြပါနှင့်'};
+_WT_L.th={step:'ขั้นตอน',back:'ย้อนกลับ',next:'ถัดไป',done:'เสร็จสิ้น',close:'ปิด',never:'ไม่ต้องแสดงอีก'};
+var _AP_TOUR={
+ btn:{ja:'使い方',en:'Guide',vi:'Hướng dẫn',id:'Panduan',zh:'使用说明',km:'ការណែនាំ',my:'လမ်းညွှန်',th:'วิธีใช้'},
+ s:[
+  {el:'#tabs',
+   t:{ja:'画面の切り替え',en:'Switch screens',vi:'Chuyển màn hình',id:'Ganti layar',zh:'切换画面',km:'ប្តូរអេក្រង់',my:'မျက်နှာပြင်ပြောင်းရန်',th:'สลับหน้าจอ'},
+   b:{ja:'上のタブで「進捗」「提出書類」「サイン書類」などを切り替えます。',en:'Use these tabs to switch between Progress, Documents, Signature documents and more.',vi:'Dùng các tab này để chuyển giữa Tiến độ, Hồ sơ nộp, Hồ sơ ký, v.v.',id:'Gunakan tab ini untuk berpindah antara Progres, Dokumen, Dokumen tanda tangan, dll.',zh:'用上方的标签切换"进度""提交文件""签名文件"等。',km:'ប្រើផ្ទាំងទាំងនេះដើម្បីប្តូររវាង វឌ្ឍនភាព ឯកសារ ឯកសារចុះហត្ថលេខា ជាដើម។',my:'ဤ tab များဖြင့် တိုးတက်မှု၊ စာရွက်စာတမ်း၊ လက်မှတ်စာရွက်များ စသည်တို့ကို ပြောင်းနိုင်သည်။',th:'ใช้แท็บด้านบนเพื่อสลับ ความคืบหน้า เอกสารที่ต้องส่ง เอกสารลงนาม ฯลฯ'}},
+  {el:'.next-box',
+   t:{ja:'いまやること',en:'What to do now',vi:'Việc cần làm bây giờ',id:'Yang perlu dilakukan sekarang',zh:'现在要做的事',km:'អ្វីដែលត្រូវធ្វើឥឡូវ',my:'ယခုလုပ်ရမည့်အရာ',th:'สิ่งที่ต้องทำตอนนี้'},
+   b:{ja:'あなたにお願いしたいことと、その<b>提出期限</b>がここに出ます。',en:'What we need from you and the <b>deadline</b> appear here.',vi:'Những việc cần bạn làm và <b>hạn nộp</b> sẽ hiện ở đây.',id:'Hal yang perlu Anda lakukan dan <b>batas waktunya</b> muncul di sini.',zh:'需要您做的事和<b>提交期限</b>显示在这里。',km:'អ្វីដែលយើងត្រូវការពីអ្នក និង<b>ថ្ងៃផុតកំណត់</b> បង្ហាញនៅទីនេះ។',my:'သင်လုပ်ရမည့်အရာနှင့် <b>နောက်ဆုံးရက်</b> ကို ဤနေရာတွင်ပြသည်။',th:'สิ่งที่คุณต้องทำและ<b>กำหนดส่ง</b>จะแสดงที่นี่'}},
+  {el:'.todo-box',
+   t:{ja:'依頼事項',en:'Requests',vi:'Yêu cầu',id:'Permintaan',zh:'委托事项',km:'សំណើ',my:'တောင်းဆိုချက်များ',th:'รายการที่ขอ'},
+   b:{ja:'ヒアリングフォームの回答と、必要書類の提出の状況です。回答した内容は<b>回答内容を見る</b>で確認できます。',en:'Status of the hearing form and required documents. You can check your answers with <b>View my answers</b>.',vi:'Tình trạng phiếu phỏng vấn và hồ sơ cần nộp. Có thể xem câu trả lời tại <b>Xem câu trả lời</b>.',id:'Status formulir wawancara dan dokumen yang diperlukan. Jawaban dapat dilihat di <b>Lihat jawaban</b>.',zh:'问询表回答和必要文件的提交情况。回答内容可在<b>查看回答内容</b>中确认。',km:'ស្ថានភាពទម្រង់សម្ភាសន៍ និងឯកសារចាំបាច់។ អាចមើលចម្លើយបានតាម<b>មើលចម្លើយ</b>។',my:'မေးခွန်းလွှာနှင့် လိုအပ်သောစာရွက်စာတမ်းများ အခြေအနေ။ ဖြေဆိုချက်ကို <b>ဖြေဆိုချက်ကြည့်ရန်</b> တွင်ကြည့်နိုင်သည်။',th:'สถานะแบบฟอร์มสัมภาษณ์และเอกสารที่ต้องส่ง ดูคำตอบได้ที่<b>ดูคำตอบ</b>'}},
+  {el:'.phase-card',
+   t:{ja:'現在の進捗',en:'Current progress',vi:'Tiến độ hiện tại',id:'Progres saat ini',zh:'当前进度',km:'វឌ្ឍនភាពបច្ចុប្បន្ន',my:'လက်ရှိတိုးတက်မှု',th:'ความคืบหน้าปัจจุบัน'},
+   b:{ja:'申請がいまどの段階かを表示します。',en:'Shows which stage your application is at.',vi:'Cho biết hồ sơ của bạn đang ở giai đoạn nào.',id:'Menunjukkan tahap permohonan Anda saat ini.',zh:'显示申请目前处于哪个阶段。',km:'បង្ហាញដំណាក់កាលបច្ចុប្បន្ននៃពាក្យស្នើសុំរបស់អ្នក។',my:'သင့်လျှောက်လွှာ ယခုမည်သည့်အဆင့်တွင်ရှိသည်ကို ပြသည်။',th:'แสดงว่าคำขอของคุณอยู่ในขั้นตอนใด'}},
+  {el:'.cards',
+   t:{ja:'在留期限',en:'Period of stay',vi:'Thời hạn lưu trú',id:'Masa tinggal',zh:'在留期限',km:'រយៈពេលស្នាក់នៅ',my:'နေထိုင်ခွင့်သက်တမ်း',th:'ระยะเวลาพำนัก'},
+   b:{ja:'在留期限と、一時帰国の予定です。一時帰国するときは、必ず事前に担当者に連絡してください。',en:'Your period of stay and temporary return plans. Always tell your representative before going home temporarily.',vi:'Thời hạn lưu trú và kế hoạch về nước tạm thời. Hãy báo trước cho người phụ trách khi về nước tạm thời.',id:'Masa tinggal dan rencana pulang sementara. Beri tahu petugas sebelum pulang sementara.',zh:'在留期限和临时回国计划。临时回国前请务必联系负责人。',km:'រយៈពេលស្នាក់នៅ និងផែនការត្រឡប់ទៅប្រទេសបណ្តោះអាសន្ន។ សូមប្រាប់អ្នកទទួលបន្ទុកជាមុន។',my:'နေထိုင်ခွင့်သက်တမ်းနှင့် ယာယီပြန်မည့်အစီအစဉ်။ ယာယီပြန်မည်ဆိုလျှင် တာဝန်ခံထံ ကြိုတင်အကြောင်းကြားပါ။',th:'ระยะเวลาพำนักและแผนกลับประเทศชั่วคราว ก่อนกลับประเทศชั่วคราวโปรดแจ้งผู้รับผิดชอบล่วงหน้า'}},
+  {el:'.tab[data-tab="docs"]',
+   t:{ja:'提出書類',en:'Documents',vi:'Hồ sơ nộp',id:'Dokumen',zh:'提交文件',km:'ឯកសារ',my:'စာရွက်စာတမ်း',th:'เอกสารที่ต้องส่ง'},
+   b:{ja:'出してほしい書類の一覧です。書類を押すと見本や取り方が見られます。',en:'The list of documents to submit. Tap a document to see a sample and how to get it.',vi:'Danh sách hồ sơ cần nộp. Nhấn vào từng hồ sơ để xem mẫu và cách lấy.',id:'Daftar dokumen yang harus diserahkan. Ketuk dokumen untuk melihat contoh dan cara mendapatkannya.',zh:'需要提交的文件列表。点击文件可查看样本和取得方法。',km:'បញ្ជីឯកសារដែលត្រូវដាក់។ ចុចលើឯកសារដើម្បីមើលគំរូ និងរបៀបទទួលបាន។',my:'တင်ရမည့်စာရွက်စာတမ်းစာရင်း။ နမူနာနှင့် ရယူပုံကို ကြည့်ရန် စာရွက်ကို နှိပ်ပါ။',th:'รายการเอกสารที่ต้องส่ง แตะที่เอกสารเพื่อดูตัวอย่างและวิธีขอรับ'}},
+  {el:'#langSwitch',
+   t:{ja:'言語',en:'Language',vi:'Ngôn ngữ',id:'Bahasa',zh:'语言',km:'ភាសា',my:'ဘာသာစကား',th:'ภาษา'},
+   b:{ja:'ここで表示する言語を変えられます。',en:'You can change the display language here.',vi:'Bạn có thể đổi ngôn ngữ hiển thị tại đây.',id:'Anda dapat mengganti bahasa tampilan di sini.',zh:'可以在这里切换显示语言。',km:'អ្នកអាចប្តូរភាសាបង្ហាញនៅទីនេះ។',my:'ဤနေရာတွင် ပြသမည့်ဘာသာစကားကို ပြောင်းနိုင်သည်။',th:'เปลี่ยนภาษาที่แสดงได้ที่นี่'}},
+  {el:'.contact-btns',
+   t:{ja:'お問い合わせ',en:'Contact',vi:'Liên hệ',id:'Kontak',zh:'联系我们',km:'ទំនាក់ទំនង',my:'ဆက်သွယ်ရန်',th:'ติดต่อ'},
+   b:{ja:'わからないことがあれば、ここから電話・メールで連絡してください。',en:'If you have questions, contact us here by phone or email.',vi:'Nếu có thắc mắc, hãy liên hệ qua điện thoại hoặc email tại đây.',id:'Jika ada pertanyaan, hubungi kami di sini lewat telepon atau email.',zh:'如有不明之处，请通过这里电话或邮件联系。',km:'ប្រសិនបើមានសំណួរ សូមទាក់ទងតាមទូរស័ព្ទ ឬអ៊ីមែលនៅទីនេះ។',my:'မေးစရာရှိပါက ဤနေရာမှ ဖုန်း သို့မဟုတ် အီးမေးလ်ဖြင့် ဆက်သွယ်ပါ။',th:'หากมีข้อสงสัย ติดต่อทางโทรศัพท์หรืออีเมลได้ที่นี่'}}
+ ]};
+function _apTx(o){ return (o&&(o[curLang]||o.en||o.ja))||''; }
+function _apTourLabel(){ var b=document.getElementById('apTourBtn'); if(b) b.textContent=_apTx(_AP_TOUR.btn); }
+
+
+// ver.20261030.01: 開いたときに、まだご対応いただくことがあればポップアップで知らせる（提出期限つき）
+var _tpDone=false, _tpAfter=null;
+function _taskPopup(title, sub, bodyHtml, btn){
+  if(_tpDone) return false; _tpDone=true;
+  if(typeof _wt!=='undefined' && _wt){ var _st=_wt.all||_wt.steps, _op=_wt.opt; _wtEnd(true); _tpAfter=function(){ _wtStart(_st,_op); }; }  // 案内が先に始まっていたら、お願いを閉じてから続ける
+  var bg=document.createElement('div'); bg.id='tpBg';
+  bg.innerHTML='<div id="tpBox" role="dialog"><div class="tp-h"><span style="width:10px;height:10px;border-radius:50%;background:#dc2626;flex-shrink:0;"></span><div class="tp-t">'+title+'</div>'
+    +'<button onclick="_taskPopupClose()" style="background:none;border:none;font-size:18px;color:#747474;cursor:pointer;">✕</button></div>'
+    +(sub?'<div class="tp-s">'+sub+'</div>':'')+'<div class="tp-b">'+bodyHtml+'</div>'
+    +'<div class="tp-f"><button class="tp-btn" onclick="_taskPopupClose()">'+btn+'</button></div></div>';
+  bg.addEventListener('click',function(e){ if(e.target===bg) _taskPopupClose(); var a=e.target.closest&&e.target.closest('#tpBox .tp-b a, #tpBox .tp-b button'); if(a) setTimeout(_taskPopupClose,0); });
+  document.body.appendChild(bg);
+  return true;
+}
+function _taskPopupClose(){ var b=document.getElementById('tpBg'); if(b) b.remove(); if(_tpAfter){ var f=_tpAfter; _tpAfter=null; setTimeout(f,300); } }
+var _TP_TX={
+ title:{ja:'ご対応のお願い',en:'Action needed',vi:'Việc cần làm',id:'Perlu tindakan',zh:'请您处理',km:'សូមចាត់វិធានការ',my:'ဆောင်ရွက်ရန်',th:'โปรดดำเนินการ'},
+ sub:{ja:'まだ対応していないことがあります。<b>提出期限</b>までに対応してください。',en:'There are tasks you have not finished yet. Please complete them by the <b>deadline</b>.',vi:'Vẫn còn việc bạn chưa làm. Vui lòng hoàn thành trước <b>hạn nộp</b>.',id:'Masih ada tugas yang belum selesai. Mohon selesaikan sebelum <b>batas waktu</b>.',zh:'还有尚未处理的事项。请在<b>提交期限</b>前完成。',km:'នៅមានការងារដែលមិនទាន់បានធ្វើ។ សូមធ្វើឲ្យរួចមុន<b>ថ្ងៃផុតកំណត់</b>។',my:'မလုပ်ရသေးသည့်အရာများ ရှိနေပါသည်။ <b>နောက်ဆုံးရက်</b> မတိုင်မီ ဆောင်ရွက်ပါ။',th:'ยังมีสิ่งที่ยังไม่ได้ทำ โปรดดำเนินการภายใน<b>กำหนดส่ง</b>'},
+ ok:{ja:'確認しました',en:'OK',vi:'Đã hiểu',id:'Mengerti',zh:'知道了',km:'យល់ហើយ',my:'နားလည်ပါပြီ',th:'รับทราบ'}
+};
+// ver.20261030.01: ログインのたびに使い方ガイド（ウォークスルー）を自動で表示（「もう表示しない」で止められる・ブラウザごと）
+var _autoTourDone=false;
+function _autoTour(key, fn){
+  // ver.20261030.01: ログインのたびに自動で表示。案内の「もう表示しない」を押すと、そのブラウザでは出なくなる
+  if(_autoTourDone) return; _autoTourDone=true;
+  var never=false; try{ never=localStorage.getItem(key)==='1'; }catch(e){ never=false; }
+  if(never) return;
+  var go=function(){ window._wtNeverKey=key; fn(); };
+  var ready=function(){ var t=document.getElementById('tabs'); return !!(t && t.getBoundingClientRect().height>0); };
+  var tries=0;
+  (function wait(){ tries++; if(!ready() && tries<40){ setTimeout(wait,300); return; }  // 画面の読み込みが終わってから
+    setTimeout(function(){ if(document.getElementById('tpBg')){ _tpAfter=go; return; } go(); }, 600); })();
+}
+function _apTour(){
+  if(typeof currentTab!=='undefined' && currentTab!=='status'){ try{ switchTab('status'); }catch(e){} }
+  setTimeout(function(){ _wtStart(_AP_TOUR.s.map(function(x){ return {el:x.el,title:_apTx(x.t),body:_apTx(x.b)}; })); },250);
+}
 function switchTab(t){ currentTab=t; document.querySelectorAll('.tab').forEach(function(el){el.classList.toggle('active',el.dataset.tab===t);}); render(); }
 
 function render(){
   var m=document.getElementById('main');
   // ver.20261024.07: 書類のご案内があり、まだ確認していなければ、まず必要書類の確認画面
   try{ if(theCase && _apGatePending().length){ m.innerHTML=_apGateHtml(); renderSendBar(); return; } }catch(eG){ console.warn('gate',eG); }
+  try{ if(!_tpDone){ var _hA=hearingAnswered(), _dH=docDisplayList().length>0, _dD=docsAllDone();
+    if(_isSignReturnStatus(theCase.status) || (!_hA&&hearingNagActive()) || (_dH&&!_dD)){ _taskPopup(_apTx(_TP_TX.title), _apTx(_TP_TX.sub), renderTodo(), _apTx(_TP_TX.ok)); } } }catch(eP){ console.warn('taskpop',eP); }
+  try{ _autoTour('olink_tour_never_ap_'+currentToken, _apTour); }catch(eT){}  // ver.20261030.01: ログインのたびに表示（書類の確認画面のあと・「もう表示しない」まで）
   if(currentTab==='status') m.innerHTML=renderStatus();
   else if(currentTab==='docs') m.innerHTML=renderDocs();
   else if(currentTab==='sign') m.innerHTML=renderSign();

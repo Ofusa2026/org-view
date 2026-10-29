@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261030.test01: ログインのたびに（案内の「もう表示しない」を押すまで・ブラウザごと）、進行中の一覧で「このページの見方」の案内を自動で表示。 -->
 <!-- ver.20261029.test10: 使い方の表示をSalesforce型のウォークスルーに統一。画面を暗くして説明する場所だけを明るく抜き、横に「ステップ n / N」のカード（タイトル・説明・進み具合の点・戻る／次へ／✕）を出す。← → Escキーでも操作可。「このページの見方」（一覧）と新規案件依頼の「使い方を見る」（①〜⑤）の両方に適用（左右カード・黄色の番号表示は廃止）。 使い方ガイドの「練習モード」（送信されない新規案件依頼）は廃止し、ガイドの案内も「使い方を見る」に変更。 案件が1件もない機関には、サンプル（架空の案件・企業・人材：株式会社サンプル建設／株式会社みほん食品など4件）を表示し、上部に「サンプル表示」の帯を出す（?demo=1 でいつでも表示）。サンプルの案件では保存処理は行わない。 サンプルの申請受付番号には、以前作成した見本の受付番号通知PDFを表示（受付番号PDFボタン・申請記録）。 -->
 <!-- ver.20261029.test09: 一覧の上に「このページの見方」ボタンを追加（各列・人材詳細／企業詳細ボタン・PDFボタンに黄色い番号と枠を付け、右下に①〜の説明を表示。スクロールに追従、閉じる／Escで終了）。サイドバーのいちばん上に「O-Link使い方ガイド」を移動（黄色で目立たせる）。使い方ガイドの「案件一覧・詳細」から一覧の見方を表示できるボタンを追加。 -->
 <!-- ver.20261029.test08: 新規案件依頼の「使い方を見る」を作り直し。各欄の長いふせんをやめ、ポップアップの左右の余白に「依頼の仕方」①〜⑤（AI読み取り／案件の情報／申請する人／人材紹介手数料／登録する）を短い文のカードで置き、黄色い線で各欄（⑤は登録するボタン）につなぐ。スクロールに追従し、見えていない欄のカードは薄く表示。押すとその欄へ移動。画面内の番号もAI読み取りを1にして①〜⑤と一致。画面が狭いときは下にまとめて表示。 あわせて、AI読み取りの入力欄を見やすくした（書体を通常の文字に、案内文を3行の短い文に、点線の貼り付け枠に）。 -->
@@ -735,7 +736,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261029.test10</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261030.test01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -3786,9 +3787,11 @@ function _demoBanner(){
 var _wt=null;
 function _wtStart(steps, opt){
   _wtEnd(true);
+  var _all=steps;
   steps=(steps||[]).filter(function(st){ return !!_wtEl(st); });
   if(!steps.length) return;
-  _wt={steps:steps,i:0,opt:opt||{}};
+  _wt={steps:steps,all:_all,i:0,opt:opt||{}};
+  if(window._wtNeverKey){ _wt.opt.neverKey=window._wtNeverKey; window._wtNeverKey=null; }  // 自動表示のときだけ「もう表示しない」を出す
   var o=document.createElement('div'); o.id='wtLayer';
   o.innerHTML='<div id="wtHole"></div><div id="wtPop" role="dialog"></div>';
   document.body.appendChild(o);
@@ -3802,6 +3805,7 @@ function _wtStart(steps, opt){
 }
 function _wtEl(st){ try{ return (typeof st.el==='function')?st.el():document.querySelector(st.el); }catch(e){ return null; } }
 function _wtGo(d){ if(!_wt) return; var n=_wt.i+d; if(n<0) return; if(n>=_wt.steps.length){ _wtEnd(); return; } _wt.i=n; _wtShow(); }
+function _wtNever(){ try{ if(_wt&&_wt.opt.neverKey) localStorage.setItem(_wt.opt.neverKey,'1'); }catch(e){} _wtEnd(); }
 function _wtEnd(silent){
   var o=document.getElementById('wtLayer'); if(o) o.remove();
   var cb=_wt&&_wt.opt&&_wt.opt.onEnd; _wt=null;
@@ -3816,6 +3820,7 @@ function _wtShow(){
     +'<button class="wt-x" onclick="_wtEnd()" aria-label="閉じる">✕</button>'
     +'<div class="wt-body"><div class="wt-step">ステップ '+(_wt.i+1)+' / '+n+'</div>'
     +'<div class="wt-title">'+st.title+'</div><div class="wt-text">'+st.body+'</div></div>'
+    +(_wt.opt.neverKey?'<div style="padding:0 20px;"><button class="wt-never" onclick="_wtNever()" style="background:none;border:none;color:#747474;font-size:11.5px;text-decoration:underline;cursor:pointer;padding:6px 0 0;font-family:inherit;">'+'もう表示しない'+'</button></div>':'')
     +'<div class="wt-foot"><div class="wt-dots">'+dots+'</div>'
     +(_wt.i>0?'<button class="wt-btn wt-back" onclick="_wtGo(-1)">戻る</button>':'')
     +'<button class="wt-btn wt-next" onclick="_wtGo(1)">'+(last?'完了':'次へ')+'</button></div>';
@@ -3874,6 +3879,17 @@ function _pvItems(){
 function _pvNo(i){ return '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'.charAt(i)||String(i+1); }
 function _pvClose(){ if(_pvOn){ _pvOn=false; _wtEnd(true); } }
 function _pvToggle(){ if(_pvOn) _pvClose(); else _pvOpen(); }
+
+// ver.20261030.01: ログインのたびに使い方ガイド（ウォークスルー）を自動で表示（「もう表示しない」で止められる・ブラウザごと）
+var _autoTourDone=false;
+function _autoTour(key, fn){
+  // ver.20261030.01: ログインのたびに自動で表示。案内の「もう表示しない」を押すと、そのブラウザでは出なくなる
+  if(_autoTourDone) return; _autoTourDone=true;
+  var never=false; try{ never=localStorage.getItem(key)==='1'; }catch(e){ never=false; }
+  if(never) return;
+  var go=function(){ window._wtNeverKey=key; fn(); };
+  setTimeout(go, 700);
+}
 function _pvOpen(){
   // ver.20261029.test10: 1項目ずつのウォークスルー（Salesforce型）に変更
   if(currentView!=='list'){ currentView='list'; renderMain(); }
@@ -8539,6 +8555,7 @@ async function loadData(){
     // ver.20261029.test10: 案件が1件もない機関には、サンプル（架空の案件）を表示して画面のイメージをつかめるように（?demo=1 でいつでも確認可）
     _demoApply();
     await loadNews();
+    try{ _autoTour('olink_tour_never_org_'+currentToken, function(){ switchGroup('active'); setTimeout(_pvOpen,300); }); }catch(eT){}  // ver.20261030.01: ログインのたびに一覧の見方を自動表示（「もう表示しない」まで）
     renderSidebar();
     renderCurrent();
     if(!_dataReloadTimer){
