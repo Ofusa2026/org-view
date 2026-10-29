@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261029.test05: 「⚠️書類未提出企業」を変更。依頼日（request_date）が入っている案件のみ対象。国交省書類の提出期限（残り/超過）を企業名の横に移動。前回の申請の受付番号が「EU」（特定活動更新済み）の人材は「更新不可」として依頼日がなくても表示し、企業カード右上に「更新不可」を表示して一番上に並べる。 -->
 <!-- ver.20261029.test04: 「⚠️書類未提出企業」を変更。①の対象を在留期限まで4ヶ月以内（国交省申請前・国交省書類未提出）に変更し、人材ごとに提出期限（在留期限の3ヶ月前）と「残り○日／○日超過」を表示、超過時は「特定活動更新または更新不可のため確認必要」と表示。人材行の国交省ステータス表示を外し、企業カード左上に「国交省：企業書類未提出」（オレンジ）／「入管書類 未提出」（青）のラベルを追加。サイドバーの件数は0件でも常に表示（1件以上は赤）。 -->
 <!-- ver.20261029.test03: サイドバーに「⚠️書類未提出企業」を追加（オープンケア系のみ）。①国交省申請前×希望在留資格 特定技能1号×在留期限まで3ヶ月以内で企業の国交省書類が未提出の企業、②国交省申請済み×特定技能1号×在留期限まで2ヶ月以内で企業の入管書類が未提出の企業を、未提出書類・対象人材つきで一覧表示。 -->
 <!-- ver.20261029.test02: 本番 share.html(ver.20261029.02) と同じ変更。新規案件依頼・まとめて貼り付けは✕・キャンセルのみで閉じる。 -->
@@ -681,7 +682,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261029.test04</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261029.test05</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1830,18 +1831,40 @@ function _mdMissing(map, names){
   });
   return out;
 }
+// 前の申請の受付番号が「EU」（特定活動更新済み）＝もう更新できない（更新不可）人材の判定用
+function _mdBaseName(n){ return String(n||'').normalize('NFKC').replace(/\s*\(\d+\)\s*$/,'').replace(/\s+/g,' ').trim().toUpperCase(); }
+function _mdEuIndex(){
+  var idx={};
+  allCases.forEach(function(c){
+    var r=String(c.receiptNo||'').normalize('NFKC').toUpperCase();
+    if(r.indexOf('EU')<0) return;
+    var k=_mdBaseName(c.applicant); if(!k) return;
+    (idx[k]||(idx[k]=[])).push({id:c.id,no:String(c.receiptNo||'').normalize('NFKC')});
+  });
+  return idx;
+}
+function _mdFmtD(d){ return d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate(); }
 function _mdCollect(){
-  var A={}, B={}, nA=0, nB=0;
+  var A={}, B={}, eu=_mdEuIndex();
   allCases.forEach(function(c){
     if(!c.companyId || c.residenceStatus!=='特定技能1号' || !_mdActive(c)) return;
     var _oa=c.otherAgencies||{}; if(!_oa.kokkoSho || _oa.kokkoSho_fuyo) return;  // 国交省申請の対象案件（建設）のみ
+    var _euHit=(eu[_mdBaseName(c.applicant)]||[]).filter(function(x){ return x.id!==c.id; })[0]||null;
+    var noRenew=!!_euHit;
+    if(!_hasV(c.requestDate) && !noRenew) return;  // 依頼日（案件受領日）が入っている案件のみ（更新不可の人材は依頼日がなくても表示）
     var days=_mdDays(c.expire); if(days===null) return;
     var ks=_mdKokko(c); var applied=_KS_KOKKO_APPLIED_G.indexOf(ks)>=0;
     var map=coDocsAll[c.companyId]||{};
     if(!applied && days<=_mdMonthDays(4)){  // 在留期限まで4ヶ月以内（国交省 申請前）
       var ko=requiredDocsCoKokko.filter(function(n){ return !/^(6|8|12|15)[.．]/.test(String(n).trim()); });
       var miss=_mdMissing(map, ko);
-      if(miss.length){ var _du=_mdKoDue(c.expire); var e=A[c.companyId]||(A[c.companyId]={id:c.companyId,name:c.company,cases:[],miss:miss,minDays:_du.left}); e.cases.push({c:c,days:_du.left,due:_du}); if(_du.left<e.minDays) e.minDays=_du.left; }
+      if(miss.length){
+        var _du=_mdKoDue(c.expire);
+        var e=A[c.companyId]||(A[c.companyId]={id:c.companyId,name:c.company,cases:[],miss:miss,minDays:_du.left,due:_du,noRenew:false});
+        e.cases.push({c:c,days:_du.left,due:_du,noRenew:noRenew,euNo:_euHit?_euHit.no:''});
+        if(_du.left<e.minDays){ e.minDays=_du.left; e.due=_du; }
+        if(noRenew) e.noRenew=true;
+      }
     }
     if(applied && days<=_mdMonthDays(2)){  // 在留期限まで2ヶ月以内
       var ny=Object.keys(map).filter(function(nm){
@@ -1852,10 +1875,16 @@ function _mdCollect(){
         return true;
       });
       var miss2=_mdMissing(map, ny);
-      if(miss2.length){ var e2=B[c.companyId]||(B[c.companyId]={id:c.companyId,name:c.company,cases:[],miss:miss2,minDays:days}); e2.cases.push({c:c,days:days}); if(days<e2.minDays) e2.minDays=days; }
+      if(miss2.length){
+        var e2=B[c.companyId]||(B[c.companyId]={id:c.companyId,name:c.company,cases:[],miss:miss2,minDays:days,noRenew:false});
+        e2.cases.push({c:c,days:days,noRenew:noRenew,euNo:_euHit?_euHit.no:''});
+        if(days<e2.minDays) e2.minDays=days;
+        if(noRenew) e2.noRenew=true;
+      }
     }
   });
-  function arr(o){ return Object.keys(o).map(function(k){return o[k];}).sort(function(a,b){return a.minDays-b.minDays;}); }
+  // 更新不可の企業を一番上に、その中・残りは期限が近い順
+  function arr(o){ return Object.keys(o).map(function(k){return o[k];}).sort(function(a,b){ if(a.noRenew!==b.noRenew) return a.noRenew?-1:1; return a.minDays-b.minDays; }); }
   var a=arr(A), b=arr(B);
   var all={}; a.concat(b).forEach(function(e){ all[e.id]=1; });
   return {A:a,B:b,total:Object.keys(all).length};
@@ -1869,26 +1898,36 @@ function _mdSection(title, sub, list, kind){
   var h='<div style="margin:18px 0 8px;"><div style="font-size:14px;font-weight:900;color:#0f2040;">'+title+'（'+list.length+'社）</div><div style="font-size:11px;color:#64748b;margin-top:2px;">'+sub+'</div></div>';
   if(!list.length) return h+'<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;font-size:12px;color:#15803d;font-weight:700;">該当する企業はありません</div>';
   list.forEach(function(e){
-    h+='<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid '+(kind==='ko'?'#c2410c':'#1d4ed8')+';border-radius:10px;padding:12px 14px;margin-bottom:10px;">';
+    h+='<div style="background:'+(e.noRenew?'#fffafa':'#fff')+';border:1px solid '+(e.noRenew?'#fecaca':'#e2e8f0')+';border-left:4px solid '+(e.noRenew?'#b91c1c':(kind==='ko'?'#c2410c':'#1d4ed8'))+';border-radius:10px;padding:12px 14px;margin-bottom:10px;">';
     var _kb=(kind==='ko')?'<span style="flex-shrink:0;font-size:11px;font-weight:900;color:#fff;background:#c2410c;border-radius:6px;padding:3px 9px;">国交省：企業書類未提出</span>':'<span style="flex-shrink:0;font-size:11px;font-weight:900;color:#fff;background:#1d4ed8;border-radius:6px;padding:3px 9px;">入管書類 未提出</span>';
-    h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+_kb+'<div style="font-size:14px;font-weight:900;color:#0f2040;flex:1;min-width:160px;">'+esc(e.name||e.id)+'</div>'
+    // 企業名の横：国交省書類の提出期限（人材のうち一番早いもの）
+    var _dueH='';
+    if(kind==='ko'&&e.due){
+      _dueH='<span style="font-size:11.5px;color:#475569;font-weight:700;white-space:nowrap;">国交省書類提出期限 '+_mdFmtD(e.due.date)+'</span>'
+        +(e.due.left>=0
+          ? '<span style="font-size:11px;font-weight:800;color:'+(e.due.left<=14?'#dc2626':'#c2410c')+';background:'+(e.due.left<=14?'#fef2f2':'#fff7ed')+';border-radius:999px;padding:2px 9px;white-space:nowrap;">残り'+e.due.left+'日</span>'
+          : '<span style="font-size:11px;font-weight:800;color:#fff;background:#dc2626;border-radius:999px;padding:2px 9px;white-space:nowrap;">'+(-e.due.left)+'日超過</span>');
+    }
+    h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+_kb
+      +'<div style="font-size:14px;font-weight:900;color:#0f2040;">'+esc(e.name||e.id)+'</div>'+_dueH
+      +'<div style="flex:1;"></div>'
+      +(e.noRenew?'<span style="flex-shrink:0;font-size:12px;font-weight:900;color:#fff;background:#b91c1c;border-radius:6px;padding:4px 12px;letter-spacing:.5px;">更新不可</span>':'')
       +(_gpIsGpOrg()?'<button onclick="openGpCoModal(\''+esc(e.id)+'\')" style="background:#eef4fd;color:#1c3d6e;border:1px solid #b9d0ee;border-radius:6px;font-size:11px;font-weight:800;padding:4px 10px;cursor:pointer;">企業詳細</button>':'')+'</div>';
+    if(kind==='ko'&&e.due&&e.due.left<0&&!e.noRenew){
+      h+='<div style="font-size:11.5px;font-weight:800;color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:4px 10px;margin-top:8px;">特定活動更新または更新不可のため確認必要</div>';
+    }
     h+='<div style="font-size:11px;color:#64748b;font-weight:700;margin:8px 0 4px;">未提出の'+(kind==='ko'?'国交省':'入管')+'書類（'+e.miss.length+'件）</div><div style="display:flex;flex-wrap:wrap;gap:5px;">';
     e.miss.forEach(function(n){ h+='<span style="font-size:11px;font-weight:700;color:#9a3412;background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:2px 8px;">'+esc(n)+'</span>'; });
     h+='</div><div style="font-size:11px;color:#64748b;font-weight:700;margin:10px 0 2px;">対象の人材（'+e.cases.length+'名）</div>';
-    e.cases.sort(function(x,y){return x.days-y.days;}).forEach(function(x){
+    e.cases.sort(function(x,y){ if(x.noRenew!==y.noRenew) return x.noRenew?-1:1; return x.days-y.days; }).forEach(function(x){
       var c=x.c;
       h+='<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid #f1f5f9;flex-wrap:wrap;">'
         +'<div style="flex:1;min-width:180px;font-size:12px;color:#0f2040;font-weight:600;">'+esc(c.applicant||c.name||'')+'<span style="font-size:10.5px;color:#94a3b8;font-weight:500;">　'+esc(c.name||'')+'</span></div>'
+        +(x.noRenew?'<span style="font-size:10.5px;font-weight:900;color:#fff;background:#b91c1c;border-radius:5px;padding:1px 8px;">更新不可</span>':'')
         +'<span style="font-size:11px;color:#475569;">在留期限 '+esc(String(c.expire).slice(0,10).replace(/-/g,'/'))+'</span>'
-        +(kind==='ko'&&x.due
-          ? '<span style="font-size:11px;color:#475569;">提出期限 '+x.due.date.getFullYear()+'/'+(x.due.date.getMonth()+1)+'/'+x.due.date.getDate()+'</span>'
-            +(x.due.left>=0
-              ? '<span style="font-size:10.5px;font-weight:800;color:'+(x.due.left<=14?'#dc2626':'#c2410c')+';background:'+(x.due.left<=14?'#fef2f2':'#fff7ed')+';border-radius:999px;padding:1px 8px;white-space:nowrap;">残り'+x.due.left+'日</span>'
-              : '<span style="font-size:10.5px;font-weight:800;color:#fff;background:#dc2626;border-radius:999px;padding:1px 8px;white-space:nowrap;">'+(-x.due.left)+'日超過</span>')
-          : _mdDaysBadge(x.days))
+        +(kind==='ko'?'':_mdDaysBadge(x.days))
         +'<button onclick="openPersonModal(\''+esc(c.id)+'\')" style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;font-size:10.5px;font-weight:800;padding:3px 9px;cursor:pointer;">人材詳細</button></div>'
-        +(kind==='ko'&&x.due&&x.due.left<0?'<div style="font-size:11.5px;font-weight:800;color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:4px 10px;margin:0 0 6px;">特定活動更新または更新不可のため確認必要</div>':'');
+        +(x.noRenew?'<div style="font-size:11px;font-weight:700;color:#b91c1c;margin:0 0 6px;">前回の申請（受付番号 '+esc(x.euNo)+'）で特定活動を更新済みのため、これ以上更新できません</div>':'');
     });
     h+='</div>';
   });
@@ -1899,7 +1938,7 @@ function renderMissingDocs(){
   var main=document.getElementById('main'); if(!main) return;
   var md=_mdCollect();
   var h='<div style="font-size:16px;font-weight:900;margin-bottom:4px;">⚠️書類未提出企業</div>'
-    +'<div style="font-size:11.5px;color:#64748b;">国交省申請の対象（建設）で希望在留資格が特定技能1号の案件のうち、在留期限が近いのに企業の書類がそろっていない企業です。在留期限が近い順に並んでいます。</div>';
+    +'<div style="font-size:11.5px;color:#64748b;">国交省申請の対象（建設）で希望在留資格が特定技能1号の案件のうち、在留期限が近いのに企業の書類がそろっていない企業です（依頼日が入っている案件のみ。前回の申請で特定活動を更新済みの「更新不可」の人材は依頼日がなくても表示し、一番上に並べます）。そのあとは期限が近い順です。</div>';
   h+=_mdSection('① 国交省 申請前','国交省の申請前 × 在留期限まで4ヶ月以内 → 企業の国交省書類で未提出のもの（大房行政書士法人が作成する6・8・12・15は除く）。提出期限は在留期限の3ヶ月前です。過ぎた場合は特定活動更新または更新不可のため確認が必要です',md.A,'ko');
   h+=_mdSection('② 国交省 申請済み','国交省は申請済み × 在留期限まで2ヶ月以内 → 企業の入管書類で未提出のもの',md.B,'ny');
   main.innerHTML='<div style="padding:4px 2px 30px;max-width:980px;">'+h+'</div>';
