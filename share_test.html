@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261029.test07: 「⚠️書類未提出企業」の依頼日の条件を、案件の受領日（request_date）ではなく企業の国交省書類の依頼日（co_doc_check の req::）が入っているかで判定するよう修正。 -->
 <!-- ver.20261029.test06: 国交省書類リスト（required_docs_co_kokko）を全機関で案シスの設定から読み込むよう修正。これまでGP以外の機関では初期値の「16. 技能者ID」まで国交省書類として扱われ、書類未提出企業などに出ていた。 -->
 <!-- ver.20261029.test05: 「⚠️書類未提出企業」を変更。依頼日（request_date）が入っている案件のみ対象。国交省書類の提出期限（残り/超過）を企業名の横に移動。前回の申請の受付番号が「EU」（特定活動更新済み）の人材は「更新不可」として依頼日がなくても表示し、企業カード右上に「更新不可」を表示して一番上に並べる。 -->
 <!-- ver.20261029.test04: 「⚠️書類未提出企業」を変更。①の対象を在留期限まで4ヶ月以内（国交省申請前・国交省書類未提出）に変更し、人材ごとに提出期限（在留期限の3ヶ月前）と「残り○日／○日超過」を表示、超過時は「特定活動更新または更新不可のため確認必要」と表示。人材行の国交省ステータス表示を外し、企業カード左上に「国交省：企業書類未提出」（オレンジ）／「入管書類 未提出」（青）のラベルを追加。サイドバーの件数は0件でも常に表示（1件以上は赤）。 -->
@@ -683,7 +684,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261029.test06</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261029.test07</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1852,14 +1853,15 @@ function _mdCollect(){
     var _oa=c.otherAgencies||{}; if(!_oa.kokkoSho || _oa.kokkoSho_fuyo) return;  // 国交省申請の対象案件（建設）のみ
     var _euHit=(eu[_mdBaseName(c.applicant)]||[]).filter(function(x){ return x.id!==c.id; })[0]||null;
     var noRenew=!!_euHit;
-    if(!_hasV(c.requestDate) && !noRenew) return;  // 依頼日（案件受領日）が入っている案件のみ（更新不可の人材は依頼日がなくても表示）
     var days=_mdDays(c.expire); if(days===null) return;
     var ks=_mdKokko(c); var applied=_KS_KOKKO_APPLIED_G.indexOf(ks)>=0;
     var map=coDocsAll[c.companyId]||{};
     if(!applied && days<=_mdMonthDays(4)){  // 在留期限まで4ヶ月以内（国交省 申請前）
       var ko=requiredDocsCoKokko.filter(function(n){ return !/^(6|8|12|15)[.．]/.test(String(n).trim()); });
       var miss=_mdMissing(map, ko);
-      if(miss.length){
+      // 書類の依頼日（案シスの「依頼」日付＝req）が入っている企業のみ（更新不可の人材は依頼日がなくても表示）
+      var _koReq=ko.some(function(n){ var d=map[n]||{}; return /^\d{4}-\d{2}-\d{2}/.test(String(d.req||d.req0||'')); });
+      if(miss.length && (_koReq||noRenew)){
         var _du=_mdKoDue(c.expire);
         var e=A[c.companyId]||(A[c.companyId]={id:c.companyId,name:c.company,cases:[],miss:miss,minDays:_du.left,due:_du,noRenew:false});
         e.cases.push({c:c,days:_du.left,due:_du,noRenew:noRenew,euNo:_euHit?_euHit.no:''});
@@ -1939,7 +1941,7 @@ function renderMissingDocs(){
   var main=document.getElementById('main'); if(!main) return;
   var md=_mdCollect();
   var h='<div style="font-size:16px;font-weight:900;margin-bottom:4px;">⚠️書類未提出企業</div>'
-    +'<div style="font-size:11.5px;color:#64748b;">国交省申請の対象（建設）で希望在留資格が特定技能1号の案件のうち、在留期限が近いのに企業の書類がそろっていない企業です（依頼日が入っている案件のみ。前回の申請で特定活動を更新済みの「更新不可」の人材は依頼日がなくても表示し、一番上に並べます）。そのあとは期限が近い順です。</div>';
+    +'<div style="font-size:11.5px;color:#64748b;">国交省申請の対象（建設）で希望在留資格が特定技能1号の案件のうち、在留期限が近いのに企業の書類がそろっていない企業です（書類の依頼日が入っている企業のみ。前回の申請で特定活動を更新済みの「更新不可」の人材は依頼日がなくても表示し、一番上に並べます）。そのあとは期限が近い順です。</div>';
   h+=_mdSection('① 国交省 申請前','国交省の申請前 × 在留期限まで4ヶ月以内 → 企業の国交省書類で未提出のもの（大房行政書士法人が作成する6・8・12・15は除く）。提出期限は在留期限の3ヶ月前です。過ぎた場合は特定活動更新または更新不可のため確認が必要です',md.A,'ko');
   h+=_mdSection('② 国交省 申請済み','国交省は申請済み × 在留期限まで2ヶ月以内 → 企業の入管書類で未提出のもの',md.B,'ny');
   main.innerHTML='<div style="padding:4px 2px 30px;max-width:980px;">'+h+'</div>';
