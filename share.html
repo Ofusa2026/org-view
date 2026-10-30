@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261030.03: 「送信した依頼」で、大房が受け付ける前（確認待ち）の依頼を ✏️編集・🗑取り下げ できるように（update_org_intake／withdraw_org_intake。DB側で「この機関の依頼か・全部が確認待ちか」を確かめる。編集は新規案件依頼と同じ画面に送った内容を入れて開く。人材の追加・削除も可）。 -->
 <!-- ver.20261030.02: 協議会案内「はじめに」の文言を整理（簡潔化）。 -->
 <!-- ver.20261030.01: サイドバーに「協議会案内」タブを追加。登録支援機関/所属機関それぞれの加入フロー、19分野をステップ表記（工業製品製造業・建設は省略、リネン/物流倉庫/資源循環は新設・準備中）。登録支援機関タブは加入が必要な6分野のみ表示。 -->
 <!-- ver.20261029.07: 「⚠️書類未提出企業」の依頼日の条件を、案件の受領日（request_date）ではなく企業の国交省書類の依頼日（co_doc_check の req::）が入っているかで判定するよう修正。 -->
@@ -642,7 +643,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261029.07</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261030.03</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1309,6 +1310,17 @@ var NOTIF_LABELS={'申請済(番号待)':'申請済（番号待ち）','受付�
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20261030.03',
+    date: '2026-10-30',
+    audience: 'all',
+    notify: true,
+    items: [
+      '✏️ <b>「送信した依頼」</b>で、大房がまだ確認していない（<b>確認待ち</b>）の依頼を、あとから<b>編集</b>できるようになりました。入力をまちがえたときは、依頼の右上の「✏️ 編集」から直せます（人材の追加・削除もできます）。',
+      '🗑 重複して送ってしまった依頼は、「🗑 取り下げ」で取り消せます。',
+      '※ 大房が受け付けたあと（登録済み）は変更できません。変更がある場合は、これまでどおり大房へご連絡ください。'
+    ]
+  },
   {
     version: 'ver.20261029.02',
     date: '2026-10-29',
@@ -5231,7 +5243,7 @@ function renderIntakes(){
   var fb=document.getElementById('filter-bar'); if(fb) fb.innerHTML='';
   var h='<div style="padding:4px 2px 14px;">';
   h+='<div style="font-size:17px;font-weight:900;color:#0f2040;">送信した依頼</div>';
-  h+='<div style="font-size:11.5px;color:#64748b;margin-top:4px;line-height:1.6;">OFUSAに送信した新規案件依頼の受付状況です。<b>確認待ち</b>＝OFUSAが確認中／<b>登録済み</b>＝正式案件として登録済み（「進行中」「すべて」タブに表示）／<b>差し戻し</b>＝内容をご確認のうえOFUSAへご連絡ください。</div>';
+  h+='<div style="font-size:11.5px;color:#64748b;margin-top:4px;line-height:1.6;">OFUSAに送信した新規案件依頼の受付状況です。<b>確認待ち</b>＝OFUSAが確認中／<b>登録済み</b>＝正式案件として登録済み（「進行中」「すべて」タブに表示）／<b>差し戻し</b>＝内容をご確認のうえOFUSAへご連絡ください。<br><b>確認待ち</b>の依頼は、右上の「✏️ 編集」で直したり、「🗑 取り下げ」で取り消したりできます（OFUSAが受け付けると変更できなくなります）。</div>';
   h+='</div>';
   if(!allIntakes || !allIntakes.length){
     h+='<div class="empty">送信した依頼はありません</div>';
@@ -5278,6 +5290,8 @@ function renderIntakes(){
     _intakeGroupCache[gi]=g; // ver.20260723.test01: 一覧からのLINEテキストコピー用
     var stKeys=Object.keys(g.statuses);
     var badges=stKeys.map(function(s){ return _intakeStatusBadge(s)+(stKeys.length>1?'<span style="font-size:10px;color:#94a3b8;margin-left:2px;">×'+g.statuses[s]+'</span>':''); }).join(' ');
+    var _canEdit=_intakeGroupEditable(g), _edAt='';   // ver.20261030.03: 確認待ちだけ編集・取り下げ
+    g.rows.forEach(function(r){ if(r.org_edited_at && String(r.org_edited_at)>_edAt) _edAt=String(r.org_edited_at); });
     h+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin-bottom:12px;">';
     h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">';
     h+='<div style="min-width:0;"><div style="font-size:14px;font-weight:800;color:#0f2040;">'+esc(g.case_name_now||g.case_name||'(案件名なし)')+'</div>';
@@ -5286,8 +5300,11 @@ function renderIntakes(){
       +'<div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;">'
       +'<button onclick="copyIntakeLineText('+gi+',this)" title="この依頼のLINE報告用テキストをコピーします" style="padding:3px 11px;border-radius:999px;font-size:11px;font-weight:800;background:#fff;color:#15803d;border:1px solid #86efac;cursor:pointer;white-space:nowrap;line-height:1.5;">テキスト</button>'
       +'<button onclick="copyIntakeMailText('+gi+',this)" title="企業様へ大房行政書士法人をご紹介する初回メールの文案をコピーします" style="padding:3px 11px;border-radius:999px;font-size:11px;font-weight:800;background:#fff;color:#1d4ed8;border:1px solid #93c5fd;cursor:pointer;white-space:nowrap;line-height:1.5;">初回メール</button>'
+      +(_canEdit?('<button onclick="openIntakeEditModal('+gi+')" title="大房が確認する前なので、送った内容を直せます（人材の追加・削除もできます）" style="padding:3px 11px;border-radius:999px;font-size:11px;font-weight:800;background:#fff;color:#b45309;border:1px solid #fcd34d;cursor:pointer;white-space:nowrap;line-height:1.5;">✏️ 編集</button>'
+        +'<button onclick="withdrawIntakeGroup('+gi+',this)" title="重複して送ったときなどに、この依頼を取り下げます" style="padding:3px 11px;border-radius:999px;font-size:11px;font-weight:800;background:#fff;color:#b91c1c;border:1px solid #fecaca;cursor:pointer;white-space:nowrap;line-height:1.5;">🗑 取り下げ</button>'):'')
       +badges+'</div>'
-      +'<div style="font-size:10.5px;color:#94a3b8;margin-top:4px;">送信: '+_intakeFmtDt(g.received_at)+'</div></div>';
+      +'<div style="font-size:10.5px;color:#94a3b8;margin-top:4px;">送信: '+_intakeFmtDt(g.received_at)+'</div>'
+      +(_edAt?('<div style="font-size:10.5px;color:#b45309;margin-top:2px;font-weight:700;">✏️ 編集: '+_intakeFmtDt(_edAt)+'</div>'):'')+'</div>';
     h+='</div>';
     // ver.20261001.01: 依頼時に入力した宛先(TO/CC)も表示
     var _mailParts=[];
@@ -5318,6 +5335,124 @@ function renderIntakes(){
     h+='</div>';
   });
   document.getElementById('main').innerHTML=h;
+}
+// ===== ver.20261030.03: 「送信した依頼」の編集・取り下げ（大房がまだ受け付けていない＝確認待ちの依頼だけ）=====
+//   編集＝新規案件依頼と同じ画面に、送った内容を入れて開く → 確認 → update_org_intake（人数が増えれば足し、減れば消す）
+//   取り下げ＝withdraw_org_intake（重複して送ったときなど）。どちらも DB 側で「この機関の依頼か・全部が確認待ちか」を確かめる
+window._ncEditIds=null;
+function updateOrgIntake(ids, records){ return sbRpc('update_org_intake',{p_token:currentToken,p_pass:(currentPass||null),p_ids:ids,p_records:records}); }
+function _intakeGroupEditable(g){ return !!(g && g.rows && g.rows.length && g.rows.every(function(r){ return r.status==='pending' && r.id; })); }
+function _ncIntakeErrText(res, kind){   // kind: 'new'＝新規 ／ 'edit'＝編集 ／ 'withdraw'＝取り下げ（true は 'edit'）
+  if(kind===true) kind='edit'; if(!kind) kind='new';
+  var act=(kind==='withdraw')?'取り下げ':(kind==='edit'?'編集':'登録');
+  var e=(res&&res.error)||'', m=(res&&res.message)||'';
+  if(e==='not_pending') return '大房が取り込んだ可能性があります。'+act+'できませんでした。\n変更がある場合は、大房へご連絡ください。';
+  if(e==='not_found') return 'この依頼が見つかりませんでした（すでに取り下げられている可能性があります）。'+act+'できませんでした。';
+  if(e==='forbidden') return 'この依頼は'+act+'できません。';
+  if(e==='invalid_pass' || e==='invalid_token') return 'ログインの有効期限が切れました。画面を再読み込みしてから、もう一度お試しください。';
+  if(!res) return (kind==='new')?'登録に失敗しました（通信できませんでした）':('通信が切れたため、'+act+'できたかどうか確かめられませんでした。「送信した依頼」の一覧で内容を確かめてください。');
+  return act+'に失敗しました: '+(e||m||'unknown');
+}
+async function _reloadIntakes(){
+  try{ var idata=await sbRpc('get_org_intakes',{p_token:currentToken,p_pass:(currentPass||null)}); if(idata && Array.isArray(idata.intakes)) allIntakes=idata.intakes; }catch(e){ console.warn('[reload intakes]', e); }
+  try{ if(currentGroup==='intakes') renderIntakes(); }catch(e){}
+}
+function _ncSetErrHead(isEdit){   // 送信に失敗したときの見出し（編集のときは「編集できませんでした」）
+  var t=document.querySelector('#ncBigError .nc-big-error-title'), sb=document.querySelector('#ncBigError .nc-big-success-sub');
+  if(t){ if(!t.dataset.def) t.dataset.def=t.textContent; t.textContent=isEdit?'編集できませんでした':t.dataset.def; }
+  if(sb){ if(!sb.dataset.def) sb.dataset.def=sb.innerHTML; sb.innerHTML=isEdit?'「送信した依頼」の一覧を、最新の状態に読み直しました。':sb.dataset.def; }
+}
+function _ncSetEditUi(on){
+  var t=document.querySelector('#newCaseModalBg .nc-modal-title'); if(t) t.textContent=on?'✏️ 送信した依頼を編集':'＋ 新規案件依頼';
+  var b=document.getElementById('ncSubmitBtn'); if(b) b.textContent=on?'変更を確認する':'登録する';
+  var cs=document.getElementById('ncConfirmSendBtn'); if(cs) cs.textContent=on?'変更を送信する':'送信する';
+  var fa=document.getElementById('ncFormArea'), bn=document.getElementById('ncEditBanner');
+  if(on && fa && !bn){ bn=document.createElement('div'); bn.id='ncEditBanner'; fa.insertBefore(bn, fa.firstChild); }
+  if(bn){
+    bn.style.cssText=on?'margin:0 0 12px;padding:9px 12px;border-radius:8px;background:#fffbeb;border:1px solid #fcd34d;color:#92400e;font-size:12px;line-height:1.7;':'display:none;';
+    bn.innerHTML=on?'<b>✏️ 送信した依頼を編集しています。</b>直したい項目を変えて「変更を確認する」を押してください。<br>大房が受け付ける前（確認待ち）の間だけ変更できます。人材の追加・削除もできます。':'';
+  }
+}
+function _ncSetSel(el, v){   // 選択肢に無い値（前の書き方）も消さずに選べるようにする
+  if(!el) return; v=(v==null)?'':String(v);
+  if(v && !Array.prototype.some.call(el.options, function(o){ return o.value===v; })){ var o=document.createElement('option'); o.value=v; o.textContent=v; el.appendChild(o); }
+  el.value=v;
+}
+async function openIntakeEditModal(gi){
+  var g0=_intakeGroupCache[gi]; if(!g0) return;
+  var ids=g0.rows.map(function(r){ return r.id; });
+  await _reloadIntakes();   // 開く前に最新を読み直す（そのあいだに大房が取り込んでいないか）
+  var rows=ids.map(function(id){ return (allIntakes||[]).find(function(x){ return x.id===id; }); });
+  if(rows.some(function(r){ return !r; })){ alert('この依頼は見つかりませんでした（すでに取り下げられている可能性があります）。編集できませんでした。'); return; }
+  var g=Object.assign({}, g0, {rows:rows});
+  if(!_intakeGroupEditable(g)){ alert('大房が取り込んだ可能性があります。編集できませんでした。\n変更がある場合は、大房へご連絡ください。'); return; }
+  openNewCaseModal();
+  window._ncEditIds=g.rows.map(function(r){ return r.id; });
+  _ncSetEditUi(true);
+  try{ _ncPrefillFromGroup(g); }catch(e){ console.error('[intake edit prefill]', e); showNcError('送信した内容を読み込めませんでした: '+((e&&e.message)||e)); }
+}
+function _ncPrefillFromGroup(g){
+  var rows=g.rows||[], r0=rows[0]||{};
+  var $=function(id){ return document.getElementById(id); };
+  if($('nc_caseName')) $('nc_caseName').value=r0.case_name||g.case_name||'';
+  _ncSetSel($('nc_appType'), r0.app_type||'');
+  if($('nc_company')) $('nc_company').value=r0.company||'';
+  _ncFillAddrs('nc_toRows','to', r0.to_email||''); _ncFillAddrs('nc_ccRows','cc', r0.cc_email||'');
+  // 希望在留資格（「その他: ○○」は その他＋詳細）
+  var ds=String(r0.desired_status||''), dm=ds.match(/^その他[:：]\s*([\s\S]*)$/);
+  _ncSetSel($('nc_desiredStatus'), dm?'その他':ds);
+  _onDesiredStatusChange();
+  if(dm && $('nc_desiredStatusNote')) $('nc_desiredStatusNote').value=dm[1]||'';
+  // 備考（先頭の【分野：○○】は分野）
+  var note=''; for(var i=0;i<rows.length;i++){ var n=String(rows[i].other_support_note||''); if(n.trim()){ note=n; break; } }
+  var fm=note.match(/^【分野：([^】]*)】\n?/); if(fm){ note=note.slice(fm[0].length); if($('nc_applicantField')) _ncSetSel($('nc_applicantField'), fm[1]); }
+  if($('nc_remarks')) $('nc_remarks').value=note;
+  document.querySelectorAll('input[name="nc_acceptExp"]').forEach(function(x){ x.checked=(x.value===(r0.accept_exp||'')); });
+  if($('nc_supportFee')) $('nc_supportFee').value=(r0.support_fee==null?'':String(r0.support_fee));
+  if($('nc_referralFee')) $('nc_referralFee').value=(r0.intro_fee==null?'':String(r0.intro_fee));
+  if($('nc_aidemBranch')){ _ncSetSel($('nc_aidemBranch'), r0.aidem_branch||''); try{ _onAidemBranchChange(); }catch(e){} }
+  if($('nc_salesPartner')) _ncSetSel($('nc_salesPartner'), r0.sales_partner||'');
+  var cst=String(r0.client_staff||'').split(/[、,]/).map(function(x){ return x.trim(); }).filter(Boolean);
+  if($('nc_clientStaff')) $('nc_clientStaff').value=cst[0]||''; if($('nc_clientStaff2')) $('nc_clientStaff2').value=cst[1]||'';
+  // 人材（1人＝1行）
+  $('ncJinzaiBody').innerHTML=''; _ncJinzaiRows=0;
+  rows.forEach(function(r){
+    addJinzaiRow();
+    var trs=document.querySelectorAll('#ncJinzaiBody > tr:not([id$="_noteRow"])'), tr=trs[trs.length-1]; if(!tr) return;
+    var q=function(c){ return tr.querySelector(c); };
+    tr.dataset.intakeId=r.id||'';   // 元の依頼の行（送るときに同じ行へ戻す。人を消したり並べ替えたりしても取り違えないように）
+    if(q('.nc-j-name')) q('.nc-j-name').value=r.applicant||'';
+    _ncSetSel(q('.nc-j-nat'), r.nationality||'');
+    var cur=String(r.residence_status||''), cm=cur.match(/^その他[:：]\s*([\s\S]*)$/);
+    _ncSetSel(q('.nc-j-current'), cm?'その他':cur);
+    if(cm){ _onJinzaiCurrentStatusChange(q('.nc-j-current'), tr.id+'_noteRow'); var ni=document.querySelector('#'+tr.id+'_noteRow .nc-j-current-note'); if(ni) ni.value=cm[1]||''; }
+    if(q('.nc-j-expire')) q('.nc-j-expire').value=String(r.expire||'').slice(0,10);
+    _ncSetSel(q('.nc-j-curperiod'), r.current_stay_period||'');
+    _ncSetSel(q('.nc-j-hoped'), r.hoped_stay_period||'');
+    var dmv=r.delivery_method; _ncSetSel(q('.nc-j-uke'), (dmv==='window'||dmv==='窓口受取')?'窓口受取':((dmv==='email'||dmv==='メール交付')?'メール交付':'郵送交付'));
+    if(q('.nc-j-recommend')) q('.nc-j-recommend').checked=(r.recommend_letter_required===true||r.recommend_letter_required==='true');
+  });
+  if(!rows.length) addJinzaiRow();
+  // 送り出し機関
+  try{ _ncUpdateSenddashiVisibility(); }catch(e){}
+  var so=r0.senddashi_org, sp=r0.senddashi_payment;
+  try{ if(typeof so==='string') so=JSON.parse(so); }catch(e){ so=null; } try{ if(typeof sp==='string') sp=JSON.parse(sp); }catch(e){ sp=null; }
+  if((so&&so.not_used)||(sp&&sp.not_used)){ window._ncSenddashiNotUsed=true; try{ _ncApplyNotUsedUI(); }catch(e){} }
+  else {
+    if(so){ if($('nc_senddashiName')) $('nc_senddashiName').value=so.name||''; if($('nc_senddashiCountry')) $('nc_senddashiCountry').value=so.country||''; if($('nc_senddashiAddress')) $('nc_senddashiAddress').value=so.address||''; if($('nc_senddashiTel')) $('nc_senddashiTel').value=so.tel||''; }
+    if(sp){ if($('nc_senddashiPayer')) _ncSetSel($('nc_senddashiPayer'), sp.payer||''); if($('nc_senddashiAmount')) $('nc_senddashiAmount').value=(sp.amount==null?'':String(sp.amount)); }
+  }
+  _updateHopedOptions(); _ncApplyUkeRule();
+}
+async function withdrawIntakeGroup(gi, btn){
+  var g=_intakeGroupCache[gi];
+  if(!_intakeGroupEditable(g)){ alert('大房が取り込んだ可能性があります。取り下げできませんでした。\n変更がある場合は、大房へご連絡ください。'); return; }
+  var names=g.rows.map(function(r){ return r.applicant||'（氏名なし）'; });
+  if(!confirm('この依頼を取り下げますか？\n\n案件名：'+(g.case_name||'')+'\n所属機関：'+(g.company||'')+'\n人材：'+names.join('、')+'（'+names.length+'名）\n\n取り下げると大房には届かなくなり、元に戻せません。\n（重複して送ってしまったときなどにお使いください）')) return;
+  if(btn){ btn.disabled=true; btn.textContent='取り下げ中…'; }
+  var res=null; try{ res=await sbRpc('withdraw_org_intake',{p_token:currentToken,p_pass:(currentPass||null),p_ids:g.rows.map(function(r){ return r.id; })}); }catch(e){ console.warn('[withdraw intake]', e); }
+  if(!res || res.error || res.code){ alert(_ncIntakeErrText(res, 'withdraw')); }
+  await _reloadIntakes();
 }
 // ===== ver.20260723.test01: 「送信した依頼」一覧からLINE報告用テキストをコピー =====
 var _intakeGroupCache={};
@@ -8396,6 +8531,7 @@ function _hfConfirm(){
   if(typeof cb==='function') cb();
 }
 function openNewCaseModal(){
+  window._ncEditIds=null; try{ _ncSetEditUi(false); _ncSetErrHead(false); }catch(_){}   // ver.20261030.03: 編集モードを外す（編集は openIntakeEditModal が開いたあとに入れる）
   // 初期化
   // ver.20260525.03: 「使用する支援事業所」は拠点から自動マッピングするため削除
   var brEl=document.getElementById('nc_aidemBranch');
@@ -8470,6 +8606,7 @@ function openNewCaseModal(){
 
 function closeNewCaseModal(){
   document.getElementById('newCaseModalBg').classList.remove('open');
+  window._ncEditIds=null;   // ver.20261030.03
 }
 
 // ===== ver.20261027.test01: 送り出し機関機能 =====
@@ -9010,7 +9147,7 @@ async function submitNewCase(){
     var _sb=document.getElementById('ncSubmitBtn');
     if(_sb){ _sb.disabled=false; _sb.style.display=''; }
     var _csb=document.getElementById('ncConfirmSendBtn');
-    if(_csb){ _csb.disabled=false; _csb.textContent='送信する'; }
+    if(_csb){ _csb.disabled=false; _csb.textContent=window._ncEditIds?'変更を送信する':'送信する'; }   // ver.20261030.03
     var _cbg=document.getElementById('ncConfirmModalBg');
     if(_cbg){ _cbg.classList.remove('open'); }
   }catch(_){}
@@ -9158,6 +9295,7 @@ async function _submitNewCaseInner(){
       return;
     }
     jinzaiList.push({
+      _iid: (rowEl.dataset && rowEl.dataset.intakeId) || '',   // ver.20261030.03: 編集のとき、元の依頼の行
       name: nm, nationality: nat, expire: exp, ukeMethod: uke, recommendLetter: rec,
       currentStatus: cur, currentStatusNote: curNote,
       hopedStayPeriod: hopedStayPeriod,
@@ -9208,7 +9346,7 @@ function closeConfirmModal(){
   var sendBtn = document.getElementById('ncConfirmSendBtn');
   if(sendBtn){
     sendBtn.disabled = false;
-    sendBtn.textContent = '送信する';
+    sendBtn.textContent = window._ncEditIds ? '変更を送信する' : '送信する';   // ver.20261030.03
   }
 }
 
@@ -9372,10 +9510,20 @@ async function executeSubmit(){
       };
     });
 
-    var _res = await createOrgIntake(records);
-    if(!_res || _res.error){
-      console.error('[create_org_intake failed]', _res);
-      throw new Error('登録に失敗しました: ' + (_res && _res.error ? _res.error : 'unknown'));
+    // ver.20261030.03: 「送信した依頼」から編集しているときは、送った行を直す（大房が受け付ける前だけ。DB側で確かめる）
+    var _editIds = (Array.isArray(window._ncEditIds) && window._ncEditIds.length) ? window._ncEditIds.slice() : null;
+    var _upIds = _editIds, _upRecs = records;
+    if(_editIds){   // 元の行に同じ人を戻す（人を消したときに、ほかの人の行を上書きしないように）。足した人は空いた行か新しい行へ
+      var _used={}, _mi=[], _mr=[], _nr=[];
+      p.jinzaiList.forEach(function(j,k){ if(j._iid && _editIds.indexOf(j._iid)>=0 && !_used[j._iid]){ _used[j._iid]=1; _mi.push(j._iid); _mr.push(records[k]); } else _nr.push(records[k]); });
+      _upIds = _mi.concat(_editIds.filter(function(id){ return !_used[id]; }));
+      _upRecs = _mr.concat(_nr);
+    }
+    var _res = _editIds ? await updateOrgIntake(_upIds, _upRecs) : await createOrgIntake(records);
+    if(!_res || _res.error || _res.code){
+      console.error(_editIds ? '[update_org_intake failed]' : '[create_org_intake failed]', _res);
+      if(_editIds){ try{ _reloadIntakes(); }catch(_){ } }
+      var _er=new Error(_ncIntakeErrText(_res, _editIds?'edit':'new')); _er.ncEdit=!!_editIds; throw _er;
     }
 
     // ver.20260617: リストに無い案件担当者は自動で「案件担当者リスト（新規案件依頼用）」へ追加
@@ -9389,7 +9537,7 @@ async function executeSubmit(){
     document.getElementById('ncBigError').classList.remove('show');
     var bigSuc = document.getElementById('ncBigSuccess');
     document.getElementById('ncBigSuccessText').innerHTML =
-      '<strong>' + p.jinzaiList.length + '名</strong> の案件依頼を送信しました。<br>' +
+      '<strong>' + p.jinzaiList.length + '名</strong> の' + (_editIds ? '依頼内容を変更しました' : '案件依頼を送信しました') + '。<br>' +
       '案件名：' + esc(p.caseName);
     // ver.20260527.16: LINE報告用テキストを生成してセット
     var lineText = _buildLineReportText(p);
@@ -9403,12 +9551,16 @@ async function executeSubmit(){
     var cancelBtn = document.querySelector('#newCaseModalBg .nc-cancel-btn');
     if(cancelBtn) cancelBtn.textContent = '閉じる';
     _ncPendingPayload = null;
+    window._ncEditIds = null;   // ver.20261030.03
+    try{ _reloadIntakes(); }catch(_){}   // 「送信した依頼」をすぐ最新に
   }catch(e){
     closeConfirmModal();
     document.getElementById('ncFormArea').style.display = 'none';
     document.getElementById('ncBigSuccess').classList.remove('show');
     var bigErr = document.getElementById('ncBigError');
     document.getElementById('ncBigErrorText').textContent = e.message;
+    document.getElementById('ncBigErrorText').style.whiteSpace = 'pre-line';
+    _ncSetErrHead(!!(e && e.ncEdit));   // ver.20261030.03: 編集のときは「編集できませんでした」
     bigErr.classList.add('show');
     // 再試行できるよう「閉じる→もう一度」に
     document.getElementById('ncSubmitBtn').style.display = 'none';
@@ -9416,7 +9568,7 @@ async function executeSubmit(){
     if(cancelBtn2) cancelBtn2.textContent = '閉じる';
     // 確認モーダルのボタンを戻す
     sendBtn.disabled = false;
-    sendBtn.textContent = '送信する';
+    sendBtn.textContent = window._ncEditIds ? '変更を送信する' : '送信する';
   }
 }
 
