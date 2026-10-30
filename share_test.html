@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261030.test20: 協議会案内：造船（所属機関）は様式第1号・第7号に加えて添付書類（登記事項証明書・定款・造船事業者との契約書の写し・注文書等）が必要な旨とチェックリストを明記。漁業（所属機関）を公式手続きに修正（様式第1-1号/1-2号＋雇用契約書等を2号構成員へ提出→毎月15日・末日締めで大日本水産会へ→1号構成員資格証明書）。 -->
+<!-- ver.20261030.test19: 協議会案内のビルクリーニング（所属機関）を現行手続きに修正：正しい協議会ページ（blc_tokuteiginou03）、Microsoft Formsの入会申請、厚労省メール案内後に登録証明書・就業場所の書面を電子提出、構成員資格証明書はメール。入会規程はR6.6.14改正版へ。 -->
 <!-- ver.20261030.test18: 協議会案内：様式をステップ内に直付け（別枠の様式ダウンロードは廃止）。メール提出のステップに件名・文例（コピー可）を追加（航空・木材・食品の返信）。自動車整備は第2号/第1号様式（入会届出書 兼 構成員資格証明書）が受付印入りで返送＝証明書、第4号/第3号は入会後に証明書があらためて必要なときに使う旨を明記。食品の所属機関フローも様式・文例つきで個別化。 -->
 <!-- ver.20261030.test17: 協議会案内の「提出先まとめ」枠を削除（各ステップに記載済みのため。コピー用テキストからも削除）。 -->
 <!-- ver.20261030.test16: 協議会案内に分野×役割ごとの「様式ダウンロード」を追加（食品の誓約書・申請ガイド、自動車整備の協議会様式・記載例、航空の届出書、木材の入会申請書・機械設備一覧表、造船の様式第1/7/11号、介護の概要書1-2号ほか）。フローのコピーにも様式URLを含める。 -->
@@ -7322,7 +7324,7 @@ function _ncPracticeFill(){
 // ver.20261030.test04: 協議会案内（登録支援機関／所属機関それぞれ・16分野をステップ表記）
 var KYOGIKAI_SECTORS=[
   {id:'kaigo',   name:'介護',            council:'介護分野特定技能協議会',          org:'厚生労働省（事務局：国際厚生事業団）', access:'協議会申請システム', url:'https://foreigncareworkers.net/Front', recv:'入会証明書', term:'通常2〜3週間', input:'', prep:[], submit:[], note:''},
-  {id:'biru',    name:'ビルクリーニング', council:'ビルクリーニング分野特定技能協議会', org:'厚生労働省', access:'厚生労働省ホームページ', url:'https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/blc_tokuteiginou05.html', recv:'構成員資格証明書', term:'1か月程度', input:'', prep:[], submit:[], note:''},
+  {id:'biru',    name:'ビルクリーニング', council:'ビルクリーニング分野特定技能協議会', org:'厚生労働省 生活衛生課', access:'入会申請フォーム（Microsoft Forms）', url:'https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/blc_tokuteiginou03.html', recv:'構成員資格証明書', term:'1か月程度', input:'', prep:[], submit:[], note:''},
   {id:'zosen',   name:'造船・舶用工業',  council:'造船・舶用工業分野特定技能協議会', org:'国土交通省', access:'加入申請サイト', url:'https://www.mlit.go.jp/maritime/maritime_fr5_000006.html', recv:'確認通知書（様式第2号）', term:'15営業日程度', input:'10〜20分', prep:[], submit:[], note:'加入証は郵送で届きます。'},
   {id:'jidosha', name:'自動車整備',      council:'自動車整備分野特定技能協議会',    org:'国土交通省（各地方運輸局）', access:'加入申請サイト', url:'https://www.mlit.go.jp/jidosha/jidosha_SSW.html', recv:'構成員資格証明書', term:'1〜2ヶ月', input:'10〜20分', prep:['自動車整備実務経験証明書（様式第8-3号）又は1級・2級自動車整備士技能検定合格証の写し'], submit:[], note:'各地方運輸局から郵送で「構成員資格証明書」が届きます。'},
   {id:'koku',    name:'航空',            council:'航空分野特定技能協議会',          org:'国土交通省', access:'加入申請サイト', url:'https://www.mlit.go.jp/koku/koku_fr19_000011.html', recv:'証明書（証明発行申請による）', term:'公表なし（要確認）', input:'10〜20分', prep:[], submit:[], note:'メールで入会通知書が届きます。'},
@@ -7330,7 +7332,7 @@ var KYOGIKAI_SECTORS=[
   {id:'gaishoku',name:'外食業',          council:'食品産業特定技能協議会',          org:'農林水産省', access:'加入申請フォーム', url:'https://www.contactus.maff.go.jp/j/form/shokusan/seizo/shozokukikan_kanyu.html', recv:'加入証', term:'2〜3ヶ月', input:'10〜15分', prep:['営業許可証（番号・有効期限）','産業分類コード（農水省サイトに一覧）'], submit:['外食業分野における特定技能外国人の受入れに関する誓約書（分野参考様式第14-1号）','営業許可証の写し'], note:'フォーム送信時に「必須項目が選択されていません」と出たら、ページを更新して最初からやり直してください（農水省サイトの既知不具合）。', alert:'外食業は現在、新規受入れが停止中の場合があります。経過措置の対象かどうかを事前にご確認ください（加入申請自体は受付されています）。'},
   {id:'inshoku', name:'飲食料品製造業',  council:'食品産業特定技能協議会',          org:'農林水産省', access:'加入申請フォーム', url:'https://www.contactus.maff.go.jp/j/form/shokusan/seizo/shozokukikan_kanyu.html', recv:'加入証', term:'2〜3ヶ月', input:'10〜15分', prep:['（必要な業種は）営業許可証（番号・有効期限）'], submit:['飲食料品製造業分野における特定技能外国人の受入れに関する誓約書（分野参考様式第13-1号）','（必要な業種は）営業許可証の写し'], note:'フォーム送信時に必須項目エラーが出たら、ページを更新してやり直してください（農水省サイトの既知不具合）。'},
   {id:'nogyo',   name:'農業',            council:'農業特定技能協議会',              org:'農林水産省', access:'加入申請フォーム', url:'https://www.maff.go.jp/j/keiei/foreigner/new.html', recv:'加入通知書', term:'概ね2週間', input:'', prep:[], submit:[], note:''},
-  {id:'gyogyo',  name:'漁業',            council:'漁業特定技能協議会',              org:'水産庁', access:'協議会ページ（オンライン）', url:'https://www.jfa.maff.go.jp/j/kikaku/tokuteikyogikai.html', recv:'公表なし（要確認）', term:'公表なし（要確認）', input:'', prep:[], submit:[], note:''},
+  {id:'gyogyo',  name:'漁業',            council:'漁業特定技能協議会',              org:'水産庁（共同事務局：大日本水産会）', access:'2号構成員経由', url:'https://www.jfa.maff.go.jp/j/kikaku/tokuteikyogikai.html', recv:'1号構成員資格証明書（様式第2号）', term:'公表なし（毎月15日・末日締め）', input:'', prep:[], submit:[], note:''},
   {id:'unso',    name:'自動車運送業',    council:'自動車運送業分野特定技能協議会',  org:'国土交通省（運営事務局：PwC）', access:'第1号様式フォーム', url:'https://www.mlit.go.jp/jidosha/jidosha_tk1_000038.html', recv:'構成員資格証明書', term:'約1か月', input:'', prep:[], submit:[], note:''},
   {id:'tetsudo', name:'鉄道',            council:'鉄道分野特定技能協議会',          org:'国土交通省 鉄道局', access:'事務局所定の様式', url:'https://www.mlit.go.jp/tetudo/tetudo_fr7_000056.html', recv:'構成員であることの証明（要確認）', term:'公表なし（要確認）', input:'', prep:[], submit:[], note:''},
   {id:'ringyo',  name:'林業',            council:'林業特定技能協議会',              org:'林野庁', access:'要確認', url:'https://www.rinya.maff.go.jp/j/routai/gaikoku.html', recv:'構成員であることの証明書', term:'公表なし（要確認）', input:'', prep:[], submit:[], note:''},
@@ -7530,16 +7532,6 @@ SZ_STEPS.kaigo=[
   {t:'【入会後】就労開始から4か月以内に外国人情報を登録',tag:'4か月以内',
     body:'<p>特定技能外国人の就労開始から4か月以内に、システムへ外国人情報を登録します（雇用条件書〔参考様式第1-6号〕・支援計画書〔参考様式第1-17号〕・在留カードの写し）。入会証明書は有効期限の4か月前から更新申請できます。</p>'}
 ];
-SZ_STEPS.biru=[
-  {t:'厚生労働省ホームページから入会申請',tag:'オンライン',
-    body:'<p>厚生労働省ホームページから入会を申請します（ホームページで難しい場合は「様式第1号 入会申請書」を事務局へ提出）。</p><p>'+_kyBtn('https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/blc_tokuteiginou05.html','ビルクリーニング 協議会ページを開く')+'</p>'},
-  {t:'添付書類を準備',tag:'',
-    body:'<ul><li>在留カードの写し（指定書の分野が「ビルクリーニング分野」の外国人のみ。氏名・性別・生年月日は黒塗り）</li><li>ビルクリーニング分野特定技能1号評価試験の合格証明書の写し（合格者がいる場合。個人情報は黒塗り）</li></ul><p style="font-size:12px;color:#64748b;">※ 登録支援機関を利用する場合は、その機関名・登録番号を記入します。</p>'},
-  {t:'審査・構成員資格証明書の受け取り',tag:'1か月程度',
-    body:'<p>審査に<b>1か月程度</b>かかります。完了すると「<b>構成員資格証明書</b>（様式第2号）」が発行されます。構成員名簿は厚生労働省ホームページで公表されます。</p>'},
-  {t:'構成員資格証明書のデータを大房行政書士法人へ共有',tag:'',
-    body:'<p>構成員資格証明書を'+_KY_SUBMIT_OFUSA+'（在留申請では建築物清掃業の登録証の写しなども必要な場合があります）</p>'}
-];
 SZ_STEPS.nogyo=[
   {t:'農林水産省の加入申請フォームから申請',tag:'オンライン',
     body:'<p>農業特定技能協議会の加入申請フォームから申請します。<b>入会費・年会費はかかりません。</b></p><p>'+_kyBtn('https://www.contactus.maff.go.jp/j/form/keiei/fukyu/kanyuu.html','農業 加入申請フォームを開く')+_kyBtn('https://www.maff.go.jp/j/keiei/foreigner/new.html','農業 協議会ページ',1)+'</p>'},
@@ -7618,7 +7610,7 @@ var KY_DEST={
   },
   shozoku:{
     kaigo:{where:'介護分野特定技能協議会（協議会申請システム）',what:'法人・受入予定事業所の情報＋事業所ごとに概要書（分野参考様式第1-2号）・事業所の指定通知書',how:'オンラインのみ（FAX・郵送不可）'},
-    biru:{where:'厚生労働省 生活衛生課（ビルクリーニング分野特定技能協議会 事務局）',what:'入会申請＋在留カードの写し・合格証明書の写し（個人情報は黒塗り）',how:'オンライン（厚労省ホームページ。難しい場合は様式第1号を事務局へ）'},
+    biru:{where:'厚生労働省 生活衛生課（ビルクリーニング分野特定技能協議会 事務局）',what:'入会申請フォームの入力＋建築物衛生法の登録を証明する書面の写し・就業場所が確認できる書面の写し',how:'オンライン（Microsoft Forms）＋メールで案内された書類を電子媒体で提出'},
     zosen:{where:'国土交通省 海事局 船舶産業課 外国人材担当（〒100-8918 東京都千代田区霞が関2-1-3）',what:'【様式第1号】事業者の確認申請書＋【様式第7号】協議会の加入申請書（事業者用）（同時申請・Excel）',how:'郵送'},
     jidosha:{where:'管轄の地方運輸局（自動車整備分野特定技能協議会）',what:'協議会第1号様式＋第3号様式（特定技能所属機関用）',how:'郵送（返信用封筒を同封）'},
     koku:{where:'国土交通省 航空局（空港グランドハンドリング＝航空ネットワーク企画課／航空機整備＝安全政策課 乗員政策室）',what:'加入届出書（所属機関用）＋証明発行申請書',how:'メール（区分別アドレス。難しい場合は郵送）'},
@@ -7653,7 +7645,7 @@ var KY_FORMS={
   },
   shozoku:{
     kaigo:[{l:'事業所の概要書（分野参考様式第1-2号）Word',u:'https://www.moj.go.jp/isa/content/001437820.docx'},{l:'入会操作マニュアル PDF',u:'https://foreigncareworkers.net/Manual/fcwmn-1.pdf'}],
-    biru:[{l:'入会規程（様式第1号 入会申請書を含む）PDF',u:'https://www.mhlw.go.jp/content/11157000/000913171.pdf'}],
+    biru:[{l:'入会規程（R6.6.14改正）PDF',u:'https://www.mhlw.go.jp/content/11130500/001264336.pdf'}],
     zosen:[{l:'【様式第1号】事業者の確認申請書 Excel',u:'https://www.mlit.go.jp/maritime/content/002017797.xlsx'},{l:'【様式第7号】加入申請書（事業者用）Excel',u:'https://www.mlit.go.jp/maritime/content/002017798.xlsx'}],
     jidosha:[{l:'協議会第1号様式 Word',u:_JD+'002015365.docx'},{l:'第1号様式 PDF',u:_JD+'002015358.pdf'},{l:'第1号様式 記載例',u:_JD+'002015351.pdf'},{l:'第3号様式（証明書発行申請）Word',u:_JD+'002015367.docx'},{l:'第3号様式 記載例',u:_JD+'002015353.pdf'},{l:'（在留申請用）実務経験証明書 第8-3号 Word',u:'https://www.moj.go.jp/isa/content/930003958.docx'}],
     koku:[{l:'加入届出書（所属機関）Word',u:'https://www.mlit.go.jp/koku/content/001734372.docx'},{l:'証明発行申請書（所属機関）Word',u:'https://www.mlit.go.jp/common/001402048.docx'}],
@@ -7767,7 +7759,6 @@ SZ_STEPS.koku=_kokuSteps('shozoku');
 
 // ---------- 介護・ビル・造船・木材（所属機関）：様式を直付け ----------
 SZ_STEPS.kaigo[1].body+=_kyDl([{l:'事業所の概要書 第1-2号 Word',u:'https://www.moj.go.jp/isa/content/001437820.docx'}]);
-SZ_STEPS.biru[0].body+=_kyDl([{l:'入会規程（様式第1号 入会申請書を含む）PDF',u:'https://www.mhlw.go.jp/content/11157000/000913171.pdf'}]);
 SZ_STEPS.mokuzai[0].body+='<p>'+_kyBtn('https://www.zenmokuren.jp/foreigner/safety/index.php','全木連 安全規範（確認証）ページ')+'</p>';
 SZ_STEPS.mokuzai[1].body='<p>入会は<b>受入れ事業所ごと</b>に必要です。</p><ul><li>入会申請書（別記様式第1号）</li><li>定款の写し（またはこれに代わる書面）</li><li>機械設備一覧表（参考様式）</li><li>全木連の確認証</li></ul>'+
   _kyDl([{l:'入会申請書 Word',u:_MOK+'doc/mokusan_tokuteikyogikai-10.docx'},{l:'入会申請書 PDF',u:_MOK+'pdf/mokusan_tokuteikyogikai-14.pdf'},{l:'機械設備一覧表 Word',u:_MOK+'doc/mokusan_tokuteikyogikai-9.docx'},{l:'機械設備一覧表 PDF',u:_MOK+'pdf/mokusan_tokuteikyogikai-13.pdf'},{l:'記載例 PDF',u:_MOK+'pdf/mokusan_tokuteikyogikai-25.pdf'}]);
@@ -7803,6 +7794,60 @@ function _foodShozoku(kind){
 }
 SZ_STEPS.gaishoku=_foodShozoku('gaishoku');
 SZ_STEPS.inshoku=_foodShozoku('inshoku');
+// ver.20261030: ビルクリーニング（所属機関）を現行手続き（Microsoft Forms・入会規程R6.6.14改正）で作り直し
+SZ_STEPS.biru=[
+  {t:'入会申請フォームから申請',tag:'オンライン',
+    body:'<p>厚生労働省の<b>入会申請フォーム（Microsoft Forms）</b>から申請します。<b>登録支援機関による代行はできません</b>（企業ご自身で申請）。費用はかかりません。受入れ<b>前</b>に構成員になる必要があります。</p>'+
+      '<p>'+_kyBtn('https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=zc_1xHImkUmY-IdwQvXJs4oHZlXQMWlOmfV_P7Ur3uNUMzMzMTVHNk5UNENTWEtRUjI3VUtOWlU3TS4u','入会申請フォームを開く')+_kyBtn('https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/blc_tokuteiginou03.html','ビルクリーニング 協議会ページ',1)+'</p>'+
+      '<div class="ky-mini">📋 フォームに入力する内容</div><ul>'+
+      '<li>名称・住所・代表者の役職と氏名</li>'+
+      '<li><b>建築物衛生法に基づく登録情報</b>（事業区分〔建築物清掃業／建築物環境衛生総合管理業〕・商号・営業所の名称と所在地・登録番号・登録有効期間）</li>'+
+      '<li>担当者の職名・氏名・電話番号・メールアドレス</li>'+
+      '<li>登録支援機関の利用の有無（利用する場合は名称・登録番号）</li>'+
+      '<li>特定技能外国人の国籍・人数</li></ul>'},
+  {t:'厚労省からのメールで案内された書類を提出',tag:'電子媒体',
+    body:'<p>登録内容の確認後、厚生労働省から担当者宛てに必要書類の案内メールが届きます。案内に従い、<b>電子媒体</b>で提出します。</p>'+
+      '<ul><li>建築物清掃業または建築物環境衛生総合管理業の<b>登録を証明する書面の写し</b></li><li>特定技能外国人の<b>就業場所が確認できる書面</b>の写し</li><li>その他、求められた書面</li></ul>'+
+      '<p style="font-size:12px;color:#64748b;">※ 厚労省からのメールが迷惑メールに入らないよう、「mhlw.go.jp」ドメインを受信許可してください。</p>'+
+      _kyDl([{l:'入会規程（R6.6.14改正）PDF',u:'https://www.mhlw.go.jp/content/11130500/001264336.pdf'}])},
+  {t:'構成員資格証明書をメールで受け取る',tag:'1か月程度',
+    body:'<p>厚生労働省の確認が終わると、<b>構成員資格証明書</b>が電子媒体で担当者宛てにメール送付されます（審査は1か月程度）。構成員名簿は厚生労働省ホームページで公表されます。紛失・記載変更時は再交付フォームから申請します。</p>'},
+  {t:'構成員資格証明書のデータを大房行政書士法人へ共有',tag:'',
+    body:'<p>構成員資格証明書を保存してください。在留申請の際に、協議会の構成員であることを示す書類の提出が必要なため、<b>大房行政書士法人へデータのご共有をお願いします。</b></p>'}
+];
+// ver.20261030: 造船（添付書類を明記）・漁業（2号構成員経由の手続き）を公式資料で修正
+var _ZOSEN_CHK=_kyDl([{l:'提出書類チェックリスト Excel',u:'https://www.mlit.go.jp/common/001499587.xlsx'},{l:'提出書類チェックリスト PDF',u:'https://www.mlit.go.jp/maritime/content/002017810.pdf'}]);
+SZ_STEPS.zosen[0]={t:'様式第1号・第7号＋添付書類を準備',tag:'',
+  body:'<p>送るのは<b>様式2点だけではありません</b>。<b>様式第1号</b>（事業者の確認申請書）と<b>様式第7号</b>（協議会の加入申請書）を<b>同時に</b>、次の添付書類と一緒に提出します。</p>'+
+    _kyDl([{l:'【様式第1号】事業者の確認申請書 Excel',u:'https://www.mlit.go.jp/maritime/content/002017797.xlsx'},{l:'【様式第7号】加入申請書（事業者用）Excel',u:'https://www.mlit.go.jp/maritime/content/002017798.xlsx'}])+
+    '<div class="ky-mini">📎 主な添付書類（該当するもの）</div><ul>'+
+    '<li>登記事項証明書（個人事業主で登記がない場合は開業届）</li>'+
+    '<li>申請者の定款または有価証券報告書</li>'+
+    '<li>造船事業者との<b>請負契約書の写し</b>（船体の一部の製造等）または<b>売買契約書の写し</b>（船舶用の製品）など、取引を示す書類</li>'+
+    '<li>上記契約の締結日が直近1年以内でない場合は、<b>直近1年以内の注文書等</b>（取引が続いていることの確認用）</li></ul>'+
+    '<div class="ky-warn" style="margin:6px 0;">造船・舶用で必要書類が分かれます。<b>必ず提出書類チェックリストで確認</b>してください。</div>'+_ZOSEN_CHK+
+    '<p>'+_kyBtn('https://www.mlit.go.jp/maritime/maritime_fr5_000006.html','造船・舶用工業 協議会ページ',1)+'</p>'};
+SZ_STEPS.zosen[1].t='海事局 船舶産業課へ郵送';
+SZ_STEPS.zosen[1].body='<p>様式第1号・第7号と添付書類一式を、国土交通省海事局 船舶産業課 外国人材担当へ<b>郵送</b>します。<br>〒100-8918 東京都千代田区霞が関2-1-3</p>';
+SS_STEPS.zosen[1].body+='<p style="font-size:12px;">添付書類は提出書類チェックリストで確認してください。</p>'+_ZOSEN_CHK;
+SZ_STEPS.gyogyo=[
+  {t:'加入申請書（様式第1-1号・第1-2号）を作成',tag:'',
+    body:'<p>漁業特定技能協議会の<b>1号構成員</b>として加入します。加入申請書を作成します。</p>'+
+      _kyDl([{l:'様式第1-1号 加入申請書 Word',u:'https://www.jfa.maff.go.jp/j/kikaku/attach/doc/tokuteikyogikai-1.docx'},{l:'様式第1-2号 申請内容 Excel',u:'https://www.jfa.maff.go.jp/j/kikaku/attach/xls/tokuteikyogikai-2.xlsx'},{l:'初めて申請する方向けQ&A PDF',u:'https://www.jfa.maff.go.jp/j/kikaku/attach/pdf/tokuteikyogikai-41.pdf'},{l:'1号構成員資格証明書交付手続規則 PDF',u:'https://www.jfa.maff.go.jp/j/kikaku/attach/pdf/tokuteikyogikai-27.pdf'}])+
+      '<p>'+_kyBtn('https://www.jfa.maff.go.jp/j/kikaku/tokuteikyogikai.html','漁業特定技能協議会ページ',1)+'</p>'},
+  {t:'添付書類を準備',tag:'',
+    body:'<ul><li>雇用契約の概要がわかる在留申請書類の写し（<b>特定技能雇用契約書・雇用条件書</b>）</li>'+
+      '<li>派遣形態の場合は追加で：派遣計画書、就業条件明示書、派遣先の概要書（漁業分野）、派遣許可書</li>'+
+      '<li>協議会の協議事項に関する措置を講じていることを確認できる書類</li>'+
+      '<li>その他、基準適合の確認に必要な書類</li></ul>'},
+  {t:'2号構成員へ提出',tag:'月2回締め',
+    body:'<p>加入申請書と添付書類を<b>2号構成員</b>（協議会の地域の構成員団体）に提出します。2号構成員が書類を確認し、<b>毎月15日または末日</b>の締めで共同事務局（一般社団法人 大日本水産会）へ送付します。</p>'+
+      '<div class="ky-warn" style="margin:6px 0;">提出先となる2号構成員と提出方法（メール／郵送）は、協議会ページまたは水産庁 漁政部企画課（03-6744-2340）でご確認ください。</div>'},
+  {t:'1号構成員資格証明書を受け取る',tag:'',
+    body:'<p>共同事務局が要件を確認後、2号構成員を経由して「<b>漁業特定技能協議会1号構成員資格証明書</b>（様式第2号）」が交付されます（期間の目安は公表なし）。紛失時は様式第3号で再交付申請します。</p>'},
+  {t:'1号構成員資格証明書のデータを大房行政書士法人へ共有',tag:'',
+    body:'<p>1号構成員資格証明書を保存してください。在留申請の際に、協議会の構成員であることを示す書類の提出が必要なため、<b>大房行政書士法人へデータのご共有をお願いします。</b></p>'}
+];
 var _kyogikaiRole='shien';   // shien=登録支援機関 / shozoku=所属機関
 var _kyogikaiSector='kaigo';
 function _kySetRole(r){ _kyogikaiRole=r; renderKyogikai(); }
