@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261030.test10: 協議会の各ステップに☑チェック＋チェック日付の記録を追加（分野×役割ごと・進捗バー・リセット）。 -->
 <!-- ver.20261030.test09: 「はじめに」の文言を4項目に整理（簡潔化）。 -->
 <!-- ver.20261030.test08: 協議会案内の登録支援機関タブは「登録支援機関も加入が必要な6分野のみ」を表示（造船・自動車整備・航空・宿泊・飲食料品・外食）。所属機関タブは全分野のまま。 -->
 <!-- ver.20261030.test07: 協議会案内に「登録支援機関の加入」要否を分野別に追加（6分野は必要・介護等は不要・工業製品/建設は任意・新/新4分野は要確認）。2024/6/15以降は全分野で申請前加入が必要の注記も追加。 -->
@@ -7339,6 +7340,23 @@ var _kyogikaiSector='kaigo';
 function _kySetRole(r){ _kyogikaiRole=r; renderKyogikai(); }
 function _kySetSector(id){ _kyogikaiSector=id; renderKyogikai(); }
 function _kyFindSector(id){ for(var i=0;i<KYOGIKAI_SECTORS.length;i++){ if(KYOGIKAI_SECTORS[i].id===id) return KYOGIKAI_SECTORS[i]; } return KYOGIKAI_SECTORS[0]; }
+// ver.20261030: ステップ進捗チェック（分野×役割ごと）。kyogikaiChecks[sector__role] = { stepIndex: 'YYYY-MM-DD' }
+if(typeof kyogikaiChecks==='undefined'){ var kyogikaiChecks={}; }
+function _kyChkKey(sid,role){ return sid+'__'+role; }
+function _kyChkMap(sid,role){ return kyogikaiChecks[_kyChkKey(sid,role)]||{}; }
+function _kyFmtDate(iso){ if(!iso) return ''; var p=String(iso).split('-'); return p.length>=3 ? (parseInt(p[1],10)+'/'+parseInt(p[2],10)) : iso; }
+function _kyPersistChecks(){ try{ if(typeof saveOrgSetting==='function' && typeof currentToken!=='undefined') saveOrgSetting('kyogikai_checks_'+currentToken, JSON.stringify(kyogikaiChecks)); }catch(e){} }
+function _kyToggleStep(sid,role,idx){
+  var k=_kyChkKey(sid,role);
+  if(!kyogikaiChecks[k]) kyogikaiChecks[k]={};
+  if(kyogikaiChecks[k][idx]){ delete kyogikaiChecks[k][idx]; }
+  else { var d=new Date(); kyogikaiChecks[k][idx]=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+  _kyPersistChecks(); renderKyogikai();
+}
+function _kyResetChecks(sid,role){
+  if(!confirm('この分野のステップチェックをすべてリセットしますか？')) return;
+  kyogikaiChecks[_kyChkKey(sid,role)]={}; _kyPersistChecks(); renderKyogikai();
+}
 function _kyStepFlow(s){
   var role=_kyogikaiRole;
   var prepBase=['法人番号（13桁）','登記上の会社住所','代表者氏名','担当者の連絡先メールアドレス'];
@@ -7372,9 +7390,26 @@ function _kyStepFlow(s){
     steps.push({t:s.recv+'を登録支援機関へ提出',tag:'',
       body:'<p>届いた'+s.recv+'（PDF等）を保存し、大房行政書士法人へご提出ください。在留申請の添付書類になります。</p>'});
   }
-  var h='<div class="ky-steps">';
-  steps.forEach(function(st){
-    h+='<div class="ky-step"><b class="t">'+st.t+(st.tag?' <span class="ky-tag">'+st.tag+'</span>':'')+'</b>'+st.body+'</div>';
+  var chk=_kyChkMap(s.id,role);
+  var done=0; steps.forEach(function(_,i){ if(chk[i]) done++; });
+  var pct=Math.round(done/steps.length*100);
+  var h='';
+  // 進捗バー
+  h+='<div class="ky-prog"><div class="ky-prog-head"><b>進捗 '+done+' / '+steps.length+'</b>'+
+     (done>0?'<a href="javascript:void(0)" class="ky-reset" onclick="_kyResetChecks(\''+s.id+'\',\''+role+'\')">チェックをリセット</a>':'')+'</div>'+
+     '<div class="ky-prog-bar"><span style="width:'+pct+'%"></span></div></div>';
+  h+='<div class="ky-steps">';
+  steps.forEach(function(st,i){
+    var on=!!chk[i];
+    h+='<div class="ky-step'+(on?' done':'')+'">'+
+       '<div class="ky-step-top">'+
+         '<b class="t">'+st.t+(st.tag?' <span class="ky-tag">'+st.tag+'</span>':'')+'</b>'+
+         '<label class="ky-chk" onclick="_kyToggleStep(\''+s.id+'\',\''+role+'\','+i+');return false;">'+
+           '<span class="ky-chk-box">'+(on?'✔':'')+'</span>'+
+           '<span class="ky-chk-lbl">'+(on?'済 <span class="ky-chk-date">'+_kyFmtDate(chk[i])+'</span>':'完了にする')+'</span>'+
+         '</label>'+
+       '</div>'+
+       st.body+'</div>';
   });
   h+='</div>';
   return h;
@@ -7413,6 +7448,21 @@ function renderKyogikai(){
     '.ky-step::before{counter-increment:kys;content:counter(kys);position:absolute;left:12px;top:11px;width:26px;height:26px;border-radius:50%;background:#2563eb;color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;}'+
     '.ky-step b.t{display:block;color:#1e3a5f;font-size:13.5px;margin-bottom:3px;}'+
     '.ky-step ul{margin:5px 0 0;} .ky-step p{margin:0 0 4px;}'+
+    '.ky-step.done{background:#f0fdf4;border-color:#bbf7d0;}'+
+    '.ky-step.done::before{background:#16a34a;}'+
+    '.ky-step-top{display:flex;align-items:flex-start;gap:8px;justify-content:space-between;}'+
+    '.ky-step-top .t{flex:1;min-width:0;}'+
+    '.ky-chk{flex:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer;background:#fff;border:1px solid #cbd5e1;border-radius:999px;padding:3px 10px 3px 4px;font-size:11.5px;font-weight:700;color:#475569;white-space:nowrap;user-select:none;}'+
+    '.ky-chk:hover{border-color:#86efac;}'+
+    '.ky-chk-box{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;border:1.5px solid #cbd5e1;background:#fff;color:#fff;font-size:11px;font-weight:800;}'+
+    '.ky-step.done .ky-chk{border-color:#16a34a;color:#166534;background:#ecfdf5;}'+
+    '.ky-step.done .ky-chk-box{background:#16a34a;border-color:#16a34a;}'+
+    '.ky-chk-date{color:#166534;font-weight:800;}'+
+    '.ky-prog{margin:4px 0 12px;}'+
+    '.ky-prog-head{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:#334155;margin-bottom:5px;}'+
+    '.ky-reset{font-size:11.5px;color:#64748b;text-decoration:underline;}'+
+    '.ky-prog-bar{height:8px;border-radius:999px;background:#e2e8f0;overflow:hidden;}'+
+    '.ky-prog-bar span{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#16a34a);transition:width .25s;}'+
     '.ky-tag{display:inline-block;background:#eef2f7;border:1px solid #d7dde6;color:#475569;border-radius:6px;padding:0 7px;font-size:11px;font-weight:700;margin-left:4px;vertical-align:middle;}'+
     '.ky-mini{font-size:12px;font-weight:700;color:#334155;margin:6px 0 2px;}'+
     '.ky-open{display:inline-block;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;}'+
@@ -8728,12 +8778,13 @@ async function loadData(){
     var _cn=data.caseNotes||{};
     Object.keys(_cn).forEach(function(cid){var note=_cn[cid];if(typeof note==='string'){try{note=JSON.parse(note);}catch(e){note={progressMemo:note};}}caseNotes[cid]=note||{};});
 
-    orgComments={};orgOwnComments={};orgWithdraws={};orgChecks={};inshiChecks={};orgChangeReqs={};
+    orgComments={};orgOwnComments={};orgWithdraws={};orgChecks={};inshiChecks={};orgChangeReqs={};kyogikaiChecks={};
     var _cmtPrefix='org_comment_'+currentToken+'_';
     var _ownPrefix='org_own_comment_'+currentToken+'_';
     var _wdPrefix='org_withdraw_'+currentToken+'_';
     var _crPrefix='org_change_req_'+currentToken+'_';
     var _chkKey='org_checks_'+currentToken;
+    var _kyoChkKey='kyogikai_checks_'+currentToken;
   var _inshiKey='org_inshi_'+currentToken;
     (data.settings||[]).forEach(function(row){
       var k=row.key||'';
@@ -8742,6 +8793,7 @@ async function loadData(){
       else if(k.indexOf(_crPrefix)===0){ var cr=row.value;if(typeof cr==='string'){try{cr=JSON.parse(cr);}catch(e){cr={text:cr};}}orgChangeReqs[k.substring(_crPrefix.length)]=cr||{}; }
       else if(k.indexOf(_wdPrefix)===0){ var v=row.value;if(typeof v==='string'){try{v=JSON.parse(v);}catch(e){v={type:v};}}orgWithdraws[k.substring(_wdPrefix.length)]=v||{}; }
       else if(k===_chkKey){ var cv=row.value;if(typeof cv==='string'){try{orgChecks=JSON.parse(cv)||{};}catch(e){orgChecks={};}}else if(cv&&typeof cv==='object'){orgChecks=cv;} }
+      else if(k===_kyoChkKey){ var kv=row.value;if(typeof kv==='string'){try{kyogikaiChecks=JSON.parse(kv)||{};}catch(e){kyogikaiChecks={};}}else if(kv&&typeof kv==='object'){kyogikaiChecks=kv;} }
   else if(k===_inshiKey){ var iv=row.value;if(typeof iv==='string'){try{inshiChecks=JSON.parse(iv)||{};}catch(e){inshiChecks={};}}else if(iv&&typeof iv==='object'){inshiChecks=iv;} }
     });
 
