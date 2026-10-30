@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261030.01: サイドバーに「協議会案内」タブを追加。登録支援機関/所属機関それぞれの加入フロー、19分野をステップ表記（工業製品製造業・建設は省略、リネン/物流倉庫/資源循環は新設・準備中）。登録支援機関タブは加入が必要な6分野のみ表示。 -->
 <!-- ver.20261029.07: 「⚠️書類未提出企業」の依頼日の条件を、案件の受領日（request_date）ではなく企業の国交省書類の依頼日（co_doc_check の req::）が入っているかで判定するよう修正。 -->
 <!-- ver.20261029.06: 国交省書類リスト（required_docs_co_kokko）を全機関で案シスの設定から読み込むよう修正。これまでGP以外の機関では初期値の「16. 技能者ID」まで国交省書類として扱われ、書類未提出企業などに出ていた。 -->
 <!-- ver.20261029.05: 「⚠️書類未提出企業」を変更。依頼日（request_date）が入っている案件のみ対象。国交省書類の提出期限（残り/超過）を企業名の横に移動。前回の申請の受付番号が「EU」（特定活動更新済み）の人材は「更新不可」として依頼日がなくても表示し、企業カード右上に「更新不可」を表示して一番上に並べる。 -->
@@ -3234,6 +3235,9 @@ function renderSidebar(){
   h+='<div class="sb-item'+(currentGroup==='kyoryoku'?' active':'')+'" onclick="switchGroup(\'kyoryoku\')">協力確認書作成</div>';
   h+='<div class="sb-divider"></div>';
   h+='<div class="sb-item'+(currentGroup==='zuiji'?' active':'')+'" onclick="switchGroup(\'zuiji\')">随時届出チェッカー</div>';
+  // ver.20261030.01: 協議会案内（登録支援機関・所属機関それぞれの加入フロー）
+  h+='<div class="sb-divider"></div>';
+  h+='<div class="sb-item'+(currentGroup==='kyogikai'?' active':'')+'" onclick="switchGroup(\'kyogikai\')">協議会案内</div>';
   if(isSidebarItemVisible('flow')){
     h+='<div class="sb-divider"></div>';
     h+='<div class="flow-sb-item" onclick="openFlowModal()">申請の流れ <span style="margin-left:auto;font-size:10px;"></span></div>';
@@ -3964,6 +3968,194 @@ function _buildShinsaTable(rows, dimmed){
 // ver.20260519.17: アイデム専用 窓口申請/窓口受取の専用画面
 // 3セクション構成：直近7日以内 / その他未来（8日以降）/ 完了（過去）
 // 各セクションは日付グループ化（05/21, 05/22, ...）
+// ver.20261030.test04: 協議会案内（登録支援機関／所属機関それぞれ・16分野をステップ表記）
+var KYOGIKAI_SECTORS=[
+  {id:'kaigo',   name:'介護',            council:'介護分野特定技能協議会',          org:'（公社）国際厚生事業団(JICWELS)', access:'加入申請サイト', url:'https://jicwels.or.jp/fcw/?page_id=20020', recv:'加入証', term:'数週間〜2ヶ月', input:'10〜20分', prep:['介護保険事業所の指定番号がわかるもの'], submit:['誓約書（分野参考様式）'], note:''},
+  {id:'biru',    name:'ビルクリーニング', council:'ビルクリーニング分野特定技能協議会', org:'厚生労働省', access:'加入申請サイト', url:'https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/blc_tokuteiginou05.html', recv:'構成員資格証明書', term:'1〜2ヶ月', input:'10〜20分', prep:['建築物清掃業の登録証の写し（登録業者の場合）'], submit:[], note:'審査後、メールで「構成員資格証明書」が届きます。'},
+  {id:'zosen',   name:'造船・舶用工業',  council:'造船・舶用工業分野特定技能協議会', org:'国土交通省', access:'加入申請サイト', url:'https://www.mlit.go.jp/maritime/maritime_fr5_000006.html', recv:'加入証', term:'1〜2ヶ月', input:'10〜20分', prep:[], submit:[], note:'加入証は郵送で届きます。'},
+  {id:'jidosha', name:'自動車整備',      council:'自動車整備分野特定技能協議会',    org:'国土交通省（各地方運輸局）', access:'加入申請サイト', url:'https://www.mlit.go.jp/jidosha/jidosha_SSW.html', recv:'構成員資格証明書', term:'1〜2ヶ月', input:'10〜20分', prep:['自動車整備実務経験証明書（様式第8-3号）又は1級・2級自動車整備士技能検定合格証の写し'], submit:[], note:'各地方運輸局から郵送で「構成員資格証明書」が届きます。'},
+  {id:'koku',    name:'航空',            council:'航空分野特定技能協議会',          org:'国土交通省', access:'加入申請サイト', url:'https://www.mlit.go.jp/koku/koku_fr19_000011.html', recv:'入会通知書', term:'1〜2ヶ月', input:'10〜20分', prep:[], submit:[], note:'メールで入会通知書が届きます。'},
+  {id:'shukuhaku',name:'宿泊',           council:'宿泊分野特定技能協議会',          org:'観光庁', access:'加入申請サイト', url:'https://www.mlit.go.jp/kankocho/seisaku_seido/kihonkeikaku/jizoku_kankochi/kankojinzai/ninaitekakuho/tokutei_gino/kyogikai.html', recv:'入会通知書', term:'1〜2ヶ月', input:'10〜20分', prep:['旅館業の営業許可証の写し（番号・有効期限）'], submit:[], note:'観光庁からメールで入会通知書が届きます。'},
+  {id:'gaishoku',name:'外食業',          council:'食品産業特定技能協議会',          org:'農林水産省', access:'加入申請フォーム', url:'https://www.contactus.maff.go.jp/j/form/shokusan/seizo/shozokukikan_kanyu.html', recv:'加入証', term:'2〜3ヶ月', input:'10〜15分', prep:['営業許可証（番号・有効期限）','産業分類コード（農水省サイトに一覧）'], submit:['外食業分野における特定技能外国人の受入れに関する誓約書（分野参考様式第14-1号）','営業許可証の写し'], note:'フォーム送信時に「必須項目が選択されていません」と出たら、ページを更新して最初からやり直してください（農水省サイトの既知不具合）。', alert:'外食業は現在、新規受入れが停止中の場合があります。経過措置の対象かどうかを事前にご確認ください（加入申請自体は受付されています）。'},
+  {id:'inshoku', name:'飲食料品製造業',  council:'食品産業特定技能協議会',          org:'農林水産省', access:'加入申請フォーム', url:'https://www.contactus.maff.go.jp/j/form/shokusan/seizo/shozokukikan_kanyu.html', recv:'加入証', term:'2〜3ヶ月', input:'10〜15分', prep:['（必要な業種は）営業許可証（番号・有効期限）'], submit:['飲食料品製造業分野における特定技能外国人の受入れに関する誓約書（分野参考様式第13-1号）','（必要な業種は）営業許可証の写し'], note:'フォーム送信時に必須項目エラーが出たら、ページを更新してやり直してください（農水省サイトの既知不具合）。'},
+  {id:'nogyo',   name:'農業',            council:'農業特定技能協議会',              org:'農林水産省', access:'加入申請サイト', url:'https://www.maff.go.jp/j/nousin/ginou/index.html', recv:'加入証', term:'1〜2ヶ月', input:'10〜20分', prep:[], submit:['農業分野における特定技能外国人の受入れに関する誓約書（分野参考様式第11-1号）'], note:''},
+  {id:'gyogyo',  name:'漁業',            council:'漁業特定技能協議会',              org:'水産庁', access:'加入申請サイト', url:'https://www.jfa.maff.go.jp/j/tokutei_ginou/index.html', recv:'加入証', term:'1〜2ヶ月', input:'10〜20分', prep:[], submit:['漁業分野における特定技能外国人の受入れに関する誓約書（分野参考様式第12-1号）'], note:''},
+  {id:'unso',    name:'自動車運送業',    council:'自動車運送業分野特定技能協議会',  org:'国土交通省', access:'加入申請サイト', url:'https://www.mlit.go.jp/jidosha/jidosha_tk1_000038.html', recv:'加入証', term:'1〜2ヶ月', input:'10〜20分', prep:['旅客・貨物の種別（バス・タクシー・トラック等）がわかるもの'], submit:[], note:''},
+  {id:'tetsudo', name:'鉄道',            council:'鉄道分野特定技能協議会',          org:'国土交通省', access:'加入申請サイト', url:'https://www.mlit.go.jp/tetudo/tetudo_tk5_000001.html', recv:'加入証', term:'1〜2ヶ月', input:'10〜20分', prep:[], submit:[], note:''},
+  {id:'ringyo',  name:'林業',            council:'林業分野特定技能協議会',          org:'林野庁', access:'加入申請サイト', url:'https://www.rinya.maff.go.jp/j/tokutei_gino/index.html', recv:'加入証', term:'1〜2ヶ月', input:'10〜20分', prep:[], submit:[], note:''},
+  {id:'mokuzai', name:'木材産業',        council:'木材産業特定技能協議会',          org:'林野庁', access:'加入申請サイト', url:'https://www.rinya.maff.go.jp/j/tokutei_gino/index.html', recv:'加入証', term:'1〜2ヶ月', input:'10〜20分', prep:[], submit:[], note:''},
+  // 手続きが異なるため省略（末尾側）
+  {id:'kogyo',   name:'工業製品製造業',  council:'製造業特定技能協議会',            org:'経済産業省', access:'加入申請サイト', url:'https://ssw.meti.go.jp/', recv:'加入証（承認通知）', term:'1〜2ヶ月', input:'10〜20分', prep:[], submit:[], note:'承認後、経済産業省サイトに構成員として掲載されます。', omit:'工業製品製造業分野の協議会加入は、経済産業省の専用システムで手続きが異なるため、ここでの手順案内は省略します。詳しくは大房行政書士法人へご確認ください。'},
+  {id:'kensetsu',name:'建設',            council:'建設技能人材機構(JAC)／建設分野特定技能協議会', org:'国土交通省・JAC', access:'加入申請サイト', url:'https://jac-skill.or.jp/', recv:'加入(会員)証', term:'2〜3ヶ月', input:'10〜20分', prep:['建設業許可通知書・許可番号','CCUS（建設キャリアアップシステム）事業者ID'], submit:[], note:'JAC会費（年会費）が必要です。受入計画の認定は別手続き。加入後JACサイトに会社名が掲載されます。', omit:'建設分野の協議会（JAC）加入は、JAC会費（年会費）や受入計画の認定など手続きが大きく異なるため、ここでの手順案内は省略します。詳しくは大房行政書士法人へご確認ください。'},
+  // 2026年新設・準備中（合計19分野）
+  {id:'linen',   name:'リネンサプライ',  council:'リネンサプライ分野特定技能協議会（整備中）', org:'厚生労働省', access:'加入申請サイト', url:'https://www.moj.go.jp/isa/applications/status/specifiedskilledworker.html', recv:'準備中', term:'未定', input:'', prep:[], submit:[], note:'', newfield:'リネンサプライ分野は2026年に新設された分野です。協議会・技能試験・受入開始時期などが整備途上のため、加入手順のご案内は準備中です。受入れをご検討の際は、最新の取扱いを大房行政書士法人へご確認ください。'},
+  {id:'butsuryu',name:'物流倉庫',        council:'物流倉庫分野特定技能協議会（設置調整中）', org:'国土交通省', access:'加入申請サイト', url:'https://www.moj.go.jp/isa/applications/status/specifiedskilledworker.html', recv:'準備中', term:'未定', input:'', prep:[], submit:[], note:'', newfield:'物流倉庫分野は2026年に新設された分野です。協議会は設置調整中で、技能試験の開始時期も整備途上のため、加入手順のご案内は準備中です。受入れをご検討の際は、最新の取扱いを大房行政書士法人へご確認ください。'},
+  {id:'shigen',  name:'資源循環',        council:'資源循環分野特定技能協議会（整備中）', org:'環境省', access:'加入申請サイト', url:'https://www.moj.go.jp/isa/applications/status/specifiedskilledworker.html', recv:'準備中', term:'未定', input:'', prep:[], submit:[], note:'', newfield:'資源循環分野は2026年に新設された分野です。協議会・技能試験・受入開始時期などが整備途上のため、加入手順のご案内は準備中です。受入れをご検討の際は、最新の取扱いを大房行政書士法人へご確認ください。'}
+];
+var _kyogikaiRole='shien';   // shien=登録支援機関 / shozoku=所属機関
+var _kyogikaiSector='kaigo';
+function _kySetRole(r){ _kyogikaiRole=r; renderKyogikai(); }
+function _kySetSector(id){ _kyogikaiSector=id; renderKyogikai(); }
+function _kyFindSector(id){ for(var i=0;i<KYOGIKAI_SECTORS.length;i++){ if(KYOGIKAI_SECTORS[i].id===id) return KYOGIKAI_SECTORS[i]; } return KYOGIKAI_SECTORS[0]; }
+function _kyStepFlow(s){
+  var role=_kyogikaiRole;
+  var prepBase=['法人番号（13桁）','登記上の会社住所','代表者氏名','担当者の連絡先メールアドレス'];
+  var prep=prepBase.concat(s.prep||[]);
+  var steps=[];
+  // STEP1 アクセス
+  steps.push({t:(role==='shien'?'（企業名義で）'+s.access+'にアクセス':s.access+'にアクセス'),tag:'オンライン',
+    body:'<p>'+s.org+'の'+s.access+'から申請します。下のボタンから公式窓口を開いてください。'+(role==='shien'?'<br>※ 企業の委任のもと、入力を代行いただけます。':'')+'</p>'+
+    '<p style="margin-top:6px;"><a class="ky-open" href="'+s.url+'" target="_blank" rel="noopener">'+s.council+'の窓口を開く ↗</a></p>'});
+  // STEP2 入力
+  steps.push({t:'必要事項を入力',tag:'所要 '+s.input,
+    body:'<p>会社名・法人番号・住所・代表者名・担当者連絡先などを入力します。</p>'+
+    '<div class="ky-mini">📋 入力時に手元に用意するもの</div><ul>'+prep.map(function(d){return '<li>'+d+'</li>';}).join('')+'</ul>'});
+  // STEP3 事務局メール / 書類提出
+  if(s.submit&&s.submit.length){
+    steps.push({t:'事務局からのメールに書類を添付して返信',tag:'数日以内',
+      body:'<p>申請後、数日以内に事務局からメールが届きます。記載の宛先へ、以下の書類をPDFで添付して返信します。</p>'+
+      '<div class="ky-mini">📎 返信メールに添付する書類</div><ul>'+s.submit.map(function(d){return '<li>'+d+'</li>';}).join('')+'</ul>'});
+  }else{
+    steps.push({t:'事務局の案内に従って対応',tag:'数日以内',
+      body:'<p>申請後、事務局から確認メールが届きます。案内に従い、求められた書類があれば添付して返信します。</p>'});
+  }
+  // STEP4 受け取り
+  steps.push({t:'審査・'+s.recv+'の受け取り',tag:s.term,
+    body:'<p>審査完了後、<b>'+s.recv+'</b>が届きます（目安 '+s.term+'）。'+(s.note?'<br>'+s.note:'')+'</p>'});
+  // STEP5 提出
+  if(role==='shien'){
+    steps.push({t:s.recv+'を回収し、在留申請書類に添付',tag:'',
+      body:'<p>発行された'+s.recv+'（PDF／郵送）を保存し、在留申請の添付書類として提出します。案件書類と一緒に大房行政書士法人へご共有ください。</p>'});
+  }else{
+    steps.push({t:s.recv+'を登録支援機関へ提出',tag:'',
+      body:'<p>届いた'+s.recv+'（PDF等）を保存し、大房行政書士法人へご提出ください。在留申請の添付書類になります。</p>'});
+  }
+  var h='<div class="ky-steps">';
+  steps.forEach(function(st){
+    h+='<div class="ky-step"><b class="t">'+st.t+(st.tag?' <span class="ky-tag">'+st.tag+'</span>':'')+'</b>'+st.body+'</div>';
+  });
+  h+='</div>';
+  return h;
+}
+function renderKyogikai(){
+  var fb=document.getElementById('filter-bar'); if(fb){ fb.innerHTML=''; fb.style.display='none'; }
+  var css='<style>'+
+    '.ky{max-width:880px;margin:0 auto;color:#1e293b;font-size:13.5px;line-height:1.85;}'+
+    '.ky-hero{background:linear-gradient(135deg,#1e3a5f,#2c5282);color:#fff;border-radius:14px;padding:22px 24px;margin-bottom:14px;}'+
+    '.ky-hero h2{margin:0 0 6px;font-size:20px;} .ky-hero p{margin:0;font-size:13px;opacity:.93;}'+
+    '.ky-sec{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;margin-bottom:14px;box-shadow:0 1px 3px rgba(15,32,64,.05);}'+
+    '.ky-sec h3{margin:0 0 10px;font-size:16px;color:#1e3a5f;}'+
+    '.ky-sec p{margin:0 0 8px;} .ky-sec ul,.ky-sec ol{margin:4px 0 8px;padding-left:22px;} .ky-sec li{margin:3px 0;}'+
+    '.ky-tip{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:9px 12px;font-size:12.5px;color:#166534;margin:8px 0;}'+
+    '.ky-warn{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:9px 12px;font-size:12.5px;color:#9a3412;margin:8px 0;}'+
+    '.ky-note{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:9px 12px;font-size:12.5px;color:#1e40af;margin:8px 0;}'+
+    '.ky-roletabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}'+
+    '.ky-roletab{flex:1;min-width:200px;text-align:center;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-size:13.5px;font-weight:800;cursor:pointer;color:#475569;font-family:inherit;}'+
+    '.ky-roletab.on{background:#2563eb;border-color:#2563eb;color:#fff;box-shadow:0 2px 6px rgba(37,99,235,.3);}'+
+    '.ky-roletab small{display:block;font-weight:600;font-size:11px;opacity:.85;margin-top:2px;}'+
+    '.ky-chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px;}'+
+    '.ky-chip{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:700;cursor:pointer;color:#475569;font-family:inherit;}'+
+    '.ky-chip.on{background:#1e3a5f;border-color:#1e3a5f;color:#fff;}'+
+    '.ky-chip.omit{background:#fff7ed;border-color:#fed7aa;color:#9a3412;}'+
+    '.ky-chip.omit.on{background:#9a3412;border-color:#9a3412;color:#fff;}'+
+    '.ky-chip.newf{background:#eef2ff;border-color:#c7d2fe;color:#3730a3;}'+
+    '.ky-chip.newf.on{background:#4338ca;border-color:#4338ca;color:#fff;}'+
+    '.ky-chip-tag{display:inline-block;background:#f59e0b;color:#fff;border-radius:5px;padding:0 5px;font-size:10px;font-weight:800;margin-left:3px;vertical-align:middle;}'+
+    '.ky-chip-tag.nf{background:#4f46e5;}'+
+    '.ky-chip:hover{border-color:#93c5fd;}'+
+    '.ky-summary{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:12.5px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:12px;}'+
+    '.ky-summary dt{font-weight:700;color:#64748b;white-space:nowrap;} .ky-summary dd{margin:0;}'+
+    '.ky-badge{display:inline-block;background:#ecfdf5;border:1px solid #a7f3d0;color:#047857;border-radius:6px;padding:1px 8px;font-size:11.5px;font-weight:700;}'+
+    '.ky-steps{counter-reset:kys;margin:6px 0;}'+
+    '.ky-step{position:relative;border:1px solid #e2e8f0;border-radius:10px;padding:11px 12px 11px 48px;margin-bottom:8px;background:#fafbfd;}'+
+    '.ky-step::before{counter-increment:kys;content:counter(kys);position:absolute;left:12px;top:11px;width:26px;height:26px;border-radius:50%;background:#2563eb;color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;}'+
+    '.ky-step b.t{display:block;color:#1e3a5f;font-size:13.5px;margin-bottom:3px;}'+
+    '.ky-step ul{margin:5px 0 0;} .ky-step p{margin:0 0 4px;}'+
+    '.ky-tag{display:inline-block;background:#eef2f7;border:1px solid #d7dde6;color:#475569;border-radius:6px;padding:0 7px;font-size:11px;font-weight:700;margin-left:4px;vertical-align:middle;}'+
+    '.ky-mini{font-size:12px;font-weight:700;color:#334155;margin:6px 0 2px;}'+
+    '.ky-open{display:inline-block;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;}'+
+    '.ky-open:hover{background:#1d4ed8;}'+
+    '@media(max-width:640px){.ky-sec{padding:14px;} .ky-hero{padding:18px;} .ky-roletab{min-width:140px;} .ky-summary{grid-template-columns:1fr;}}'+
+  '</style>';
+  // 登録支援機関自身の協議会加入 要否（2024/6/15以降 所属機関は全分野で申請前加入が必要。登録支援機関の加入要否は分野で異なる）
+  var SS_KANYU={zosen:'req',jidosha:'req',koku:'req',shukuhaku:'req',inshoku:'req',gaishoku:'req',
+                kaigo:'no',biru:'no',nogyo:'no',gyogyo:'no', kogyo:'opt',kensetsu:'opt',
+                unso:'chk',tetsudo:'chk',ringyo:'chk',mokuzai:'chk', linen:'chk',butsuryu:'chk',shigen:'chk'};
+  // 役割ごとの表示分野：登録支援機関タブは「登録支援機関も加入が必要な6分野」のみ。所属機関タブは全分野。
+  var _visSectors=KYOGIKAI_SECTORS.filter(function(x){ return _kyogikaiRole==='shien' ? (SS_KANYU[x.id]==='req') : true; });
+  if(!_visSectors.some(function(x){return x.id===_kyogikaiSector;})) _kyogikaiSector=_visSectors[0].id;
+  var s=_kyFindSector(_kyogikaiSector);
+  function _ssLabel(id){
+    var v=SS_KANYU[id]||'chk';
+    if(v==='req') return '<span class="ky-badge" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af;">必要（登録支援機関も加入）</span>';
+    if(v==='no')  return '<span class="ky-badge">不要（所属機関のみ）</span>'+((id==='nogyo'||id==='gyogyo')?' <span style="font-size:11px;color:#9a3412;">※協議会への協力は必要（申請時に誓約書を提出）</span>':'');
+    if(v==='opt') return '<span class="ky-badge" style="background:#fff7ed;border-color:#fed7aa;color:#9a3412;">任意</span>';
+    return '<span class="ky-badge" style="background:#f1f5f9;border-color:#cbd5e1;color:#475569;">要確認</span>';
+  }
+  var h=css+'<div class="ky">';
+  h+='<div class="ky-hero"><h2>協議会 加入のご案内</h2><p>特定技能外国人を受け入れるには、所属機関（受入れ企業）が分野ごとの<b>協議会に加入</b>する必要があります。加入は<b>1社1回</b>・<b>入管申請の前（新規受入れ時）</b>に行います。登録支援機関さまと所属機関さま、それぞれの進め方を分野ごとにステップでご案内します。</p></div>';
+
+  // 基本
+  h+='<div class="ky-sec"><h3>はじめに：協議会加入の基本</h3>'+
+    '<ul>'+
+    '<li><b>誰が入る？</b>：加入するのは<b>所属機関（受入れ企業）</b>です。協議会は企業単位で、人材1人ごとではありません。</li>'+
+    '<li><b>いつ入る？</b>：原則として<b>初回の在留申請（認定・変更）の前</b>。加入証（分野により構成員資格証明書・入会通知書）が申請書類に必要です。</li>'+
+    '<li><b>1社1回</b>：一度加入すれば、同じ分野の2人目以降は再加入不要です。</li>'+
+    '<li><b>受入れ経験ありの企業</b>：すでに同じ分野で加入済みなら再加入は不要（加入証の写しを再利用）。ただし<b>その分野で初めて受け入れる</b>場合は、取引実績があっても加入が必要です。</li>'+
+    '<li><b>加入のタイミング（重要）</b>：2024年6月15日以降、<b>所属機関は全分野で在留資格申請の前に加入</b>が必要です（以前の「受入れ後4か月以内」から変更）。</li>'+
+    '<li><b>登録支援機関自身の加入</b>：所属機関の加入は全分野で必要ですが、<b>登録支援機関も加入が必要かは分野で異なります</b>。必要なのは造船・舶用工業／自動車整備／航空／宿泊／飲食料品製造業／外食業の6分野。介護・ビルクリーニング・農業・漁業は不要（農業・漁業は協力義務あり）、工業製品製造業・建設は任意です。分野ごとの要否は下の表「登録支援機関の加入」でご確認ください。</li>'+
+    '</ul></div>';
+
+  // 役割タブ
+  h+='<div class="ky-roletabs">'+
+    '<div class="ky-roletab'+(_kyogikaiRole==='shien'?' on':'')+'" onclick="_kySetRole(\'shien\')">登録支援機関さまの進め方<small>企業をサポートする立場</small></div>'+
+    '<div class="ky-roletab'+(_kyogikaiRole==='shozoku'?' on':'')+'" onclick="_kySetRole(\'shozoku\')">所属機関（企業）さまの進め方<small>実際に加入する立場</small></div>'+
+  '</div>';
+
+  // 分野選択 + ステップ
+  var chips='';
+  _visSectors.forEach(function(x){
+    var cls='ky-chip'+(x.id===_kyogikaiSector?' on':'')+(x.omit?' omit':'')+(x.newfield?' newf':'');
+    var tag=x.omit?' <span class="ky-chip-tag">省略</span>':(x.newfield?' <span class="ky-chip-tag nf">新設</span>':'');
+    chips+='<div class="'+cls+'" onclick="_kySetSector(\''+x.id+'\')">'+x.name+(x.alert?' ⚠️':'')+tag+'</div>';
+  });
+  h+='<div class="ky-sec"><h3>分野を選んで加入ステップを確認</h3>'+
+    (_kyogikaiRole==='shien'
+      ? '<div class="ky-note">登録支援機関さまご自身の加入が必要な<b>6分野のみ</b>を表示しています（造船・舶用工業／自動車整備／航空／宿泊／飲食料品製造業／外食業）。他の分野は所属機関（企業）のみの加入です。企業側の手順は上のタブ「所属機関（企業）さまの進め方」でご覧ください。</div>'
+      : '<div class="ky-note">所属機関（企業）は<b>全分野で加入が必要</b>です（2024年6月15日以降は在留申請の前に加入）。</div>')+
+    '<div class="ky-chips">'+chips+'</div>'+
+    (s.alert?'<div class="ky-warn">⚠️ '+s.alert+'</div>':'')+
+    '<dl class="ky-summary">'+
+      '<dt>協議会</dt><dd>'+s.council+'</dd>'+
+      '<dt>所管・窓口</dt><dd>'+s.org+'</dd>'+
+      '<dt>受け取るもの</dt><dd>'+(s.newfield?'<span class="ky-badge" style="background:#eef2ff;border-color:#c7d2fe;color:#3730a3;">準備中</span>':'<span class="ky-badge">'+s.recv+'</span>')+'</dd>'+
+      '<dt>標準期間</dt><dd>'+s.term+'</dd>'+
+      '<dt>登録支援機関の加入</dt><dd>'+_ssLabel(s.id)+'</dd>'+
+    '</dl>'+
+    (s.newfield
+      ? '<div class="ky-note" style="background:#eef2ff;border-color:#c7d2fe;color:#3730a3;">🆕 '+s.newfield+'</div>'+
+        '<p style="margin-top:6px;"><a class="ky-open" href="'+s.url+'" target="_blank" rel="noopener">出入国在留管理庁 特定技能のページを開く ↗</a></p>'
+      : '<div class="ky-note">'+(_kyogikaiRole==='shien'?'登録支援機関さま向けの手順です（企業の加入をサポートし、加入証を回収して申請書類に添付）。':'所属機関（企業）さま向けの手順です（企業ご自身が加入し、加入証を登録支援機関へ提出）。')+'</div>'+
+        (s.omit
+          ? '<div class="ky-warn">📌 '+s.omit+'</div>'+
+            '<p style="margin-top:6px;"><a class="ky-open" href="'+s.url+'" target="_blank" rel="noopener">'+s.council+'の窓口を開く ↗</a></p>'
+          : _kyStepFlow(s))+
+        '<div class="ky-tip">各案件の「分野別ご案内リンク」を企業に共有すると、企業側で加入手順の確認と加入証の提出ができます（案件管理システム〔アンシス〕から発行）。</div>')+
+    '</div>';
+
+  h+='<div class="ky-sec"><h3>よくあるご質問</h3><ul>'+
+    '<li><b>加入に費用はかかりますか？</b> 多くの分野で加入自体は無料です。ただし<b>建設分野はJACの会費（年会費）</b>が必要です。</li>'+
+    '<li><b>2人目以降も加入が必要ですか？</b> いいえ。同じ分野であれば1社1回の加入で足り、再申請は不要です。</li>'+
+    '<li><b>加入後に必須の会合はありますか？</b> 現在は出席必須の会合はありません。加入後は協議会への情報提供等の協力が求められます。</li>'+
+    '<li><b>加入証が届くまでどのくらい？</b> 分野により数週間〜2〜3ヶ月です。申請スケジュールから逆算し、早めの加入申請をおすすめします。</li>'+
+    '</ul>'+
+    '<div class="ky-warn">書類名・様式番号・受付方法は制度改正で変わることがあります。最新の内容は必ず各分野の公式窓口でご確認ください。ご不明な点は大房行政書士法人までお問い合わせください。</div></div>';
+
+  h+='<div style="text-align:center;font-size:11.5px;color:#94a3b8;margin:4px 0 24px;">協議会加入のご相談は、大房行政書士法人までお気軽にお問い合わせください。</div>';
+  h+='</div>';
+  document.getElementById('main').innerHTML=h;
+}
+
 function renderMadoguchi(gid){
   var el=document.getElementById('main');
   if(!el)return;
@@ -6824,6 +7016,7 @@ function renderCurrent(){
   else if(currentGroup==='news'){renderNews();}
   else if(currentGroup==='kyoryoku'){renderKyoryoku();}
   else if(currentGroup==='zuiji'){renderZuiji();}
+  else if(currentGroup==='kyogikai'){renderKyogikai();} // ver.20261030.01: 協議会案内
   else{renderMain();}
   _updateOrgSaveFloat(); // ver.20261002.01: 他タブでは固定保存バーを消す
   // ver.20260827.02: コメント・要望ウィジェットを撤去（要望による）。過去分はDBに残し、関数群も削除せずに温存。
