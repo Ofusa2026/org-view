@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>申請人マイページ | 大房行政書士法人</title>
+<!-- ver.20261030.02: 在留期限まで60日を切ったら「在留期限と銀行口座」の注意を表示。最初の1回だけポップアップ（「確認しました」で以後そのブラウザでは出ない）、進捗タブの一番上には常設（案件が「完了」になったら消える）。期限が過ぎると申請中でも口座が止まることがある／申請中証明を出すと引き出せる場合がある（銀行によってはできない）／新しい在留カードを見せればまた使える／期限前に現金を引き出しておく、を8言語で。 -->
 <!-- ver.20261030.01: 登録支援機関O-Linkと同じSalesforce型の案内を追加（8言語・ログインのたびに自動で表示。「もう表示しない」を押すとそのブラウザでは出ない）。マイページを開いたとき、まだ対応していないこと（ヒアリング回答・書類提出・サイン返送）があれば、提出期限つきの「ご対応のお願い」ポップアップを表示（8言語）。ヘッダーの「使い方」ボタンで、タブ・いまやること・依頼事項・現在の進捗・在留期限・提出書類・言語・お問い合わせを1ステップずつ案内。 -->
 <!-- ver.20261028.01: ヒアリングフォーム回答済みのとき「回答内容を見る」ボタンを追加。回答内容を閲覧のみで表示（編集不可）し、「間違いがあれば担当者までご連絡ください」と表示（8言語）。RPC applicant_view_hearing。 -->
 <!-- ver.20261024.09: 申請までのスケジュールを15営業日の流れに（受領→ヒアリング・書類アップ→条件書確認→サイン返送→会社の押印→申請）。日数はアンシス「⏰ 提出期限」の8工程を合計。ヒアリングフォームに提出期限（受領日から3営業日）。hearingSkip（対象＝人材／両方）に当てはまる案件は出さない。 -->
@@ -219,6 +220,24 @@ details.doc-help-d[open]>summary::after{content:' ▲';}
 #tpBox .tp-b{padding:10px 16px 6px;max-height:60vh;overflow-y:auto;}
 #tpBox .tp-f{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid #e5e5e5;background:#fafaf9;}
 #tpBox .tp-btn{border:none;background:#0176d3;color:#fff;border-radius:6px;padding:9px 20px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;}
+/* ver.20261030.02: 在留期限と銀行口座の注意 */
+#tpBox .tp-h.bk{background:#fff7e8;}
+#tpBox .tp-h.bk .tp-t{color:#7a3d06;}
+.bk-box{display:flex;gap:12px;align-items:flex-start;border-radius:10px;padding:12px 14px;margin:10px 0;font-size:13.5px;line-height:1.75;color:#1f2937;}
+.bk-box .bk-ic{flex:none;width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;}
+.bk-box .bk-h{font-weight:800;margin-bottom:2px;}
+.bk-box .bk-n{font-size:12px;color:#475569;}
+.bk-card{background:#fff;border:2px solid #f0b45a;border-radius:14px;overflow:hidden;margin-bottom:16px;}
+.bk-card .bk-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:12px 14px;background:#fff7e8;}
+.bk-card .bk-tt{font-size:14.5px;font-weight:900;color:#7a3d06;}
+.bk-card .bk-days{font-size:12px;font-weight:800;color:#b42318;background:#fff;border:1px solid #f3c2bd;border-radius:999px;padding:3px 10px;}
+.bk-card .bk-body{padding:10px 14px 14px;font-size:13px;line-height:1.75;color:#1f2937;}
+.bk-card ul{margin:6px 0 10px;padding-left:20px;}
+.bk-card li{margin:3px 0;}
+.bk-card .bk-acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.bk-card .bk-btn{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:8px;background:#1e4a72;color:#fff;font-weight:800;font-size:13px;text-decoration:none;border:none;cursor:pointer;font-family:inherit;}
+.bk-card .bk-link{background:none;border:none;color:#0b5cad;text-decoration:underline;font-size:13px;cursor:pointer;font-family:inherit;padding:8px 4px;}
+.bk-card .bk-none{font-size:12px;color:#64748b;}
 /* ver.20261030.01: ウォークスルー（Salesforce型） */
 #wtLayer{position:fixed;inset:0;z-index:3000;pointer-events:none;}  /* 案内中もそのまま入力・操作できるよう、カード以外はクリックを通す */
 #wtPop{pointer-events:auto;}
@@ -246,7 +265,7 @@ details.doc-help-d[open]>summary::after{content:' ▲';}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;flex:none;white-space:nowrap;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title" id="hdrTitle">申請人マイページ</span>
-  <span class="header-ver">ver.20261030.01</span>
+  <span class="header-ver">ver.20261030.02</span>
   <div class="header-right">
     <button type="button" id="apTourBtn" onclick="_apTour()" style="padding:5px 11px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">？</button>
     <div id="langSwitch" class="lang-switch"></div>
@@ -991,12 +1010,77 @@ function _taskPopup(title, sub, bodyHtml, btn){
   document.body.appendChild(bg);
   return true;
 }
-function _taskPopupClose(){ var b=document.getElementById('tpBg'); if(b) b.remove(); if(_tpAfter){ var f=_tpAfter; _tpAfter=null; setTimeout(f,300); } }
+function _taskPopupClose(){ var b=document.getElementById('tpBg'); if(b) b.remove(); if(_bkPending){ _bkPending=false; setTimeout(_bkPopup,250); return; } if(_tpAfter){ var f=_tpAfter; _tpAfter=null; setTimeout(f,300); } }
 var _TP_TX={
  title:{ja:'ご対応のお願い',en:'Action needed',vi:'Việc cần làm',id:'Perlu tindakan',zh:'请您处理',km:'សូមចាត់វិធានការ',my:'ဆောင်ရွက်ရန်',th:'โปรดดำเนินการ'},
  sub:{ja:'まだ対応していないことがあります。<b>提出期限</b>までに対応してください。',en:'There are tasks you have not finished yet. Please complete them by the <b>deadline</b>.',vi:'Vẫn còn việc bạn chưa làm. Vui lòng hoàn thành trước <b>hạn nộp</b>.',id:'Masih ada tugas yang belum selesai. Mohon selesaikan sebelum <b>batas waktu</b>.',zh:'还有尚未处理的事项。请在<b>提交期限</b>前完成。',km:'នៅមានការងារដែលមិនទាន់បានធ្វើ។ សូមធ្វើឲ្យរួចមុន<b>ថ្ងៃផុតកំណត់</b>។',my:'မလုပ်ရသေးသည့်အရာများ ရှိနေပါသည်။ <b>နောက်ဆုံးရက်</b> မတိုင်မီ ဆောင်ရွက်ပါ။',th:'ยังมีสิ่งที่ยังไม่ได้ทำ โปรดดำเนินการภายใน<b>กำหนดส่ง</b>'},
  ok:{ja:'確認しました',en:'OK',vi:'Đã hiểu',id:'Mengerti',zh:'知道了',km:'យល់ហើយ',my:'နားလည်ပါပြီ',th:'รับทราบ'}
 };
+// ===== ver.20261030.02: 在留期限と銀行口座の注意（60日を切ったら。最初の1回ポップアップ＋進捗に常設、完了で消える） =====
+var _bkShown=false, _bkPending=false;
+var _BK_TX={
+ title:{ja:'大切なお知らせ：<ruby>在留期限<rt>ざいりゅうきげん</rt></ruby>と<ruby>銀行口座<rt>ぎんこうこうざ</rt></ruby>',en:'Important: residence expiry and your bank account',vi:'Thông báo quan trọng: hạn cư trú và tài khoản ngân hàng',id:'Penting: batas izin tinggal dan rekening bank',zh:'重要通知：在留期限与银行账户',km:'សេចក្តីជូនដំណឹងសំខាន់៖ ថ្ងៃផុតកំណត់ស្នាក់នៅ និងគណនីធនាគារ',my:'အရေးကြီးအသိပေးချက် - နေထိုင်ခွင့်သက်တမ်းနှင့် ဘဏ်အကောင့်',th:'ประกาศสำคัญ: วันหมดอายุการพำนักและบัญชีธนาคาร'},
+ lead:{ja:'<b style="color:#b42318;">在留カードの期限が過ぎると、銀行口座が止まる（<ruby>凍結<rt>とうけつ</rt></ruby>）ことがあります。</b><br>更新・変更の申請中でも、銀行はカードの期限だけを見て止めることがあります。',en:'<b style="color:#b42318;">When your residence card expires, your bank account may be frozen.</b><br>Even while your application is under review, some banks freeze accounts based only on the card\'s expiry date.',vi:'<b style="color:#b42318;">Khi thẻ cư trú hết hạn, tài khoản ngân hàng có thể bị đóng băng.</b><br>Ngay cả khi đang xin gia hạn/chuyển đổi, ngân hàng có thể khóa chỉ dựa vào hạn trên thẻ.',id:'<b style="color:#b42318;">Jika kartu izin tinggal kedaluwarsa, rekening bank bisa dibekukan.</b><br>Meskipun permohonan sedang diproses, bank bisa membekukan hanya berdasarkan tanggal di kartu.',zh:'<b style="color:#b42318;">在留卡过期后，银行账户可能会被冻结。</b><br>即使正在申请更新或变更，银行也可能只看在留卡的期限而冻结账户。',km:'<b style="color:#b42318;">នៅពេលកាតស្នាក់នៅផុតកំណត់ គណនីធនាគារអាចត្រូវបានបង្កក។</b><br>ទោះកំពុងដាក់ពាក្យក៏ដោយ ធនាគារខ្លះបង្កកដោយមើលតែថ្ងៃផុតកំណត់លើកាត។',my:'<b style="color:#b42318;">နေထိုင်ခွင့်ကတ် သက်တမ်းကုန်သွားပါက ဘဏ်အကောင့် ပိတ်ခံရနိုင်သည်။</b><br>လျှောက်ထားဆဲဖြစ်သော်လည်း ဘဏ်အချို့က ကတ်ပေါ်ရှိ ရက်စွဲကိုသာ ကြည့်၍ ပိတ်တတ်သည်။',th:'<b style="color:#b42318;">เมื่อบัตรพำนักหมดอายุ บัญชีธนาคารอาจถูกระงับ</b><br>แม้อยู่ระหว่างยื่นคำขอ ธนาคารบางแห่งอาจระงับโดยดูแค่วันหมดอายุบนบัตร'},
+ h1:{ja:'口座が止まったとき・止まりそうなとき',en:'If your account is frozen (or may be)',vi:'Khi tài khoản bị khóa hoặc sắp bị khóa',id:'Jika rekening dibekukan (atau akan dibekukan)',zh:'账户被冻结或可能被冻结时',km:'ពេលគណនីត្រូវបានបង្កក ឬជិតត្រូវបង្កក',my:'အကောင့်ပိတ်ခံရသည့်အခါ (သို့) ပိတ်ခံရနိုင်သည့်အခါ',th:'เมื่อบัญชีถูกระงับหรืออาจถูกระงับ'},
+ p1:{ja:'銀行に<b>「<ruby>申請中証明<rt>しんせいちゅうしょうめい</rt></ruby>」</b>を出すと、お金を引き出せる場合があります。',en:'Showing your <b>proof of pending application</b> to the bank may allow you to withdraw money.',vi:'Nộp <b>giấy xác nhận đang xin</b> cho ngân hàng, bạn có thể rút được tiền.',id:'Dengan menunjukkan <b>bukti permohonan berjalan</b> ke bank, Anda mungkin bisa menarik uang.',zh:'向银行出示<b>"申请中证明"</b>，有可能可以取款。',km:'បង្ហាញ<b>ភស្តុតាងនៃពាក្យសុំកំពុងដំណើរការ</b>ទៅធនាគារ អាចដកប្រាក់បាន។',my:'ဘဏ်သို့ <b>လျှောက်ထားဆဲဖြစ်ကြောင်းသက်သေ</b> ပြပါက ငွေထုတ်နိုင်နိုင်သည်။',th:'แสดง<b>หลักฐานคำขอที่อยู่ระหว่างดำเนินการ</b>ต่อธนาคาร อาจถอนเงินได้'},
+ n1:{ja:'※銀行によっては、できないこともあります。<br>申請中証明は「発行書類」タブに出ます（申請したあとに発行されます）。',en:'* Some banks may not accept it.<br>The proof appears in the "Issued documents" tab (issued after we file your application).',vi:'* Tùy ngân hàng có thể không được.<br>Giấy xác nhận hiện ở tab "Giấy tờ đã cấp" (được cấp sau khi nộp hồ sơ).',id:'* Beberapa bank mungkin tidak menerima.<br>Bukti muncul di tab "Dokumen terbit" (diterbitkan setelah permohonan diajukan).',zh:'※有些银行不能办理。<br>申请中证明会显示在"发行文件"标签中（申请后发行）。',km:'* ធនាគារខ្លះប្រហែលមិនទទួល។<br>ភស្តុតាងនឹងបង្ហាញក្នុងផ្ទាំង «ឯកសារចេញ» (ចេញបន្ទាប់ពីដាក់ពាក្យ)។',my:'* ဘဏ်အချို့တွင် မရနိုင်ပါ။<br>သက်သေကို "ထုတ်ပေးသည့်စာရွက်" တဘ်တွင် တွေ့နိုင်သည် (လျှောက်ထားပြီးမှ ထုတ်ပေးသည်)။',th:'* บางธนาคารอาจไม่รับ<br>หลักฐานจะแสดงในแท็บ "เอกสารที่ออกให้" (ออกให้หลังยื่นคำขอแล้ว)'},
+ p2:{ja:'<b>新しい在留カードを受け取ったら</b>、銀行に見せてください。口座がまた使えるようになります。',en:'<b>When you receive your new residence card</b>, show it to the bank. Your account can be used again.',vi:'<b>Khi nhận thẻ cư trú mới</b>, hãy mang cho ngân hàng xem. Tài khoản sẽ dùng lại được.',id:'<b>Setelah menerima kartu izin tinggal baru</b>, tunjukkan ke bank. Rekening bisa dipakai lagi.',zh:'<b>收到新的在留卡后</b>，请出示给银行。账户就可以再次使用。',km:'<b>ពេលទទួលបានកាតស្នាក់នៅថ្មី</b> សូមបង្ហាញទៅធនាគារ។ គណនីនឹងអាចប្រើបានវិញ។',my:'<b>နေထိုင်ခွင့်ကတ်အသစ် ရရှိပါက</b> ဘဏ်သို့ ပြပါ။ အကောင့်ကို ပြန်သုံးနိုင်ပါမည်။',th:'<b>เมื่อได้รับบัตรพำนักใบใหม่</b> ให้นำไปแสดงที่ธนาคาร บัญชีจะใช้ได้อีกครั้ง'},
+ h2:{ja:'期限の前にしておくと安心',en:'Before the expiry date',vi:'Nên làm trước khi hết hạn',id:'Sebaiknya sebelum kedaluwarsa',zh:'建议在期限前做好',km:'គួរធ្វើមុនថ្ងៃផុតកំណត់',my:'သက်တမ်းမကုန်မီ လုပ်ထားပါ',th:'ควรทำก่อนหมดอายุ'},
+ p3:{ja:'生活に必要なお金は、期限の前に<b>現金で引き出しておく</b>ことをおすすめします。',en:'We recommend <b>withdrawing the cash you need</b> before the expiry date.',vi:'Nên <b>rút sẵn tiền mặt</b> cần cho sinh hoạt trước khi hết hạn.',id:'Kami sarankan <b>menarik uang tunai yang diperlukan</b> sebelum kedaluwarsa.',zh:'建议在期限前<b>把生活所需的钱取出现金</b>。',km:'យើងណែនាំឲ្យ<b>ដកប្រាក់សុទ្ធដែលត្រូវការ</b>ទុកមុនថ្ងៃផុតកំណត់។',my:'လိုအပ်သော ငွေကို သက်တမ်းမကုန်မီ <b>ငွေသားဖြင့် ထုတ်ထားရန်</b> အကြံပြုပါသည်။',th:'แนะนำให้<b>ถอนเงินสดที่จำเป็น</b>ไว้ก่อนวันหมดอายุ'},
+ later:{ja:'この内容は、あとから「進捗」タブの一番上でいつでも見られます。',en:'You can see this anytime at the top of the "Progress" tab.',vi:'Bạn có thể xem lại bất cứ lúc nào ở đầu tab "Tiến độ".',id:'Anda bisa melihatnya kapan saja di bagian atas tab "Progres".',zh:'之后可随时在"进度"标签的最上方查看。',km:'អ្នកអាចមើលវាបានគ្រប់ពេលនៅខាងលើផ្ទាំង «វឌ្ឍនភាព»។',my:'"တိုးတက်မှု" တဘ်၏ ထိပ်ဆုံးတွင် အချိန်မရွေး ကြည့်နိုင်သည်။',th:'ดูได้ตลอดเวลาที่ด้านบนของแท็บ "ความคืบหน้า"'},
+ ok:{ja:'確認しました',en:'OK',vi:'Đã hiểu',id:'Mengerti',zh:'知道了',km:'យល់ហើយ',my:'နားလည်ပါပြီ',th:'รับทราบ'},
+ c1:{ja:'期限が過ぎると、申請中でも銀行口座が止まることがあります。',en:'After the expiry date, your bank account may be frozen even while your application is pending.',vi:'Sau khi hết hạn, tài khoản có thể bị khóa dù đang xin.',id:'Setelah kedaluwarsa, rekening bisa dibekukan meski permohonan sedang berjalan.',zh:'过了期限，即使在申请中，银行账户也可能被冻结。',km:'ក្រោយថ្ងៃផុតកំណត់ គណនីអាចត្រូវបង្កក ទោះកំពុងដាក់ពាក្យក៏ដោយ។',my:'သက်တမ်းကုန်ပြီးနောက် လျှောက်ထားဆဲဖြစ်သော်လည်း ဘဏ်အကောင့် ပိတ်ခံရနိုင်သည်။',th:'หลังหมดอายุ บัญชีอาจถูกระงับแม้อยู่ระหว่างยื่นคำขอ'},
+ li1:{ja:'止まったら → 銀行に<b>「申請中証明」</b>を出すと引き出せる場合があります（銀行によってはできません）',en:'If frozen → showing the <b>proof of pending application</b> may let you withdraw (not all banks)',vi:'Nếu bị khóa → nộp <b>giấy xác nhận đang xin</b> có thể rút được tiền (tùy ngân hàng)',id:'Jika dibekukan → tunjukkan <b>bukti permohonan berjalan</b>, mungkin bisa menarik uang (tidak semua bank)',zh:'被冻结时 → 出示<b>"申请中证明"</b>有可能取款（有些银行不行）',km:'បើត្រូវបង្កក → បង្ហាញ<b>ភស្តុតាងពាក្យសុំ</b> អាចដកប្រាក់បាន (មិនមែនគ្រប់ធនាគារ)',my:'ပိတ်ခံရပါက → <b>လျှောက်ထားဆဲသက်သေ</b> ပြပါက ငွေထုတ်နိုင်နိုင်သည် (ဘဏ်တိုင်း မဟုတ်)',th:'ถ้าถูกระงับ → แสดง<b>หลักฐานคำขอ</b>อาจถอนเงินได้ (บางธนาคารไม่ได้)'},
+ li2:{ja:'新しい在留カードを受け取ったら → 銀行に見せると<b>また使えるようになります</b>',en:'After you get your new card → show it to the bank and <b>your account can be used again</b>',vi:'Khi nhận thẻ mới → cho ngân hàng xem là <b>dùng lại được</b>',id:'Setelah menerima kartu baru → tunjukkan ke bank, <b>rekening bisa dipakai lagi</b>',zh:'收到新在留卡后 → 出示给银行，<b>账户即可再次使用</b>',km:'ពេលទទួលកាតថ្មី → បង្ហាញទៅធនាគារ <b>គណនីអាចប្រើវិញ</b>',my:'ကတ်အသစ်ရပါက → ဘဏ်သို့ပြလျှင် <b>ပြန်သုံးနိုင်ပါမည်</b>',th:'เมื่อได้บัตรใหม่ → แสดงที่ธนาคาร <b>บัญชีจะใช้ได้อีกครั้ง</b>'},
+ li3:{ja:'期限の前に → 必要なお金は<b>現金で引き出しておく</b>と安心です',en:'Before the expiry date → <b>withdraw the cash you need</b> in advance',vi:'Trước khi hết hạn → nên <b>rút sẵn tiền mặt</b> cần dùng',id:'Sebelum kedaluwarsa → <b>tarik uang tunai</b> yang diperlukan lebih dulu',zh:'期限之前 → 建议<b>先把需要的钱取出现金</b>',km:'មុនថ្ងៃផុតកំណត់ → <b>ដកប្រាក់សុទ្ធ</b>ដែលត្រូវការទុកជាមុន',my:'သက်တမ်းမကုန်မီ → လိုအပ်သောငွေကို <b>ငွေသားထုတ်ထားပါ</b>',th:'ก่อนหมดอายุ → <b>ถอนเงินสด</b>ที่จำเป็นไว้ก่อน'},
+ btn:{ja:'申請中証明を開く',en:'Open proof of pending application',vi:'Mở giấy xác nhận đang xin',id:'Buka bukti permohonan',zh:'打开申请中证明',km:'បើកភស្តុតាងពាក្យសុំ',my:'လျှောက်ထားဆဲသက်သေ ဖွင့်ရန်',th:'เปิดหลักฐานคำขอ'},
+ none:{ja:'申請中証明は、申請したあとに「発行書類」タブに出ます。',en:'The proof will appear in the "Issued documents" tab after we file your application.',vi:'Giấy xác nhận sẽ hiện ở tab "Giấy tờ đã cấp" sau khi nộp hồ sơ.',id:'Bukti akan muncul di tab "Dokumen terbit" setelah permohonan diajukan.',zh:'申请后，申请中证明会显示在"发行文件"标签中。',km:'ភស្តុតាងនឹងបង្ហាញក្នុងផ្ទាំង «ឯកសារចេញ» បន្ទាប់ពីដាក់ពាក្យ។',my:'လျှောက်ထားပြီးနောက် "ထုတ်ပေးသည့်စာရွက်" တဘ်တွင် ပေါ်လာပါမည်။',th:'หลักฐานจะแสดงในแท็บ "เอกสารที่ออกให้" หลังยื่นคำขอ'},
+ more:{ja:'くわしく見る',en:'Details',vi:'Xem chi tiết',id:'Selengkapnya',zh:'查看详情',km:'មើលលម្អិត',my:'အသေးစိတ်',th:'ดูรายละเอียด'}
+};
+function _bkDays(){
+  var c=theCase; if(!c||!c.expire) return null;
+  if((c.app_type||'')==='申請なし') return null;
+  if(String(c.status||'')==='完了') return null;  // 案件が完了したら出さない
+  var d=_apParse(c.expire); if(!d) return null;
+  var t0=new Date(); t0.setHours(0,0,0,0);
+  var n=Math.round((d-t0)/86400000);
+  return n<=60 ? n : null;  // 在留期限まで60日を切ったら（期限切れ・特例期間中も含む）
+}
+function _bkKey(){ return 'olink_bank_notice_ap_'+currentToken; }
+function _bkPopupHtml(){
+  var h='<div style="font-size:14px;line-height:1.75;color:#1f2937;padding:4px 4px 0;">'+_apTx(_BK_TX.lead)+'</div>';
+  h+='<div class="bk-box" style="background:#eef5ff;"><div class="bk-ic" style="background:#0b5cad;color:#fff;">🪪</div><div><div class="bk-h" style="color:#0b3f78;">'+_apTx(_BK_TX.h1)+'</div><div>'+_apTx(_BK_TX.p1)+'</div><div class="bk-n">'+_apTx(_BK_TX.n1)+'</div><div style="margin-top:6px;">'+_apTx(_BK_TX.p2)+'</div></div></div>';
+  h+='<div class="bk-box" style="background:#eefaf2;"><div class="bk-ic" style="background:#15803d;color:#fff;">💴</div><div><div class="bk-h" style="color:#14532d;">'+_apTx(_BK_TX.h2)+'</div><div>'+_apTx(_BK_TX.p3)+'</div></div></div>';
+  h+='<div style="font-size:12px;color:#475569;padding:2px 4px 6px;">'+_apTx(_BK_TX.later)+'</div>';
+  return h;
+}
+function _bkPopup(){
+  if(document.getElementById('tpBg')){ _bkPending=true; return; }
+  if(typeof _wt!=='undefined' && _wt){ var _st=_wt.all||_wt.steps, _op=_wt.opt; _wtEnd(true); _tpAfter=function(){ _wtStart(_st,_op); }; }
+  var bg=document.createElement('div'); bg.id='tpBg';
+  bg.innerHTML='<div id="tpBox" role="dialog"><div class="tp-h bk"><span style="font-size:20px;">⚠️</span><div class="tp-t">'+_apTx(_BK_TX.title)+'</div></div>'
+    +'<div class="tp-b">'+_bkPopupHtml()+'</div>'
+    +'<div class="tp-f"><button class="tp-btn" onclick="_bkOk()">'+_apTx(_BK_TX.ok)+'</button></div></div>';
+  document.body.appendChild(bg);
+}
+function _bkOk(){ try{ localStorage.setItem(_bkKey(),'1'); }catch(e){} _taskPopupClose(); }
+function _bkMaybePopup(){
+  if(_bkShown) return; if(_bkDays()===null) return;
+  var seen=false; try{ seen=localStorage.getItem(_bkKey())==='1'; }catch(e){ seen=false; }
+  _bkShown=true; if(seen) return;
+  _bkPopup();
+}
+function _bkCardHtml(){
+  var n=_bkDays(); if(n===null) return '';
+  var c=theCase, d=_apParse(c.expire);
+  var tail=n<0? t('exp_expired',{n:-n}) : t('exp_remain',{n:n});
+  var h='<div class="bk-card" id="bkCard"><div class="bk-top"><div class="bk-tt">⚠️ '+_apTx(_BK_TX.title)+'</div><span class="bk-days">'+t('exp_zairyu')+' '+(d.getMonth()+1)+'/'+d.getDate()+'（'+tail+'）</span></div>';
+  h+='<div class="bk-body">'+_apTx(_BK_TX.c1)+'<ul><li>'+_apTx(_BK_TX.li1)+'</li><li>'+_apTx(_BK_TX.li2)+'</li><li>'+_apTx(_BK_TX.li3)+'</li></ul><div class="bk-acts">';
+  if(pdfCert) h+='<a class="bk-btn" href="'+esc(pdfCert)+'" target="_blank" rel="noopener">🪪 '+_apTx(_BK_TX.btn)+'</a>';
+  else h+='<span class="bk-none">'+_apTx(_BK_TX.none)+'</span>';
+  h+='<button class="bk-link" onclick="_bkPopup()">'+_apTx(_BK_TX.more)+'</button></div></div></div>';
+  return h;
+}
 // ver.20261030.01: ログインのたびに使い方ガイド（ウォークスルー）を自動で表示（「もう表示しない」で止められる・ブラウザごと）
 var _autoTourDone=false;
 function _autoTour(key, fn){
@@ -1022,6 +1106,7 @@ function render(){
   try{ if(theCase && _apGatePending().length){ m.innerHTML=_apGateHtml(); renderSendBar(); return; } }catch(eG){ console.warn('gate',eG); }
   try{ if(!_tpDone){ var _hA=hearingAnswered(), _dH=docDisplayList().length>0, _dD=docsAllDone();
     if(_isSignReturnStatus(theCase.status) || (!_hA&&hearingNagActive()) || (_dH&&!_dD)){ _taskPopup(_apTx(_TP_TX.title), _apTx(_TP_TX.sub), renderTodo(), _apTx(_TP_TX.ok)); } } }catch(eP){ console.warn('taskpop',eP); }
+  try{ _bkMaybePopup(); }catch(eB){ console.warn('bankpop',eB); }  // ver.20261030.02: 在留期限60日以内の銀行口座の注意（最初の1回）
   try{ _autoTour('olink_tour_never_ap_'+currentToken, _apTour); }catch(eT){}  // ver.20261030.01: ログインのたびに表示（書類の確認画面のあと・「もう表示しない」まで）
   if(currentTab==='status') m.innerHTML=renderStatus();
   else if(currentTab==='docs') m.innerHTML=renderDocs();
@@ -1362,7 +1447,7 @@ function _apFaqHtml(){
 }
 function renderStatus(){
   var c=theCase;
-  var h=renderNextAction()+renderTodo()+_apPlanHtml(); // ver.20261024.03: 申請までのスケジュール
+  var h=_bkCardHtml()+renderNextAction()+renderTodo()+_apPlanHtml(); // ver.20261030.02: 在留期限と銀行口座の注意を一番上に ／ ver.20261024.03: 申請までのスケジュール
   h+='<div class="phase-card">';
   h+='<div class="phase-lbl">'+t('cur_progress')+'</div>';
   h+='<div class="phase-st" style="'+stExtStyle(getExternalStatus(c.status))+'">'+extStatusHtml(c)+'</div>';
