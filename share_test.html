@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261030.test23: 協議会案内のブラッシュアップ：冒頭の「1社1回」に例外（介護・木材は事業所ごと、更新・再確認、航空は区分ごと）を明記、ヒーロー文を「原則1社1回・該当分野では在留申請の前」に、「下の表」表記を修正、分野別ご案内リンク（アンシス）の注記を削除、所属機関タブのコピーを「企業へ送るフローをコピー」に、分野ごとに「2026年10月30日時点・出典」を表示、「印刷・PDF保存」ボタンを追加（チェック欄つきA4レイアウト・URL併記）。 -->
 <!-- ver.20261030.test22: 協議会案内：鉄道（第1号/第2号様式＋チェックシートをWordのままJARTSへメール、登録支援機関も加入必要）・林業（林業特定技能・育成就労協議会、WEBフォーム、加入通知書、構成員要件、登録支援機関は対象外）・自動車運送業（登録支援機関も第2号様式フォームで加入）を公式情報で確定。登録支援機関タブは8分野に。「要確認」表示を解消。 -->
 <!-- ver.20261030.test21: 協議会案内（漁業・所属機関）：特定技能雇用契約書・雇用条件書の写しは大房行政書士法人より提供する旨に文言修正。 -->
 <!-- ver.20261030.test20: 協議会案内：造船（所属機関）は様式第1号・第7号に加えて添付書類（登記事項証明書・定款・造船事業者との契約書の写し・注文書等）が必要な旨とチェックリストを明記。漁業（所属機関）を公式手続きに修正（様式第1-1号/1-2号＋雇用契約書等を2号構成員へ提出→毎月15日・末日締めで大日本水産会へ→1号構成員資格証明書）。 -->
@@ -7883,6 +7884,58 @@ SS_STEPS.unso=[
   {t:'構成員資格証明書のデータを大房行政書士法人へ共有',tag:'',
     body:'<p>構成員資格証明書を保存してください。在留申請の際に、協議会の構成員であることを示す書類の提出が必要なため、<b>大房行政書士法人へデータのご共有をお願いします。</b></p>'}
 ];
+// ver.20261030: 最終確認日・印刷/PDF保存
+var KY_CHECKED='2026年10月30日';
+function _kyEsc(x){ return String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function _kyPrintFlow(){
+  if(!_kyLastFlow) return;
+  var s=_kyLastFlow.s, role=_kyLastFlow.role, steps=_kyLastFlow.steps;
+  var who = role==='shien' ? '登録支援機関の加入手順' : '所属機関（受入れ企業）の加入手順';
+  var nums='①②③④⑤⑥⑦⑧⑨⑩';
+  var body=steps.map(function(st,i){
+    var b=String(st.body||'').replace(/<button[\s\S]*?<\/button>/g,'');
+    return '<div class="st"><div class="h"><span class="cb">□</span> '+(nums.charAt(i)||(i+1)+'.')+' '+st.t+(st.tag?' <span class="tag">'+st.tag+'</span>':'')+'</div>'+b+'</div>';
+  }).join('');
+  var css='body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;color:#1e293b;font-size:12px;line-height:1.7;margin:18px 22px;}'+
+    'h1{font-size:17px;margin:0 0 2px;color:#1e3a5f;} .sub{font-size:12px;color:#475569;margin-bottom:8px;}'+
+    '.meta{font-size:10.5px;color:#64748b;border-bottom:1px solid #cbd5e1;padding-bottom:6px;margin-bottom:10px;}'+
+    '.st{border:1px solid #cbd5e1;border-radius:6px;padding:8px 10px;margin-bottom:8px;page-break-inside:avoid;}'+
+    '.h{font-weight:700;color:#1e3a5f;font-size:13px;margin-bottom:3px;} .cb{font-size:14px;}'+
+    '.tag{font-size:10px;border:1px solid #94a3b8;border-radius:4px;padding:0 5px;font-weight:600;color:#475569;}'+
+    'p{margin:2px 0;} ul{margin:3px 0;padding-left:20px;}'+
+    'a{color:#1d4ed8;text-decoration:none;} a[href^="http"]:after{content:" （" attr(href) "）";font-size:9.5px;color:#475569;word-break:break-all;}'+
+    '.ky-open,.ky-dl{display:inline;background:none!important;border:none;padding:0;color:#1d4ed8;font-weight:600;} .ky-dlrow{margin:3px 0;} .ky-dlrow a{display:block;}'+
+    '.ky-mail{border:1px dashed #64748b;border-radius:6px;padding:6px 8px;margin:6px 0;} .ky-mail-h{font-weight:700;} .ky-mail-body{white-space:pre-wrap;font-family:inherit;font-size:11px;margin:4px 0;} .ky-mail-note{display:none;}'+
+    '.ky-warn,.ky-tip,.ky-note{border-left:3px solid #94a3b8;padding:3px 8px;margin:4px 0;background:#f8fafc;} .ky-mini{font-weight:700;margin-top:4px;}'+
+    '.foot{font-size:10px;color:#64748b;margin-top:10px;border-top:1px solid #cbd5e1;padding-top:6px;}'+
+    '@page{size:A4;margin:12mm;}';
+  var html='<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>'+_kyEsc(s.name+'分野 協議会 '+who)+'</title><style>'+css+'</style></head><body>'+
+    '<h1>【'+_kyEsc(s.name)+'分野】'+_kyEsc(s.council)+'</h1><div class="sub">'+who+'</div>'+
+    '<div class="meta">'+KY_CHECKED+'時点の公式情報をもとに作成／出典：'+_kyEsc(s.srcName||s.council+'（公式ページ）')+' '+_kyEsc(s.src||s.url)+'</div>'+
+    (s.alert?'<div class="ky-warn">⚠️ '+s.alert+'</div>':'')+body+
+    '<div class="foot">書類名・受付方法は変更されることがあります。最新は各分野の公式窓口でご確認ください。　作成：大房行政書士法人</div></body></html>';
+  var w=window.open('','_blank');
+  if(!w){ alert('ポップアップがブロックされました。ブラウザの設定でこのサイトのポップアップを許可してください。'); return; }
+  w.document.open(); w.document.write(html); w.document.close(); w.focus();
+  setTimeout(function(){ try{ w.print(); }catch(e){} },400);
+}
+(function(){ var m={
+  kaigo:['https://jicwels.or.jp/fcw/wp-content/uploads/2024/10/e427e5aaebd8bf63f9192b6a1dd1aa60.pdf','介護分野特定技能協議会 入会手続き案内（国際厚生事業団）'],
+  gaishoku:['https://www.maff.go.jp/j/shokusan/sanki/soumu/kyougikai.html','食品産業特定技能協議会（農林水産省）'],
+  inshoku:['https://www.maff.go.jp/j/shokusan/sanki/soumu/kyougikai.html','食品産業特定技能協議会（農林水産省）'],
+  biru:['https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/blc_tokuteiginou03.html','ビルクリーニング分野特定技能協議会について（厚生労働省）'],
+  zosen:['https://www.mlit.go.jp/maritime/maritime_fr5_000006.html','造船・舶用工業分野（国土交通省 海事局）'],
+  jidosha:['https://www.mlit.go.jp/jidosha/jidosha_SSW.html','自動車整備分野（国土交通省）'],
+  koku:['https://www.mlit.go.jp/koku/koku_fr19_000011.html','航空分野（国土交通省）'],
+  shukuhaku:['https://www.mlit.go.jp/kankocho/seisaku_seido/kihonkeikaku/jizoku_kankochi/kankojinzai/ninaitekakuho/tokutei_gino/kyogikai.html','宿泊分野特定技能協議会（観光庁）'],
+  nogyo:['https://www.maff.go.jp/j/keiei/foreigner/new.html','農業特定技能協議会（農林水産省）'],
+  gyogyo:['https://www.jfa.maff.go.jp/j/kikaku/tokuteikyogikai.html','漁業特定技能協議会（水産庁）'],
+  unso:['https://www.mlit.go.jp/jidosha/jidosha_tk1_000038.html','自動車運送業分野（国土交通省）'],
+  tetsudo:['https://www.mlit.go.jp/tetudo/tetudo_fr7_000056.html','鉄道分野における外国人材の受入れ（国土交通省）'],
+  ringyo:['https://www.rinya.maff.go.jp/j/routai/241010.html','林業特定技能・育成就労協議会（林野庁）'],
+  mokuzai:['https://www.rinya.maff.go.jp/j/mokusan/seisankakou/mokusan_tokuteikyogikai.html','木材産業特定技能協議会（林野庁）'],
+  linen:['https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/kenkou/seikatsu-eisei/linen_supply3.html','リネンサプライ分野特定技能協議会（厚生労働省）']
+}; KYOGIKAI_SECTORS.forEach(function(s){ if(m[s.id]){ s.src=m[s.id][0]; s.srcName=m[s.id][1]; } }); })();
 var _kyogikaiRole='shien';   // shien=登録支援機関 / shozoku=所属機関
 var _kyogikaiSector='kaigo';
 function _kySetRole(r){ _kyogikaiRole=r; renderKyogikai(); }
@@ -7948,7 +8001,9 @@ function _kyStepFlow(s){
   var pct=Math.round(done/steps.length*100);
   var h='';
   // 進捗バー
-  h+='<div class="ky-copybar"><button type="button" class="ky-copy" onclick="_kyCopyFlow(this)">📋 このフローをコピー（リンク付き）</button><span>メール・LINE・チャットにそのまま貼り付けられます</span></div>';
+  h+='<div class="ky-copybar"><button type="button" class="ky-copy" onclick="_kyCopyFlow(this)">'+(role==='shozoku'?'📋 企業へ送るフローをコピー（リンク付き）':'📋 このフローをコピー（リンク付き）')+'</button>'+
+     '<button type="button" class="ky-copy ky-print" onclick="_kyPrintFlow()">🖨 印刷・PDF保存</button>'+
+     '<span>'+(role==='shozoku'?'企業へメール・LINEでそのまま転送できます':'メール・LINE・チャットにそのまま貼り付けられます')+'</span></div>';
   h+='<div class="ky-prog"><div class="ky-prog-head"><b>進捗 '+done+' / '+steps.length+'</b>'+
      (done>0?'<a href="javascript:void(0)" class="ky-reset" onclick="_kyResetChecks(\''+s.id+'\',\''+role+'\')">チェックをリセット</a>':'')+'</div>'+
      '<div class="ky-prog-bar"><span style="width:'+pct+'%"></span></div></div>';
@@ -8013,6 +8068,8 @@ function renderKyogikai(){
     '.ky-step.done .ky-chk-box{background:#16a34a;border-color:#16a34a;}'+
     '.ky-chk-date{color:#166534;font-weight:800;}'+
     '.ky-prog{margin:4px 0 12px;}'+
+    '.ky-src{font-size:11px;color:#64748b;margin:-6px 0 10px;} .ky-src a{color:#2563eb;}'+
+    '.ky-copy.ky-print{background:#475569;} .ky-copy.ky-print:hover{background:#334155;}'+
     '.ky-dlrow{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0;}'+
     '.ky-mail{border:1px solid #99f6e4;background:#f0fdfa;border-radius:10px;padding:10px 12px;margin:8px 0 4px;}'+
     '.ky-mail-h{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:800;color:#0f766e;font-size:12.5px;margin-bottom:6px;}'+
@@ -8060,15 +8117,15 @@ function renderKyogikai(){
     return '<span class="ky-badge" style="background:#f1f5f9;border-color:#cbd5e1;color:#475569;">未定（準備中）</span>';
   }
   var h=css+'<div class="ky">';
-  h+='<div class="ky-hero"><h2>協議会 加入のご案内</h2><p>特定技能外国人を受け入れるには、所属機関（受入れ企業）が分野ごとの<b>協議会に加入</b>する必要があります。加入は<b>1社1回</b>・<b>入管申請の前（新規受入れ時）</b>に行います。登録支援機関さまと所属機関さま、それぞれの進め方を分野ごとにステップでご案内します。</p></div>';
+  h+='<div class="ky-hero"><h2>協議会 加入のご案内</h2><p>特定技能外国人を受け入れるには、所属機関（受入れ企業）が分野ごとの<b>協議会に加入</b>する必要があります。加入は<b>原則1社1回</b>、該当分野では<b>在留申請の前</b>に行います。登録支援機関さまと所属機関さま、それぞれの進め方を分野ごとにステップでご案内します。</p></div>';
 
   // 基本
   h+='<div class="ky-sec"><h3>はじめに：協議会加入の基本</h3>'+
     '<ul>'+
     '<li><b>誰が・いつ</b>：加入するのは<b>所属機関（受入れ企業）</b>（企業単位。人材ごとではありません）。原則<b>初回の在留申請の前</b>に加入します。</li>'+
-    '<li><b>1社1回</b>：同じ分野なら2人目以降は再加入不要。加入済みなら加入証の写しを再利用（その分野で初めての受入れは加入が必要）。</li>'+
+    '<li><b>原則1社1回</b>：同じ分野なら2人目以降は再加入不要。加入済みなら証明書の写しを再利用します（その分野で初めての受入れは加入が必要）。<br><span style="font-size:12.5px;color:#64748b;">※ 介護・木材産業は<b>事業所ごと</b>に加入。介護は入会証明書の<b>更新</b>（初回1年・以後4年）、木材産業は<b>2年ごと</b>の確認、航空は<b>別の区分</b>で受け入れる場合に再提出が必要です。</span></li>'+
     '<li><b>申請前加入（2024/6/15〜）</b>：該当分野では、所属機関は<b>在留申請の前に加入</b>が必要です（旧「受入れ後4か月以内」から変更）。加入時期は各分野のステップでご確認ください。</li>'+
-    '<li><b>登録支援機関の加入</b>：必要なのは<b>8分野のみ</b>（造船・舶用工業／自動車整備／航空／宿泊／飲食料品製造業／外食業／鉄道／自動車運送業）。他は所属機関のみ（下の表で確認）。</li>'+
+    '<li><b>登録支援機関の加入</b>：必要なのは<b>8分野のみ</b>（造船・舶用工業／自動車整備／航空／宿泊／飲食料品製造業／外食業／鉄道／自動車運送業）。他は所属機関のみの加入です（各分野の画面でご確認いただけます）。</li>'+
     '</ul></div>';
 
   // 役割タブ
@@ -8097,6 +8154,7 @@ function renderKyogikai(){
       '<dt>標準期間</dt><dd>'+s.term+'</dd>'))+
       '<dt>登録支援機関の加入</dt><dd>'+_ssLabel(s.id)+'</dd>'+
     '</dl>'+
+    '<div class="ky-src">ℹ️ '+KY_CHECKED+'時点の公式情報をもとに作成　出典：<a href="'+(s.src||s.url)+'" target="_blank" rel="noopener">'+(s.srcName||s.council+'（公式ページ）')+'</a></div>'+
     (s.newfield
       ? '<div class="ky-note" style="background:#eef2ff;border-color:#c7d2fe;color:#3730a3;">🆕 '+s.newfield+'</div>'+
         '<p style="margin-top:6px;"><a class="ky-open" href="'+s.url+'" target="_blank" rel="noopener">出入国在留管理庁 特定技能のページを開く ↗</a></p>'
@@ -8104,13 +8162,12 @@ function renderKyogikai(){
         (s.omit
           ? '<div class="ky-warn">📌 '+s.omit+'</div>'+
             '<p style="margin-top:6px;"><a class="ky-open" href="'+s.url+'" target="_blank" rel="noopener">'+s.council+'の窓口を開く ↗</a></p>'
-          : _kyStepFlow(s))+
-        '<div class="ky-tip">各案件の「分野別ご案内リンク」を企業に共有すると、企業側で加入手順の確認と加入証の提出ができます（案件管理システム〔アンシス〕から発行）。</div>')+
+          : _kyStepFlow(s)))+
     '</div>';
 
   h+='<div class="ky-sec"><h3>よくあるご質問</h3><ul>'+
     '<li><b>加入に費用はかかりますか？</b> 多くの分野で加入自体は無料です。ただし<b>建設分野はJACの会費（年会費）</b>が必要です。</li>'+
-    '<li><b>2人目以降も加入が必要ですか？</b> いいえ。同じ分野であれば1社1回の加入で足り、再申請は不要です。</li>'+
+    '<li><b>2人目以降も加入が必要ですか？</b> 原則不要です。同じ分野であれば1社1回の加入で足ります（介護・木材産業は事業所ごと、航空は区分ごとに必要な場合があります）。</li>'+
     '<li><b>加入後に必須の会合はありますか？</b> 現在は出席必須の会合はありません。加入後は協議会への情報提供等の協力が求められます。</li>'+
     '<li><b>加入証が届くまでどのくらい？</b> 分野により数週間〜2〜3ヶ月です。申請スケジュールから逆算し、早めの加入申請をおすすめします。</li>'+
     '</ul>'+
