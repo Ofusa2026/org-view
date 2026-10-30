@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261030.test02: 他機関申請の列に国交省だけでなく推薦票（ベトナム）・MWO（フィリピン）・二国間協定（カンボジア・MoLVT）・タイ大使館・JAIM・協議会も表示（不要にしたものは出さない）。ログイン時の自動案内を、まず「新規案件依頼の使い方」（入力画面を開いて①〜⑤）に変更。 -->
 <!-- ver.20261030.test01: ログインのたびに（案内の「もう表示しない」を押すまで・ブラウザごと）、進行中の一覧で「このページの見方」の案内を自動で表示。 -->
 <!-- ver.20261029.test10: 使い方の表示をSalesforce型のウォークスルーに統一。画面を暗くして説明する場所だけを明るく抜き、横に「ステップ n / N」のカード（タイトル・説明・進み具合の点・戻る／次へ／✕）を出す。← → Escキーでも操作可。「このページの見方」（一覧）と新規案件依頼の「使い方を見る」（①〜⑤）の両方に適用（左右カード・黄色の番号表示は廃止）。 使い方ガイドの「練習モード」（送信されない新規案件依頼）は廃止し、ガイドの案内も「使い方を見る」に変更。 案件が1件もない機関には、サンプル（架空の案件・企業・人材：株式会社サンプル建設／株式会社みほん食品など4件）を表示し、上部に「サンプル表示」の帯を出す（?demo=1 でいつでも表示）。サンプルの案件では保存処理は行わない。 サンプルの申請受付番号には、以前作成した見本の受付番号通知PDFを表示（受付番号PDFボタン・申請記録）。 -->
 <!-- ver.20261029.test09: 一覧の上に「このページの見方」ボタンを追加（各列・人材詳細／企業詳細ボタン・PDFボタンに黄色い番号と枠を付け、右下に①〜の説明を表示。スクロールに追従、閉じる／Escで終了）。サイドバーのいちばん上に「O-Link使い方ガイド」を移動（黄色で目立たせる）。使い方ガイドの「案件一覧・詳細」から一覧の見方を表示できるボタンを追加。 -->
@@ -736,7 +737,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261030.test01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261030.test02</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1440,6 +1441,21 @@ function getMlitStatus(c){
 // ver.20260622.test54: 国交省ステータスの表示丸め（prodより移植）
 var MLIT_DISPLAY_MAP={'準備中(企業ボール)':'準備中(企業ボール)','精査 / 事前補正依頼中(企業ボール)':'準備中(企業ボール)','企業確認中':'準備中(企業ボール)','準備中(ナンバリング未対応)':'準備中(大房ボール)','準備中(ナンバリング済み)':'準備中(大房ボール)','申請可能':'準備中(大房ボール)','申請済み':'申請中','補正未着手':'申請中','補正可能':'申請中','補正完了':'申請中','完了(許可済)':'許可済み','未紐付':'','未設定':''};
 function getMlitStatusDisplay(c){ var t=getMlitStatus(c); if(!t) return t; if(MLIT_DISPLAY_MAP.hasOwnProperty(t)) return MLIT_DISPLAY_MAP[t]; return '申請手続き中'; }
+// ver.20261030.test02: 他機関申請は国交省以外（推薦票・MWO・二国間協定・タイ大使館・JAIM・協議会）も表示
+var OTHER_AG_SHARE=[{key:'suisensho',label:'推薦票'},{key:'mwo',label:'MWO'},{key:'nikokukan',label:'二国間協定(MoLVT)'},{key:'thaiTaishikan',label:'タイ大使館'},{key:'jaim',label:'JAIM'},{key:'kyogikai',label:'協議会'}];
+function getOtherAgList(c){
+  var oa=c.otherAgencies; if(!oa||typeof oa!=='object') return [];
+  var out=[]; OTHER_AG_SHARE.forEach(function(a){ if(oa[a.key] && !oa[a.key+'_fuyo']){ var st=String(oa[a.key+'_status']||'').trim(); out.push({key:a.key,label:a.label,status:st}); } });
+  return out;
+}
+function otherAgColor(st){
+  if(st==='完了'||st==='補正済'||st==='補正完了') return '#16a34a';
+  if(st==='申請中') return '#2563eb';
+  if(st.indexOf('補正')>=0) return '#ef4444';
+  if(st.indexOf('大房')>=0||st.indexOf('相手')>=0) return '#f59e0b';
+  return '#64748b';
+}
+function hasAnyOtherAg(c){ return !!getMlitStatus(c) || getOtherAgList(c).length>0; }
 
 // お知らせモーダル内のステータス表示ラベル
 var NOTIF_LABELS={'申請済(番号待)':'申請済（番号待ち）','受付番号取込':'受付番号が付きました','審査完了':'審査完了','認定証発行':'認定証明書 発行','審査中':'申請済み・受付番号紐付','許可済 受取方法調整中':'許可済 受取方法調整中','入管受取ステータス変更中':'入管受取ステータス変更中','郵送交付':'郵送交付','★郵送交付':'郵送交付','★窓口受取':'窓口受取','窓口受取（本人）':'窓口受取（本人）'};
@@ -2925,7 +2941,9 @@ function buildRow(c){
   }
   // 他機関申請（建設分野のみ表示）
   var mlitLabel=getMlitStatusDisplay(c); // ver.20260622.test54: 表示丸め版を使用
-  var mlitHtml=mlitLabel?'<span class="st-badge" style="background:#f8fafc;color:'+agencyColor(mlitLabel)+';border-color:#e2e8f0;white-space:normal;max-width:none;line-height:1.3;">国交省 '+esc(mlitLabel)+'</span>':'<span style="color:#d1d5db;font-size:10px;">—</span>';
+  var _agB=[]; if(mlitLabel) _agB.push('<span class="st-badge" style="background:#f8fafc;color:'+agencyColor(mlitLabel)+';border-color:#e2e8f0;white-space:normal;max-width:none;line-height:1.3;">国交省 '+esc(mlitLabel)+'</span>');
+  getOtherAgList(c).forEach(function(a){ _agB.push('<span class="st-badge" style="background:#f8fafc;color:'+otherAgColor(a.status)+';border-color:#e2e8f0;white-space:normal;max-width:none;line-height:1.3;">'+esc(a.label)+(a.status?' '+esc(a.status):'')+'</span>'); });
+  var mlitHtml=_agB.length?'<div style="display:flex;flex-direction:column;align-items:flex-start;gap:3px;">'+_agB.join('')+'</div>':'<span style="color:#d1d5db;font-size:10px;">—</span>';
   var tCls=c.appType==='認定'?'type-nintei':c.appType==='更新'?'type-koshin':c.appType==='変更'?'type-henkou':'type-other';
   var typeHtml=c.appType?'<span class="type-badge '+tCls+'">'+esc(c.appType)+'</span>':'—';
   var teamShort=(c.team||'').replace(/チーム$/,'').replace(/\s*チーム/,'');
@@ -3592,7 +3610,7 @@ var FILTER_DEFS={
   appType:    {type:'value', get:function(c){return c.appType||'';}},
   staff:      {type:'value', get:function(c){return c.clientStaff||'';}},
   status:     {type:'value', get:function(c){return getExternalStatus(c.status)||'';}},
-  _mlit:      {type:'bool',  get:function(c){return !!getMlitStatus(c);}},
+  _mlit:      {type:'bool',  get:function(c){return hasAnyOtherAg(c);}},
   receiptNo:  {type:'bool',  get:function(c){return !!(c.receiptNo);}},
   tempReturn: {type:'bool',  get:function(c){return !!(c.tempReturn);}}
 };
@@ -3747,8 +3765,8 @@ function _demoApply(){
   var C1='demo_co_1', C2='demo_co_2';
   function cs(o){ return Object.assign({id:'',applicant:'',name:'',company:'',companyId:'',residenceStatus:'特定技能1号',status:'',expire:'',tokureiDate:'',staff:'大房　太郎',team:'',appType:'変更',receiptNo:'',receiptDate:'',requestDate:'',tempReturn:'',applicantField:'',madoguchiDate:'',madoguchiReceiveDate:'',clientStaff:'見本　花子',deliveryMethod:'mail',otherAgencies:{},updated_at:'',kokkoStatus:''},o); }
   allCases=[
-    cs({id:'demo_case_1',applicant:'NGUYEN VAN AN',name:'【第1弾】株式会社サンプル建設（変更・ベトナム2名）',company:'株式会社サンプル建設',companyId:C1,status:'企業書類待ち',expire:_demoD(85),requestDate:_demoD(-6),applicantField:'建設分野（特定技能１号）'}),
-    cs({id:'demo_case_2',applicant:'TRAN THI BINH',name:'【第1弾】株式会社サンプル建設（変更・ベトナム2名）',company:'株式会社サンプル建設',companyId:C1,status:'審査中',expire:_demoD(40),tokureiDate:_demoD(100),receiptNo:'東オンCU00000001',receiptDate:_demoD(-12),requestDate:_demoD(-40),applicantField:'建設分野（特定技能１号）'}),
+    cs({id:'demo_case_1',applicant:'NGUYEN VAN AN',name:'【第1弾】株式会社サンプル建設（変更・ベトナム2名）',company:'株式会社サンプル建設',companyId:C1,status:'企業書類待ち',expire:_demoD(85),requestDate:_demoD(-6),applicantField:'建設分野（特定技能１号）',otherAgencies:{kokkoSho:true,kokkoSho_status:'準備中(企業ボール)',suisensho:true,suisensho_status:'申請中'}}),
+    cs({id:'demo_case_2',applicant:'TRAN THI BINH',name:'【第1弾】株式会社サンプル建設（変更・ベトナム2名）',company:'株式会社サンプル建設',companyId:C1,status:'審査中',expire:_demoD(40),tokureiDate:_demoD(100),receiptNo:'東オンCU00000001',receiptDate:_demoD(-12),requestDate:_demoD(-40),applicantField:'建設分野（特定技能１号）',otherAgencies:{kokkoSho:true,kokkoSho_status:'申請済み',suisensho:true,suisensho_status:'完了'}}),
     cs({id:'demo_case_3',applicant:'BUDI SANTOSO',name:'【第1弾】株式会社みほん食品（更新・インドネシア1名）',company:'株式会社みほん食品',companyId:C2,appType:'更新',status:'人材書類待ち',expire:_demoD(55),requestDate:_demoD(-3),applicantField:'飲食料品製造業分野（特定技能１号）'}),
     cs({id:'demo_case_4',applicant:'SITI RAHAYU',name:'【第1弾】株式会社みほん食品（認定・インドネシア1名）',company:'株式会社みほん食品',companyId:C2,appType:'認定',status:'完了',receiptNo:'東オンAU00000002',receiptDate:_demoD(-50),requestDate:_demoD(-80),applicantField:'飲食料品製造業分野（特定技能１号）'})
   ];
@@ -3849,7 +3867,7 @@ var _PV_DESC={
   '種別':'変更・更新・認定 と 希望在留資格',
   '担当':'上が貴社のご担当者、下が大房行政書士法人の担当者です。',
   'ステータス':'今どの段階か',
-  '他機関申請':'国交省の進み具合',
+  '他機関申請':'国交省・推薦票（ベトナム）・MWO（フィリピン）・二国間協定（カンボジア）などの進み具合',
   '在留期限 / 特例':'赤字は期限が近い。特例＝申請中も在留できる期限',
   '受付番号':'入管の受付番号と受取方法',
   '帰国予定':'一時帰国の予定日',
@@ -8555,7 +8573,7 @@ async function loadData(){
     // ver.20261029.test10: 案件が1件もない機関には、サンプル（架空の案件）を表示して画面のイメージをつかめるように（?demo=1 でいつでも確認可）
     _demoApply();
     await loadNews();
-    try{ _autoTour('olink_tour_never_org_'+currentToken, function(){ switchGroup('active'); setTimeout(_pvOpen,300); }); }catch(eT){}  // ver.20261030.01: ログインのたびに一覧の見方を自動表示（「もう表示しない」まで）
+    try{ _autoTour('olink_tour_never_org_'+currentToken, _ncAutoTour); }catch(eT){}  // ver.20261030.test02: ログインのたびに、まず「新規案件依頼の使い方」を自動表示（「もう表示しない」まで）
     renderSidebar();
     renderCurrent();
     if(!_dataReloadTimer){
@@ -9795,7 +9813,16 @@ function _ncHelpToggle(){
   try{ localStorage.setItem('olink_nc_help_seen','1'); }catch(_){}
 }
 // 初めて開いた人・練習モードでは自動で表示
+// ver.20261030.test02: ログイン時の自動案内＝新規案件依頼の入力画面を開いて①〜⑤を案内
+function _ncAutoTour(){
+  var k=window._wtNeverKey; window._wtNeverKey=null;
+  window._ncSkipAuto=true;
+  try{ openNewCaseModal(); }catch(e){ window._ncSkipAuto=false; return; }
+  window._ncSkipAuto=false;
+  setTimeout(function(){ window._wtNeverKey=k; _ncHelpSet(true); try{ localStorage.setItem('olink_nc_help_seen','1'); }catch(_){} }, 450);
+}
 function _ncHelpAuto(){
+  if(window._ncSkipAuto) return;
   var seen=false; try{ seen=localStorage.getItem('olink_nc_help_seen')==='1'; }catch(_){ seen=true; }
   _ncHelpSet(!!window._ncPractice || !seen);
   if(!seen){ try{ localStorage.setItem('olink_nc_help_seen','1'); }catch(_){} }

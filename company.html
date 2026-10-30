@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261030.02: 人材詳細をタブで切り替える形に（スケジュール／申請情報／人材情報／発行書類／提出書類）。提出書類タブには御社の提出書類チェックリストを表示し、未提出の数をタブに表示。 -->
 <!-- ver.20261030.01: 登録支援機関O-Linkと同じSalesforce型の案内を追加（ログインのたびに自動で表示。「もう表示しない」を押すとそのブラウザでは出ない）。マイページを開いたとき、まだご対応いただくこと（書類・確認・押印・ヒアリング等）があれば、提出期限つきの「ご対応のお願い」ポップアップを表示。ヘッダーの「このページの見方」とサイドバーのダッシュボードの上の「O-Link使い方ガイド」で、対応が必要なタスク・ダッシュボード・案件一覧・提出書類・申請の流れ・所属機関情報・協力確認書を1ステップずつ案内（画面を暗くして対象だけ明るく、ステップ n / N・戻る／次へ）。 -->
 <!-- ver.20261028.01: 提出書類チェックリストの「取得予定日」を改行せず書類と同じ行に表示。説明・見本が見られることが分かるよう、小さい▸を「説明・見本を見る ▼」ボタンに変更（開くと「閉じる ▲」）。 -->
 <!-- ver.20261024.09: 申請までのスケジュールを15営業日の流れに（ヒアリング回答・書類アップ3→1-6作成2→1-6企業確認2→サイン書類作成1→サイン返送2→押印書類作成1→押印返送2→スキャン書類作成2＝できた日に申請）。日数はアンシス「⏰ 提出期限」の8工程を合計。企業ヒアリング不要（hearingSkip）にも対応。 -->
@@ -154,6 +155,11 @@ tr:hover td{background:#fcfcfd;}
 .detail-box{background:#fff;border-radius:16px;max-width:520px;width:100%;padding:22px 22px 26px;position:relative;margin:auto;}
 .detail-close{position:absolute;top:12px;right:12px;background:#f1f5f9;border:none;border-radius:8px;width:30px;height:30px;font-size:14px;cursor:pointer;color:#64748b;}
 .dt-name{font-size:18px;font-weight:900;color:#0f2040;padding-right:34px;}
+.dt-tabs{position:sticky;top:-1px;z-index:5;background:#fff;display:flex;gap:4px;overflow-x:auto;margin:12px 0 4px;border-bottom:2px solid #e2e8f0;-webkit-overflow-scrolling:touch;}
+.dt-tab{flex-shrink:0;white-space:nowrap;font-size:12px;font-weight:800;padding:8px 12px;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;background:transparent;color:#64748b;cursor:pointer;border-radius:6px 6px 0 0;font-family:inherit;}
+.dt-tab.on{border-bottom-color:#0f2040;background:#f1f5f9;color:#0f2040;}
+@media(max-width:520px){.dt-tab{padding:7px 5px;font-size:11px;letter-spacing:-.2px;}.dt-tabs{gap:1px;}.dt-tab-b{padding:0 4px;}}
+.dt-tab-b{font-size:10px;font-weight:800;color:#c2410c;background:#fff7ed;border:1px solid #fed7aa;border-radius:999px;padding:0 6px;}
 .dt-sub{font-size:11px;color:#64748b;margin-bottom:8px;}
 .dt-sec{font-size:11px;font-weight:800;color:#0f2040;border-bottom:2px solid #e2e8f0;padding-bottom:4px;margin:16px 0 8px;}
 .pdf-row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 4px;}
@@ -403,7 +409,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261030.01</span>
+  <span class="header-ver">ver.20261030.02</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
@@ -2822,21 +2828,42 @@ function openList(key){
 function openDetail(caseId){
   var c=allCases.filter(function(x){return x.id===caseId;})[0]; if(!c) return;
   var p=personsByCase[caseId]||{};
+  _dtActive=0;
   document.getElementById('detailBody').innerHTML=renderDetail(c,p);
   document.getElementById('detailScreen').classList.remove('hide');
 }
 function closeDetail(){ document.getElementById('detailScreen').classList.add('hide'); }
 function _dv(v){ return (v==null||v==='')?'—':esc(v); }
 function renderDetail(c,p){
+  // ver.20261030.02: 人材詳細を登録支援機関O-Linkと同じくタブで切り替え（スケジュール／申請情報／人材情報／発行書類／提出書類）
   function row(l,v){ return '<div class="dt-row"><span class="dt-l">'+l+'</span><span class="dt-v">'+v+'</span></div>'; }
   var nm=c.applicant||c.name||'—';
   var addr=[p.jp_postal_code?('〒'+p.jp_postal_code):'', p.jp_address||'', p.jp_detail_address||''].filter(Boolean).join(' ');
   var tel=p.phone||p.cel_phone||p.tel_num||'';
   var ti=_tokureiTracked(c)?expInfo(_tokureiDate(c)):null;
-  var h='<div class="dt-name">'+esc(nm)+'</div>';
-  h+='<div class="dt-sub">'+_dv(p.applicant_name_en)+' / '+_dv(p.nationality||c.nationality)+'</div>';
-  var _ks=_cksSchedule(c); h+=_ks||_planScheduleHtml(c);  // ver.20260921.10 / ver.20261024.03: 建設以外は3週間スケジュール
-  h+='<div class="dt-sec">基本情報</div>';
+  var hdr='<div class="dt-name">'+esc(nm)+'</div>';
+  hdr+='<div class="dt-sub">'+_dv(p.applicant_name_en)+' / '+_dv(p.nationality||c.nationality)+'</div>';
+  var panes=[];
+  // スケジュール
+  var _ks=_cksSchedule(c)||_planScheduleHtml(c);  // ver.20260921.10 / ver.20261024.03: 建設以外は3週間スケジュール
+  if(_ks) panes.push({t:'スケジュール',h:_ks});
+  // 申請情報
+  var h='<div class="dt-sec">在留・申請</div>';
+  h+=row('現在の在留資格',_dv(p.residence_status));
+  h+=row('申請在留資格',_dv(c.residence_status));
+  h+=row('在留期限',_dv(c.expire));
+  if(ti) h+=row('特例期限',ti.txt);
+  h+=row('申請種別',_dv(c.app_type));
+  h+=row('登録支援機関',_dv(c.org));
+  h+=row('進捗',esc(getExternalStatus(c.status)));
+  if(companyShowMlit){ var _ml=getKokkoStatus(c); if(_ml) h+=row('国交省申請',esc(_ml)); }
+  h+=row('受付番号',_dv(c.receipt_no));
+  h+='<div class="dt-sec">大房行政書士法人担当</div>';
+  h+=row('部署',_dv(c.team));
+  h+=row('担当',_dv(c.staff));
+  panes.push({t:'申請情報',h:h});
+  // 人材情報
+  h='<div class="dt-sec">基本情報</div>';
   h+=row('生年月日',_dv(p.birthdate));
   h+=row('性別',_dv(p.gender));
   h+=row('国籍',_dv(p.nationality||c.nationality));
@@ -2849,27 +2876,38 @@ function renderDetail(c,p){
   h+=row('母国住所',_dv(p.home_country_address));
   h+=row('電話',_dv(tel));
   h+=row('メール',_dv(p.email));
-  h+='<div class="dt-sec">在留・申請</div>';
-  h+=row('現在の在留資格',_dv(p.residence_status));
-  h+=row('申請在留資格',_dv(c.residence_status));
-  h+=row('在留期限',_dv(c.expire));
-  if(ti) h+=row('特例期限',ti.txt);
-  h+=row('申請種別',_dv(c.app_type));
-  h+=row('登録支援機関',_dv(c.org));
-  h+=row('進捗',esc(getExternalStatus(c.status)));
-  if(companyShowMlit){ var _ml=getKokkoStatus(c); if(_ml) h+=row('国交省申請',esc(_ml)); }
-  h+=row('受付番号',_dv(c.receipt_no));
-  h+='<div class="dt-sec">発行書類</div>';
+  panes.push({t:'人材情報',h:h});
+  // 発行書類
+  h='<div class="dt-sec">発行書類</div>';
   h+='<div class="pdf-row">'
     +_pdfChip('申請中証明',_lastPdfUrl(p.application_cert_pdf_urls),'#2563eb','🪪')
     +_pdfChip('預かり証',_lastPdfUrl(p.custody_receipt_pdf_urls),'#7c3aed','📋')
     +_pdfChip('受付番号',receiptByCase[c.id]||'','#dc2626','📄')
     +_pdfChip('審査完了',shinsaByCase[c.id]||'','#16a34a','✅')
     +'</div>';
-  h+='<div class="dt-sec">大房行政書士法人担当</div>';
-  h+=row('部署',_dv(c.team));
-  h+=row('担当',_dv(c.staff));
-  return h;
+  h+='<div style="font-size:11px;color:#94a3b8;margin-top:8px;">色の付いたボタンは押すと開けます。グレーのものはまだ発行されていません。</div>';
+  panes.push({t:'発行書類',h:h});
+  // 提出書類（御社）
+  var _dh=''; try{ _dh=renderDocs(); }catch(e){ _dh=''; }
+  var _miss=((_dh.split('pointer-events:none')[0]).match(/class="doc-state s-todo"/g)||[]).length;  // 未提出の数（入管書類がまだ締まっている間は数えない）
+  if(_dh) panes.push({t:'提出書類',h:_dh,badge:_miss});
+  if(_dtActive>=panes.length) _dtActive=0;
+  var tabs='<div class="dt-tabs">';
+  var bodies='';
+  panes.forEach(function(x,k){
+    var on=(k===_dtActive);
+    tabs+='<button type="button" class="dt-tab'+(on?' on':'')+'" onclick="_dtTab('+k+')">'+esc(x.t)+(x.badge?' <span class="dt-tab-b">未'+x.badge+'</span>':'')+'</button>';
+    bodies+='<div class="dt-pane" style="display:'+(on?'block':'none')+';">'+x.h+'</div>';
+  });
+  tabs+='</div>';
+  return hdr+tabs+bodies;
+}
+var _dtActive=0;
+function _dtTab(k){
+  _dtActive=k;
+  var b=document.getElementById('detailBody'); if(!b) return;
+  b.querySelectorAll('.dt-tab').forEach(function(t,j){ t.classList.toggle('on', j===k); });
+  b.querySelectorAll('.dt-pane').forEach(function(p,j){ p.style.display=(j===k)?'block':'none'; });
 }
 
 init();
