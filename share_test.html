@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261030.test17: 協議会案内の「提出先まとめ」枠を削除（各ステップに記載済みのため。コピー用テキストからも削除）。 -->
 <!-- ver.20261030.test16: 協議会案内に分野×役割ごとの「様式ダウンロード」を追加（食品の誓約書・申請ガイド、自動車整備の協議会様式・記載例、航空の届出書、木材の入会申請書・機械設備一覧表、造船の様式第1/7/11号、介護の概要書1-2号ほか）。フローのコピーにも様式URLを含める。 -->
 <!-- ver.20261030.test15: 協議会案内に分野×役割ごとの「提出先まとめ（どこに・何を・どうやって）」を追加。造船の様式第1号・第7号・第11号へ直接リンク。全分野の最終ステップを「在留申請で提出が必要なため、大房行政書士法人へデータのご共有を」に統一。 -->
 <!-- ver.20261030.test14: 協議会案内の「全分野で申請前の加入が必要」を「該当分野では申請前に加入」に修正（はじめに・所属機関タブ説明）。 -->
@@ -7494,7 +7495,6 @@ function _kyFlowText(){
   var nums='①②③④⑤⑥⑦⑧⑨⑩';
   var who = role==='shien' ? '登録支援機関の加入手順' : '所属機関（受入れ企業）の加入手順';
   var t='【'+s.name+'分野】'+s.council+'　'+who+'\n';
-  var dd=_kyLastFlow.dest; if(dd){ t+='\n■ どこに：'+dd.where+'\n■ 何を：'+dd.what+'\n■ どうやって：'+dd.how+'\n'; }
   var ff=_kyLastFlow.forms; if(ff){ t+='\n■ 様式ダウンロード\n'; if(typeof ff==='string') t+='　'+ff+'\n'; else ff.forEach(function(x){ t+='　・'+x.l+'：'+x.u+'\n'; }); }
   steps.forEach(function(st,i){
     t+='\n'+(nums.charAt(i)||(i+1)+'.')+' '+st.t+(st.tag?'（'+st.tag+'）':'')+'\n';
@@ -7741,7 +7741,6 @@ function _kyStepFlow(s){
   var pct=Math.round(done/steps.length*100);
   var h='';
   // 進捗バー
-  h+=_kyDestBox(_dest);
   h+=_kyFormsBox(_forms);
   h+='<div class="ky-copybar"><button type="button" class="ky-copy" onclick="_kyCopyFlow(this)">📋 このフローをコピー（リンク付き）</button><span>メール・LINE・チャットにそのまま貼り付けられます</span></div>';
   h+='<div class="ky-prog"><div class="ky-prog-head"><b>進捗 '+done+' / '+steps.length+'</b>'+
