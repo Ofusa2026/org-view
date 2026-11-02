@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261102.01: サンプル表示を追加。URLに ?demo=1 で開くと、架空の「株式会社大房」（人材：AKIRA OFUSA・HANAKO OFUSA）でログインなしに表示。上に「サンプル表示」の帯。データは読み書きともサーバーに送らない（お知らせ・期限ルールのみ通常どおり）。 -->
 <!-- ver.20261030.02: 人材詳細をタブで切り替える形に（スケジュール／申請情報／人材情報／発行書類／提出書類）。提出書類タブには御社の提出書類チェックリストを表示し、未提出の数をタブに表示。 -->
 <!-- ver.20261030.01: 登録支援機関O-Linkと同じSalesforce型の案内を追加（ログインのたびに自動で表示。「もう表示しない」を押すとそのブラウザでは出ない）。マイページを開いたとき、まだご対応いただくこと（書類・確認・押印・ヒアリング等）があれば、提出期限つきの「ご対応のお願い」ポップアップを表示。ヘッダーの「このページの見方」とサイドバーのダッシュボードの上の「O-Link使い方ガイド」で、対応が必要なタスク・ダッシュボード・案件一覧・提出書類・申請の流れ・所属機関情報・協力確認書を1ステップずつ案内（画面を暗くして対象だけ明るく、ステップ n / N・戻る／次へ）。 -->
 <!-- ver.20261028.01: 提出書類チェックリストの「取得予定日」を改行せず書類と同じ行に表示。説明・見本が見られることが分かるよう、小さい▸を「説明・見本を見る ▼」ボタンに変更（開くと「閉じる ▲」）。 -->
@@ -409,7 +410,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261030.02</span>
+  <span class="header-ver">ver.20261102.01</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
@@ -453,7 +454,48 @@ tr:hover td{background:#fcfcfd;}
 var SUPABASE_URL='https://ehwlgbwpycglmopiqyty.supabase.co';
 var SUPABASE_KEY='sb_publishable_3ptyILIpGIcNA5sUBhFMbA_n0VxpY2u';
 function sbFetch(p,opts){return fetch(SUPABASE_URL+'/rest/v1/'+p,Object.assign({headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'}},opts||{}));}
-function callRpc(fn,args){return fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(args||{})}).then(function(r){return r.json();});}
+/* ver.20261102.01: サンプル表示（URLに &demo=1）。架空の会社「株式会社大房」と人材で画面を見せる。データは読み書きともサーバーに送らない */
+var _DEMO=/[?&]demo=1\b/.test(location.search);
+function _dd(n){ var d=new Date(); d.setDate(d.getDate()+n); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+var _DEMO_PDF='https://drive.google.com/file/d/1LIqM5Z6vaSzmA4vzybsmajFMOGVHIVXm/preview';
+function _demoCoGet(){
+  var ORG='サンプル登録支援機関';
+  function cs(o){ return Object.assign({org:ORG,team:'書類部',staff:'大房　太郎',industry:null,created_at:_dd(-10)+'T10:00:00+09:00',receipt_no:null,nationality:'ベトナム',shinsa_date:null,status_date:_dd(-3)+'T10:00:00+09:00',temp_return:null,contract_start:_dd(30),contract_end:_dd(1125),job_category:null,receipt_date:null,milestone_step:null,other_agencies:{},applicant_field:'建設分野（特定技能１号）',residence_status:'特定技能1号',application_deadline:null},o); }
+  function ps(o){ return Object.assign({email:'sample@example.com',phone:null,expire:null,tel_num:null,hire_date:null,jp_address:'東京都千代田区サンプル1-2-3',nationality:'ベトナム',contract_end:null,contract_start:null,jp_postal_code:'100-0000',jp_detail_address:'サンプルハイツ101',home_country_address:null,custody_receipt_pdf_urls:[],application_cert_pdf_urls:[],cel_phone:'090-0000-0000'},o); }
+  var R=_dd(-6);
+  var dc=[];
+  function d(k,v){ dc.push({doc_key:k,value:v}); }
+  ['1. 履歴事項全部証明書','3. 標準報酬決定通知書','5. 会員証明書','7. 求人票','9. 就業規則および賃金規程','10. 賃金台帳','11. 経歴書','13. 36協定','14. 年間カレンダー'].forEach(function(n){ d('req::'+n,R); });
+  ['2. 建設業許可','4. キャリアアップID','7. 求人票','14. 年間カレンダー'].forEach(function(n){ d('staff::'+n,'true'); });
+  d('skip::16. 技能者ID','true');
+  return {ok:true, company_id:'demo_co',
+    company:{name:'株式会社大房',drive_url:'',kokko_exp:'無',show_mlit:true,ofusa_staff:'大房　太郎',has_kokko_idpw:false},
+    company_profile:{name:'株式会社大房',name_en:'OFUSA Co., Ltd.',tel:'03-0000-0000',zip:'100-0000',pref:'東京都',city:'千代田区',address:'サンプル1-2-3',capital:'10000000',corp_no:'0000000000000',rep_name:'大房 一郎',industry:'建設業'},
+    change_req:null, company_hearing_done:false, company_hearing_exists:false, hearing_show:null, org_scope:null,
+    cases:[
+      cs({id:'demo_c1',name:'【特定技能】【第1弾】株式会社大房（変更・ベトナム1名）',expire:_dd(110),status:'企業書類待ち',app_type:'変更',applicant:'AKIRA OFUSA',tokurei_date:_dd(170),other_agencies:{kokkoSho:true}}),
+      cs({id:'demo_c2',name:'【特定技能】【第1弾】株式会社大房（更新・ベトナム1名）',expire:_dd(25),status:'審査中',app_type:'更新',applicant:'HANAKO OFUSA',receipt_no:'東オンＣＵ00000001',receipt_date:_dd(-12),tokurei_date:_dd(85),status_date:_dd(-12)+'T10:00:00+09:00',created_at:_dd(-40)+'T10:00:00+09:00'}),
+      cs({id:'demo_c3',name:'【特活】【第1弾】株式会社大房（変更・ベトナム1名）',expire:null,status:'完了',app_type:'変更',applicant:'AKIRA OFUSA',residence_status:'特定活動',receipt_no:'東オンＣＵ00000002',receipt_date:_dd(-70),tokurei_date:null,status_date:_dd(-20)+'T10:00:00+09:00',created_at:_dd(-95)+'T10:00:00+09:00'})
+    ],
+    persons:[
+      ps({case_id:'demo_c1',applicant_name_en:'AKIRA OFUSA',gender:'男',birthdate:'1998-04-01',passport:'XX0000001',passport_expiry:_dd(900),residence_card:'AB00000001CD',residence_status:'特定活動'}),
+      ps({case_id:'demo_c2',applicant_name_en:'HANAKO OFUSA',gender:'女',birthdate:'1999-07-15',passport:'XX0000002',passport_expiry:_dd(1200),residence_card:'AB00000002CD',residence_status:'特定技能1号'}),
+      ps({case_id:'demo_c3',applicant_name_en:'AKIRA OFUSA',gender:'男',birthdate:'1998-04-01',passport:'XX0000001',passport_expiry:_dd(900),residence_card:'AB00000001CD',residence_status:'技能実習2号'})
+    ],
+    receipt:[{case_id:'demo_c3',drive_url:_DEMO_PDF}],
+    shinsa:[],
+    co_doc_check:dc };
+}
+function _demoRpc(fn,args){
+  if(fn==='company_view_meta') return {ok:true,has_pass:true,company_id:'demo_co',company_name:'株式会社大房'};
+  if(fn==='company_view_get') return _demoCoGet();
+  if(fn==='company_view_extra') return {ok:true,cases:[{id:'demo_c1',kokko_status:'準備中(企業ボール)',request_date:_dd(-6)},{id:'demo_c2',kokko_status:'',request_date:_dd(-40)},{id:'demo_c3',kokko_status:'',request_date:_dd(-95)}]};
+  if(fn==='list_company_feedback') return [];
+  if(/set|confirm|change|submit|kyoryoku/.test(fn)) return {ok:true,demo:true,at:new Date().toISOString()};
+  return undefined;   // お知らせ・期限ルールなど会社に関係しないものは通常どおり読む
+}
+function callRpc(fn,args){ if(_DEMO){ var _d=_demoRpc(fn,args); if(_d!==undefined) return Promise.resolve(JSON.parse(JSON.stringify(_d))); } return _callRpcLive(fn,args); }
+function _callRpcLive(fn,args){return fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(args||{})}).then(function(r){return r.json();});}
 function getParam(k){return new URLSearchParams(location.search).get(k);}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
@@ -672,8 +714,16 @@ async function passSubmit(){
   document.getElementById('passScreen').classList.add('hide');
 }
 
+function _demoBanner(){
+  if(document.getElementById('demoBanner')) return;
+  var b=document.createElement('div'); b.id='demoBanner';
+  b.style.cssText='background:#fef3c7;border-bottom:1px solid #f59e0b;color:#78350f;font-size:12px;font-weight:700;padding:7px 14px;text-align:center;position:relative;z-index:5;';
+  b.textContent='サンプル表示です。会社・人材・書類はすべて架空のもので、操作しても保存されません。';
+  document.body.insertBefore(b, document.body.firstChild);
+}
 async function init(){
   var token=getParam('token');
+  if(_DEMO){ token=token||'demo'; _demoBanner(); currentToken=token; companyName='株式会社大房'; var _lrD=await loadData('demo'); return; }   // ver.20261102.01: サンプル表示
   if(!token){ document.getElementById('main').innerHTML='<div class="error-box">URLが正しくありません。</div>'; return; }
   currentToken=token;
   try{

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261102.02: サンプル表示を作り直し。URLに ?demo=1 だけ（tokenなし）で開くと、架空の「サンプル登録支援機関」でログインなしに表示（会社・人材のデータは読み書きともサーバーに送らない。お知らせのみ通常どおり）。サンプルの会社・人材を「株式会社大房」「AKIRA OFUSA」（特活の完了案件に見本の受付番号PDF）／「HANAKO OFUSA」に変更。 -->
 <!-- ver.20261102.01: 新規案件依頼の「希望在留期間」を1ヶ月刻み（1月〜5年）に変更。従来は「3ヶ月／4ヶ月／6ヶ月／1年／2年／3年／5年」の7択だったが、「2年6月」「3年4月」などの中間値を細かく選べるようになった。希望在留資格が「技術・人文知識・国際業務」または「特定活動46号」のときのみ3年超（3年1月〜5年）を選択可。発行手数料計算（_feeForPeriod）も新形式に対応（総月数から入管庁の料金区分に振り分け）。 -->
 <!-- ver.20261030.04: share_test（〜ver.20261030.test02）の機能を本番に反映。協議会案内は本番の内容のまま（さわらない）。主な内容：①新規案件依頼の作り直し（AIで読み取って入力〔NEW〕、①〜⑤の番号、人材紹介手数料を1人あたりの独立ボックスに、案件名の自動作成、変更・更新は現在の在留期間も必須）②使い方の案内をSalesforce型のウォークスルーに（新規案件依頼の使い方・このページの見方・O-Link使い方ガイドをサイドバー最上部に。ログインのたびに新規案件依頼の使い方を自動表示、「もう表示しない」で止まる・ブラウザごと）③案件0件の機関にはサンプル表示（架空の案件・受付番号PDFの見本）④人材詳細・企業詳細をタブで切り替え、書類チェックリストに初回案内日・催促日・催促履歴、特定活動の期限は申請済みなら非表示 ⑤他機関申請に推薦票・MWO・二国間協定（MoLVT）・タイ大使館・JAIM・協議会も表示 ⑥お知らせ等の絵文字を整理。本番の「送信した依頼」の編集・取り下げ（ver.20261030.03）、受取段階のステータス表示（ver.20261026.01）、送り出し機関の読み込み順は維持。アップデートのお知らせ（WHATS_NEW）は追加なし。 -->
 <!-- ver.20261030.03: 「送信した依頼」で、大房が受け付ける前（確認待ち）の依頼を ✏️編集・🗑取り下げ できるように（update_org_intake／withdraw_org_intake。DB側で「この機関の依頼か・全部が確認待ちか」を確かめる。編集は新規案件依頼と同じ画面に送った内容を入れて開く。人材の追加・削除も可）。 -->
@@ -724,7 +725,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261102.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261102.02</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1196,7 +1197,25 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 var SUPABASE_URL='https://ehwlgbwpycglmopiqyty.supabase.co';
 var SUPABASE_KEY='sb_publishable_3ptyILIpGIcNA5sUBhFMbA_n0VxpY2u';
 function sbFetch(p,opts){return fetch(SUPABASE_URL+'/rest/v1/'+p,Object.assign({headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'}},opts||{}));}
-function sbRpc(fn,body){ if(typeof _demoMode!=='undefined' && _demoMode && /^(save_|set_|upsert_|confirm_|toggle|submit_|mark_|delete_|org_set)/.test(fn) && JSON.stringify(body||{}).indexOf('demo_')>=0){ return Promise.resolve({ok:false,demo:true}); } return fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(body||{})}).then(function(r){return r.json();});}
+// ver.20261102.01: サンプル表示（token なしで ?demo=1）。架空の「サンプル登録支援機関」で画面を見せる。会社・人材のデータは読み書きともサーバーに送らない
+var _DEMO_OFF=/[?&]demo=1\b/.test(location.search) && !new URLSearchParams(location.search).get('token');
+function _demoOffRpc(fn){
+  if(fn==='get_org_meta') return {orgName:'サンプル登録支援機関',isGpMode:false,hasPass:false};
+  if(fn==='get_org_share') return {org:{orgId:'demo_org'},cases:[],settings:[]};
+  if(fn==='get_org_companies') return [{name:'株式会社大房'},{name:'株式会社みほん食品'}];
+  if(fn==='get_org_profile') return {profile:{name:'サンプル登録支援機関'},offices:[],supportStaffList:[],intakeStaff:['見本　花子'],emails:[]};
+  if(fn==='get_org_notifications'||fn==='list_org_feedback') return [];
+  if(fn==='get_org_intakes') return {intakes:[]};
+  if(fn==='get_org_docs') return {docs:[]};
+  if(fn==='get_org_langs') return {langs:[],languages_master:[]};
+  if(fn==='list_senddashi_orgs') return {rows:[]};
+  if(fn==='org_company_links') return {ok:true,companies:[]};
+  if(fn==='quiz_history') return {ok:true,attempts:[]};
+  if(fn==='get_org_doc_req_history') return {ok:true,rows:[]};
+  if(fn==='news_list') return undefined;   // お知らせは通常どおり読む
+  return {ok:true,demo:true};
+}
+function sbRpc(fn,body){ if(_DEMO_OFF){ var _dv=_demoOffRpc(fn); if(_dv!==undefined) return Promise.resolve(JSON.parse(JSON.stringify(_dv))); } if(typeof _demoMode!=='undefined' && _demoMode && /^(save_|set_|upsert_|confirm_|toggle|submit_|mark_|delete_|org_set)/.test(fn) && JSON.stringify(body||{}).indexOf('demo_')>=0){ return Promise.resolve({ok:false,demo:true}); } return fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(body||{})}).then(function(r){return r.json();});}
 function saveOrgSetting(key,value){return sbRpc('set_org_setting',{p_token:currentToken,p_pass:(currentPass||null),p_key:key,p_value:value});}
 function confirmOrgNotifs(ids,confirmed){return sbRpc('confirm_org_notifications',{p_token:currentToken,p_pass:(currentPass||null),p_ids:ids,p_confirmed:!!confirmed});}
 function createOrgIntake(records){return sbRpc('create_org_intake',{p_token:currentToken,p_pass:(currentPass||null),p_records:records});}
@@ -3758,29 +3777,29 @@ function _demoApply(){
   var C1='demo_co_1', C2='demo_co_2';
   function cs(o){ return Object.assign({id:'',applicant:'',name:'',company:'',companyId:'',residenceStatus:'特定技能1号',status:'',expire:'',tokureiDate:'',staff:'大房　太郎',team:'',appType:'変更',receiptNo:'',receiptDate:'',requestDate:'',tempReturn:'',applicantField:'',madoguchiDate:'',madoguchiReceiveDate:'',clientStaff:'見本　花子',deliveryMethod:'mail',otherAgencies:{},updated_at:'',kokkoStatus:''},o); }
   allCases=[
-    cs({id:'demo_case_1',applicant:'NGUYEN VAN AN',name:'【第1弾】株式会社サンプル建設（変更・ベトナム2名）',company:'株式会社サンプル建設',companyId:C1,status:'企業書類待ち',expire:_demoD(85),requestDate:_demoD(-6),applicantField:'建設分野（特定技能１号）',otherAgencies:{kokkoSho:true,kokkoSho_status:'準備中(企業ボール)',suisensho:true,suisensho_status:'申請中'}}),
-    cs({id:'demo_case_2',applicant:'TRAN THI BINH',name:'【第1弾】株式会社サンプル建設（変更・ベトナム2名）',company:'株式会社サンプル建設',companyId:C1,status:'審査中',expire:_demoD(40),tokureiDate:_demoD(100),receiptNo:'東オンCU00000001',receiptDate:_demoD(-12),requestDate:_demoD(-40),applicantField:'建設分野（特定技能１号）',otherAgencies:{kokkoSho:true,kokkoSho_status:'申請済み',suisensho:true,suisensho_status:'完了'}}),
+    cs({id:'demo_case_1',applicant:'AKIRA OFUSA',name:'【特定技能】【第1弾】株式会社大房（変更・ベトナム1名）',company:'株式会社大房',companyId:C1,status:'企業書類待ち',expire:_demoD(110),tokureiDate:_demoD(170),requestDate:_demoD(-6),applicantField:'建設分野（特定技能１号）',otherAgencies:{kokkoSho:true,kokkoSho_status:'準備中(企業ボール)',suisensho:true,suisensho_status:'申請中'}}),
+    cs({id:'demo_case_2',applicant:'HANAKO OFUSA',name:'【特定技能】【第1弾】株式会社大房（更新・ベトナム1名）',company:'株式会社大房',companyId:C1,appType:'更新',status:'審査中',expire:_demoD(25),tokureiDate:_demoD(85),receiptNo:'東オンCU00000001',receiptDate:_demoD(-12),requestDate:_demoD(-40),applicantField:'建設分野（特定技能１号）'}),
     cs({id:'demo_case_3',applicant:'BUDI SANTOSO',name:'【第1弾】株式会社みほん食品（更新・インドネシア1名）',company:'株式会社みほん食品',companyId:C2,appType:'更新',status:'人材書類待ち',expire:_demoD(55),requestDate:_demoD(-3),applicantField:'飲食料品製造業分野（特定技能１号）'}),
-    cs({id:'demo_case_4',applicant:'SITI RAHAYU',name:'【第1弾】株式会社みほん食品（認定・インドネシア1名）',company:'株式会社みほん食品',companyId:C2,appType:'認定',status:'完了',receiptNo:'東オンAU00000002',receiptDate:_demoD(-50),requestDate:_demoD(-80),applicantField:'飲食料品製造業分野（特定技能１号）'})
+    cs({id:'demo_case_4',applicant:'AKIRA OFUSA',name:'【特活】【第1弾】株式会社大房（変更・ベトナム1名）',company:'株式会社大房',companyId:C1,residenceStatus:'特定活動',status:'完了',receiptNo:'東オンCU00000002',receiptDate:_demoD(-70),requestDate:_demoD(-95),applicantField:'建設分野（特定技能１号）'})
   ];
   allPersons={
-    demo_case_1:{case_id:'demo_case_1',applicant_name_en:'NGUYEN VAN AN',nationality:'ベトナム',gender:'男',birthdate:'1999-04-12',residence_status:'技能実習2号',expire:_demoD(85)},
-    demo_case_2:{case_id:'demo_case_2',applicant_name_en:'TRAN THI BINH',nationality:'ベトナム',gender:'女',birthdate:'2000-08-03',residence_status:'技能実習2号',expire:_demoD(40)},
+    demo_case_1:{case_id:'demo_case_1',applicant_name_en:'AKIRA OFUSA',nationality:'ベトナム',gender:'男',birthdate:'1998-04-01',residence_status:'特定活動',expire:_demoD(110)},
+    demo_case_2:{case_id:'demo_case_2',applicant_name_en:'HANAKO OFUSA',nationality:'ベトナム',gender:'女',birthdate:'1999-07-15',residence_status:'特定技能1号',expire:_demoD(25)},
     demo_case_3:{case_id:'demo_case_3',applicant_name_en:'BUDI SANTOSO',nationality:'インドネシア',gender:'男',birthdate:'1997-11-21',residence_status:'特定技能1号',expire:_demoD(55)},
-    demo_case_4:{case_id:'demo_case_4',applicant_name_en:'SITI RAHAYU',nationality:'インドネシア',gender:'女',birthdate:'2001-02-15'}
+    demo_case_4:{case_id:'demo_case_4',applicant_name_en:'AKIRA OFUSA',nationality:'ベトナム',gender:'男',birthdate:'1998-04-01',residence_status:'技能実習2号'}
   };
   function dk(req,staff,req0){ var o={req:req}; if(req0) o.req0=req0; if(staff) o.staff=staff; return o; }
   personDocsAll={
-    demo_case_1:{'パスポート':dk(_demoD(-6),_demoD(-4)),'在留カード（表）':dk(_demoD(-6),_demoD(-4)),'在留カード（裏）':dk(_demoD(-6),_demoD(-4)),'健康診断票':dk(_demoD(-1),'',_demoD(-6)),'課税証明書':dk(_demoD(-1),'',_demoD(-6))},
+    demo_case_1:{'顔写真':dk(_demoD(-6),_demoD(-4)),'パスポート':dk(_demoD(-6),_demoD(-4)),'在留カード（表）':dk(_demoD(-6),_demoD(-4)),'在留カード（裏）':dk(_demoD(-6),_demoD(-4)),'所得・課税証明書':dk(_demoD(-1),'',_demoD(-6)),'納税証明書':dk(_demoD(-1),'',_demoD(-6)),'源泉徴収票':dk(_demoD(-6))},
     demo_case_3:{'パスポート':dk(_demoD(-3)),'在留カード（表）':dk(_demoD(-3)),'源泉徴収票':dk(_demoD(-3))}
   };
   coDocsAll={};
-  coDocsAll[C1]={'1. 履歴事項全部証明書':dk(_demoD(-6),_demoD(-5)),'2. 建設業許可':dk(_demoD(-6),_demoD(-5)),'3. 標準報酬決定通知書':dk(_demoD(-1),'',_demoD(-6)),'登記事項証明書（履歴事項全部証明書）':dk(_demoD(-6))};
+  coDocsAll[C1]={'1. 履歴事項全部証明書':dk(_demoD(-6)),'2. 建設業許可':dk(_demoD(-6),_demoD(-5)),'3. 標準報酬決定通知書':dk(_demoD(-1),'',_demoD(-6)),'4. キャリアアップID':dk(_demoD(-6),_demoD(-5)),'5. 会員証明書':dk(_demoD(-6)),'登記事項証明書（履歴事項全部証明書）':dk(_demoD(-6))};
   coDocsAll[C2]={'登記事項証明書（履歴事項全部証明書）':dk(_demoD(-3),_demoD(-2)),'納税証明書（その3）':dk(_demoD(-3))};
   // 申請受付番号のイメージ：以前作った見本の受付番号通知PDF（AKIRA OFUSA の見本）を表示
   var _RCPT_SAMPLE='https://drive.google.com/file/d/1LIqM5Z6vaSzmA4vzybsmajFMOGVHIVXm/view';
   function rc(cid){ var c=allCases.find(function(x){return x.id===cid;})||{}; return {id:'demo_r_'+cid,case_id:cid,name:c.applicant||'',date:c.receiptDate+' 10:00',caseNo:c.receiptNo,sub:'',applicationDate:c.receiptDate,reported:true,driveUrl:_RCPT_SAMPLE,pdfDone:true,company:c.company,caseName:c.name,status:c.status,appType:c.appType,expire:c.expire,tokureiDate:c.tokureiDate,tempReturn:'',team:''}; }
-  allReceipts=[rc('demo_case_2'),rc('demo_case_4')];
+  allReceipts=[rc('demo_case_4')];
   allShinsa=[];
   _demoBanner();
 }
@@ -3790,7 +3809,7 @@ function _demoBanner(){
   if(!b && m){ b=document.createElement('div'); b.id='demoBanner'; m.parentNode.insertBefore(b,m); }
   if(b) b.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#eff6ff;border-bottom:1px solid #bfdbfe;padding:9px 18px;font-size:12.5px;color:#1e3a8a;">'
     +'<span style="font-size:11px;font-weight:900;color:#fff;background:#2563eb;border-radius:4px;padding:2px 8px;">サンプル表示</span>'
-    +'<span>まだ案件がないため、<b>架空の案件・企業・人材</b>で画面のイメージを表示しています。実際にご依頼いただくと、ここに貴社の案件が表示されます。</span>'
+    +(_DEMO_OFF?'<span><b>架空の案件・企業・人材</b>で画面のイメージを表示しています。操作しても保存されません。</span>':'<span>まだ案件がないため、<b>架空の案件・企業・人材</b>で画面のイメージを表示しています。実際にご依頼いただくと、ここに貴社の案件が表示されます。</span>')
     +'<button onclick="if(currentGroup!==\'active\'&&currentGroup!==\'all\'&&currentGroup!==\'done\'){switchGroup(\'active\');} setTimeout(_pvOpen,250);" style="margin-left:auto;padding:5px 12px;background:#0176d3;color:#fff;border:none;border-radius:6px;font-size:11.5px;font-weight:800;cursor:pointer;">このページの見方</button></div>';
 }
 // ===== ver.20261029.test10: ウォークスルー（Salesforce型）共通エンジン =====
@@ -8528,6 +8547,7 @@ function checkPass(){
 
 async function init(){
   var token=getParam('token');
+  if(!token && _DEMO_OFF) token='demo';   // ver.20261102.01: サンプル表示
   if(!token){document.getElementById('main').innerHTML='<div class="error-box">URLが正しくありません。</div>';return;}
   currentToken=token;
   try{

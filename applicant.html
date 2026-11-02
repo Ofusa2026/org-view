@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>申請人マイページ | 大房行政書士法人</title>
+<!-- ver.20261102.01: サンプル表示を追加。URLに ?demo=1 で開くと、架空の人材「AKIRA OFUSA」（株式会社大房）でPINなしに表示。ヒアリング回答の見本つき。データは読み書きともサーバーに送らない。 -->
 <!-- ver.20261030.02: 在留期限まで60日を切ったら「在留期限と銀行口座」の注意を表示。最初の1回だけポップアップ（「確認しました」で以後そのブラウザでは出ない）、進捗タブの一番上には常設（案件が「完了」になったら消える）。期限が過ぎると申請中でも口座が止まることがある／申請中証明を出すと引き出せる場合がある（銀行によってはできない）／新しい在留カードを見せればまた使える／期限前に現金を引き出しておく、を8言語で。 -->
 <!-- ver.20261030.01: 登録支援機関O-Linkと同じSalesforce型の案内を追加（8言語・ログインのたびに自動で表示。「もう表示しない」を押すとそのブラウザでは出ない）。マイページを開いたとき、まだ対応していないこと（ヒアリング回答・書類提出・サイン返送）があれば、提出期限つきの「ご対応のお願い」ポップアップを表示（8言語）。ヘッダーの「使い方」ボタンで、タブ・いまやること・依頼事項・現在の進捗・在留期限・提出書類・言語・お問い合わせを1ステップずつ案内。 -->
 <!-- ver.20261028.01: ヒアリングフォーム回答済みのとき「回答内容を見る」ボタンを追加。回答内容を閲覧のみで表示（編集不可）し、「間違いがあれば担当者までご連絡ください」と表示（8言語）。RPC applicant_view_hearing。 -->
@@ -265,7 +266,7 @@ details.doc-help-d[open]>summary::after{content:' ▲';}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;flex:none;white-space:nowrap;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title" id="hdrTitle">申請人マイページ</span>
-  <span class="header-ver">ver.20261030.02</span>
+  <span class="header-ver">ver.20261102.01</span>
   <div class="header-right">
     <button type="button" id="apTourBtn" onclick="_apTour()" style="padding:5px 11px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">？</button>
     <div id="langSwitch" class="lang-switch"></div>
@@ -302,7 +303,31 @@ details.doc-help-d[open]>summary::after{content:' ▲';}
 var SUPABASE_URL='https://ehwlgbwpycglmopiqyty.supabase.co';
 var SUPABASE_KEY='sb_publishable_3ptyILIpGIcNA5sUBhFMbA_n0VxpY2u';
 function sbFetch(p,opts){return fetch(SUPABASE_URL+'/rest/v1/'+p,Object.assign({headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'}},opts||{}));}
-function callRpc(fn,args){return fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(args||{})}).then(function(r){return r.json();});}
+/* ver.20261102.01: サンプル表示（URLに &demo=1）。架空の人材「AKIRA OFUSA」（株式会社大房）で画面を見せる。データは読み書きともサーバーに送らない */
+var _DEMO=/[?&]demo=1\b/.test(location.search);
+function _dd(n){ var d=new Date(); d.setDate(d.getDate()+n); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+function _demoApGet(){
+  var R=_dd(-4);
+  var docs=['顔写真','在留カード（表）','在留カード（裏）','パスポート','技能実習修了証','合格証（日本語）','所得・課税証明書','納税証明書','源泉徴収票'];
+  var dc=docs.map(function(n){ return {doc_key:'req::'+n,value:R}; });
+  ['顔写真','在留カード（表）','在留カード（裏）','パスポート'].forEach(function(n){ dc.push({doc_key:'staff::'+n,value:'true'}); });
+  dc.push({doc_key:'yotei::所得・課税証明書',value:_dd(5)});
+  return {ok:true,
+    case:{id:'demo_c1',org:'サンプル登録支援機関',name:'【特定技能】【第1弾】株式会社大房（変更・ベトナム1名）',team:'書類部',staff:'大房　太郎',expire:_dd(110),status:'人材書類待ち',company:'株式会社大房',app_type:'変更',industry:null,applicant:'AKIRA OFUSA',drive_url:'',receipt_no:null,nationality:'ベトナム',shinsa_date:null,status_date:_dd(-3)+'T10:00:00+09:00',temp_return:null,job_category:null,receipt_date:null,request_date:_dd(-6),tokurei_date:_dd(170),current_status:null,other_agencies:{},temp_return_in:null,applicant_field:'建設分野（特定技能１号）',residence_status:'特定技能1号',temp_return_in_tbd:''},
+    person:{email:'sample@example.com',phone:null,gender:'男',tel_num:null,passport:'XX0000001',birthdate:'1998-04-01',cel_phone:'090-0000-0000',jp_address:'東京都千代田区サンプル1-2-3',nationality:'ベトナム',temp_return:null,jp_postal_code:'100-0000',residence_card:'AB00000001CD',temp_return_in:null,passport_expiry:_dd(900),residence_status:'特定活動',applicant_name_en:'AKIRA OFUSA',jp_detail_address:'サンプルハイツ101',temp_return_in_tbd:null,home_country_address:null,custody_receipt_pdf_urls:[],application_cert_pdf_urls:[]},
+    doc_check:dc,
+    cache_docs:docs.map(function(n){ return {l:n,r:1,done:false}; }).concat([{l:'その他',r:0}]),
+    change_req:'', pdf_shinsa:'', pdf_receipt:'', sign_requests:[], has_hearing_form:true };
+}
+function _demoRpc(fn,args){
+  if(fn==='applicant_view_meta') return {ok:true,has_pin:true};
+  if(fn==='applicant_view_get') return _demoApGet();
+  if(fn==='applicant_view_hearing') return {ok:true,forms:[{form_type:'tokutei_henkou',submitted_at:_dd(-5)+'T10:00:00+09:00',response:{applicantNameEn:'AKIRA OFUSA',birthdate:'1998-04-01',nationality:'ベトナム',birthPlace:'ハノイ',passport:'XX0000001',passportExpiry:_dd(900),residenceCardStatus:'あり',residenceCard:'AB00000001CD',addressStatus:'変更なし',address:'東京都千代田区サンプル1-2-3 サンプルハイツ101',email:'sample@example.com',married:'no'}}]};
+  if(/set|confirm|change|submit/.test(fn)) return {ok:true,demo:true,at:new Date().toISOString()};
+  return undefined;
+}
+function callRpc(fn,args){ if(_DEMO){ var _d=_demoRpc(fn,args); if(_d!==undefined) return Promise.resolve(JSON.parse(JSON.stringify(_d))); } return _callRpcLive(fn,args); }
+function _callRpcLive(fn,args){return fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(args||{})}).then(function(r){return r.json();});}
 function getParam(k){return new URLSearchParams(location.search).get(k);}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
@@ -818,10 +843,18 @@ async function passSubmit(){
   }
 }
 
+function _demoBanner(){
+  if(document.getElementById('demoBanner')) return;
+  var b=document.createElement('div'); b.id='demoBanner';
+  b.style.cssText='background:#fef3c7;border-bottom:1px solid #f59e0b;color:#78350f;font-size:12px;font-weight:700;padding:7px 14px;text-align:center;';
+  b.textContent='サンプル表示です（架空の人材・書類）。操作しても保存されません。 / Sample view';
+  document.body.insertBefore(b, document.body.firstChild);
+}
 async function init(){
   renderLangSwitch();
   document.documentElement.lang=curLang;
   var token=getParam('token');
+  if(_DEMO){ token=token||'demo'; currentToken=token; window._passToken=token; _demoBanner(); applyStaticI18n(); document.getElementById('passScreen').classList.add('hide'); await loadData('demo'); return; }   // ver.20261102.01: サンプル表示
   if(!token){ document.getElementById('main').innerHTML='<div class="error-box">'+t('err_badurl')+'</div>'; return; }
   currentToken=token; window._passToken=token;
   try{
