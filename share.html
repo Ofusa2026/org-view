@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261102.01: 新規案件依頼の「希望在留期間」を1ヶ月刻み（1月〜5年）に変更。従来は「3ヶ月／4ヶ月／6ヶ月／1年／2年／3年／5年」の7択だったが、「2年6月」「3年4月」などの中間値を細かく選べるようになった。希望在留資格が「技術・人文知識・国際業務」または「特定活動46号」のときのみ3年超（3年1月〜5年）を選択可。発行手数料計算（_feeForPeriod）も新形式に対応（総月数から入管庁の料金区分に振り分け）。 -->
 <!-- ver.20261030.04: share_test（〜ver.20261030.test02）の機能を本番に反映。協議会案内は本番の内容のまま（さわらない）。主な内容：①新規案件依頼の作り直し（AIで読み取って入力〔NEW〕、①〜⑤の番号、人材紹介手数料を1人あたりの独立ボックスに、案件名の自動作成、変更・更新は現在の在留期間も必須）②使い方の案内をSalesforce型のウォークスルーに（新規案件依頼の使い方・このページの見方・O-Link使い方ガイドをサイドバー最上部に。ログインのたびに新規案件依頼の使い方を自動表示、「もう表示しない」で止まる・ブラウザごと）③案件0件の機関にはサンプル表示（架空の案件・受付番号PDFの見本）④人材詳細・企業詳細をタブで切り替え、書類チェックリストに初回案内日・催促日・催促履歴、特定活動の期限は申請済みなら非表示 ⑤他機関申請に推薦票・MWO・二国間協定（MoLVT）・タイ大使館・JAIM・協議会も表示 ⑥お知らせ等の絵文字を整理。本番の「送信した依頼」の編集・取り下げ（ver.20261030.03）、受取段階のステータス表示（ver.20261026.01）、送り出し機関の読み込み順は維持。アップデートのお知らせ（WHATS_NEW）は追加なし。 -->
 <!-- ver.20261030.03: 「送信した依頼」で、大房が受け付ける前（確認待ち）の依頼を ✏️編集・🗑取り下げ できるように（update_org_intake／withdraw_org_intake。DB側で「この機関の依頼か・全部が確認待ちか」を確かめる。編集は新規案件依頼と同じ画面に送った内容を入れて開く。人材の追加・削除も可）。 -->
 <!-- ver.20261030.02: 協議会案内「はじめに」の文言を整理（簡潔化）。 -->
@@ -723,7 +724,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261030.04</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261102.01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1069,7 +1070,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
               <th style="width:155px;">現在の在留資格</th>
               <th style="width:140px;">在留期限<span class="nc-exp-req" style="color:#dc2626;"> *</span></th>
               <th style="width:150px;">現在の在留期間<span class="nc-exp-req" style="color:#dc2626;"> *</span></th>
-              <th style="width:130px;">希望在留期間 <span style="color:#dc2626;">*</span></th>
+              <th style="width:150px;">希望在留期間 <span style="color:#dc2626;">*</span></th><!-- ver.20261102.01: 1月〜5年の1ヶ月刻みに合わせ列幅調整 -->
               <th style="width:120px;">受取方法 <span style="color:#dc2626;">*</span></th>
               <th style="width:80px;text-align:center;">推薦票</th>
               <th class="nc-fee-col" style="width:115px;">紹介料（1人あたり・円）</th>
@@ -9069,18 +9070,32 @@ var _FEE_TABLE_2026 = [
   { period:'3年以上5年未満',   window:64000, online:56000 },
   { period:'5年以上',          window:75000, online:65000 }
 ];
+// ver.20261102.01: 「N年M月」/「Mヶ月」/「3ヶ月」等を総月数に変換（旧UI互換も吸収）
+function _periodToMonths(hopedStayPeriod){
+  var v = String(hopedStayPeriod||'').trim();
+  if(!v) return 0;
+  // 旧UI互換: 「Nヶ月」
+  var mOld = v.match(/^(\d+)ヶ月$/);
+  if(mOld) return parseInt(mOld[1],10);
+  // 新UI: 「N年」「M月」「N年M月」
+  var y = 0, mo = 0;
+  var ym = v.match(/(\d+)年/); if(ym) y = parseInt(ym[1],10);
+  var mm = v.match(/(\d+)月/); if(mm) mo = parseInt(mm[1],10);
+  return y*12 + mo;
+}
 function _feeForPeriod(hopedStayPeriod){
-  // 選択肢のvalue(「3ヶ月」「4ヶ月」「6ヶ月」「1年」「2年」「3年」「5年」)から表の該当行を選ぶ
-  var v = String(hopedStayPeriod||'');
-  var idx = -1;
-  if(v==='3ヶ月')      idx = 0;  // 3ヶ月以下
-  else if(v==='4ヶ月') idx = 1;  // 3ヶ月超6ヶ月以下
-  else if(v==='6ヶ月') idx = 1;  // 3ヶ月超6ヶ月以下
-  else if(v==='1年')   idx = 3;  // 1年
-  else if(v==='2年')   idx = 4;  // 1年超3年未満
-  else if(v==='3年')   idx = 5;  // 3年以上5年未満（3年ちょうどは「以上」に含まれる）
-  else if(v==='5年')   idx = 6;  // 5年以上
-  return idx>=0 ? _FEE_TABLE_2026[idx] : null;
+  // ver.20261102.01: 選択肢の value を総月数に変換してから入管庁の料金区分（_FEE_TABLE_2026）に振り分け
+  var total = _periodToMonths(hopedStayPeriod);
+  if(total <= 0) return null;
+  var idx;
+  if(total <= 3)       idx = 0;  // 3ヶ月以下
+  else if(total <= 6)  idx = 1;  // 3ヶ月超6ヶ月以下
+  else if(total < 12)  idx = 2;  // 6ヶ月超1年未満
+  else if(total === 12)idx = 3;  // 1年
+  else if(total < 36)  idx = 4;  // 1年超3年未満
+  else if(total < 60)  idx = 5;  // 3年以上5年未満（3年ちょうどは「以上」に含まれる）
+  else                 idx = 6;  // 5年以上
+  return _FEE_TABLE_2026[idx] || null;
 }
 function _openHopedFeeConfirm(payload, onOK){
   // 既存モーダルがあれば消す
@@ -9153,9 +9168,9 @@ function _openHopedFeeConfirm(payload, onOK){
     +     '</div>'
     +     '<div style="font-size:9.5px;color:#475569;text-align:center;margin-top:4px;line-height:1.4;">'
     +       (function(){
-              // ver.20260908.03: 3年以上(=3年/5年)を選んだ人材がいれば550円、それ以外は330円、混在時は両方明示
-              var _hasY3plus = (payload.jinzaiList||[]).some(function(j){ return j.hopedStayPeriod==='3年' || j.hopedStayPeriod==='5年'; });
-              var _hasUnder3 = (payload.jinzaiList||[]).some(function(j){ return j.hopedStayPeriod && j.hopedStayPeriod!=='3年' && j.hopedStayPeriod!=='5年'; });
+              // ver.20261102.01: 3年以上(総月数≥36)を選んだ人材がいれば550円、それ以外は330円、混在時は両方明示
+              var _hasY3plus = (payload.jinzaiList||[]).some(function(j){ return _periodToMonths(j.hopedStayPeriod) >= 36; });
+              var _hasUnder3 = (payload.jinzaiList||[]).some(function(j){ var m=_periodToMonths(j.hopedStayPeriod); return m>0 && m<36; });
               if(_hasY3plus && _hasUnder3){
                 return '※ オンライン申請の場合、別途決済手数料が必要です<br>（許可期間3年未満：330円/件、3年以上：<b style="color:#dc2626;">550円/件</b>）';
               } else if(_hasY3plus){
@@ -9778,6 +9793,19 @@ var _CUR_PERIOD_OPT = (function(){
   }
   return o;
 })();
+// ver.20261102.01: 希望在留期間プルダウンも 1ヶ月刻み（1月〜5年）に変更。資格が「技人国」「特定活動46号」でないときは 3年1月以上を data-y5plus="1" で隠す。
+var _HOPED_PERIOD_OPT = (function(){
+  var o = '<option value="">-- 選択 --</option>';
+  for(var m=1; m<=60; m++){
+    var y = Math.floor(m/12), mo = m%12, lbl = '';
+    if(y>0) lbl += y+'年';
+    if(mo>0) lbl += mo+'月';
+    // 37ヶ月（3年1月）以降は5年系資格のみ選択可
+    var y5plus = (m>36) ? ' data-y5plus="1" style="display:none;"' : '';
+    o += '<option value="'+lbl+'"'+y5plus+'>'+lbl+'</option>';
+  }
+  return o;
+})();
 
 function addJinzaiRow(){
   if(_ncJinzaiRows >= _NC_MAX_JINZAI){
@@ -9833,17 +9861,8 @@ function addJinzaiRow(){
     '</td>' +
     // ver.20260828.02: 希望在留期間（3ヶ月〜3年）
     '<td>' +
-      // ver.20260830.02: 希望在留期間。技人国/特定活動46号の場合は5年まで選べる
-      '<select class="nc-select nc-j-hoped">' +
-        '<option value="">-- 選択 --</option>' +
-        '<option value="3ヶ月">3ヶ月</option>' +
-        '<option value="4ヶ月">4ヶ月</option>' +
-        '<option value="6ヶ月">6ヶ月</option>' +
-        '<option value="1年">1年</option>' +
-        '<option value="2年">2年</option>' +
-        '<option value="3年">3年</option>' +
-        '<option value="5年" data-y5="1" style="display:none;">5年</option>' +
-      '</select>' +
+      // ver.20261102.01: 希望在留期間を1ヶ月刻み（1月〜5年）に変更。技人国/特定活動46号のときは 3年超（3年1月〜5年）も選択可
+      '<select class="nc-select nc-j-hoped">' + _HOPED_PERIOD_OPT + '</select>' +
     '</td>' +
     '<td>' +
       '<select class="nc-select nc-j-uke">' +
@@ -9924,12 +9943,22 @@ function _updateHopedOptions(){
   var ds = (document.getElementById('nc_desiredStatus')||{}).value || '';
   var allow5y = (/技術.*人文知識.*国際業務/.test(ds)) || /技人国/.test(ds) || /特定活動46号/.test(ds);
   document.querySelectorAll('.nc-j-hoped').forEach(function(sel){
+    // ver.20261102.01: 3年超（37ヶ月以上）の選択肢を一括で出し分け
+    sel.querySelectorAll('option[data-y5plus="1"]').forEach(function(op){
+      op.style.display = allow5y ? '' : 'none';
+      op.disabled = !allow5y;
+    });
+    // 旧仕様の 5年 option も互換のため同じ扱い
     var opt5=sel.querySelector('option[data-y5="1"]');
-    if(!opt5) return;
-    opt5.style.display = allow5y ? '' : 'none';
-    opt5.disabled = !allow5y;
-    // 5年不可な資格に変わったのに既に5年が選ばれていたらクリア
-    if(!allow5y && sel.value==='5年'){ sel.value=''; }
+    if(opt5){ opt5.style.display = allow5y ? '' : 'none'; opt5.disabled = !allow5y; }
+    // 不可な資格に変わったのに既に 3年超 が選ばれていたらクリア
+    if(!allow5y){
+      var v = String(sel.value||'');
+      var mY = v.match(/^(\d+)年/);
+      if(mY && parseInt(mY[1],10) > 3) sel.value = '';
+      else if(mY && parseInt(mY[1],10) === 3 && /\d+月/.test(v)) sel.value = ''; // 3年M月（M≥1）
+      else if(v==='5年') sel.value = '';
+    }
   });
 }
 function _onDesiredStatusChange(){
