@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261102.test04: 新規・全登録支援機関で「企業詳細」ボタン（案件一覧・人材詳細の隣）と「企業マイページを開く」ボタン（企業詳細モーダル・人材詳細の提出書類（企業）欄）を表示（従来はグローバルパートナーズ専用）。開いた企業ページはその機関の案件のみ表示（&ot= 機関スコープ・既存仕様）。企業マイページ未発行の企業は「企業マイページ未発行」と表示。「貴社担当者」欄と「支援企業リスト」はグローバルパートナーズのみのまま。 -->
 <!-- ver.20261102.test03: 新規案件依頼の「希望在留期間」を1ヶ月刻み（1月〜5年）に変更。従来は「3ヶ月／4ヶ月／6ヶ月／1年／2年／3年／5年」の7択だったが、「2年6月」「3年4月」などの中間値を細かく選べるようになった。希望在留資格が「技術・人文知識・国際業務」または「特定活動46号」のときのみ3年超（3年1月〜5年）を選択可。発行手数料計算（_feeForPeriod）も新形式に対応（総月数から入管庁の料金区分に振り分け）。 -->
 <!-- ver.20261102.test02: 協議会案内の工業製品製造業（JAIM）を丁寧版に：該当性チェック（対象産業分類49分類・条件つき/対象外・直近1年の製造品出荷額等・業務区分10）、JAIM相談窓口への問合せ文例、様式2〜5・証明書類作成テンプレート・請負チェックシート・分類別の書き方見本を直接ダウンロード、新規入会手続/マイページ/会員名簿への直接リンク、年会費の表。 -->
 <!-- ver.20261102.test01: 協議会案内に工業製品製造業（JAIM入会）の案内を追加（省略表記を解除）。事業所ごとの賛助会員入会、様式2/3/4・産業分類証明書、JAIMポータル申請、年会費、2〜3か月で名簿掲載（会員証なし）、名簿データを大房へ共有。登録支援機関は入会対象外（不要）に。 -->
@@ -759,7 +760,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261102.test03</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261102.test04</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1895,6 +1896,8 @@ function _ksOrgAllowed(){ var n=orgName||''; return _KS_ORGS.some(function(k){ r
 // ver.20260921.06: グローバルパートナーズ向け 企業マイページリンク
 var _gpCoLinks=null;
 function _gpIsGpOrg(){ return (orgName||'').indexOf('グローバルパートナーズ')===0; }
+// ver.20261102.02: 企業詳細・「企業マイページを開く」は全登録支援機関で表示（GP専用を解除）
+function _coPageOrg(){ return true; }
 function _gpLoadCoLinks(){
   if(_gpCoLinks!==null) return Promise.resolve(_gpCoLinks);
   return sbRpc('org_company_links',{p_token:currentToken,p_pass:(currentPass||null)}).then(function(r){
@@ -2005,7 +2008,7 @@ function _mdSection(title, sub, list, kind){
       +'<div style="font-size:14px;font-weight:900;color:#0f2040;">'+esc(e.name||e.id)+'</div>'+_dueH
       +'<div style="flex:1;"></div>'
       +(e.noRenew?'<span style="flex-shrink:0;font-size:12px;font-weight:900;color:#fff;background:#b91c1c;border-radius:6px;padding:4px 12px;letter-spacing:.5px;">更新不可</span>':'')
-      +(_gpIsGpOrg()?'<button onclick="openGpCoModal(\''+esc(e.id)+'\')" style="background:#eef4fd;color:#1c3d6e;border:1px solid #b9d0ee;border-radius:6px;font-size:11px;font-weight:800;padding:4px 10px;cursor:pointer;">企業詳細</button>':'')+'</div>';
+      +(_coPageOrg()?'<button onclick="openGpCoModal(\''+esc(e.id)+'\')" style="background:#eef4fd;color:#1c3d6e;border:1px solid #b9d0ee;border-radius:6px;font-size:11px;font-weight:800;padding:4px 10px;cursor:pointer;">企業詳細</button>':'')+'</div>';
     if(kind==='ko'&&e.due&&e.due.left<0&&!e.noRenew){
       h+='<div style="font-size:11.5px;font-weight:800;color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:4px 10px;margin-top:8px;">特定活動更新または更新不可のため確認必要</div>';
     }
@@ -2117,7 +2120,7 @@ function renderGpCompanies(){
 var _KS_KOKKO_APPLIED_G=['申請済み','補正可能','補正完了','補正未着手','完了(許可済)'];
 // ver.20260921.11: 企業詳細ボタン（GP専用・人材詳細と同列）→ 企業詳細モーダル → 企業マイページへ移動
 function _gpCoBtn(c){
-  if(!_gpIsGpOrg()||!c.companyId) return '';
+  if(!_coPageOrg()||!c.companyId) return '';
   return ' <button onclick="event.stopPropagation();openGpCoModal(\''+esc(c.companyId)+'\')" style="background:#eef4fd;color:#1c3d6e;border:1px solid #b9d0ee;border-radius:6px;font-size:10.5px;font-weight:800;padding:3px 8px;cursor:pointer;">企業詳細</button>';
 }
 function closeGpCoModal(){ var m=document.getElementById('gpCoModal'); if(m) m.remove(); }
@@ -2165,7 +2168,7 @@ function openGpCoModal(companyId, _keep){
     +'<button onclick="closeGpCoModal()" style="background:#f1f5f9;border:none;border-radius:8px;font-size:13px;font-weight:800;padding:6px 10px;cursor:pointer;">✕</button></div>'
     ;
   var _ov=''
-    +row('貴社担当者','<span style="cursor:pointer;border-bottom:1px dashed #94a3b8;" onclick="_gpEditStaff(\''+esc(companyId)+'\')">'+(gpStaff?esc(gpStaff):'<span style="color:#94a3b8;">未設定 ✎</span>')+'</span>')
+    +(_gpIsGpOrg()?row('貴社担当者','<span style="cursor:pointer;border-bottom:1px dashed #94a3b8;" onclick="_gpEditStaff(\''+esc(companyId)+'\')">'+(gpStaff?esc(gpStaff):'<span style="color:#94a3b8;">未設定 ✎</span>')+'</span>'):'')  // ver.20261102.02: 貴社担当者はGPのみ
     +row('Ofusa担当',esc(Object.keys(e.staff).join('・')||'—'))
     +row('案件','進行中 <b>'+e.active+'</b>／完了 '+e.done)
     +row('国交省書類',kokkoLine)
@@ -2217,7 +2220,7 @@ function _gpEditStaff(companyId){
   }).catch(function(){ alert('保存に失敗しました。'); });
 }
 function _gpFillCoLink(companyId){
-  if(!_gpIsGpOrg()||!companyId) return;
+  if(!_coPageOrg()||!companyId) return;
   _gpLoadCoLinks().then(function(list){
     var m=null; for(var i=0;i<list.length;i++){ if(list[i].company_id===companyId){ m=list[i]; break; } }
     var el=document.getElementById('gpCoLinkSlot'); if(!el||!m) return;
@@ -2531,7 +2534,7 @@ function openPersonModal(caseId, _keep){
   // 企業書類チェックリスト（ver.20260908.01: 国交省／入管で分割表示）
   // ver.20260908.02: 特定活動かつ国交省未申請の場合、入管書類はまだ収集不要としてバナー＋グレーアウト表示
   _seg('提出書類（企業）');
-  if(c.companyId && _gpIsGpOrg()) h+='<div id="gpCoLinkSlot"></div>';
+  if(c.companyId && _coPageOrg()) h+='<div id="gpCoLinkSlot"></div>';
   if(c.companyId && coDocsAll[c.companyId]){
     var _coMap=coDocsAll[c.companyId]||{};
     var _kokkoList=(Array.isArray(requiredDocsCoKokko)?requiredDocsCoKokko:[]);
