@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261102.test02: 協議会案内の工業製品製造業（JAIM）を丁寧版に：該当性チェック（対象産業分類49分類・条件つき/対象外・直近1年の製造品出荷額等・業務区分10）、JAIM相談窓口への問合せ文例、様式2〜5・証明書類作成テンプレート・請負チェックシート・分類別の書き方見本を直接ダウンロード、新規入会手続/マイページ/会員名簿への直接リンク、年会費の表。 -->
 <!-- ver.20261102.test01: 協議会案内に工業製品製造業（JAIM入会）の案内を追加（省略表記を解除）。事業所ごとの賛助会員入会、様式2/3/4・産業分類証明書、JAIMポータル申請、年会費、2〜3か月で名簿掲載（会員証なし）、名簿データを大房へ共有。登録支援機関は入会対象外（不要）に。 -->
 <!-- ver.20261030.test23: 協議会案内のブラッシュアップ：冒頭の「1社1回」に例外（介護・木材は事業所ごと、更新・再確認、航空は区分ごと）を明記、ヒーロー文を「原則1社1回・該当分野では在留申請の前」に、「下の表」表記を修正、分野別ご案内リンク（アンシス）の注記を削除、所属機関タブのコピーを「企業へ送るフローをコピー」に、分野ごとに「2026年10月30日時点・出典」を表示、「印刷・PDF保存」ボタンを追加（チェック欄つきA4レイアウト・URL併記）。 -->
 <!-- ver.20261030.test22: 協議会案内：鉄道（第1号/第2号様式＋チェックシートをWordのままJARTSへメール、登録支援機関も加入必要）・林業（林業特定技能・育成就労協議会、WEBフォーム、加入通知書、構成員要件、登録支援機関は対象外）・自動車運送業（登録支援機関も第2号様式フォームで加入）を公式情報で確定。登録支援機関タブは8分野に。「要確認」表示を解消。 -->
@@ -7894,7 +7895,7 @@ function _kyPrintFlow(){
   var who = role==='shien' ? '登録支援機関の加入手順' : '所属機関（受入れ企業）の加入手順';
   var nums='①②③④⑤⑥⑦⑧⑨⑩';
   var body=steps.map(function(st,i){
-    var b=String(st.body||'').replace(/<button[\s\S]*?<\/button>/g,'');
+    var b=String(st.body||'').replace(/<button[\s\S]*?<\/button>/g,'').replace(/<details/g,'<details open');
     return '<div class="st"><div class="h"><span class="cb">□</span> '+(nums.charAt(i)||(i+1)+'.')+' '+st.t+(st.tag?' <span class="tag">'+st.tag+'</span>':'')+'</div>'+b+'</div>';
   }).join('');
   var css='body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;color:#1e293b;font-size:12px;line-height:1.7;margin:18px 22px;}'+
@@ -7909,6 +7910,7 @@ function _kyPrintFlow(){
     '.ky-mail{border:1px dashed #64748b;border-radius:6px;padding:6px 8px;margin:6px 0;} .ky-mail-h{font-weight:700;} .ky-mail-body{white-space:pre-wrap;font-family:inherit;font-size:11px;margin:4px 0;} .ky-mail-note{display:none;}'+
     '.ky-warn,.ky-tip,.ky-note{border-left:3px solid #94a3b8;padding:3px 8px;margin:4px 0;background:#f8fafc;} .ky-mini{font-weight:700;margin-top:4px;}'+
     '.foot{font-size:10px;color:#64748b;margin-top:10px;border-top:1px solid #cbd5e1;padding-top:6px;}'+
+    'table{border-collapse:collapse;} th,td{border:1px solid #94a3b8;padding:2px 8px;font-size:11px;} details summary{font-weight:700;} .ky-chk3{border:1px solid #94a3b8;padding:4px 8px;}'+
     '@page{size:A4;margin:12mm;}';
   var html='<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>'+_kyEsc(s.name+'分野 協議会 '+who)+'</title><style>'+css+'</style></head><body>'+
     '<h1>【'+_kyEsc(s.name)+'分野】'+_kyEsc(s.council)+'</h1><div class="sub">'+who+'</div>'+
@@ -7937,35 +7939,67 @@ function _kyPrintFlow(){
   mokuzai:['https://www.rinya.maff.go.jp/j/mokusan/seisankakou/mokusan_tokuteikyogikai.html','木材産業特定技能協議会（林野庁）'],
   linen:['https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/kenkou/seikatsu-eisei/linen_supply3.html','リネンサプライ分野特定技能協議会（厚生労働省）']
 }; KYOGIKAI_SECTORS.forEach(function(s){ if(m[s.id]){ s.src=m[s.id][0]; s.srcName=m[s.id][1]; } }); })();
-// ver.20261102: 工業製品製造業（JAIM入会）の案内を追加（省略表記を解除）
+// ver.20261102: 工業製品製造業（JAIM）を丁寧版に作り直し（該当性チェック・様式ダウンロード・問合せ文例）
+var _JE='https://www.jaim-skill.or.jp/assets/files/entry/';
+var _JM='https://www.jaim-skill.or.jp/assets/files/entry-member/';
 SZ_STEPS.kogyo=[
-  {t:'【前提】入会の単位と会員区分を確認',tag:'',
-    body:'<p>工業製品製造業分野で特定技能外国人を受け入れる事業所は、<b>JAIM（一般社団法人 工業製品製造技能人材機構）への入会が必須</b>です。</p><ul>'+
-      '<li>入会は<b>事業所（工場）ごと</b>。同じ法人でも、外国人を受け入れる工場はそれぞれ入会が必要です。</li>'+
-      '<li>特定技能を受け入れる事業所は<b>賛助会員</b>として入会します（育成就労のみの場合は育成就労会員）。</li>'+
-      '<li>稼働していない工場は、直近1年間に製造品出荷額等があることが必要なため、事前の申請はできません。</li>'+
-      '<li>旧「製造業特定技能外国人材受入れ協議・連絡会」の構成員で、2025年12月25日までにJAIMへの移行手続をしていない場合は<b>新規入会</b>が必要です。</li></ul>'+
-      _kyDl([{l:'入会マニュアル PDF',u:'https://www.jaim-skill.or.jp/assets/files/entry/entry_manual.pdf'},{l:'入会FAQ PDF',u:'https://www.jaim-skill.or.jp/assets/files/top/entry_faq.pdf'},{l:'JAIM FAQ PDF',u:'https://www.jaim-skill.or.jp/assets/files/top/jaim_faq.pdf'}])},
-  {t:'提出書類を準備',tag:'',
-    body:'<ul><li><b>様式2</b>（業界行動規範の誓約）</li><li><b>様式3</b>（反社会的勢力でない旨の申告）</li><li><b>様式4</b>（生産性向上・国内人材確保の誓約）※賛助会員のみ</li>'+
-      '<li><b>産業分類の証明書</b>（JAIM所定のテンプレート。日本標準産業分類に基づく）</li>'+
-      '<li>産業分類が11・15・19・2465・3299・484などの場合は追加書類</li><li>中小企業割引・正会員団体割引を使う場合はその証明</li></ul>'+
-      '<p style="font-size:12px;color:#64748b;">※ 様式・テンプレートはJAIMポータルからダウンロードします。産業分類証明書の書き方見本：</p>'+
-      _kyDl([{l:'書き方見本（一般）PDF',u:'https://www.jaim-skill.or.jp/assets/files/entry/sample_other.pdf'}])},
-  {t:'JAIMポータルから入会申請',tag:'オンライン',
-    body:'<p>JAIMポータルの「<b>賛助会員/育成就労会員入会</b>」→「<b>新規入会手続</b>」から申請し、書類をアップロードします。<b>入会費はかかりません。</b></p>'+
-      '<p>'+_kyBtn('https://www.jaim-skill.or.jp/','JAIM 公式サイト（ポータル）を開く')+'</p>'+
-      '<p style="font-size:12px;color:#64748b;">※ JAIMヘルプデスク：0120-777-544（平日10:00〜17:30）</p>'},
+  {t:'まず該当性を確認（受け入れられる事業所か）',tag:'最初に確認',
+    body:'<p>工業製品製造業分野で受け入れられるかは、<b>事業所（工場）ごと</b>に次の3点で判断します。すべて当てはまるか確認してください。</p>'+
+      '<div class="ky-chk3">'+
+      '<div>□ <b>① 対象の産業分類</b>：事業所の製造品が、下の「対象となる日本標準産業分類」のいずれかに当たる</div>'+
+      '<div>□ <b>② 出荷の実績</b>：その分類で、事業所に<b>直近1年間の製造品出荷額等</b>が発生している（稼働前の工場は申請できません）</div>'+
+      '<div>□ <b>③ 業務区分</b>：外国人に従事させる業務が、次の10区分のいずれかに当たる<br>'+
+      '<span style="font-size:12px;">機械金属加工／電気電子機器組立て／金属表面処理／紙器・段ボール箱製造／コンクリート製品製造／RPF製造／陶磁器製品製造／印刷・製本／紡織製品製造／縫製</span></div>'+
+      '</div>'+
+      '<details class="ky-det"><summary>対象となる日本標準産業分類（1号特定技能・49分類）を見る</summary>'+
+      '<p style="margin:6px 0 4px;"><b>分類番号</b>：11、141、1421、1422、1423、1431、1432、144、145、149、15、18、2123、2142、2143、2194、2211、2212、2221、2231、2232、2234、225、2291、2299、235、2422、2424、2431、2441、2443、2446、245、2461、2462、2464、2465、2469、248、2499、25、26、27、28、29、30、3295、3299、484</p>'+
+      '<p style="margin:4px 0;"><b>主な分類の例</b>：11 繊維工業／15 印刷・同関連業／18 プラスチック製品製造業／2462・2464・2469 めっき業・金属表面処理業／2465 金属熱処理業／25 はん用機械器具製造業／26 生産用機械器具製造業／27 業務用機械器具製造業／28 電子部品・デバイス・電子回路製造業／29 電気機械器具製造業／30 情報通信機械器具製造業／484 こん包業</p>'+
+      '<p style="margin:4px 0;"><b>条件つき・対象外</b></p><ul style="margin:0 0 4px;">'+
+      '<li>2446：高圧ガス用の溶接容器・バルク貯槽の製造業に限る</li><li>2469：アルミニウム陽極酸化処理業に限る</li><li>2499：ドラム缶の更生業に限る</li><li>3299：RPF製造業に限る</li>'+
+      '<li>2431：バルブ・コックの製造は対象外</li><li>25：消火器具・消火装置の製造は対象外</li><li>27：医療用機械器具・医療用品、武器の製造は対象外</li><li>29：内燃機関電装品の製造は対象外</li><li>2462・2464：表面処理鋼材の製造は対象外</li></ul>'+
+      '<p style="font-size:12px;color:#64748b;margin:4px 0;">分類の名称・内容は、JAIMの「対象となる産業分類一覧」と総務省の日本標準産業分類で確認できます。</p></details>'+
+      '<p>'+_kyBtn('https://www.jaim-skill.or.jp/entry/classification/','JAIM 対象となる産業分類一覧')+_kyBtn('https://www.meti.go.jp/policy/mono_info_service/gaikokujinzai/kogyoseihin-seizogyo_gaiyo_2025.12.pdf','経済産業省 制度の概要（PDF）',1)+'</p>'+
+      _kyDl([{l:'日本標準産業分類（総務省）PDF',u:'https://www.soumu.go.jp/main_content/000935526.pdf'}])+
+      '<div class="ky-tip" style="margin:6px 0;">判断に迷う場合は、JAIM相談窓口（0120-777-544／平日10:00〜17:30）または下の文例でメールで問い合わせできます。大房行政書士法人でも確認のお手伝いをします。</div>'+
+      _kyMail('kogyo_q','JAIMに関する問合せ','一般社団法人 工業製品製造技能人材機構 相談窓口 御中\n\nお世話になっております。\n特定技能外国人の受入れを検討しており、当社事業所が工業製品製造業分野の対象となるか確認させてください。\n\n① 企業名：〇〇株式会社\n② 住所（受入れ予定事業所）：〇〇\n③ 電話番号：〇〇\n④ 氏名（ふりがな）：〇〇（〇〇）\n⑤ 問合せ内容：\n　・主な製造品：〇〇\n　・該当すると考えている産業分類：〇〇（分類番号〇〇）\n　・外国人に従事させる予定の業務：〇〇\n　上記で対象となるか、ご教示いただけますでしょうか。\n\nよろしくお願いいたします。\n\n'+_SIG_CO)+
+      '<p style="font-size:12px;color:#64748b;">送信先：seizou_soudanmadoguchi★jaim-skill.or.jp（★を@に）。件名は「JAIMに関する問合せ」、本文に①企業名 ②住所 ③電話番号 ④氏名（ふりがな） ⑤問合せ内容 を記載するよう案内されています。</p>'},
+  {t:'入会の単位と会員区分を確認',tag:'',
+    body:'<ul>'+
+      '<li>JAIMへの入会は<b>事業所（工場）ごと</b>です。同じ法人でも、外国人を受け入れる工場はそれぞれ入会が必要です。</li>'+
+      '<li>特定技能外国人を受け入れる事業所は<b>賛助会員</b>として入会します（育成就労会員では特定技能は受け入れられません）。</li>'+
+      '<li>旧「製造業特定技能外国人材受入れ協議・連絡会」の構成員で、2025年12月25日までにJAIMへの移行手続をしていない場合は<b>新規入会</b>が必要です。</li>'+
+      '<li>受入れを検討する<b>最初の段階</b>で入会します（審査に2〜3か月かかります）。</li></ul>'+
+      _kyDl([{l:'新規入会手続マニュアル PDF',u:_JE+'entry_manual.pdf'},{l:'入会手続のよくある質問 PDF',u:'https://www.jaim-skill.or.jp/assets/files/top/entry_faq.pdf'},{l:'JAIM FAQ PDF',u:'https://www.jaim-skill.or.jp/assets/files/top/jaim_faq.pdf'},{l:'会員区分の違い（参考資料）PDF',u:_JE+'esd-info.pdf'}])},
+  {t:'提出書類をダウンロードして作成',tag:'',
+    body:'<div class="ky-mini">📄 全員が提出するもの</div><ul>'+
+      '<li><b>様式2</b>：工業製品製造業共通行動規範に係る誓約書</li><li><b>様式3</b>：反社会的勢力でないことの表明・確約に係る誓約書</li>'+
+      '<li><b>様式4</b>：生産性向上及び国内人材確保のための取組に係る誓約書（賛助会員）</li>'+
+      '<li><b>証明書類作成テンプレート</b>（産業分類・製造品出荷額等の証明。分類にかかわらず必ず使用）</li></ul>'+
+      _kyDl([{l:'様式2 Word',u:_JE+'format2.docx'},{l:'様式3 Word',u:_JE+'format3.docx'},{l:'様式4 Word',u:_JE+'format4.docx'},{l:'証明書類作成テンプレート Excel',u:_JE+'form_template.xlsx'}])+
+      '<div class="ky-mini">📄 該当する場合に提出するもの</div><ul>'+
+      '<li>中小企業割引を希望する場合：<b>様式5 従業員数証明書</b></li>'+
+      '<li>請負による製造の場合：<b>請負事業所判断チェックシート</b>＋請負契約書の写し</li>'+
+      '<li>11 繊維工業：上乗せ要件の証明書（テンプレート②・③-1・④ほか）</li>'+
+      '<li>15・19・2465・3299・484 などは分類ごとの追加書類あり（書き方見本で確認）</li></ul>'+
+      _kyDl([{l:'様式5 従業員数証明書 Word',u:_JE+'format5.docx'},{l:'請負事業所判断チェックシート Excel',u:_JE+'checksheet.xlsx'}])+
+      '<div class="ky-mini">📝 書き方見本（申請する分類のものを必ず確認）</div>'+
+      _kyDl([{l:'そのほかの産業分類',u:_JE+'sample_other.pdf'},{l:'11 繊維工業',u:_JE+'sample_11.pdf'},{l:'15 印刷・同関連業',u:_JE+'sample_15.pdf'},{l:'18 プラスチック製品',u:_JE+'sample_18.pdf'},{l:'19 ゴム製品',u:_JE+'sample_19.pdf'},{l:'2462・2464・2469 めっき・表面処理',u:_JE+'sample_2462-2464-2469.pdf'},{l:'2465 金属熱処理',u:_JE+'sample_2465.pdf'},{l:'3299 RPF・人体保護具',u:_JE+'sample_3299.pdf'},{l:'484 こん包業',u:_JE+'sample_484.pdf'}])+
+      '<p>'+_kyBtn('https://www.jaim-skill.or.jp/entry/template/','JAIM 様式・テンプレート・書き方見本ページ（繊維工業の上乗せ要件など全種類）',1)+'</p>'},
+  {t:'JAIMポータルから新規入会手続',tag:'オンライン',
+    body:'<p>JAIMの「<b>新規入会手続</b>」から申し込み、作成した書類をアップロードします。<b>入会費はかかりません。</b>手続中・入会後の情報更新はマイページから行います。</p>'+
+      '<p>'+_kyBtn('https://www.jaim-skill.or.jp/entry/reception/','新規入会手続を開く')+_kyBtn('https://www.jaim-skill.or.jp/system/member/login','マイページ ログイン',1)+_kyBtn('https://www.jaim-skill.or.jp/entry/','JAIM 入会案内ページ',1)+'</p>'+
+      '<p style="font-size:12px;color:#64748b;">※ 入会案内ページに新規入会手続の案内動画もあります。</p>'},
   {t:'年会費を支払う',tag:'',
-    body:'<p>初年度は<b>銀行振込</b>、翌年度以降は<b>口座振替</b>です。賛助会員の年会費（事業所ごと）：</p>'+
-      '<ul><li>中小企業：60,000円（正会員団体に所属）／63,000円（未所属）</li><li>大企業：80,000円（正会員団体に所属）／83,000円（未所属）</li></ul>'+
-      '<p style="font-size:12px;color:#64748b;">※ 初年度は入会月により異なります（1〜3月の請求は翌年度分と合算）。登録支援機関が代理で支払うこともできます（振込名義は申請企業名）。退会しても支払済みの年会費は返金されません。</p>'},
+    body:'<p>初年度は<b>銀行振込</b>、翌年度以降は<b>口座振替</b>です。賛助会員の年会費（事業所ごと・消費税不課税）：</p>'+
+      '<table class="ky-fee"><tr><th></th><th>正会員団体に所属</th><th>未所属</th></tr><tr><th>中小企業</th><td>60,000円</td><td>63,000円</td></tr><tr><th>大企業</th><td>80,000円</td><td>83,000円</td></tr></table>'+
+      '<p style="font-size:12px;color:#64748b;">※ 初年度は入会月により月割（1〜3月の請求は翌年度分と合算）。登録支援機関が代わりに支払うこともできます（振込名義は申請企業名）。退会しても支払済みの年会費は返金されません。</p>'},
   {t:'審査・名簿への掲載',tag:'2〜3か月程度',
-    body:'<p>申請から完了まで<b>2〜3か月程度</b>（書類に不備があるとさらにかかります）。承認されると、JAIMポータルの「<b>工業製品製造業分野 特定技能外国人受入可能事業所名簿</b>」に掲載されます。<b>会員証は発行されません。</b></p>'},
-  {t:'名簿（掲載ページ）のデータを大房行政書士法人へ共有',tag:'',
-    body:'<p>JAIMポータルの名簿ページから、貴社の事業所が掲載された名簿をダウンロードして保存してください。在留申請の際に、受入れ可能事業所であることを示す書類の提出が必要なため、<b>大房行政書士法人へデータのご共有をお願いします。</b></p>'}
+    body:'<p>申請から完了まで<b>2〜3か月程度</b>（書類に不備があるとさらにかかります）。承認されると「<b>工業製品製造業分野 特定技能外国人受入可能事業所名簿</b>」に掲載されます。<b>会員証は発行されません。</b>JAIMが代表して協議会に加入するため、事業所が別に協議会へ申請する必要はありません。</p>'+
+      '<p>'+_kyBtn('https://www.jaim-skill.or.jp/about/#register','JAIM 会員名簿ページ',1)+'</p>'},
+  {t:'名簿のデータを大房行政書士法人へ共有',tag:'',
+    body:'<p>会員名簿ページから、貴社の事業所が掲載された名簿をダウンロードして保存してください。在留申請の際に、受入れ可能事業所であることを示す書類の提出が必要なため、<b>大房行政書士法人へデータのご共有をお願いします。</b></p>'}
 ];
-(function(){ var s=_kyFindSector('kogyo'); delete s.omit; s.src='https://www.jaim-skill.or.jp/assets/files/top/jaim_faq.pdf'; s.srcName='JAIM FAQ・入会マニュアル（工業製品製造技能人材機構）'; })();
+(function(){ var s=_kyFindSector('kogyo'); delete s.omit; s.url='https://www.jaim-skill.or.jp/entry/'; s.access='JAIM 新規入会手続（オンライン）'; s.src='https://www.jaim-skill.or.jp/entry/'; s.srcName='JAIM 入会案内・様式ページ／経済産業省 制度の概要'; })();
 var _kyogikaiRole='shien';   // shien=登録支援機関 / shozoku=所属機関
 var _kyogikaiSector='kaigo';
 function _kySetRole(r){ _kyogikaiRole=r; renderKyogikai(); }
@@ -8098,6 +8132,9 @@ function renderKyogikai(){
     '.ky-step.done .ky-chk-box{background:#16a34a;border-color:#16a34a;}'+
     '.ky-chk-date{color:#166534;font-weight:800;}'+
     '.ky-prog{margin:4px 0 12px;}'+
+    '.ky-chk3{border:1.5px solid #93c5fd;background:#eff6ff;border-radius:10px;padding:8px 12px;margin:6px 0;display:grid;gap:5px;font-size:13px;}'+
+    '.ky-det{border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;margin:6px 0;background:#fff;font-size:12.5px;} .ky-det summary{cursor:pointer;font-weight:700;color:#1e3a5f;}'+
+    '.ky-fee{border-collapse:collapse;font-size:12.5px;margin:4px 0;} .ky-fee th,.ky-fee td{border:1px solid #e2e8f0;padding:4px 10px;text-align:center;} .ky-fee th{background:#f1f5f9;}'+
     '.ky-src{font-size:11px;color:#64748b;margin:-6px 0 10px;} .ky-src a{color:#2563eb;}'+
     '.ky-copy.ky-print{background:#475569;} .ky-copy.ky-print:hover{background:#334155;}'+
     '.ky-dlrow{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0;}'+
