@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261102.test01: 協議会案内に工業製品製造業（JAIM入会）の案内を追加（省略表記を解除）。事業所ごとの賛助会員入会、様式2/3/4・産業分類証明書、JAIMポータル申請、年会費、2〜3か月で名簿掲載（会員証なし）、名簿データを大房へ共有。登録支援機関は入会対象外（不要）に。 -->
 <!-- ver.20261030.test23: 協議会案内のブラッシュアップ：冒頭の「1社1回」に例外（介護・木材は事業所ごと、更新・再確認、航空は区分ごと）を明記、ヒーロー文を「原則1社1回・該当分野では在留申請の前」に、「下の表」表記を修正、分野別ご案内リンク（アンシス）の注記を削除、所属機関タブのコピーを「企業へ送るフローをコピー」に、分野ごとに「2026年10月30日時点・出典」を表示、「印刷・PDF保存」ボタンを追加（チェック欄つきA4レイアウト・URL併記）。 -->
 <!-- ver.20261030.test22: 協議会案内：鉄道（第1号/第2号様式＋チェックシートをWordのままJARTSへメール、登録支援機関も加入必要）・林業（林業特定技能・育成就労協議会、WEBフォーム、加入通知書、構成員要件、登録支援機関は対象外）・自動車運送業（登録支援機関も第2号様式フォームで加入）を公式情報で確定。登録支援機関タブは8分野に。「要確認」表示を解消。 -->
 <!-- ver.20261030.test21: 協議会案内（漁業・所属機関）：特定技能雇用契約書・雇用条件書の写しは大房行政書士法人より提供する旨に文言修正。 -->
@@ -7341,7 +7342,7 @@ var KYOGIKAI_SECTORS=[
   {id:'ringyo',  name:'林業',            council:'林業特定技能・育成就労協議会',    org:'林野庁 林政部経営課', access:'WEB申請フォーム', url:'https://www.rinya.maff.go.jp/j/routai/241010.html', recv:'加入通知書', term:'概ね10営業日', input:'', prep:[], submit:[], note:''},
   {id:'mokuzai', name:'木材産業',        council:'木材産業特定技能協議会',          org:'林野庁 木材産業課', access:'メール提出', url:'https://www.rinya.maff.go.jp/j/mokusan/seisankakou/mokusan_tokuteikyogikai.html', recv:'構成員資格証明書', term:'相当期間（余裕をもって）', input:'', prep:[], submit:[], note:''},
   // 手続きが異なるため省略（末尾側）
-  {id:'kogyo',   name:'工業製品製造業',  council:'製造業特定技能協議会',            org:'経済産業省', access:'加入申請サイト', url:'https://ssw.meti.go.jp/', recv:'加入証（承認通知）', term:'1〜2ヶ月', input:'10〜20分', prep:[], submit:[], note:'承認後、経済産業省サイトに構成員として掲載されます。', omit:'工業製品製造業分野の協議会加入は、経済産業省の専用システムで手続きが異なるため、ここでの手順案内は省略します。詳しくは大房行政書士法人へご確認ください。'},
+  {id:'kogyo',   name:'工業製品製造業',  council:'JAIM（一般社団法人 工業製品製造技能人材機構）', org:'経済産業省（入会先：JAIM）', access:'JAIMポータル', url:'https://www.jaim-skill.or.jp/', recv:'名簿への掲載（会員証の発行なし）', term:'2〜3か月程度', input:'', prep:[], submit:[], note:''},
   {id:'kensetsu',name:'建設',            council:'建設技能人材機構(JAC)／建設分野特定技能協議会', org:'国土交通省・JAC', access:'加入申請サイト', url:'https://jac-skill.or.jp/', recv:'加入(会員)証', term:'2〜3ヶ月', input:'10〜20分', prep:['建設業許可通知書・許可番号','CCUS（建設キャリアアップシステム）事業者ID'], submit:[], note:'JAC会費（年会費）が必要です。受入計画の認定は別手続き。加入後JACサイトに会社名が掲載されます。', omit:'建設分野の協議会（JAC）加入は、JAC会費（年会費）や受入計画の認定など手続きが大きく異なるため、ここでの手順案内は省略します。詳しくは大房行政書士法人へご確認ください。'},
   // 2026年新設・準備中（合計19分野）
   {id:'linen',   name:'リネンサプライ',  council:'リネンサプライ分野特定技能協議会', org:'厚生労働省', access:'入会申請フォーム', url:'https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/kenkou/seikatsu-eisei/linen_supply3.html', recv:'構成員資格証明書', term:'公表なし', input:'', prep:[], submit:[], note:'', isnew:true},
@@ -7936,6 +7937,35 @@ function _kyPrintFlow(){
   mokuzai:['https://www.rinya.maff.go.jp/j/mokusan/seisankakou/mokusan_tokuteikyogikai.html','木材産業特定技能協議会（林野庁）'],
   linen:['https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/kenkou/seikatsu-eisei/linen_supply3.html','リネンサプライ分野特定技能協議会（厚生労働省）']
 }; KYOGIKAI_SECTORS.forEach(function(s){ if(m[s.id]){ s.src=m[s.id][0]; s.srcName=m[s.id][1]; } }); })();
+// ver.20261102: 工業製品製造業（JAIM入会）の案内を追加（省略表記を解除）
+SZ_STEPS.kogyo=[
+  {t:'【前提】入会の単位と会員区分を確認',tag:'',
+    body:'<p>工業製品製造業分野で特定技能外国人を受け入れる事業所は、<b>JAIM（一般社団法人 工業製品製造技能人材機構）への入会が必須</b>です。</p><ul>'+
+      '<li>入会は<b>事業所（工場）ごと</b>。同じ法人でも、外国人を受け入れる工場はそれぞれ入会が必要です。</li>'+
+      '<li>特定技能を受け入れる事業所は<b>賛助会員</b>として入会します（育成就労のみの場合は育成就労会員）。</li>'+
+      '<li>稼働していない工場は、直近1年間に製造品出荷額等があることが必要なため、事前の申請はできません。</li>'+
+      '<li>旧「製造業特定技能外国人材受入れ協議・連絡会」の構成員で、2025年12月25日までにJAIMへの移行手続をしていない場合は<b>新規入会</b>が必要です。</li></ul>'+
+      _kyDl([{l:'入会マニュアル PDF',u:'https://www.jaim-skill.or.jp/assets/files/entry/entry_manual.pdf'},{l:'入会FAQ PDF',u:'https://www.jaim-skill.or.jp/assets/files/top/entry_faq.pdf'},{l:'JAIM FAQ PDF',u:'https://www.jaim-skill.or.jp/assets/files/top/jaim_faq.pdf'}])},
+  {t:'提出書類を準備',tag:'',
+    body:'<ul><li><b>様式2</b>（業界行動規範の誓約）</li><li><b>様式3</b>（反社会的勢力でない旨の申告）</li><li><b>様式4</b>（生産性向上・国内人材確保の誓約）※賛助会員のみ</li>'+
+      '<li><b>産業分類の証明書</b>（JAIM所定のテンプレート。日本標準産業分類に基づく）</li>'+
+      '<li>産業分類が11・15・19・2465・3299・484などの場合は追加書類</li><li>中小企業割引・正会員団体割引を使う場合はその証明</li></ul>'+
+      '<p style="font-size:12px;color:#64748b;">※ 様式・テンプレートはJAIMポータルからダウンロードします。産業分類証明書の書き方見本：</p>'+
+      _kyDl([{l:'書き方見本（一般）PDF',u:'https://www.jaim-skill.or.jp/assets/files/entry/sample_other.pdf'}])},
+  {t:'JAIMポータルから入会申請',tag:'オンライン',
+    body:'<p>JAIMポータルの「<b>賛助会員/育成就労会員入会</b>」→「<b>新規入会手続</b>」から申請し、書類をアップロードします。<b>入会費はかかりません。</b></p>'+
+      '<p>'+_kyBtn('https://www.jaim-skill.or.jp/','JAIM 公式サイト（ポータル）を開く')+'</p>'+
+      '<p style="font-size:12px;color:#64748b;">※ JAIMヘルプデスク：0120-777-544（平日10:00〜17:30）</p>'},
+  {t:'年会費を支払う',tag:'',
+    body:'<p>初年度は<b>銀行振込</b>、翌年度以降は<b>口座振替</b>です。賛助会員の年会費（事業所ごと）：</p>'+
+      '<ul><li>中小企業：60,000円（正会員団体に所属）／63,000円（未所属）</li><li>大企業：80,000円（正会員団体に所属）／83,000円（未所属）</li></ul>'+
+      '<p style="font-size:12px;color:#64748b;">※ 初年度は入会月により異なります（1〜3月の請求は翌年度分と合算）。登録支援機関が代理で支払うこともできます（振込名義は申請企業名）。退会しても支払済みの年会費は返金されません。</p>'},
+  {t:'審査・名簿への掲載',tag:'2〜3か月程度',
+    body:'<p>申請から完了まで<b>2〜3か月程度</b>（書類に不備があるとさらにかかります）。承認されると、JAIMポータルの「<b>工業製品製造業分野 特定技能外国人受入可能事業所名簿</b>」に掲載されます。<b>会員証は発行されません。</b></p>'},
+  {t:'名簿（掲載ページ）のデータを大房行政書士法人へ共有',tag:'',
+    body:'<p>JAIMポータルの名簿ページから、貴社の事業所が掲載された名簿をダウンロードして保存してください。在留申請の際に、受入れ可能事業所であることを示す書類の提出が必要なため、<b>大房行政書士法人へデータのご共有をお願いします。</b></p>'}
+];
+(function(){ var s=_kyFindSector('kogyo'); delete s.omit; s.src='https://www.jaim-skill.or.jp/assets/files/top/jaim_faq.pdf'; s.srcName='JAIM FAQ・入会マニュアル（工業製品製造技能人材機構）'; })();
 var _kyogikaiRole='shien';   // shien=登録支援機関 / shozoku=所属機関
 var _kyogikaiSector='kaigo';
 function _kySetRole(r){ _kyogikaiRole=r; renderKyogikai(); }
@@ -8102,7 +8132,7 @@ function renderKyogikai(){
   '</style>';
   // 登録支援機関自身の協議会加入 要否（2024/6/15以降、該当分野では所属機関は申請前加入が必要。登録支援機関の加入要否は分野で異なる）
   var SS_KANYU={zosen:'req',jidosha:'req',koku:'req',shukuhaku:'req',inshoku:'req',gaishoku:'req',
-                kaigo:'no',biru:'no',nogyo:'no',gyogyo:'chk', kogyo:'opt',kensetsu:'opt',
+                kaigo:'no',biru:'no',nogyo:'no',gyogyo:'chk', kogyo:'no',kensetsu:'opt',
                 unso:'req',tetsudo:'req',ringyo:'no',mokuzai:'no', linen:'no',butsuryu:'chk',shigen:'chk'};
   // 役割ごとの表示分野：登録支援機関タブは「登録支援機関も加入が必要な8分野」のみ。所属機関タブは全分野。
   var _visSectors=KYOGIKAI_SECTORS.filter(function(x){ return _kyogikaiRole==='shien' ? (SS_KANYU[x.id]==='req') : true; });
@@ -8123,7 +8153,7 @@ function renderKyogikai(){
   h+='<div class="ky-sec"><h3>はじめに：協議会加入の基本</h3>'+
     '<ul>'+
     '<li><b>誰が・いつ</b>：加入するのは<b>所属機関（受入れ企業）</b>（企業単位。人材ごとではありません）。原則<b>初回の在留申請の前</b>に加入します。</li>'+
-    '<li><b>原則1社1回</b>：同じ分野なら2人目以降は再加入不要。加入済みなら証明書の写しを再利用します（その分野で初めての受入れは加入が必要）。<br><span style="font-size:12.5px;color:#64748b;">※ 介護・木材産業は<b>事業所ごと</b>に加入。介護は入会証明書の<b>更新</b>（初回1年・以後4年）、木材産業は<b>2年ごと</b>の確認、航空は<b>別の区分</b>で受け入れる場合に再提出が必要です。</span></li>'+
+    '<li><b>原則1社1回</b>：同じ分野なら2人目以降は再加入不要。加入済みなら証明書の写しを再利用します（その分野で初めての受入れは加入が必要）。<br><span style="font-size:12.5px;color:#64748b;">※ 介護・木材産業・工業製品製造業（JAIM）は<b>事業所ごと</b>に加入。介護は入会証明書の<b>更新</b>（初回1年・以後4年）、木材産業は<b>2年ごと</b>の確認、航空は<b>別の区分</b>で受け入れる場合に再提出が必要です。</span></li>'+
     '<li><b>申請前加入（2024/6/15〜）</b>：該当分野では、所属機関は<b>在留申請の前に加入</b>が必要です（旧「受入れ後4か月以内」から変更）。加入時期は各分野のステップでご確認ください。</li>'+
     '<li><b>登録支援機関の加入</b>：必要なのは<b>8分野のみ</b>（造船・舶用工業／自動車整備／航空／宿泊／飲食料品製造業／外食業／鉄道／自動車運送業）。他は所属機関のみの加入です（各分野の画面でご確認いただけます）。</li>'+
     '</ul></div>';
@@ -8166,8 +8196,8 @@ function renderKyogikai(){
     '</div>';
 
   h+='<div class="ky-sec"><h3>よくあるご質問</h3><ul>'+
-    '<li><b>加入に費用はかかりますか？</b> 多くの分野で加入自体は無料です。ただし<b>建設分野はJACの会費（年会費）</b>が必要です。</li>'+
-    '<li><b>2人目以降も加入が必要ですか？</b> 原則不要です。同じ分野であれば1社1回の加入で足ります（介護・木材産業は事業所ごと、航空は区分ごとに必要な場合があります）。</li>'+
+    '<li><b>加入に費用はかかりますか？</b> 多くの分野で加入自体は無料です。ただし<b>建設分野はJACの会費</b>、<b>工業製品製造業はJAIMの年会費</b>（事業所ごと）が必要です。</li>'+
+    '<li><b>2人目以降も加入が必要ですか？</b> 原則不要です。同じ分野であれば1社1回の加入で足ります（介護・木材産業・工業製品製造業は事業所ごと、航空は区分ごとに必要な場合があります）。</li>'+
     '<li><b>加入後に必須の会合はありますか？</b> 現在は出席必須の会合はありません。加入後は協議会への情報提供等の協力が求められます。</li>'+
     '<li><b>加入証が届くまでどのくらい？</b> 分野により数週間〜2〜3ヶ月です。申請スケジュールから逆算し、早めの加入申請をおすすめします。</li>'+
     '</ul>'+
