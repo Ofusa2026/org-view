@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261102.02: 提出書類の表示を整理。「未提出」を赤で目立たせて上に、「提出済」と「不要」（灰色）を分けて表示（これまでは「提出済（または不要）」でまとめていた）。案シスの今の書類リスト（get_required_doc_lists）を読み、リストにない古い名前の済み書類は出さない。国交省書類の点数も案シスの設定に合わせる（「16. 技能者ID」を出さない）。 -->
 <!-- ver.20261102.01: サンプル表示を追加。URLに ?demo=1 で開くと、架空の「株式会社大房」（人材：AKIRA OFUSA・HANAKO OFUSA）でログインなしに表示。上に「サンプル表示」の帯。データは読み書きともサーバーに送らない（お知らせ・期限ルールのみ通常どおり）。 -->
 <!-- ver.20261030.02: 人材詳細をタブで切り替える形に（スケジュール／申請情報／人材情報／発行書類／提出書類）。提出書類タブには御社の提出書類チェックリストを表示し、未提出の数をタブに表示。 -->
 <!-- ver.20261030.01: 登録支援機関O-Linkと同じSalesforce型の案内を追加（ログインのたびに自動で表示。「もう表示しない」を押すとそのブラウザでは出ない）。マイページを開いたとき、まだご対応いただくこと（書類・確認・押印・ヒアリング等）があれば、提出期限つきの「ご対応のお願い」ポップアップを表示。ヘッダーの「このページの見方」とサイドバーのダッシュボードの上の「O-Link使い方ガイド」で、対応が必要なタスク・ダッシュボード・案件一覧・提出書類・申請の流れ・所属機関情報・協力確認書を1ステップずつ案内（画面を暗くして対象だけ明るく、ステップ n / N・戻る／次へ）。 -->
@@ -112,7 +113,8 @@ tr:hover td{background:#fcfcfd;}
 .doc-date{font-size:10px;color:#94a3b8;}
 .doc-state{font-size:10px;font-weight:800;padding:2px 9px;border-radius:99px;flex-shrink:0;}
 .s-done{background:#f0fdf4;color:#15803d;border:1px solid #86efac;}
-.s-todo{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;}
+.s-todo{background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;font-weight:800;}
+.s-skip{background:#f8fafc;color:#94a3b8;border:1px solid #e2e8f0;}
 .s-na{background:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0;}
 .s-made{background:#eef4fd;color:#1c3d6e;border:1px solid #b9d0ee;}
 .note{font-size:11px;color:#64748b;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:10px 14px;margin-bottom:14px;line-height:1.6;}
@@ -410,7 +412,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261102.01</span>
+  <span class="header-ver">ver.20261102.02</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
@@ -787,6 +789,7 @@ async function loadData(pass){
       if(!coDocs[name]) coDocs[name]={};
       coDocs[name][prefix]=row.value;
     });
+    await _applyReqDocLists();   // ver.20261102.02: 案シスの今の書類リストに合わせる（古い名前の済み書類は出さない・国交省は設定の点数）
     computeMissing();
     personsByCase={};
     (res.persons||[]).forEach(function(p){ personsByCase[p.case_id]=p; });
@@ -1102,6 +1105,26 @@ function docState(d){
 }
 function docDate(d){ return _hasVal(d.date) ? d.date : ''; }
 
+// ver.20261102.02: 案シスの設定（required_docs_co / required_docs_co_kokko ほか）を読み、リストにない「済み」の書類（古い名前など）は表示しない
+var _reqDocLists=null;
+async function _applyReqDocLists(){
+  try{
+    if(!_reqDocLists) _reqDocLists=await callRpc('get_required_doc_lists',{});
+    var L=_reqDocLists||{}; var all={};
+    function add(a){ if(Array.isArray(a)) a.forEach(function(n){ all[n]=1; }); }
+    add(L.co); add(L.co_kokko); add(L.co_large); add(L.co_kojin); add(L.co_giji);
+    if(L.co_field && typeof L.co_field==='object') Object.keys(L.co_field).forEach(function(k){ add(L.co_field[k]); });
+    if(!Object.keys(all).length) return;
+    if(Array.isArray(L.co_kokko) && L.co_kokko.length) _CKS_K16=L.co_kokko.slice();
+    Object.keys(coDocs).forEach(function(n){
+      if(!n || all[n]) return;
+      var d=coDocs[n]||{};
+      if(_hasVal(d.req) && docState(d)==='todo') return;   // 案内した未提出の書類は残す
+      delete coDocs[n];
+    });
+  }catch(e){}
+}
+function _docSkipped(d){ d=d||{}; return (_hasVal(d.skip)||_hasVal(d.autoskip)) && !_hasVal(d.staff) && !_hasVal(d.ai) && !_hasVal(d.date); }
 function computeMissing(){
   missingDocCount=0;
   Object.keys(coDocs).forEach(function(name){
@@ -2413,9 +2436,10 @@ function _docRowsHtml(names){
   var s='';
   names.forEach(function(name){
     var st=docState(coDocs[name]);
-    var ico = st==='done'?'✅':'⬜';
-    var stTxt = st==='done'?'提出済（または不要）':'未提出';
-    var stCls = st==='done'?'s-done':'s-todo';
+    var _sk=(st==='done' && _docSkipped(coDocs[name]));   // ver.20261102.02: 不要は提出済と分けて表示
+    var ico = _sk?'➖':(st==='done'?'✅':'⬜');
+    var stTxt = _sk?'不要':(st==='done'?'提出済':'未提出');
+    var stCls = _sk?'s-skip':(st==='done'?'s-done':'s-todo');
     var meta=(typeof _nyukanMetaFor==='function')?_nyukanMetaFor(name):null;
     var uid=++_docRowUid;
     s+='<div class="doc-row"'+(meta?' style="cursor:pointer;" onclick="_nyukanToggle('+uid+')"':'')+'>';
@@ -2609,7 +2633,8 @@ function _kokkoRowsHtml(){
     var meta=(!made && typeof _KOKKO_META!=='undefined')?_KOKKO_META[name]:null;
     var ico, stTxt, stCls;
     if(made){ ico='📝'; stTxt='大房行政書士法人が作成'; stCls='s-made'; }
-    else if(done){ ico='✅'; stTxt='提出済（または不要）'; stCls='s-done'; }
+    else if(done && _docSkipped(v)){ ico='➖'; stTxt='不要'; stCls='s-skip'; }   // ver.20261102.02
+    else if(done){ ico='✅'; stTxt='提出済'; stCls='s-done'; }
     else { ico='⬜'; stTxt='未提出'; stCls='s-todo'; }
     s+='<div class="doc-row"'+(meta?' style="cursor:pointer;" onclick="_kokkoToggle('+i+')"':'')+'>';
     s+='<span class="doc-ico">'+ico+'</span>';
@@ -2633,9 +2658,10 @@ function renderDocs(){
   var names=Object.keys(coDocs).filter(function(n){ return docInList(coDocs[n]); });
   if(!names.length) return '<div class="empty">提出書類リストはまだ登録されていません。</div>';
   // todo（未提出）を上に、done を下に。各内で名前順
-  var order={todo:0,done:1};
+  var order={todo:0,done:1,skip:2};
   names.sort(function(a,b){
     var sa=docState(coDocs[a]),sb=docState(coDocs[b]);
+    if(sa==='done' && _docSkipped(coDocs[a])) sa='skip'; if(sb==='done' && _docSkipped(coDocs[b])) sb='skip';   // ver.20261102.02: 未提出→提出済→不要の順
     if(order[sa]!==order[sb]) return order[sa]-order[sb];
     return a.localeCompare(b,'ja');
   });
@@ -2644,7 +2670,7 @@ function renderDocs(){
   var gateClosed=_nyukanGateClosed();
   var gateExists=allCases.some(function(c){ var rs=(c.residence_status||''); return (rs==='特定活動'||rs==='特定技能1号') && String(c.applicant_field||'').indexOf('建設')>=0; });
   var h='<div class="section-title">📄 御社の提出書類チェックリスト</div>';
-  h+='<div class="note">大房行政書士法人でチェックが入った書類は「提出済（または不要）」になります。「未提出」の書類はご提出をお願いいたします。ご不明点は担当者までご連絡ください。</div>';
+  h+='<div class="note">「<b style="color:#b91c1c;">未提出</b>」の書類のご提出をお願いいたします。大房行政書士法人で受け取った書類は「提出済」、今回の申請で使わない書類は「不要」と表示されます。ご不明点は担当者までご連絡ください。</div>';
   // ver.20260928.01: 所属機関ヒアリングフォームへ飛ぶボタン（常時表示）
   if(!_noHearingOrg()) h+='<div style="margin-bottom:14px;"><a href="'+esc(_companyHearingUrl())+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#7c3aed;color:#fff;text-decoration:none;font-size:12px;font-weight:800;padding:11px 18px;border-radius:10px;box-shadow:0 2px 6px rgba(124,58,237,.25);">📋 所属機関ヒアリングフォームを開く</a></div>';   // ver.20261005.01
   var kokkoUrl=buildKokkoUploadUrl();
