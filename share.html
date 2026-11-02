@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261102.06: サイドバーの「協議会案内」を本番から外した（テスト版 share_test のみで表示・内容の更新はテスト版で継続）。本番のコードは残すが入口なし、直接開かれた場合はダッシュボードへ。他機関申請の「協議会」ステータス表示はそのまま。 -->
 <!-- ver.20261102.05: 新規案件依頼の「希望在留資格」に技能実習（1号イ・1号ロ・2号イ・2号ロ・3号イ・3号ロ）を追加。選ぶと希望在留期間は1号＝1年まで／2号・3号＝2年まで。案シスの受信トレイから登録すると、そのまま案件の在留資格に入る -->
 <!-- ver.20261102.04: 新規・全登録支援機関で「企業詳細」ボタン（案件一覧・人材詳細の隣）と「企業マイページを開く」ボタン（企業詳細モーダル・人材詳細の提出書類（企業）欄）を表示（従来はグローバルパートナーズ専用）。開いた企業ページはその機関の案件のみ表示（&ot= 機関スコープ・既存仕様）。企業マイページ未発行の企業は「企業マイページ未発行」と表示。「貴社担当者」欄と「支援企業リスト」はグローバルパートナーズのみのまま。 -->
 <!-- ver.20261102.03: 新規案件依頼の送信完了画面（初回メール文案の欄）と「送信した依頼」カードに「大房のアドレスをコピー」を追加。代表（settings: olink_ofusa_rep_emails）＋機関の大房担当（support_orgs.staff）＋このO-Linkの案件で直近6か月3件以上担当した人（除外: settings olink_ofusa_exclude_<org_id>）を「; 」区切りで一括コピー。RPC get_org_ofusa_contacts。画面表示時に先読みし押下時は同期コピー（Safari対策）。 -->
@@ -728,7 +729,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261102.05</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261102.06</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -3564,9 +3565,7 @@ function renderSidebar(){
   h+='<div class="sb-item'+(currentGroup==='kyoryoku'?' active':'')+'" onclick="switchGroup(\'kyoryoku\')">協力確認書作成</div>';
   h+='<div class="sb-divider"></div>';
   h+='<div class="sb-item'+(currentGroup==='zuiji'?' active':'')+'" onclick="switchGroup(\'zuiji\')">随時届出チェッカー</div>';
-  // ver.20261030.test05: 協議会案内（登録支援機関・所属機関それぞれの加入フロー）
-  h+='<div class="sb-divider"></div>';
-  h+='<div class="sb-item'+(currentGroup==='kyogikai'?' active':'')+'" onclick="switchGroup(\'kyogikai\')">協議会案内</div>';
+  // ver.20261102.06: 協議会案内は本番から外し、テスト版（share_test）のみで表示
   // ver.20261013.test04: 使い方ガイド
 
   if(isSidebarItemVisible('flow')){
@@ -7934,7 +7933,7 @@ function renderCurrent(){
   else if(currentGroup==='kyoryoku'){renderKyoryoku();}
   else if(currentGroup==='zuiji'){renderZuiji();}
   else if(currentGroup==='guide'){renderGuide();} // ver.20261013.test04: 使い方ガイド
-  else if(currentGroup==='kyogikai'){renderKyogikai();} // ver.20261030.test05: 協議会案内
+  else if(currentGroup==='kyogikai'){currentGroup='dashboard';renderSidebar();renderDashboard();} // ver.20261102.06: 協議会案内は本番では非表示（テスト版のみ）
   else{renderMain();}
   _updateOrgSaveFloat(); // ver.20261002.01: 他タブでは固定保存バーを消す
   // ver.20260827.02: コメント・要望ウィジェットを撤去（要望による）。過去分はDBに残し、関数群も削除せずに温存。
