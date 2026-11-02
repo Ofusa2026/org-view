@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261102.test05: 新規案件依頼の「希望在留資格」に技能実習（1号イ・1号ロ・2号イ・2号ロ・3号イ・3号ロ）を追加。選ぶと希望在留期間は1号＝1年まで／2号・3号＝2年まで。案シスの受信トレイから登録すると、そのまま案件の在留資格に入る -->
 <!-- ver.20261102.test04: 新規・全登録支援機関で「企業詳細」ボタン（案件一覧・人材詳細の隣）と「企業マイページを開く」ボタン（企業詳細モーダル・人材詳細の提出書類（企業）欄）を表示（従来はグローバルパートナーズ専用）。開いた企業ページはその機関の案件のみ表示（&ot= 機関スコープ・既存仕様）。企業マイページ未発行の企業は「企業マイページ未発行」と表示。「貴社担当者」欄と「支援企業リスト」はグローバルパートナーズのみのまま。 -->
 <!-- ver.20261102.test03: 新規案件依頼の「希望在留期間」を1ヶ月刻み（1月〜5年）に変更。従来は「3ヶ月／4ヶ月／6ヶ月／1年／2年／3年／5年」の7択だったが、「2年6月」「3年4月」などの中間値を細かく選べるようになった。希望在留資格が「技術・人文知識・国際業務」または「特定活動46号」のときのみ3年超（3年1月〜5年）を選択可。発行手数料計算（_feeForPeriod）も新形式に対応（総月数から入管庁の料金区分に振り分け）。 -->
 <!-- ver.20261102.test02: 協議会案内の工業製品製造業（JAIM）を丁寧版に：該当性チェック（対象産業分類49分類・条件つき/対象外・直近1年の製造品出荷額等・業務区分10）、JAIM相談窓口への問合せ文例、様式2〜5・証明書類作成テンプレート・請負チェックシート・分類別の書き方見本を直接ダウンロード、新規入会手続/マイページ/会員名簿への直接リンク、年会費の表。 -->
@@ -760,7 +761,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261102.test04</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261102.test05</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -948,6 +949,12 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                     <option value="特定活動">特定活動</option>
                     <option value="特定活動46号">特定活動46号</option>
                     <option value="技術・人文知識・国際業務">技術・人文知識・国際業務</option>
+                    <option value="技能実習1号イ">技能実習1号イ（企業単独型）</option>
+                    <option value="技能実習1号ロ">技能実習1号ロ（団体監理型）</option>
+                    <option value="技能実習2号イ">技能実習2号イ（企業単独型）</option>
+                    <option value="技能実習2号ロ">技能実習2号ロ（団体監理型）</option>
+                    <option value="技能実習3号イ">技能実習3号イ（企業単独型）</option>
+                    <option value="技能実習3号ロ">技能実習3号ロ（団体監理型）</option>
                     <option value="特定活動(インターン)">特定活動(インターン)</option>
                     <option value="その他">その他</option>
                   </select>
@@ -1490,6 +1497,16 @@ var NOTIF_LABELS={'申請済(番号待)':'申請済（番号待ち）','受付�
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20261102.test05',
+    date: '2026-11-02',
+    audience: 'all',
+    notify: true,
+    items: [
+      '🧑‍🏭 新規案件依頼の<b>「希望在留資格」で技能実習</b>（1号・2号・3号／イ＝企業単独型・ロ＝団体監理型）を選べるようになりました。',
+      '技能実習を選ぶと、希望在留期間は<b>1号は1年まで、2号・3号は2年まで</b>の中から選べます。'
+    ]
+  },
   {
     version: 'ver.20261029.test02',
     date: '2026-10-29',
@@ -10583,6 +10600,23 @@ function _updateHopedOptions(){
       else if(mY && parseInt(mY[1],10) === 3 && /\d+月/.test(v)) sel.value = '';
       else if(v==='5年') sel.value = '';
     }
+  });
+  // ver.20261102.test05: 技能実習は 1号＝1年まで／2号・3号＝2年まで（その上の期間を隠す。ほかの資格に戻したら元どおり）
+  var jMax = /技能実習1号/.test(ds) ? 12 : (/技能実習[23２３]号/.test(ds) ? 24 : 0);
+  var _hpM = function(v){ var y=String(v).match(/(\d+)年/), mo=String(v).match(/(\d+)月/); return (y?parseInt(y[1],10)*12:0) + (mo?parseInt(mo[1],10):0); };
+  document.querySelectorAll('.nc-j-hoped').forEach(function(sel){
+    sel.querySelectorAll('option[data-jh="1"]').forEach(function(op){
+      op.removeAttribute('data-jh');
+      var y5hide = (op.getAttribute('data-y5plus')==='1' || op.getAttribute('data-y5')==='1') && !allow5y;
+      op.style.display = y5hide ? 'none' : ''; op.disabled = y5hide;
+    });
+    if(!jMax) return;
+    sel.querySelectorAll('option').forEach(function(op){
+      if(!op.value) return;
+      var mm = _hpM(op.value);
+      if(mm > jMax){ op.setAttribute('data-jh','1'); op.style.display='none'; op.disabled=true; }
+    });
+    if(sel.value && _hpM(sel.value) > jMax) sel.value = '';
   });
 }
 function _onDesiredStatusChange(){
