@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261103.02: ①入管書類（建設以外）の提出期限を「案件登録日から14日以内」に変更（アンシスのテンプレート docsDays で変更可・既定14日）。これまでの「受領日から5営業日・在留期限の30日前の早いほう」と3週間スケジュールによる前倒しはやめ、期限の横のその説明も出さない。②提出書類タブの「🛂 入管提出書類」見出しの下に、入管書類の提出期限（対応が必要なタスクと同じ計算・残り日数）を表示（未提出があるときだけ）。国交省・入管の提出期限に「※ 期限内のご提出が難しい場合は、担当者までご相談ください。」を追加。 -->
 <!-- ver.20261103.01: 「O-Link（オーリンク）所属機関マイページとは」の説明と「マイページの使用を希望します」チェックを、マイページを表示する前（パスワード入力の前）に出す。チェックすると、このマイページのURLを案件（会社）につながっているLINE・Chatwork・Slackへ自動で送る（Edge Function olink-optin・記録は olink_optin。同じページは1回だけ）。つながっていないときは「担当者からお送りします」と表示。 -->
 <!-- ver.20261102.02: 提出書類の表示を整理。「未提出」を赤で目立たせて上に、「提出済」と「不要」（灰色）を分けて表示（これまでは「提出済（または不要）」でまとめていた）。案シスの今の書類リスト（get_required_doc_lists）を読み、リストにない古い名前の済み書類は出さない。国交省書類の点数も案シスの設定に合わせる（「16. 技能者ID」を出さない）。 -->
 <!-- ver.20261102.01: サンプル表示を追加。URLに ?demo=1 で開くと、架空の「株式会社大房」（人材：AKIRA OFUSA・HANAKO OFUSA）でログインなしに表示。上に「サンプル表示」の帯。データは読み書きともサーバーに送らない（お知らせ・期限ルールのみ通常どおり）。 -->
@@ -429,7 +430,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261103.01</span>
+  <span class="header-ver">ver.20261103.02</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
@@ -1092,7 +1093,34 @@ function _kokkoDeadlineHtml(){
     ? '<span style="background:#dc2626;color:#fff;border-radius:6px;padding:2px 8px;font-weight:900;">⚠ 提出期限を'+(-days)+'日超過・至急ご提出ください</span>'
     : '<span style="background:'+T.bg+';color:'+T.col+';border-radius:6px;padding:2px 8px;font-weight:900;">⏳ '+(days===0?'今日まで':'あと'+days+'日')+'</span>';
   var label=annaiD?('ご案内日から'+DL_RULES.kokkoDays+'日以内'):('案件受領日から'+DL_RULES.kokkoDays+'日以内');
-  return '<div style="font-size:12px;font-weight:800;color:'+(T.lv?T.txt:'#1c3d6e')+';background:'+T.soft+';border:1px solid '+T.bor+';border-radius:8px;padding:8px 12px;margin:4px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">📄 国交省書類の提出期限 〜'+_cksFmt(due)+'（'+label+'）'+chip+'</div>';
+  return '<div style="font-size:12px;font-weight:800;color:'+(T.lv?T.txt:'#1c3d6e')+';background:'+T.soft+';border:1px solid '+T.bor+';border-radius:8px;padding:8px 12px;margin:4px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">📄 国交省書類の提出期限 〜'+_cksFmt(due)+'（'+label+'）'+chip+_DL_CONSULT+'</div>';
+}
+// ver.20261103.02: 提出書類タブ用——入管書類の提出期限（「対応が必要なタスク」と同じ計算）。
+//   建設（特定活動・特定技能1号）＝特定技能1号申請の1ヶ月前（在留期限の1日前の1ヶ月前で最も早いもの）
+//   それ以外＝申請前の案件の「案件登録日から14日」で最も早いもの
+function _nyukanDeadlineInfo(){
+  var hasK=false, t1=null;
+  var annaiAny = !!_kokkoFirstAnnai() || _CKS_K16.some(function(n){ return _hasVal((coDocs[n]||{}).req); });
+  (allCases||[]).forEach(function(c){
+    if(String(c.applicant_field||'').indexOf('建設')<0 && !annaiAny) return;
+    var rs=(c.residence_status||''); if(rs!=='特定活動'&&rs!=='特定技能1号') return;
+    hasK=true;
+    var ex=_cksParse(c.expire); if(ex){ var d=_cksAddM(_cksAdd(ex,-1),-1); if(!t1||d<t1) t1=d; }
+  });
+  if(hasK) return t1?{due:t1,label:'特定技能1号申請の1ヶ月前'}:null;
+  var due=null;
+  (allCases||[]).forEach(function(c){ if(_PRE_APPLY_EXT.indexOf(getExternalStatus(c.status))<0) return; due=_dlMin(due,_caseDl(c).nyukan); });
+  return due?{due:due,label:''}:null;
+}
+var _DL_CONSULT='<div style="flex-basis:100%;font-size:11.5px;font-weight:700;color:#475569;">※ 期限内のご提出が難しい場合は、担当者までご相談ください。</div>';
+function _nyukanDeadlineHtml(){
+  var inf=_nyukanDeadlineInfo(); if(!inf||!inf.due) return '';
+  var today=new Date(); today.setHours(0,0,0,0);
+  var days=Math.round((inf.due-today)/86400000), over=days<0, T=_dlTier(days);
+  var chip = over
+    ? '<span style="background:#dc2626;color:#fff;border-radius:6px;padding:2px 8px;font-weight:900;">⚠ 提出期限を'+(-days)+'日超過・至急ご提出ください</span>'
+    : '<span style="background:'+T.bg+';color:'+T.col+';border-radius:6px;padding:2px 8px;font-weight:900;">⏳ '+(days===0?'今日まで':'あと'+days+'日')+'</span>';
+  return '<div style="font-size:12px;font-weight:800;color:'+(T.lv?T.txt:'#1c3d6e')+';background:'+T.soft+';border:1px solid '+T.bor+';border-radius:8px;padding:8px 12px;margin:4px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">📄 入管書類の提出期限 〜'+_cksFmt(inf.due)+(inf.label?'（'+inf.label+'）':'')+chip+_DL_CONSULT+'</div>';
 }
 function _lastPdfUrl(arr){ if(Array.isArray(arr)&&arr.length){ var l=arr[arr.length-1]; if(l&&l.url) return l.url; } return ''; }function _pdfChip(label,url,color,icon){
   if(url) return '<a class="pdf-chip" style="background:'+color+';" href="'+esc(url)+'" target="_blank" rel="noopener">'+icon+' '+label+'</a>';
@@ -1516,7 +1544,7 @@ function _kokkoDashCard(){
 // ver.20261024.01: 提出期限（O-Linkと同じルール）。受領日基準と在留期限基準の早いほう。受領日から45日を過ぎた案件は在留期限基準のみ
 // ver.20261024.09: 申請まで15営業日の流れ（ヒアリング回答・書類アップ3→1-6作成2→1-6企業確認2→サイン書類作成1→サイン返送2→押印書類作成1→押印返送2→スキャン書類作成2＝できた日に申請）
 var DL_STEP_KEYS=['hearing','soufu','kakunin','sakusei','sign','ouinSakusei','signOuin','prep'];
-var DL_RULES={applyBiz:15,nyukanBiz:5,nyukanBeforeExpire:30,applyBeforeExpire:14,kokkoDays:45,kokkoBeforeExpireMonths:4,
+var DL_RULES={applyBiz:15,nyukanBiz:5,nyukanDays:14,nyukanBeforeExpire:30,applyBeforeExpire:14,kokkoDays:45,kokkoBeforeExpireMonths:4,
   steps:{hearing:3,soufu:2,kakunin:2,sakusei:1,sign:2,ouinSakusei:1,signOuin:2,prep:2}, askBiz:3, minDocsBiz:2, freshDays:45,
   hearingBiz:3, companyHearingBiz:3, uploadBiz:3};
 // ver.20261024.05: 日数はアンシスの「テンプレート」で編集（settings.deadline_rules → RPC get_deadline_rules）。読めなければ上の既定値
@@ -1528,7 +1556,7 @@ function _dlMerge(base, src){
   var st=src.steps||{};
   DL_STEP_KEYS.forEach(function(k){ o.steps[k]=n(st[k],o.steps[k]); });
   ['hearingBiz','companyHearingBiz','uploadBiz'].forEach(function(k){ o[k]=n(src[k],o[k]); });
-  o.askBiz=n(src.askBiz,o.askBiz); o.nyukanBiz=n(src.docsBiz,o.nyukanBiz);
+  o.askBiz=n(src.askBiz,o.askBiz); o.nyukanBiz=n(src.docsBiz,o.nyukanBiz); o.nyukanDays=n(src.docsDays,o.nyukanDays);
   o.nyukanBeforeExpire=n(src.docsBeforeExpire,o.nyukanBeforeExpire); o.applyBeforeExpire=n(src.applyBeforeExpire,o.applyBeforeExpire);
   o.minDocsBiz=n(src.minDocsBiz,o.minDocsBiz); o.kokkoDays=n(src.kokkoDays,o.kokkoDays);
   o.kokkoBeforeExpireMonths=n(src.kokkoBeforeExpireMonths,o.kokkoBeforeExpireMonths); o.freshDays=n(src.freshDays,o.freshDays);
@@ -1614,6 +1642,8 @@ function _planScheduleHtml(c){
   sh+='</div></div><div style="font-size:10px;color:#94a3b8;margin:-4px 0 8px;">押印のご返送後、スキャン書類ができた日に申請します。受領日から'+_rulesFor(c.org).applyBiz+'営業日で申請できるように逆算しています。</div>';
   return h+sh;
 }
+// 案件登録日（cases.created_at を日本時間の日付に）
+function _regDate(c){ if(!c||!c.created_at) return null; var d=new Date(c.created_at); if(isNaN(d)) return null; d.setHours(0,0,0,0); return d; }
 function _caseDl(c){
   var R=_rulesFor(c.org);
   var today=new Date(); today.setHours(0,0,0,0);
@@ -1621,10 +1651,12 @@ function _caseDl(c){
   if(exp && exp<today) exp=null; // 在留期限を過ぎた案件（止まっている古い案件など）は在留期限基準を使わない
   var fresh=req && Math.round((today-req)/86400000)<=R.freshDays;
   var ny=null, ap=null;
-  if(fresh){ ny=_cksAddBiz(req,R.nyukanBiz); ap=_cksAddBiz(req,R.applyBiz); }
-  if(exp){ ny=_dlMin(ny,_cksAdd(exp,-R.nyukanBeforeExpire)); ap=_dlMin(ap,_cksAdd(exp,-R.applyBeforeExpire)); }
+  // ver.20261103.02: 入管書類（建設以外）の提出期限＝案件登録日から nyukanDays 日（既定14日）。在留期限・受領日の営業日・3週間スケジュールでは動かさない
+  var reg=_regDate(c)||req; if(reg) ny=_cksAdd(reg,R.nyukanDays);
+  if(fresh){ ap=_cksAddBiz(req,R.applyBiz); }
+  if(exp){ ap=_dlMin(ap,_cksAdd(exp,-R.applyBeforeExpire)); }
   // 受領した時点で在留期限が近い案件でも、受領日から2営業日（押印は5営業日）より前にはしない
-  if(fresh){ var m2=_cksAddBiz(req,R.minDocsBiz), m5=_cksAddBiz(req,R.askBiz+R.minDocsBiz); if(ny&&ny<m2) ny=m2; if(ap&&ap<m5) ap=m5; }
+  if(fresh){ var m5=_cksAddBiz(req,R.askBiz+R.minDocsBiz); if(ap&&ap<m5) ap=m5; }
   // 1-6号確認・サイン・押印＝依頼（案シスのステータスが確認待ち／返送待ちに変わった日）から3営業日（O-Linkの建設申請スケジュールと同じ）。在留期限の方が早ければ依頼当日
   var sd=_cksParse(c.status_date), seal=null;
   if(sd){ seal=_cksAddBiz(sd,R.askBiz); var ex0=_cksParse(c.expire); if(ex0 && ex0<seal) seal=sd; }
@@ -1633,7 +1665,6 @@ function _caseDl(c){
   if(pl){
     var stepD=/1-6/.test(String(c.status||''))?pl.kakunin:(/サイン/.test(String(c.status||''))?pl.sign:pl.signOuin);
     if(seal && stepD && stepD<seal && (!sd || stepD>=sd)) seal=stepD;
-    if(pl.signOuin && (!ny || pl.signOuin<ny) && pl.signOuin>=today) ny=pl.signOuin;
     ap=pl.app;
   }
   return {nyukan:ny, apply:ap, seal:seal};
@@ -1692,7 +1723,7 @@ function renderRequests(){
     var chip;
     if(over) chip='<span style="background:#dc2626;color:#fff;border-radius:6px;padding:2px 8px;font-weight:900;">⚠ 提出期限を'+(-days)+'日超過・至急ご対応ください</span>';
     else { var T=_dlTier(days); chip='<span style="background:'+T.bg+';color:'+T.col+';border-radius:6px;padding:2px 8px;font-weight:900;">⏳ '+(days===0?'今日まで':'あと'+days+'日')+'</span>'; }
-    return '<div style="font-size:11px;font-weight:800;color:'+_dlTier(days).txt+';margin:2px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">📄 提出期限 〜'+_cksFmt(due)+'（'+label+'）'+chip+'</div>';
+    return '<div style="font-size:11px;font-weight:800;color:'+_dlTier(days).txt+';margin:2px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">📄 提出期限 〜'+_cksFmt(due)+(label?'（'+label+'）':'')+chip+'</div>';
   }
   var missing=[];
   Object.keys(coDocs).forEach(function(name){ if(docInList(coDocs[name]) && docState(coDocs[name])==='todo') missing.push(name); });
@@ -1746,7 +1777,7 @@ function renderRequests(){
     var _dDue=null;
     allCases.forEach(function(c){ if(_PRE_APPLY_EXT.indexOf(getExternalStatus(c.status))<0) return; _dDue=_dlMin(_dDue,_caseDl(c).nyukan); });
     var _dOver=_isOverdue(_dDue);
-    var dbody=dlLine(_dDue,'受領日から'+DL_RULES.nyukanBiz+'営業日・在留期限の'+DL_RULES.nyukanBeforeExpire+'日前の早いほう')
+    var dbody=dlLine(_dDue,'')
       +missing.map(function(n){ return _docTaskRow(n,_dOver); }).join('')
       +'<button class="req-btn" onclick="switchGroup(\'docs\')">提出書類を開く</button>';
     secs.push(_reqSection('📄','未提出の書類', missing.length, dbody));
@@ -2298,7 +2329,7 @@ function _gateDue(names, kokko){
   if(kokko){ var base=_kokkoFirstAnnai()||minReq; return base?_cksAdd(base,DL_RULES.kokkoDays):null; }
   var due=null;
   allCases.forEach(function(c){ if(_PRE_APPLY_EXT.indexOf(getExternalStatus(c.status))<0) return; due=_dlMin(due,_caseDl(c).nyukan); });
-  if(!due && minReq) due=_cksAddBiz(minReq,DL_RULES.nyukanBiz);
+  if(!due && minReq) due=_cksAdd(minReq,DL_RULES.nyukanDays);
   return due;
 }
 function _docGateHtml(){
@@ -2768,6 +2799,8 @@ function renderDocs(){
       h+='<div class="doc-co" style="opacity:.45;pointer-events:none;filter:grayscale(60%);">'+_docRowsHtml(nyukanNames)+'</div>';
     }
   } else {
+    // ver.20261103.02: 入管書類の提出期限を見出し直下に（未提出があるときだけ）＋「期限内のご提出が難しい場合は担当者までご相談ください」
+    if(nyukanNames.some(function(n){ return docState(coDocs[n])==='todo'; })) h+=_nyukanDeadlineHtml();
     if(upUrl){ h+='<div><a class="upload-btn" href="'+esc(upUrl)+'" target="_blank" rel="noopener">📤 入管書類をアップロード</a></div>'; }
     if(nyukanNames.length){ h+='<div class="doc-co">'+_docRowsHtml(nyukanNames)+'</div>'; }
     else h+='<div class="empty" style="padding:10px 0;">入管書類のご案内はまだありません。</div>';

@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>申請人マイページ | 大房行政書士法人</title>
+<!-- ver.20261103.02: 書類（建設以外）の提出期限を「案件登録日から14日以内」に変更（アンシスのテンプレート docsDays で変更可・既定14日）。これまでの「受領日から5営業日・在留期限の30日前の早いほう」と3週間スケジュールによる前倒しはやめる。applicant_view_get に created_at（案件登録日）を追加。 -->
 <!-- ver.20261103.01: 「O-Link（オーリンク）マイページとは」の説明と「マイページの使用を希望します」チェックを、マイページを表示する前（PIN入力の前）に出す（8言語・言語切り替えつき）。チェックすると、このマイページのURLを案件につながっているLINE・Chatwork・Slackへ自動で送る（Edge Function olink-optin・記録は olink_optin。1回だけ）。 -->
 <!-- ver.20261102.01: サンプル表示を追加。URLに ?demo=1 で開くと、架空の人材「AKIRA OFUSA」（株式会社大房）でPINなしに表示。ヒアリング回答の見本つき。データは読み書きともサーバーに送らない。 -->
 <!-- ver.20261030.02: 在留期限まで60日を切ったら「在留期限と銀行口座」の注意を表示。最初の1回だけポップアップ（「確認しました」で以後そのブラウザでは出ない）、進捗タブの一番上には常設（案件が「完了」になったら消える）。期限が過ぎると申請中でも口座が止まることがある／申請中証明を出すと引き出せる場合がある（銀行によってはできない）／新しい在留カードを見せればまた使える／期限前に現金を引き出しておく、を8言語で。 -->
@@ -283,7 +284,7 @@ details.doc-help-d[open]>summary::after{content:' ▲';}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;flex:none;white-space:nowrap;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title" id="hdrTitle">申請人マイページ</span>
-  <span class="header-ver">ver.20261103.01</span>
+  <span class="header-ver">ver.20261103.02</span>
   <div class="header-right">
     <button type="button" id="apTourBtn" onclick="_apTour()" style="padding:5px 11px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">？</button>
     <div id="langSwitch" class="lang-switch"></div>
@@ -1232,7 +1233,7 @@ function _apGatePending(){
 function _apGateHtml(){
   var list=_apGatePending();
   var due=_apDeadlines().docs;
-  if(!due){ var mr=null; list.forEach(function(d){ var r=_apParse(reqMap[d.l]); if(r&&(!mr||r<mr)) mr=r; }); if(mr) due=_apAddBiz(mr,AP_RULES.docsBiz); }
+  if(!due){ var mr=null; list.forEach(function(d){ var r=_apParse(reqMap[d.l]); if(r&&(!mr||r<mr)) mr=r; }); if(mr) due=_apAdd(mr,AP_RULES.docsDays); }
   var h='<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #1c3d6e;border-radius:14px;padding:16px 16px 18px;margin-bottom:16px;">';
   h+='<div style="font-size:16px;font-weight:900;color:#0f2040;">'+t('gate_title')+'</div>';
   h+='<div style="font-size:12.5px;color:#334155;line-height:1.75;margin:8px 0 4px;">'+t('gate_intro')+'</div>';
@@ -1359,7 +1360,7 @@ function _apAddBiz(d,n){ var r=new Date(d),c=0; while(c<n){ r=_apAdd(r,1); var w
 // ver.20261024.05: 日数はアンシスの「テンプレート」で編集（settings.deadline_rules → RPC get_deadline_rules）。読めなければ既定値
 // ver.20261024.09: 申請まで15営業日の流れ（ヒアリング回答・書類アップ3→1-6作成2→1-6企業確認2→サイン書類作成1→サイン返送2→押印書類作成1→押印返送2→スキャン書類作成2＝できた日に申請）
 var AP_STEP_KEYS=['hearing','soufu','kakunin','sakusei','sign','ouinSakusei','signOuin','prep'];
-var AP_RULES={steps:{hearing:3,soufu:2,kakunin:2,sakusei:1,sign:2,ouinSakusei:1,signOuin:2,prep:2},askBiz:3,docsBiz:5,docsBeforeExpire:30,applyBeforeExpire:14,minDocsBiz:2,freshDays:45,hearingBiz:3,uploadBiz:3};
+var AP_RULES={steps:{hearing:3,soufu:2,kakunin:2,sakusei:1,sign:2,ouinSakusei:1,signOuin:2,prep:2},askBiz:3,docsBiz:5,docsDays:14,docsBeforeExpire:30,applyBeforeExpire:14,minDocsBiz:2,freshDays:45,hearingBiz:3,uploadBiz:3};
 var _apRaw=null;
 var _apRulesTried=false;
 function _apRulesLoad(){
@@ -1370,7 +1371,7 @@ function _apRulesLoad(){
     function n(v,d){ v=parseInt(v,10); return (isNaN(v)||v<0||v>365)?d:v; }
     function ap(src){ if(!src||typeof src!=='object') return; var st=src.steps||{};
       AP_STEP_KEYS.forEach(function(k){ AP_RULES.steps[k]=n(st[k],AP_RULES.steps[k]); });
-      ['askBiz','docsBiz','docsBeforeExpire','applyBeforeExpire','minDocsBiz','freshDays','hearingBiz','uploadBiz'].forEach(function(k){ AP_RULES[k]=n(src[k],AP_RULES[k]); }); }
+      ['askBiz','docsBiz','docsDays','docsBeforeExpire','applyBeforeExpire','minDocsBiz','freshDays','hearingBiz','uploadBiz'].forEach(function(k){ AP_RULES[k]=n(src[k],AP_RULES[k]); }); }
     ap(r);
     // ver.20261024.07: 登録支援機関ごとの日数（deadline_rules.orgs["機関名"]・前方一致・差分だけ）
     var org=String((theCase&&theCase.org)||'').trim(), orgs=r.orgs||{}, best='';
@@ -1410,10 +1411,13 @@ function _apDeadlines(){
   _apRulesLoad();
   var fresh=req && Math.round((today-req)/86400000)<=AP_RULES.freshDays;
   var docs=null, sign=null;
-  if(fresh){ docs=_apAddBiz(req,AP_RULES.docsBiz); sign=_apAddBiz(req,_apApplyBiz()); }
-  if(exp){ docs=_apMin(docs,_apAdd(exp,-AP_RULES.docsBeforeExpire)); sign=_apMin(sign,_apAdd(exp,-AP_RULES.applyBeforeExpire)); }
+  // ver.20261103.02: 書類（建設以外）の提出期限＝案件登録日から docsDays 日（既定14日）。在留期限・受領日の営業日・3週間スケジュールでは動かさない
+  var reg=null; if(c.created_at){ reg=new Date(c.created_at); if(isNaN(reg)) reg=null; else reg.setHours(0,0,0,0); }
+  reg=reg||req; if(reg) docs=_apAdd(reg,AP_RULES.docsDays);
+  if(fresh){ sign=_apAddBiz(req,_apApplyBiz()); }
+  if(exp){ sign=_apMin(sign,_apAdd(exp,-AP_RULES.applyBeforeExpire)); }
   // 受領した時点で在留期限が近い案件でも、受領日から2営業日（サインは5営業日）より前にはしない
-  if(fresh){ var m2=_apAddBiz(req,AP_RULES.minDocsBiz), m5=_apAddBiz(req,AP_RULES.askBiz+AP_RULES.minDocsBiz); if(docs&&docs<m2) docs=m2; if(sign&&sign<m5) sign=m5; }
+  if(fresh){ var m5=_apAddBiz(req,AP_RULES.askBiz+AP_RULES.minDocsBiz); if(sign&&sign<m5) sign=m5; }
   // 建設の特定活動で国交省の申請前は、入管の書類はまだ集めない（期限を出さない）
   var KO=['申請済み','補正可能','補正完了','補正未着手','完了(許可済)','完了'];
   if(String(c.residence_status||'')==='特定活動' && /建設/.test(String(c.applicant_field||'')) && KO.indexOf(getKokkoStatus(c))<0) docs=null;
@@ -1424,7 +1428,6 @@ function _apDeadlines(){
   var pl=_apPlan();
   if(pl && pl.signOuin){
     if(sign && pl.sign<sign && (!sd || pl.sign>=sd)) sign=pl.sign;
-    if(docs && pl.signOuin<docs && pl.signOuin>=today) docs=pl.signOuin;
   }
   return {docs:docs, sign:sign};
 }
