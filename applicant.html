@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>申請人マイページ | 大房行政書士法人</title>
+<!-- ver.20261103.01: 「O-Link（オーリンク）マイページとは」の説明と「マイページの使用を希望します」チェックを、マイページを表示する前（PIN入力の前）に出す（8言語・言語切り替えつき）。チェックすると、このマイページのURLを案件につながっているLINE・Chatwork・Slackへ自動で送る（Edge Function olink-optin・記録は olink_optin。1回だけ）。 -->
 <!-- ver.20261102.01: サンプル表示を追加。URLに ?demo=1 で開くと、架空の人材「AKIRA OFUSA」（株式会社大房）でPINなしに表示。ヒアリング回答の見本つき。データは読み書きともサーバーに送らない。 -->
 <!-- ver.20261030.02: 在留期限まで60日を切ったら「在留期限と銀行口座」の注意を表示。最初の1回だけポップアップ（「確認しました」で以後そのブラウザでは出ない）、進捗タブの一番上には常設（案件が「完了」になったら消える）。期限が過ぎると申請中でも口座が止まることがある／申請中証明を出すと引き出せる場合がある（銀行によってはできない）／新しい在留カードを見せればまた使える／期限前に現金を引き出しておく、を8言語で。 -->
 <!-- ver.20261030.01: 登録支援機関O-Linkと同じSalesforce型の案内を追加（8言語・ログインのたびに自動で表示。「もう表示しない」を押すとそのブラウザでは出ない）。マイページを開いたとき、まだ対応していないこと（ヒアリング回答・書類提出・サイン返送）があれば、提出期限つきの「ご対応のお願い」ポップアップを表示（8言語）。ヘッダーの「使い方」ボタンで、タブ・いまやること・依頼事項・現在の進捗・在留期限・提出書類・言語・お問い合わせを1ステップずつ案内。 -->
@@ -221,6 +222,22 @@ details.doc-help-d[open]>summary::after{content:' ▲';}
 #tpBox .tp-b{padding:10px 16px 6px;max-height:60vh;overflow-y:auto;}
 #tpBox .tp-f{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid #e5e5e5;background:#fafaf9;}
 #tpBox .tp-btn{border:none;background:#0176d3;color:#fff;border-radius:6px;padding:9px 20px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;}
+/* ver.20261103.02: マイページを表示する前の「O-Linkとは」＋使用希望 */
+.op-gate{position:fixed;inset:0;background:#0f2040;z-index:520;overflow:auto;padding:20px 14px;display:flex;align-items:flex-start;justify-content:center;}
+.op-gate .op-card{max-width:520px;width:100%;margin:auto 0;}
+.op-logo{font-size:20px;font-weight:900;color:#0f2040;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.op-go{display:block;width:100%;margin-top:14px;background:#1a56db;color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;}
+.op-go:disabled{opacity:.6;cursor:default;}
+/* ver.20261103.01: O-Linkの説明＋マイページ使用の希望 */
+.op-card{background:#fff;border:2px solid #1a56db;border-radius:14px;padding:14px 16px;margin-bottom:16px;}
+.op-h{font-size:15px;font-weight:900;color:#0f2040;margin-bottom:4px;}
+.op-lead{font-size:12.5px;color:#334155;margin-bottom:6px;line-height:1.8;}
+.op-ul{margin:0 0 10px 18px;font-size:12.5px;color:#334155;line-height:1.9;}
+.op-chk{display:flex;align-items:center;gap:10px;background:#eff6ff;border:1.5px solid #93c5fd;border-radius:10px;padding:12px 14px;font-size:14px;font-weight:900;color:#0f2040;cursor:pointer;}
+.op-chk input{width:22px;height:22px;flex-shrink:0;}
+.op-note{font-size:11.5px;color:#64748b;margin-top:6px;line-height:1.7;}
+.op-msg{font-size:12px;font-weight:700;color:#1a56db;margin-top:6px;}
+.op-done{background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:10px;padding:9px 14px;font-size:12.5px;font-weight:700;margin-bottom:14px;line-height:1.7;}
 /* ver.20261030.02: 在留期限と銀行口座の注意 */
 #tpBox .tp-h.bk{background:#fff7e8;}
 #tpBox .tp-h.bk .tp-t{color:#7a3d06;}
@@ -266,7 +283,7 @@ details.doc-help-d[open]>summary::after{content:' ▲';}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;flex:none;white-space:nowrap;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title" id="hdrTitle">申請人マイページ</span>
-  <span class="header-ver">ver.20261102.01</span>
+  <span class="header-ver">ver.20261103.01</span>
   <div class="header-right">
     <button type="button" id="apTourBtn" onclick="_apTour()" style="padding:5px 11px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">？</button>
     <div id="langSwitch" class="lang-switch"></div>
@@ -854,7 +871,7 @@ async function init(){
   renderLangSwitch();
   document.documentElement.lang=curLang;
   var token=getParam('token');
-  if(_DEMO){ token=token||'demo'; currentToken=token; window._passToken=token; _demoBanner(); applyStaticI18n(); document.getElementById('passScreen').classList.add('hide'); await loadData('demo'); return; }   // ver.20261102.01: サンプル表示
+  if(_DEMO){ token=token||'demo'; currentToken=token; window._passToken=token; _demoBanner(); applyStaticI18n(); document.getElementById('passScreen').classList.add('hide'); _optinGate(function(){ loadData('demo'); }); return; }   // ver.20261102.01: サンプル表示
   if(!token){ document.getElementById('main').innerHTML='<div class="error-box">'+t('err_badurl')+'</div>'; return; }
   currentToken=token; window._passToken=token;
   try{
@@ -868,12 +885,15 @@ async function init(){
       document.getElementById('passInput2').classList.remove('hide');
     }
     applyStaticI18n();
-    document.getElementById('passScreen').classList.remove('hide');
-    setTimeout(function(){document.getElementById('passInput').focus();},100);
+    _optinGate(function(){   // ver.20261103.02: マイページを表示する前に「O-Linkとは」＋使用希望
+      document.getElementById('passScreen').classList.remove('hide');
+      setTimeout(function(){document.getElementById('passInput').focus();},100);
+    });
   }catch(e){ document.getElementById('main').innerHTML='<div class="error-box">'+t('err_load',{n:e.message})+'</div>'; }
 }
 
 async function loadData(pass){
+  _opPass=pass||'';
   try{
     var res=await callRpc('applicant_view_get',{p_token:currentToken,p_pass:pass||''});
     if(!res||!res.ok){
@@ -1133,6 +1153,57 @@ function _apTour(){
 }
 function switchTab(t){ currentTab=t; document.querySelectorAll('.tab').forEach(function(el){el.classList.toggle('active',el.dataset.tab===t);}); render(); }
 
+// ===== ver.20261103.01: O-Linkの説明＋「このマイページの使用を希望します」（チェックすると、このマイページのURLを案件につながっているLINE・Chatwork・Slackへ自動で送る） =====
+var _OP_TX={
+ h:{ja:'O-Link（オーリンク）マイページとは',en:'What is the O-Link My Page?',vi:'Trang cá nhân O-Link là gì?',id:'Apa itu Halaman Saya O-Link?',zh:'什么是 O-Link 个人页面？',km:'ទំព័ររបស់ខ្ញុំ O-Link ជាអ្វី?',my:'O-Link ကိုယ်ပိုင်စာမျက်နှာ ဆိုသည်မှာ',th:'หน้าของฉัน O-Link คืออะไร'},
+ lead:{ja:'あなたの<ruby>申請<rt>しんせい</rt></ruby>の<ruby>状況<rt>じょうきょう</rt></ruby>を、いつでもこのページで<ruby>確認<rt>かくにん</rt></ruby>できます。',en:'You can check the status of your application on this page at any time.',vi:'Bạn có thể xem tình trạng hồ sơ của mình trên trang này bất cứ lúc nào.',id:'Anda bisa memeriksa status permohonan Anda di halaman ini kapan saja.',zh:'您可以随时在此页面查看申请的进展。',km:'អ្នកអាចពិនិត្យស្ថានភាពពាក្យស្នើសុំរបស់អ្នកនៅលើទំព័រនេះបានគ្រប់ពេល។',my:'သင့်လျှောက်လွှာ အခြေအနေကို ဤစာမျက်နှာတွင် အချိန်မရွေး စစ်ဆေးနိုင်ပါသည်။',th:'คุณสามารถตรวจสอบสถานะการยื่นคำขอได้ที่หน้านี้ตลอดเวลา'},
+ b1:{ja:'<b>出す書類と期限</b>がわかります',en:'See <b>which documents to submit and the deadline</b>',vi:'Biết <b>giấy tờ cần nộp và hạn nộp</b>',id:'Lihat <b>dokumen yang harus diserahkan dan batas waktunya</b>',zh:'了解<b>需要提交的材料和期限</b>',km:'ដឹង<b>ឯកសារដែលត្រូវដាក់ និងថ្ងៃផុតកំណត់</b>',my:'<b>တင်ရမည့် စာရွက်စာတမ်းနှင့် နောက်ဆုံးရက်</b>ကို သိနိုင်သည်',th:'รู้<b>เอกสารที่ต้องส่งและกำหนดส่ง</b>'},
+ b2:{ja:'<b>申請の進み具合</b>と<b>スケジュール</b>がわかります',en:'See <b>your application progress and schedule</b>',vi:'Biết <b>tiến độ và lịch trình</b> hồ sơ',id:'Lihat <b>kemajuan dan jadwal</b> permohonan',zh:'了解<b>申请进展和日程</b>',km:'ដឹង<b>វឌ្ឍនភាព និងកាលវិភាគ</b>នៃពាក្យស្នើសុំ',my:'<b>လျှောက်လွှာ တိုးတက်မှုနှင့် အချိန်ဇယား</b>ကို သိနိုင်သည်',th:'รู้<b>ความคืบหน้าและกำหนดการ</b>ของการยื่นคำขอ'},
+ b3:{ja:'書類の<b>アップロード</b>や、ヒアリングの<b>回答の確認</b>ができます',en:'<b>Upload documents</b> and <b>check your hearing-form answers</b>',vi:'<b>Tải giấy tờ lên</b> và <b>xem lại câu trả lời</b> phiếu khảo sát',id:'<b>Unggah dokumen</b> dan <b>cek jawaban formulir</b>',zh:'可以<b>上传材料</b>，<b>查看问卷的回答</b>',km:'<b>បង្ហោះឯកសារ</b> និង<b>ពិនិត្យចម្លើយ</b>ទម្រង់សំណួរ',my:'<b>စာရွက်စာတမ်း တင်ခြင်း</b>နှင့် <b>မေးခွန်းပုံစံ အဖြေ စစ်ဆေးခြင်း</b> ပြုလုပ်နိုင်သည်',th:'<b>อัปโหลดเอกสาร</b>และ<b>ตรวจคำตอบแบบสอบถาม</b>ได้'},
+ b4:{ja:'8つの<ruby>言語<rt>げんご</rt></ruby>で<ruby>見<rt>み</rt></ruby>られます',en:'Available in 8 languages',vi:'Có 8 ngôn ngữ',id:'Tersedia dalam 8 bahasa',zh:'支持8种语言',km:'មាន 8 ភាសា',my:'ဘာသာစကား ၈ မျိုးဖြင့် ကြည့်နိုင်သည်',th:'มีให้เลือก 8 ภาษา'},
+ chk:{ja:'マイページの<ruby>使用<rt>しよう</rt></ruby>を<ruby>希望<rt>きぼう</rt></ruby>します',en:'I want to use this My Page',vi:'Tôi muốn sử dụng trang này',id:'Saya ingin menggunakan halaman ini',zh:'我想使用这个个人页面',km:'ខ្ញុំចង់ប្រើទំព័រនេះ',my:'ဤစာမျက်နှာကို အသုံးပြုလိုပါသည်',th:'ฉันต้องการใช้หน้านี้'},
+ note:{ja:'チェックすると、このページのURLを、<ruby>大房行政書士法人<rt>おおふさぎょうせいしょしほうじん</rt></ruby>とのLINEグループに<ruby>送<rt>おく</rt></ruby>ります。',en:'When you check this, we will send the link to this page to your LINE group with OFUSA.',vi:'Khi chọn, chúng tôi sẽ gửi đường link trang này vào nhóm LINE với OFUSA.',id:'Jika dicentang, kami akan mengirim tautan halaman ini ke grup LINE Anda dengan OFUSA.',zh:'勾选后，我们会把本页链接发送到您与OFUSA的LINE群组。',km:'ពេលធីក យើងនឹងផ្ញើតំណភ្ជាប់ទំព័រនេះទៅក្រុម LINE ជាមួយ OFUSA។',my:'အမှန်ခြစ်လျှင် ဤစာမျက်နှာ လင့်ခ်ကို OFUSA နှင့် LINE အုပ်စုသို့ ပို့ပေးပါမည်။',th:'เมื่อเลือก เราจะส่งลิงก์หน้านี้ไปยังกลุ่ม LINE กับ OFUSA'},
+ sending:{ja:'<ruby>送<rt>おく</rt></ruby>っています…',en:'Sending…',vi:'Đang gửi…',id:'Mengirim…',zh:'正在发送…',km:'កំពុងផ្ញើ…',my:'ပို့နေသည်…',th:'กำลังส่ง…'},
+ ok:{ja:'✅ マイページを<ruby>使<rt>つか</rt></ruby>う<ruby>希望<rt>きぼう</rt></ruby>を<ruby>受<rt>う</rt></ruby>け<ruby>付<rt>つ</rt></ruby>けました。このページのURLをLINEグループに<ruby>送<rt>おく</rt></ruby>りました。',en:'✅ Thank you. We have sent the link to this page to your LINE group.',vi:'✅ Đã nhận. Chúng tôi đã gửi link trang này vào nhóm LINE.',id:'✅ Terima kasih. Tautan halaman ini sudah dikirim ke grup LINE.',zh:'✅ 已收到。本页链接已发送到LINE群组。',km:'✅ បានទទួល។ យើងបានផ្ញើតំណភ្ជាប់ទៅក្រុម LINE ហើយ។',my:'✅ လက်ခံပြီးပါပြီ။ ဤစာမျက်နှာ လင့်ခ်ကို LINE အုပ်စုသို့ ပို့ပြီးပါပြီ။',th:'✅ รับทราบแล้ว เราได้ส่งลิงก์หน้านี้ไปยังกลุ่ม LINE แล้ว'},
+ nolink:{ja:'✅ マイページを<ruby>使<rt>つか</rt></ruby>う<ruby>希望<rt>きぼう</rt></ruby>を<ruby>受<rt>う</rt></ruby>け<ruby>付<rt>つ</rt></ruby>けました。<ruby>担当者<rt>たんとうしゃ</rt></ruby>からURLを<ruby>送<rt>おく</rt></ruby>ります。',en:'✅ Thank you. Your staff contact will send you the link.',vi:'✅ Đã nhận. Người phụ trách sẽ gửi link cho bạn.',id:'✅ Terima kasih. Petugas akan mengirimkan tautannya.',zh:'✅ 已收到。负责人会把链接发给您。',km:'✅ បានទទួល។ អ្នកទទួលបន្ទុកនឹងផ្ញើតំណភ្ជាប់ទៅអ្នក។',my:'✅ လက်ခံပြီးပါပြီ။ တာဝန်ခံက လင့်ခ်ကို ပို့ပေးပါမည်။',th:'✅ รับทราบแล้ว เจ้าหน้าที่จะส่งลิงก์ให้คุณ'},
+ go:{ja:'マイページへ<ruby>進<rt>すす</rt></ruby>む',en:'Go to My Page',vi:'Vào trang cá nhân',id:'Masuk ke Halaman Saya',zh:'进入个人页面',km:'ចូលទៅទំព័ររបស់ខ្ញុំ',my:'ကိုယ်ပိုင်စာမျက်နှာသို့ သွားရန်',th:'ไปที่หน้าของฉัน'},
+ fail:{ja:'<ruby>送<rt>おく</rt></ruby>れませんでした。しばらくしてから、もう<ruby>一度<rt>いちど</rt></ruby>してください。',en:'Could not send. Please try again later.',vi:'Không gửi được. Vui lòng thử lại sau.',id:'Gagal mengirim. Silakan coba lagi nanti.',zh:'发送失败，请稍后再试。',km:'មិនអាចផ្ញើបាន។ សូមព្យាយាមម្តងទៀតនៅពេលក្រោយ។',my:'မပို့နိုင်ပါ။ နောက်မှ ထပ်ကြိုးစားပါ။',th:'ส่งไม่สำเร็จ กรุณาลองใหม่ภายหลัง'}
+};
+var _opPass='', _opBusy=false, _opGo=null;
+var _OPTIN_FN=SUPABASE_URL+'/functions/v1/olink-optin';
+function _optinCall(action){
+  return fetch(_OPTIN_FN,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({kind:'applicant',token:currentToken,action:action})}).then(function(r){ return r.json(); });
+}
+function _opT(k){ var o=_OP_TX[k]; return (o&&(o[curLang]||o.en||o.ja))||''; }
+// マイページを表示する前に出す（すでに希望済みなら出さない）
+function _optinGate(next){
+  _opGo=function(){ var g=document.getElementById('opGate'); if(g) g.remove(); _opGo=null; next(); };
+  if(_DEMO){ _optinShow(); return; }
+  _optinCall('status').then(function(r){ if(r&&r.ok&&r.opted) _opGo(); else _optinShow(); }).catch(function(){ _opGo(); });
+}
+function _optinShow(){
+  var g=document.getElementById('opGate'); var chk0=g&&document.getElementById('opChk')&&document.getElementById('opChk').checked;
+  if(!g){ g=document.createElement('div'); g.id='opGate'; g.className='op-gate'; document.body.appendChild(g); }
+  var langs=[['ja','日本語'],['en','English'],['vi','Tiếng Việt'],['id','Indonesia'],['zh','中文'],['km','ភាសាខ្មែរ'],['my','မြန်မာ'],['th','ไทย']];
+  g.innerHTML='<div class="op-card">'
+    +'<div class="op-logo"><span>O-Link</span><select onchange="setLang(this.value);_optinShow();" style="font-size:13px;padding:5px 8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#0f2040;font-family:inherit;">'+langs.map(function(l){ return '<option value="'+l[0]+'"'+(l[0]===curLang?' selected':'')+'>'+l[1]+'</option>'; }).join('')+'</select></div>'
+    +'<div class="op-h">'+_opT('h')+'</div>'
+    +'<div class="op-lead">'+_opT('lead')+'</div>'
+    +'<ul class="op-ul"><li>'+_opT('b1')+'</li><li>'+_opT('b2')+'</li><li>'+_opT('b3')+'</li><li>'+_opT('b4')+'</li></ul>'
+    +'<label class="op-chk"><input type="checkbox" id="opChk"'+(chk0?' checked':'')+'> '+_opT('chk')+'</label>'
+    +'<div class="op-note">'+_opT('note')+'</div>'
+    +'<button type="button" class="op-go" id="opGo">'+_opT('go')+'</button>'
+    +'<div id="opMsg" class="op-msg"></div>'
+    +'</div>';
+  document.getElementById('opGo').onclick=function(){
+    var chk=document.getElementById('opChk'), btn=this, m=document.getElementById('opMsg');
+    if(!chk.checked){ _opGo(); return; }
+    if(_opBusy) return; _opBusy=true; btn.disabled=true; chk.disabled=true; m.innerHTML=_opT('sending');
+    var done=function(r){ _opBusy=false; var st=(r&&r.status)||(r&&r.last&&r.last.status)||'ok'; m.style.color='#15803d'; m.innerHTML=(st==='ok'?_opT('ok'):_opT('nolink')); setTimeout(function(){ if(_opGo) _opGo(); },1300); };
+    if(_DEMO){ setTimeout(function(){ done({status:'ok'}); },500); return; }
+    _optinCall('optin').then(function(r){ if(r&&r.ok) done(r); else throw 0; }).catch(function(){ _opBusy=false; btn.disabled=false; chk.disabled=false; m.style.color='#dc2626'; m.innerHTML=_opT('fail'); });
+  };
+}
 function render(){
   var m=document.getElementById('main');
   // ver.20261024.07: 書類のご案内があり、まだ確認していなければ、まず必要書類の確認画面

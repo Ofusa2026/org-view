@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261103.01: 「O-Link（オーリンク）所属機関マイページとは」の説明と「マイページの使用を希望します」チェックを、マイページを表示する前（パスワード入力の前）に出す。チェックすると、このマイページのURLを案件（会社）につながっているLINE・Chatwork・Slackへ自動で送る（Edge Function olink-optin・記録は olink_optin。同じページは1回だけ）。つながっていないときは「担当者からお送りします」と表示。 -->
 <!-- ver.20261102.02: 提出書類の表示を整理。「未提出」を赤で目立たせて上に、「提出済」と「不要」（灰色）を分けて表示（これまでは「提出済（または不要）」でまとめていた）。案シスの今の書類リスト（get_required_doc_lists）を読み、リストにない古い名前の済み書類は出さない。国交省書類の点数も案シスの設定に合わせる（「16. 技能者ID」を出さない）。 -->
 <!-- ver.20261102.01: サンプル表示を追加。URLに ?demo=1 で開くと、架空の「株式会社大房」（人材：AKIRA OFUSA・HANAKO OFUSA）でログインなしに表示。上に「サンプル表示」の帯。データは読み書きともサーバーに送らない（お知らせ・期限ルールのみ通常どおり）。 -->
 <!-- ver.20261030.02: 人材詳細をタブで切り替える形に（スケジュール／申請情報／人材情報／発行書類／提出書類）。提出書類タブには御社の提出書類チェックリストを表示し、未提出の数をタブに表示。 -->
@@ -376,6 +377,22 @@ tr:hover td{background:#fcfcfd;}
 .co-send-bar a{display:block;text-align:center;background:#16a34a;color:#fff;text-decoration:none;font-size:15px;font-weight:900;padding:13px 10px;border-radius:12px;box-shadow:0 2px 8px rgba(22,163,74,.35);}
 .co-send-bar a:active{background:#15803d;}
 
+/* ver.20261103.02: マイページを表示する前の「O-Linkとは」＋使用希望 */
+.op-gate{position:fixed;inset:0;background:#0f2040;z-index:520;overflow:auto;padding:24px 16px;display:flex;align-items:flex-start;justify-content:center;}
+.op-gate .op-card{max-width:560px;width:100%;margin:auto 0;}
+.op-logo{font-size:20px;font-weight:900;color:#0f2040;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.op-go{display:block;width:100%;margin-top:14px;background:#1a56db;color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;}
+.op-go:disabled{opacity:.6;cursor:default;}
+/* ver.20261103.01: O-Linkの説明＋マイページ使用の希望 */
+.op-card{background:#fff;border:2px solid #1a56db;border-radius:14px;padding:16px 18px;margin-bottom:16px;box-shadow:0 2px 10px rgba(26,86,219,.08);}
+.op-h{font-size:15px;font-weight:900;color:#0f2040;margin-bottom:4px;}
+.op-lead{font-size:12.5px;color:#334155;margin-bottom:8px;line-height:1.7;}
+.op-ul{margin:0 0 12px 18px;font-size:12.5px;color:#334155;line-height:1.9;}
+.op-chk{display:flex;align-items:center;gap:10px;background:#eff6ff;border:1.5px solid #93c5fd;border-radius:10px;padding:12px 14px;font-size:14px;font-weight:900;color:#0f2040;cursor:pointer;}
+.op-chk input{width:20px;height:20px;cursor:pointer;flex-shrink:0;}
+.op-note{font-size:11.5px;color:#64748b;margin-top:6px;line-height:1.6;}
+.op-msg{font-size:12px;font-weight:700;color:#1a56db;margin-top:6px;}
+.op-done{background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:10px;padding:9px 14px;font-size:12.5px;font-weight:700;margin-bottom:14px;line-height:1.6;}
 /* ver.20261030.01: 開いたときの「ご対応のお願い」ポップアップ */
 #tpBg{position:fixed;inset:0;background:rgba(3,16,38,.55);z-index:2900;display:flex;align-items:flex-start;justify-content:center;padding:40px 12px;overflow-y:auto;}
 #tpBox{background:#fff;border-radius:12px;max-width:640px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.35);overflow:hidden;font-family:inherit;}
@@ -412,7 +429,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261102.02</span>
+  <span class="header-ver">ver.20261103.01</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
@@ -725,7 +742,7 @@ function _demoBanner(){
 }
 async function init(){
   var token=getParam('token');
-  if(_DEMO){ token=token||'demo'; _demoBanner(); currentToken=token; companyName='株式会社大房'; var _lrD=await loadData('demo'); return; }   // ver.20261102.01: サンプル表示
+  if(_DEMO){ token=token||'demo'; _demoBanner(); currentToken=token; companyName='株式会社大房'; _optinGate(function(){ loadData('demo'); }); return; }   // ver.20261102.01: サンプル表示
   if(!token){ document.getElementById('main').innerHTML='<div class="error-box">URLが正しくありません。</div>'; return; }
   currentToken=token;
   try{
@@ -756,12 +773,12 @@ async function init(){
         return;
       }
     }
-    _passMode = meta.has_pass ? 'enter' : 'setup';
-    _showPassScreen();
+    _optinGate(function(){ _passMode = meta.has_pass ? 'enter' : 'setup'; _showPassScreen(); });   // ver.20261103.02: マイページを表示する前に「O-Linkとは」＋使用希望
   }catch(e){ document.getElementById('main').innerHTML='<div class="error-box">読み込みエラー: '+esc(e.message)+'</div>'; }
 }
 
 async function loadData(pass){
+  _opPass=pass||'';
   try{
     var _pl={p_token:currentToken,p_pass:pass||''};
     if(_orgToken){ _pl.p_org_token=_orgToken; _pl.p_org_pass=_orgPass||null; }
@@ -2322,6 +2339,51 @@ function _docGateConfirm(){
     if(r&&r.ok){ if(!coDocs['']) coDocs['']={}; coDocs['']['docconfirm']=r.at; currentTab='dashboard'; try{ renderSidebar(); }catch(e){} render(); try{ window.scrollTo(0,0); }catch(e){} }
     else { if(b){ b.disabled=false; b.textContent='✅ 提出が必要な書類を確認しました'; } if(m){ m.style.color='#dc2626'; m.textContent='保存できませんでした。時間をおいてもう一度押してください。'; } }
   }).catch(function(){ if(b){ b.disabled=false; b.textContent='✅ 提出が必要な書類を確認しました'; } if(m){ m.style.color='#dc2626'; m.textContent='保存できませんでした。時間をおいてもう一度押してください。'; } });
+}
+// ===== ver.20261103.01: O-Linkの説明＋「このマイページの使用を希望します」（チェックすると、このマイページのURLを案件につながっているLINE・Chatwork・Slackへ自動で送る） =====
+var _opPass='', _opBusy=false;
+var _OPTIN_FN=SUPABASE_URL+'/functions/v1/olink-optin';
+function _optinCall(action){
+  return fetch(_OPTIN_FN,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({kind:'company',token:currentToken,action:action})}).then(function(r){ return r.json(); });
+}
+// マイページを表示する前に出す（すでに希望済みなら出さない）
+function _optinGate(next){
+  var go=function(){ var g=document.getElementById('opGate'); if(g) g.remove(); next(); };
+  if(_DEMO){ _optinShow(go); return; }
+  _optinCall('status').then(function(r){ if(r&&r.ok&&r.opted) go(); else _optinShow(go); }).catch(function(){ go(); });
+}
+function _optinShow(go){
+  var g=document.createElement('div'); g.id='opGate'; g.className='op-gate';
+  g.innerHTML='<div class="op-card">'
+    +'<div class="op-logo">O-Link <span style="font-size:12px;font-weight:700;color:#64748b;">大房行政書士法人</span></div>'
+    +'<div class="op-h">O-Link（オーリンク）所属機関マイページのご案内</div>'
+    +'<div class="op-lead">いつも大変お世話になっております。大房行政書士法人です。<br>弊社にご依頼いただいております在留申請の状況を、御社専用のマイページにて、いつでもご確認いただけます。</div>'
+    +'<ul class="op-ul">'
+    +'<li>御社にご準備いただく<b>書類と提出期限</b>をご確認いただけます（未提出の書類は赤字で表示いたします）</li>'
+    +'<li>人材の方ごとの<b>申請の進捗状況およびスケジュール</b>をご確認いただけます</li>'
+    +'<li>書類の<b>アップロード</b>や、受付番号通知などの<b>PDF</b>のご確認が可能です</li>'
+    +'<li>ご対応いただきたい事項がある場合は、ページを開いた際に<b>「ご対応のお願い」</b>としてお知らせいたします</li>'
+    +'</ul>'
+    +'<label class="op-chk"><input type="checkbox" id="opChk"> マイページの利用を希望いたします</label>'
+    +'<div class="op-note">チェックを入れてお進みいただくと、本マイページのURLを、弊社との連絡用のLINEグループ（Chatwork・Slack）へお送りいたします。</div>'
+    +'<button type="button" class="op-go" id="opGo">マイページへ進む</button>'
+    +'<div id="opMsg" class="op-msg"></div>'
+    +'</div>';
+  document.body.appendChild(g);
+  document.getElementById('opGo').onclick=function(){
+    var chk=document.getElementById('opChk'), btn=this, m=document.getElementById('opMsg');
+    if(!chk.checked){ go(); return; }
+    if(_opBusy) return; _opBusy=true; btn.disabled=true; chk.disabled=true; m.textContent='お送りしております…';
+    var done=function(r){
+      _opBusy=false;
+      var st=(r&&r.status)||((r&&r.last&&r.last.status))||'ok';
+      m.style.color='#15803d';
+      m.textContent= st==='ok' ? '✅ ご希望を承りました。本マイページのURLを、連絡用のグループへお送りいたしました。' : '✅ ご希望を承りました。URLは担当者より改めてお送りいたします。';
+      setTimeout(go,1300);
+    };
+    if(_DEMO){ setTimeout(function(){ done({status:'ok'}); },500); return; }
+    _optinCall('optin').then(function(r){ if(r&&r.ok) done(r); else throw 0; }).catch(function(){ _opBusy=false; btn.disabled=false; chk.disabled=false; m.style.color='#dc2626'; m.textContent='送信できませんでした。恐れ入りますが、時間をおいて再度お試しいただくか、チェックを外してお進みください。'; });
+  };
 }
 function renderDashboard(){
   var total=allCases.length;
