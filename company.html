@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261105.04: 「🔐 登録支援機関とのマイページ共有」を追加（ダッシュボード）。所属機関が登録支援機関ごとに「パスワードを共有する」を押したときだけ、その登録支援機関がマイページ（その機関の案件のみ）と提出書類を見られる（company_org_share）。登録支援機関から共有のお願いが届いたら「対応が必要なタスク」と「ご対応のお願い」に表示。登録支援機関のリンク（&ot=）は共有されていないと開けない。 -->
 <!-- ver.20261105.03: 期限切れの書類行の「📅 いつ出せますか？」を「📅 提出予定日」に、注意文も「『📅 提出予定日』をご入力ください。」に変更（言い方がきついため）。 -->
 <!-- ver.20261105.02: ①「対応が必要なタスク」を件数ではなく中身で表示（書類提出 n件・企業ヒアリングフォームの回答・押印書類のご返送 n件 など。上のバーとご対応のお願いの見出し）。②企業ヒアリングフォームは、フォームの行がまだ無くても申請前の案件があればご依頼事項に出す（これまではフォームを一度開いた会社だけだった）。同じ内容のヒアリング欄が2つ出ないように整理。 -->
 <!-- ver.20261105.01: マイページ表示前の「O-Linkのご案内」に「御社の提出書類と提出状況を、登録支援機関と共有することに同意いたします」のチェックを追加。同意は olink_optin.share_consent に記録（マイページを希望しない場合も、共有に同意したときは status='share_only' で記録）。 -->
@@ -434,7 +435,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261105.03</span>
+  <span class="header-ver">ver.20261105.04</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
@@ -764,7 +765,9 @@ async function init(){
       window._gateStaff=true;
       var lrO=await loadData(null);
       if(lrO&&lrO.ok){ return; }
-      document.getElementById('main').innerHTML='<div class="error-box">機関用リンクが無効です。担当者にお問い合わせください。</div>';
+      document.getElementById('main').innerHTML=(window._lastLoadErr==='org_not_approved')
+        ? '<div class="error-box">この企業のマイページは、まだ共有されていません。<br>企業様がマイページで「パスワードを共有する」を押すと、ご覧いただけるようになります。</div>'  // ver.20261105.04
+        : '<div class="error-box">機関用リンクが無効です。担当者にお問い合わせください。</div>';
       return;
     }
     // ver.20260921.10: &pass= パラメータで自動ログイン（案シスの企業マイページモーダルから直接アクセス用）
@@ -789,6 +792,7 @@ async function loadData(pass){
     if(_orgToken){ _pl.p_org_token=_orgToken; _pl.p_org_pass=_orgPass||null; }
     var res=await callRpc('company_view_get',_pl);
     if(!res||!res.ok){
+      window._lastLoadErr=(res&&res.error)||'';
       if(res&&res.error==='pass'){ return {passErr:true}; }
       document.getElementById('main').innerHTML='<div class="error-box">対象の情報が見つかりません。</div>'; return {ok:false};
     }
@@ -833,6 +837,7 @@ async function loadData(pass){
       if(_mainEl) _mainEl.insertAdjacentHTML('beforebegin',
         '<div id="orgScopeBanner" style="background:#eef4fd;border-bottom:1px solid #b9d0ee;padding:8px 16px;font-size:12px;color:#1c3d6e;font-weight:700;">🔗 '+esc(_orgScope)+' 様向け表示：この画面には '+esc(_orgScope)+' 様が支援している案件のみが表示されています。</div>');
     }
+    await _coShareLoad();  // ver.20261105.04: 登録支援機関とのマイページ共有
     await loadNews();
     renderSidebar();
     render();
@@ -1185,7 +1190,7 @@ function computeMissing(){
 // ver.20260922.02: 「対応が必要なタスク」集計——未提出書類＋ボールが企業にある案件＋ヒアリング未回答
 var _CKS_BALL=['雇用条件待ち','ヒアリングフォーム回答待ち(送付済)','ヒアリングフォーム回答待ち (送付済)','1-6企業確認待ち(送付済)','1-6企業確認待ち (送付済)','サイン書類返送待ち(送付済)','サイン書類返送待ち (送付済)','企業押印返送待ち(送付済)','企業押印返送待ち (送付済)','人材書類待ち','企業書類待ち'];
 function _companyTasks(){
-  var t={docs:0, idpw:0, ball:0, ballCases:[], hearing:0, total:0};
+  var t={docs:0, idpw:0, ball:0, ballCases:[], hearing:0, share:0, total:0};
   // 未提出書類（ご依頼事項と同じロジック）
   var hasKensetsu=false, kokkoAppliedAny=false;
   var APPLIED=['申請済み','補正未着手','補正可能','補正完了','完了(許可済)'];
@@ -1218,7 +1223,8 @@ function _companyTasks(){
   });
   // 企業情報ヒアリング未回答
   if(!companyHearingDone && _showHearing()) t.hearing=1;  // ver.20261105.02: ご依頼事項の表示と同じ判定に
-  t.total=t.docs+t.idpw+t.ball+t.hearing;
+  t.share=_coShareRequested().length;  // ver.20261105.04
+  t.total=t.docs+t.idpw+t.ball+t.hearing+t.share;
   return t;
 }
 // ver.20261105.02: タスクの中身（トピック）を件数の代わりに表示
@@ -1228,6 +1234,7 @@ function _taskTopics(t){
   if(t.docs>0) a.push('書類提出 '+t.docs+'件');
   if(t.hearing>0) a.push('企業ヒアリングフォームの回答');
   if(t.idpw>0) a.push('就労管理システムのID・パスワード');
+  if(t.share>0) a.push('登録支援機関からの共有のお願い '+t.share+'件');
   var cnt={}, ord=[];
   (t.ballCases||[]).forEach(function(b){ var l=_TK_BALL_LBL[b.status]; if(!l) return; if(!cnt[l]){ cnt[l]=0; ord.push(l); } cnt[l]++; });
   ord.forEach(function(l){ a.push(l+' '+cnt[l]+'件'); });
@@ -1513,6 +1520,46 @@ function renderStats(){
 }
 
 /* ver.20260617.13: ダッシュボードの依頼事項を「種類ごとのセクション＋該当案件入れ子」に */
+// ===== ver.20261105.04: 登録支援機関とのマイページ共有（所属機関が「パスワードを共有する」を押したときだけ、その登録支援機関がマイページと書類を見られる） =====
+var _coShareList=[];
+function _coShareLoad(){
+  _coShareList=[];
+  if(_DEMO || _orgScope) return Promise.resolve();
+  return callRpc('company_view_share_list',{p_token:currentToken,p_pass:_correctPass||_opPass||null}).then(function(r){
+    if(r&&r.ok&&Array.isArray(r.orgs)) _coShareList=r.orgs;
+  }).catch(function(){});
+}
+function _coShareOrgName(n){ return String(n||'').replace(/様?[（(].*$/,'').replace(/様$/,'').trim()||String(n||''); }
+function _coShareRequested(){ return (_coShareList||[]).filter(function(o){ return o.status==='requested'; }); }
+function _coShareRows(onlyReq){
+  var list=(_coShareList||[]).filter(function(o){ return !onlyReq || o.status==='requested'; });
+  return list.map(function(o){
+    var on=(o.status==='approved'), req=(o.status==='requested');
+    var chip=on?'<span style="font-size:10.5px;font-weight:800;color:#15803d;background:#f0fdf4;border:1px solid #86efac;border-radius:99px;padding:2px 9px;">共有中</span>'
+      :(req?'<span style="font-size:10.5px;font-weight:800;color:#b45309;background:#fffbeb;border:1px solid #fcd34d;border-radius:99px;padding:2px 9px;">共有のお願いが届いています</span>'
+      :'<span style="font-size:10.5px;font-weight:700;color:#64748b;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:99px;padding:2px 9px;">未共有</span>');
+    var btn=on?'<button type="button" onclick="_coShareSet(\''+esc(o.org_id)+'\',false)" style="background:#fff;color:#b91c1c;border:1px solid #fca5a5;border-radius:8px;font-size:12px;font-weight:800;padding:7px 12px;cursor:pointer;font-family:inherit;">共有をやめる</button>'
+      :'<button type="button" onclick="_coShareSet(\''+esc(o.org_id)+'\',true)" style="background:#1a56db;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:800;padding:8px 14px;cursor:pointer;font-family:inherit;">パスワードを共有する</button>';
+    return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 2px;border-bottom:1px solid #eef1f5;">'
+      +'<div style="flex:1;min-width:180px;font-size:13px;font-weight:800;color:#0f2040;">'+esc(_coShareOrgName(o.org_name))+' 様　'+chip+'</div>'+btn+'</div>';
+  }).join('');
+}
+function _coShareCard(){
+  if(_DEMO || _orgScope || !(_coShareList||[]).length) return '';
+  return '<div id="coShareCard" style="background:#fff;border:1px solid #dbe3ef;border-radius:12px;padding:14px 16px;margin-bottom:16px;">'
+    +'<div style="font-size:14px;font-weight:900;color:#0f2040;margin-bottom:4px;">🔐 登録支援機関とのマイページ共有</div>'
+    +'<div style="font-size:11.5px;color:#64748b;line-height:1.7;margin-bottom:4px;">「パスワードを共有する」を押していただくと、その登録支援機関が、御社のマイページ（その登録支援機関が支援している案件のみ）と、ご提出いただいた書類を確認できるようになります。共有はいつでも「共有をやめる」で取りやめられます。</div>'
+    +_coShareRows(false)+'</div>';
+}
+function _coShareSet(orgId, on){
+  var o=(_coShareList||[]).find(function(x){ return x.org_id===orgId; }); var nm=o?_coShareOrgName(o.org_name):'';
+  var msg=on?(nm+' 様と、御社のマイページ（パスワード）とご提出書類を共有します。よろしいですか？'):(nm+' 様との共有をやめます。よろしいですか？');
+  if(!confirm(msg)) return;
+  callRpc('company_view_share_set',{p_token:currentToken,p_pass:_correctPass||_opPass||null,p_org_id:orgId,p_approve:!!on}).then(function(r){
+    if(!(r&&r.ok)){ alert('保存できませんでした。時間をおいてもう一度お試しください。'); return; }
+    return _coShareLoad().then(function(){ try{ render(); }catch(e){} try{ var b=document.getElementById('tpBg'); if(b){ var bx=b.querySelector('.coShareReqRows'); if(bx) bx.innerHTML=_coShareRows(true)||'<div style="font-size:12px;color:#15803d;font-weight:700;padding:6px 0;">✅ ありがとうございます。設定しました。</div>'; } }catch(e2){} });
+  }).catch(function(){ alert('保存できませんでした。時間をおいてもう一度お試しください。'); });
+}
 function _reqSection(icon, title, count, body, note){
   return '<div class="req-sec"><div class="req-sec-h">'+icon+' '+esc(title)
     +' <span class="req-sec-n">'+count+'件</span></div>'
@@ -1836,6 +1883,10 @@ function renderRequests(){
     }).join('')
     +'<div style="font-size:11px;color:#64748b;margin-top:4px;">お送りしている書類のご確認・サイン・押印・ご返送をお願いいたします。ご不明点は担当者まで。</div>';
     secs.push(_reqSection('⚽','御社のご対応待ちの案件', _tk.ball, bb));
+  }
+  if(_tk.share>0){
+    secs.push(_reqSection('🔐','登録支援機関からの共有のお願い', _tk.share, '<div class="coShareReqRows">'+_coShareRows(true)+'</div>',
+      '登録支援機関から、御社のマイページと提出書類を確認したいとのお願いが届いています。共有してよろしければ「パスワードを共有する」を押してください。'));
   }
   var _tp2=_taskTopics(_tk); var _title=(_tk.total>0)?('🚨 対応が必要なタスク（'+(_tp2.length?_tp2.join('・'):_tk.total+'件')+'）'):'📌 ご依頼事項';
   window._reqOverdueAny=_overdueAny; // ver.20261024.06: 提出期限切れがあるときだけタスクバーを赤に
@@ -2447,6 +2498,7 @@ function renderDashboard(){
   var expired=allCases.filter(function(c){if(!_expireTracked(c))return false;var i=expInfo(c.expire);return i.days!=null&&i.days<0;}).length;
   var h='';
   h+=renderRequests();
+  h+=_coShareCard();  // ver.20261105.04
   h+=_kokkoDashCard();  // ver.20260921.19: 国交省書類の進捗を案件に埋もれさせずダッシュボードへ
   h+=_companyHearingCard();
   h+=_dashAlertList();
