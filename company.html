@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261105.03: 期限切れの書類行の「📅 いつ出せますか？」を「📅 提出予定日」に、注意文も「『📅 提出予定日』をご入力ください。」に変更（言い方がきついため）。 -->
 <!-- ver.20261105.02: ①「対応が必要なタスク」を件数ではなく中身で表示（書類提出 n件・企業ヒアリングフォームの回答・押印書類のご返送 n件 など。上のバーとご対応のお願いの見出し）。②企業ヒアリングフォームは、フォームの行がまだ無くても申請前の案件があればご依頼事項に出す（これまではフォームを一度開いた会社だけだった）。同じ内容のヒアリング欄が2つ出ないように整理。 -->
 <!-- ver.20261105.01: マイページ表示前の「O-Linkのご案内」に「御社の提出書類と提出状況を、登録支援機関と共有することに同意いたします」のチェックを追加。同意は olink_optin.share_consent に記録（マイページを希望しない場合も、共有に同意したときは status='share_only' で記録）。 -->
 <!-- ver.20261103.02: ①入管書類（建設以外）の提出期限を「案件登録日から14日以内」に変更（アンシスのテンプレート docsDays で変更可・既定14日）。これまでの「受領日から5営業日・在留期限の30日前の早いほう」と3週間スケジュールによる前倒しはやめ、期限の横のその説明も出さない。②提出書類タブの「🛂 入管提出書類」見出しの下に、入管書類の提出期限（対応が必要なタスクと同じ計算・残り日数）を表示（未提出があるときだけ）。国交省・入管の提出期限に「※ 期限内のご提出が難しい場合は、担当者までご相談ください。」を追加。 -->
@@ -433,7 +434,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261105.02</span>
+  <span class="header-ver">ver.20261105.03</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
@@ -1695,12 +1696,12 @@ function _dlChip(due){
   if(days<0) return d+'<span style="background:#dc2626;color:#fff;border-radius:6px;padding:1px 7px;font-size:10.5px;font-weight:900;">⚠ 提出期限切れ</span>';
   return d+'<span style="background:'+T.bg+';color:'+T.col+';border-radius:6px;padding:1px 7px;font-size:10.5px;font-weight:900;">⏳ '+(days===0?'今日まで':'あと'+days+'日')+'</span>';
 }
-// 期限切れの書類行に「いつ出せますか？」（取得予定日。co_doc_check の yotei:: に保存・案シスと連動）
+// 期限切れの書類行に「提出予定日」（ver.20261105.03：旧「いつ出せますか？」）（取得予定日。co_doc_check の yotei:: に保存・案シスと連動）
 function _docTaskRow(n, overdue){
   var cur=(coDocs[n]&&coDocs[n].yotei)?coDocs[n].yotei:'';
   var r='<div class="req-row"'+(overdue?' style="border-left-color:#fca5a5;"':'')+'><span class="req-nm">'+esc(n)+'</span>';
   if(overdue||cur){
-    r+='<span style="display:inline-flex;align-items:center;gap:5px;margin-left:auto;font-size:10.5px;font-weight:800;color:'+(cur?'#475569':'#b91c1c')+';">📅 いつ出せますか？'
+    r+='<span style="display:inline-flex;align-items:center;gap:5px;margin-left:auto;font-size:10.5px;font-weight:800;color:'+(cur?'#475569':'#b91c1c')+';">📅 提出予定日'
       +'<input type="date" value="'+esc(cur)+'" onchange="saveYoteiCo('+JSON.stringify(n).replace(/"/g,'&quot;')+',this.value,this)" style="font-size:11px;padding:2px 4px;border:1.5px solid '+(cur?'#cbd5e1':'#f87171')+';border-radius:6px;">'
       +'<span class="yotei-msg" style="font-size:10px;"></span></span>';
   }
@@ -1839,7 +1840,7 @@ function renderRequests(){
   var _tp2=_taskTopics(_tk); var _title=(_tk.total>0)?('🚨 対応が必要なタスク（'+(_tp2.length?_tp2.join('・'):_tk.total+'件')+'）'):'📌 ご依頼事項';
   window._reqOverdueAny=_overdueAny; // ver.20261024.06: 提出期限切れがあるときだけタスクバーを赤に
   try{ var _tb=document.getElementById('taskBar'); if(_tb) _tb.classList.toggle('urgent',!!_overdueAny); }catch(e){}
-  var urgentBar=_overdueAny?'<div style="background:#dc2626;color:#fff;font-size:12px;font-weight:900;border-radius:8px;padding:8px 12px;margin:4px 0 10px;">🚨 提出期限を過ぎたご依頼があります。申請スケジュール全体に影響しますので、至急ご対応いただくか、「📅 いつ出せますか？」に日付を入れてください。</div>':'';
+  var urgentBar=_overdueAny?'<div style="background:#dc2626;color:#fff;font-size:12px;font-weight:900;border-radius:8px;padding:8px 12px;margin:4px 0 10px;">🚨 提出期限を過ぎたご依頼があります。申請スケジュール全体に影響しますので、至急ご対応いただくか、「📅 提出予定日」をご入力ください。</div>':'';
   if(!secs.length){
     return '<div class="req-card ok" id="reqCard"><div class="req-head">📌 ご依頼事項</div>'
       +'<div class="req-clear">✅ 現在ご対応いただく依頼事項はありません。</div></div>';
