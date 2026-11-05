@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261105.02: 人材詳細のタブから「提出書類（企業）」を外した（人材の画面に企業の書類が出ていて分かりにくいため）。企業の書類は「企業詳細」と「企業マイページを開く」で確認。 -->
 <!-- ver.20261105.01: 「希望在留期間の確認」（変更・更新のときに出る発行手数料の確認画面）に<b>発行手数料の負担先</b>（所属機関／申請人／その他＋内容）を追加。選ばないと「登録に進む」を押せない。intake_requests の issuance_fee_payer / issuance_fee_payer_note と、1人ずつの発行手数料 issuance_fee（オンライン額）に保存し、確認画面・依頼テキスト（■発行手数料の負担先）にも表示。あわせて全期間の手数料表のハイライトを1ヶ月刻みの期間にも対応。 送信した依頼の「編集」では前回の負担先を初期選択。 -->
 <!-- ver.20261102.06: サイドバーの「協議会案内」を本番から外した（テスト版 share_test のみで表示・内容の更新はテスト版で継続）。本番のコードは残すが入口なし、直接開かれた場合はダッシュボードへ。他機関申請の「協議会」ステータス表示はそのまま。 -->
 <!-- ver.20261102.05: 新規案件依頼の「希望在留資格」に技能実習（1号イ・1号ロ・2号イ・2号ロ・3号イ・3号ロ）を追加。選ぶと希望在留期間は1号＝1年まで／2号・3号＝2年まで。案シスの受信トレイから登録すると、そのまま案件の在留資格に入る -->
@@ -730,7 +731,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261105.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261105.02</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -2601,7 +2602,7 @@ function openPersonModal(caseId, _keep){
     }
   }
   _seg('_end');
-  _panes=_panes.filter(function(x){ return x.label!=='_end' && x.html.replace(/<[^>]*>/g,'').trim().length>0; });
+  _panes=_panes.filter(function(x){ return x.label!=='_end' && x.label!=='提出書類（企業）' &&  /* ver.20261105.02: 人材詳細に企業書類は出さない（企業の書類は「企業詳細」で確認） */ x.html.replace(/<[^>]*>/g,'').trim().length>0; });
   if(!_panes.some(function(x){return x.label===_pmActiveTab;})) _pmActiveTab=_panes.length?_panes[0].label:'';
   var _tabs='<div class="pm-tabs" style="position:sticky;top:-1px;z-index:5;background:#fff;display:flex;gap:4px;overflow-x:auto;padding:8px 0 0;margin:6px 0 4px;border-bottom:2px solid #e2e8f0;">';
   var _bodies='';
