@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261105.02: ①「対応が必要なタスク」を件数ではなく中身で表示（書類提出 n件・企業ヒアリングフォームの回答・押印書類のご返送 n件 など。上のバーとご対応のお願いの見出し）。②企業ヒアリングフォームは、フォームの行がまだ無くても申請前の案件があればご依頼事項に出す（これまではフォームを一度開いた会社だけだった）。同じ内容のヒアリング欄が2つ出ないように整理。 -->
 <!-- ver.20261105.01: マイページ表示前の「O-Linkのご案内」に「御社の提出書類と提出状況を、登録支援機関と共有することに同意いたします」のチェックを追加。同意は olink_optin.share_consent に記録（マイページを希望しない場合も、共有に同意したときは status='share_only' で記録）。 -->
 <!-- ver.20261103.02: ①入管書類（建設以外）の提出期限を「案件登録日から14日以内」に変更（アンシスのテンプレート docsDays で変更可・既定14日）。これまでの「受領日から5営業日・在留期限の30日前の早いほう」と3週間スケジュールによる前倒しはやめ、期限の横のその説明も出さない。②提出書類タブの「🛂 入管提出書類」見出しの下に、入管書類の提出期限（対応が必要なタスクと同じ計算・残り日数）を表示（未提出があるときだけ）。国交省・入管の提出期限に「※ 期限内のご提出が難しい場合は、担当者までご相談ください。」を追加。 -->
 <!-- ver.20261103.01: 「O-Link（オーリンク）所属機関マイページとは」の説明と「マイページの使用を希望します」チェックを、マイページを表示する前（パスワード入力の前）に出す。チェックすると、このマイページのURLを案件（会社）につながっているLINE・Chatwork・Slackへ自動で送る（Edge Function olink-optin・記録は olink_optin。同じページは1回だけ）。つながっていないときは「担当者からお送りします」と表示。 -->
@@ -311,6 +312,7 @@ tr:hover td{background:#fcfcfd;}
 /* ver.20260922.02: 対応が必要なタスクバー（全タブ共通・sticky） */
 .task-bar{display:none;background:#1c3d6e;color:#fff;font-size:12.5px;font-weight:900;padding:9px 16px;cursor:pointer;align-items:center;gap:8px;position:sticky;top:0;z-index:140;box-shadow:0 2px 10px rgba(220,38,38,.3);}
 .task-bar.show{display:flex;}
+.task-bar .tb-topics{display:inline-flex;flex-wrap:wrap;gap:6px;flex:1;min-width:0;}  /* ver.20261105.02 */
 .task-bar.urgent{background:#dc2626;}
 .task-bar.urgent .tb-n{color:#dc2626;}
 .task-bar:active{opacity:.85;}
@@ -431,7 +433,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261105.01</span>
+  <span class="header-ver">ver.20261105.02</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
@@ -1214,16 +1216,29 @@ function _companyTasks(){
     if(_CKS_BALL.indexOf(c.status)>=0){ t.ball++; t.ballCases.push({id:c.id, applicant:c.applicant||c.name||'', status:c.status}); }
   });
   // 企業情報ヒアリング未回答
-  if(companyHearingExists && !companyHearingDone && companyHearingShow!==false && !_noHearingOrg()) t.hearing=1;
+  if(!companyHearingDone && _showHearing()) t.hearing=1;  // ver.20261105.02: ご依頼事項の表示と同じ判定に
   t.total=t.docs+t.idpw+t.ball+t.hearing;
   return t;
+}
+// ver.20261105.02: タスクの中身（トピック）を件数の代わりに表示
+var _TK_BALL_LBL={'雇用条件待ち':'雇用条件のご提示','ヒアリングフォーム回答待ち(送付済)':'人材ヒアリングの回答','ヒアリングフォーム回答待ち (送付済)':'人材ヒアリングの回答','1-6企業確認待ち(送付済)':'雇用条件書（1-6）のご確認','1-6企業確認待ち (送付済)':'雇用条件書（1-6）のご確認','サイン書類返送待ち(送付済)':'サイン書類のご返送','サイン書類返送待ち (送付済)':'サイン書類のご返送','企業押印返送待ち(送付済)':'押印書類のご返送','企業押印返送待ち (送付済)':'押印書類のご返送','人材書類待ち':'人材の書類提出'};
+function _taskTopics(t){
+  var a=[];
+  if(t.docs>0) a.push('書類提出 '+t.docs+'件');
+  if(t.hearing>0) a.push('企業ヒアリングフォームの回答');
+  if(t.idpw>0) a.push('就労管理システムのID・パスワード');
+  var cnt={}, ord=[];
+  (t.ballCases||[]).forEach(function(b){ var l=_TK_BALL_LBL[b.status]; if(!l) return; if(!cnt[l]){ cnt[l]=0; ord.push(l); } cnt[l]++; });
+  ord.forEach(function(l){ a.push(l+' '+cnt[l]+'件'); });
+  return a;
 }
 function _renderTaskBar(t){
   var bar=document.getElementById('taskBar');
   if(!bar) return;
   if(t.total>0){
     bar.className='task-bar show'+(window._reqOverdueAny?' urgent':'');
-    bar.innerHTML='⚠ 対応が必要なタスク <span class="tb-n">'+t.total+'件</span><span class="tb-go">タップして確認 ›</span>';
+    var _tp=_taskTopics(t);
+    bar.innerHTML='⚠ 対応が必要なタスク'+(_tp.length?'<span class="tb-topics">'+_tp.map(function(x){ return '<span class="tb-n">'+esc(x)+'</span>'; }).join('')+'</span>':' <span class="tb-n">'+t.total+'件</span>')+'<span class="tb-go">タップして確認 ›</span>';
   } else {
     bar.className='task-bar';
     bar.innerHTML='';
@@ -1821,12 +1836,7 @@ function renderRequests(){
     +'<div style="font-size:11px;color:#64748b;margin-top:4px;">お送りしている書類のご確認・サイン・押印・ご返送をお願いいたします。ご不明点は担当者まで。</div>';
     secs.push(_reqSection('⚽','御社のご対応待ちの案件', _tk.ball, bb));
   }
-  if(_tk.hearing>0){
-    secs.push(_reqSection('📝','企業情報ヒアリングのご回答', 1,
-      '<div class="req-row"><span class="req-nm">企業情報ヒアリングフォームが未回答です</span></div>'
-      +'<button class="req-btn" onclick="switchGroup(\'orginfo\')">所属機関情報を開く</button>'));
-  }
-  var _title=(_tk.total>0)?('🚨 対応が必要なタスク（'+_tk.total+'件）'):'📌 ご依頼事項';
+  var _tp2=_taskTopics(_tk); var _title=(_tk.total>0)?('🚨 対応が必要なタスク（'+(_tp2.length?_tp2.join('・'):_tk.total+'件')+'）'):'📌 ご依頼事項';
   window._reqOverdueAny=_overdueAny; // ver.20261024.06: 提出期限切れがあるときだけタスクバーを赤に
   try{ var _tb=document.getElementById('taskBar'); if(_tb) _tb.classList.toggle('urgent',!!_overdueAny); }catch(e){}
   var urgentBar=_overdueAny?'<div style="background:#dc2626;color:#fff;font-size:12px;font-weight:900;border-radius:8px;padding:8px 12px;margin:4px 0 10px;">🚨 提出期限を過ぎたご依頼があります。申請スケジュール全体に影響しますので、至急ご対応いただくか、「📅 いつ出せますか？」に日付を入れてください。</div>':'';
@@ -1864,7 +1874,9 @@ function _showHearing(){
   if(_noHearingOrg()) return false;
   if(companyHearingShow===true) return true;
   if(companyHearingShow===false) return false;
-  return !!companyHearingExists;
+  // ver.20261105.02: フォームの行がまだ無くても、申請前の案件があれば企業ヒアリングをお願いする（1-6の作成に必要）
+  if(companyHearingExists) return true;
+  return (allCases||[]).some(function(c){ return _PRE_APPLY_EXT.indexOf(getExternalStatus(c.status))>=0; });
 }
 function _companyHearingRow(){
   return '<div class="req-row"><span class="req-nm">企業ヒアリングフォーム</span>'
