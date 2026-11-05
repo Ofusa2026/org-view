@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261106.test05: 新規案件依頼の在留カード・パスポート欄で、入れた写真をその場で読み取り、違う書類・写りの悪い写真・期限切れを赤く知らせる（撮り直さずに送るときは確認）。読み取りはO-Linkのログインで確認（doc-ai-read） -->
 <!-- ver.20261105.test04: 企業詳細の「企業マイページを開く」と企業の書類ファイル（表示・⬇）は、企業様が所属機関マイページで「パスワードを共有する」を押したとき（company_org_share=approved）だけ。未共有のときは「📝 共有のお願い文を作成」（org_co_share_request）で企業あての依頼文を作ってコピー。PINも共有後のみ表示。 -->
 <!-- ver.20261105.test03: 新規案件依頼の人材リストの下に「在留カード（表・裏）・パスポート」の欄を申請人ごとに追加（任意・在留カードは表裏セット必須・認定はパスポートのみ）。送信すると依頼を作ったあと写真を人ごとに一時保管し、案件と人材フォルダができしだい「在留カード（表）_O-Link.jpg」などで自動格納。登録は create_org_intake_v2（依頼IDを返す・中身はv1と同じ）を使用 -->
 <!-- ver.20261105.test02: 人材詳細のタブから「提出書類（企業）」を外した（人材の画面に企業の書類が出ていて分かりにくいため）。企業の書類は「企業詳細」と「企業マイページを開く」で確認。 -->
@@ -765,7 +766,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261105.test04</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261106.test05</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -11949,24 +11950,51 @@ function closeFlowModal(){
         + '<div style="font-size:12.5px;font-weight:800;color:#1e293b;margin-bottom:6px;">' + (i+1) + '. ' + (nm ? esc(nm) : '<span style="color:#94a3b8;font-weight:600;">（氏名を入力してください）</span>') + '</div>'
         + '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
       keys.forEach(function(d){
-        var has = !!f[d.k];
-        h += '<label style="display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border:1.5px solid ' + (has?'#16a34a':'#93c5fd') + ';border-radius:8px;font-size:12px;font-weight:700;color:' + (has?'#15803d':'#1d4ed8') + ';background:' + (has?'#f0fdf4':'#fff') + ';cursor:pointer;">'
-          + (has ? '✓ ' : '＋ ') + d.l
+        var has = !!f[d.k], bad = has && f[d.k].warn && f[d.k].warn.length, chk = has && f[d.k].checking;
+        var bc = bad ? '#dc2626' : (has ? '#16a34a' : '#93c5fd'), fc = bad ? '#b91c1c' : (has ? '#15803d' : '#1d4ed8'), bg = bad ? '#fef2f2' : (has ? '#f0fdf4' : '#fff');
+        h += '<label style="display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border:1.5px solid ' + bc + ';border-radius:8px;font-size:12px;font-weight:700;color:' + fc + ';background:' + bg + ';cursor:pointer;">'
+          + (bad ? '⚠️ ' : (chk ? '⏳ ' : (has ? '✓ ' : '＋ '))) + d.l
           + '<input type="file" accept="image/*,application/pdf" style="display:none" onchange="_ncDocPick(\'' + tr.id + '\',\'' + d.k + '\',this)"></label>';
         if (has) h += '<button type="button" onclick="_ncDocClear(\'' + tr.id + '\',\'' + d.k + '\')" title="取り消す" style="border:none;background:none;color:#dc2626;cursor:pointer;font-size:12px;margin-left:-4px;">✕</button>';
       });
       h += '</div>';
       if (cardHalf) h += '<div style="font-size:11.5px;color:#b91c1c;font-weight:700;margin-top:5px;">在留カードは表と裏の両方を入れてください</div>';
+      keys.forEach(function(d){ var x = f[d.k]; if (x && x.warn && x.warn.length) h += '<div style="font-size:11.5px;color:#b91c1c;font-weight:700;margin-top:5px;">⚠️ ' + d.l + '：' + esc(x.warn.join('／')) + '。撮り直してください</div>'; });
+      if (keys.some(function(d){ return f[d.k] && f[d.k].checking; })) h += '<div style="font-size:11.5px;color:#64748b;margin-top:5px;">⏳ 写真を確認しています…</div>';
       h += '</div>';
     });
     sec.innerHTML = h;
+  }
+  // ver.20261106.test05: 入れた写真をその場で読み取り、違う書類・写りの悪い写真・期限切れを知らせる（中身は表示しない）
+  var QJ = { blurry:'写真がぼやけています', glare:'光が反射して読みにくいです', cut:'一部が写っていません', dark:'暗くて読みにくいです' };
+  var LBL = { zairyu_front:'在留カード（表）', zairyu_back:'在留カード（裏）', passport:'パスポート' };
+  function warnsOf(k, d){
+    var w = [], today = new Date(Date.now() + 9*3600e3).toISOString().slice(0,10);
+    if (d.docType && d.docType !== k && (d.docType === 'other' || LBL[d.docType])) w.push(LBL[k] + 'ではないようです' + (LBL[d.docType] ? '（' + LBL[d.docType] + 'のようです）' : ''));
+    if (d.quality && d.quality !== 'ok' && QJ[d.quality]) w.push(QJ[d.quality]);
+    if (k === 'zairyu_front' && d.stayExpiry && d.stayExpiry < today) w.push('在留カードの期限が切れています（' + d.stayExpiry + '）');
+    if (k === 'passport' && d.passportExpiry && d.passportExpiry < today) w.push('パスポートの期限が切れています（' + d.passportExpiry + '）');
+    return w;
+  }
+  async function check(rowId, k, x){
+    if (!/^image\/(jpeg|png|webp|gif)$/.test(x.mt)) { x.checking = false; return; }
+    try {
+      var r = await fetch(SUPABASE_URL + '/functions/v1/doc-ai-read', { method:'POST', headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},
+        body: JSON.stringify({ token: currentToken, pass: (currentPass||''), doc_key: k, media_type: x.mt, data: x.b64 }) });
+      var j = await r.json().catch(function(){ return null; });
+      if (j && j.ok && j.data) x.warn = warnsOf(k, j.data);
+    } catch(e) { console.warn('check', e); }
+    x.checking = false;
+    if (files[rowId] && files[rowId][k] === x) render();
   }
   window._ncDocPick = async function(rowId, k, inp){
     var f = inp.files && inp.files[0]; if (!f) return;
     if (f.size > 20*1024*1024) { alert('ファイルが大きすぎます（20MBまで）'); return; }
     var x = await prep(f);
     if (x.b64.length > 13*1024*1024) { alert('ファイルが大きすぎます。写真を小さくしてください'); return; }
+    x.checking = true; x.warn = [];
     files[rowId] = files[rowId] || {}; files[rowId][k] = x; render();
+    check(rowId, k, x);
   };
   window._ncDocClear = function(rowId, k){ if (files[rowId]) delete files[rowId][k]; render(); };
   function pairError(){
@@ -11994,6 +12022,9 @@ function closeFlowModal(){
   // 確認画面へ進む前：在留カードの表裏セットを確認
   var _origSubmit = submitNewCase;
   submitNewCase = async function(){
+    var all = []; Object.keys(files).forEach(function(id){ Object.keys(files[id]).forEach(function(k){ all.push(files[id][k]); }); });
+    if (all.some(function(x){ return x.checking; })) { showNcError('写真を確認しています。数秒待ってから、もう一度押してください'); return; }
+    if (all.some(function(x){ return x.warn && x.warn.length; }) && !confirm('注意が出ている写真があります（⚠️）。撮り直さずに送りますか？')) return;
     var pe = pairError();
     if (pe) { showNcError(pe); try { document.getElementById('ncDocSec').scrollIntoView({behavior:'smooth',block:'center'}); } catch(e){} return; }
     return _origSubmit.apply(this, arguments);
