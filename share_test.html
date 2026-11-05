@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261105.test01: 「希望在留期間の確認」（変更・更新のときに出る発行手数料の確認画面）に<b>発行手数料の負担先</b>（所属機関／申請人／その他＋内容）を追加。選ばないと「登録に進む」を押せない。intake_requests の issuance_fee_payer / issuance_fee_payer_note と、1人ずつの発行手数料 issuance_fee（オンライン額）に保存し、確認画面・依頼テキスト（■発行手数料の負担先）にも表示。あわせて全期間の手数料表のハイライトを1ヶ月刻みの期間にも対応。 -->
 <!-- ver.20261102.test05: 新規案件依頼の「希望在留資格」に技能実習（1号イ・1号ロ・2号イ・2号ロ・3号イ・3号ロ）を追加。選ぶと希望在留期間は1号＝1年まで／2号・3号＝2年まで。案シスの受信トレイから登録すると、そのまま案件の在留資格に入る -->
 <!-- ver.20261102.test04: 新規・全登録支援機関で「企業詳細」ボタン（案件一覧・人材詳細の隣）と「企業マイページを開く」ボタン（企業詳細モーダル・人材詳細の提出書類（企業）欄）を表示（従来はグローバルパートナーズ専用）。開いた企業ページはその機関の案件のみ表示（&ot= 機関スコープ・既存仕様）。企業マイページ未発行の企業は「企業マイページ未発行」と表示。「貴社担当者」欄と「支援企業リスト」はグローバルパートナーズのみのまま。 -->
 <!-- ver.20261102.test03: 新規案件依頼の「希望在留期間」を1ヶ月刻み（1月〜5年）に変更。従来は「3ヶ月／4ヶ月／6ヶ月／1年／2年／3年／5年」の7択だったが、「2年6月」「3年4月」などの中間値を細かく選べるようになった。希望在留資格が「技術・人文知識・国際業務」または「特定活動46号」のときのみ3年超（3年1月〜5年）を選択可。発行手数料計算（_feeForPeriod）も新形式に対応（総月数から入管庁の料金区分に振り分け）。 -->
@@ -761,7 +762,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261102.test05</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261105.test01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -9777,10 +9778,8 @@ function _openHopedFeeConfirm(payload, onOK){
   (payload.jinzaiList||[]).forEach(function(j){ if(j.hopedStayPeriod) uniqPeriods[j.hopedStayPeriod]=1; });
   var allTable = _FEE_TABLE_2026.map(function(r,i){
     var isSelected = false;
-    var vs = ['3ヶ月','4ヶ月','6ヶ月','1年','2年','3年','5年'];
-    vs.forEach(function(v){
-      if(uniqPeriods[v] && _feeForPeriod(v)===r) isSelected = true;
-    });
+    // ver.20261105.test01: 1ヶ月刻みの期間でも該当区分をハイライト
+    Object.keys(uniqPeriods).forEach(function(v){ if(_feeForPeriod(v)===r) isSelected = true; });
     return '<tr'+(isSelected?' style="background:#fef3c7;font-weight:800;"':'')+'>'
       + '<td style="padding:3px 6px;border:1px solid #e5e7eb;font-size:10.5px;">'+r.period+(isSelected?' <span style="color:#dc2626;">←</span>':'')+'</td>'
       + '<td style="text-align:right;padding:3px 8px;border:1px solid #e5e7eb;font-size:10.5px;background:#fafafa;">'+r.window.toLocaleString()+'円</td>'
@@ -9841,6 +9840,18 @@ function _openHopedFeeConfirm(payload, onOK){
     +   '<a href="https://www.moj.go.jp/isa/01_00644.html" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#1e40af;text-decoration:none;padding:5px 10px;border:1px solid #bfdbfe;border-radius:6px;background:#eff6ff;margin-bottom:10px;font-weight:700;">'
     +     '詳細を入管庁ページで確認する（別タブで開く）'
     +   '</a>'
+    // ver.20261105.test01: 発行手数料の負担先
+    +   (function(){
+          var pv=(window._ncPrevIssPayer||{}), cur=payload.issuanceFeePayer||pv.p||'', note=payload.issuanceFeePayerNote||pv.n||'';
+          var opt=function(v,sub){ return '<label class="_hfPyLbl" style="flex:1;min-width:110px;display:flex;align-items:flex-start;gap:6px;padding:6px 8px;background:'+(cur===v?'#eff6ff':'#fff')+';border:1.5px solid '+(cur===v?'#2563eb':'#cbd5e1')+';border-radius:6px;cursor:pointer;">'
+            +'<input type="radio" name="_hfPayer" value="'+v+'"'+(cur===v?' checked':'')+' onchange="_hfUpdateBtn()" style="margin-top:2px;">'
+            +'<span style="font-size:11.5px;color:#0f2040;line-height:1.35;"><b>'+v+'</b><br><span style="font-size:10px;color:#64748b;">'+sub+'</span></span></label>'; };
+          return '<div style="border-top:1px dashed #cbd5e1;padding-top:8px;margin-bottom:8px;">'
+            +'<div style="font-size:11.5px;font-weight:800;color:#0f2040;margin-bottom:5px;">発行手数料の負担先 <span style="color:#dc2626;">*</span></div>'
+            +'<div style="display:flex;gap:6px;flex-wrap:wrap;">'+opt('所属機関','受入れ企業が負担')+opt('申請人','外国人本人が負担')+opt('その他','登録支援機関など')+'</div>'
+            +'<input type="text" id="_hfPayerNote" value="'+esc(note)+'" oninput="_hfUpdateBtn()" placeholder="その他の内容（例：登録支援機関が負担）" style="display:'+(cur==='その他'?'block':'none')+';width:100%;box-sizing:border-box;margin-top:6px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">'
+            +'</div>';
+        })()
     // 同意チェック
     +   '<div style="border-top:1px dashed #cbd5e1;padding-top:8px;">'
     +     '<label id="_hfChkLbl1" style="display:flex;align-items:flex-start;gap:6px;padding:6px 10px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;margin-bottom:4px;cursor:pointer;">'
@@ -9862,11 +9873,18 @@ function _openHopedFeeConfirm(payload, onOK){
   document.body.appendChild(box);
   document.body.style.overflow='hidden'; // ver.20260901.03: 親モーダルのスクロール影響を排除
   window._hfOnOK = onOK;
+  window._hfPayload = payload;  // ver.20261105.test01
+  _hfUpdateBtn();
 }
 function _hfUpdateBtn(){
   var c1=document.getElementById('_hfChk1'), c2=document.getElementById('_hfChk2'), btn=document.getElementById('_hfOKBtn');
   if(!c1||!c2||!btn) return;
-  var ok = c1.checked && c2.checked;
+  // ver.20261105.test01: 負担先の選択も必須（その他は内容必須）
+  var _pr=document.querySelector('input[name="_hfPayer"]:checked'), _pv=_pr?_pr.value:'';
+  var _pn=document.getElementById('_hfPayerNote'); if(_pn) _pn.style.display=(_pv==='その他')?'block':'none';
+  document.querySelectorAll('._hfPyLbl').forEach(function(l){ var on=l.querySelector('input').checked; l.style.background=on?'#eff6ff':'#fff'; l.style.borderColor=on?'#2563eb':'#cbd5e1'; });
+  var _payerOk = !!_pv && (_pv!=='その他' || ((_pn&&_pn.value)||'').trim()!=='');
+  var ok = c1.checked && c2.checked && _payerOk;
   btn.disabled = !ok;
   btn.style.cssText = ok
     ? 'padding:8px 20px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:800;cursor:pointer;'
@@ -9884,6 +9902,14 @@ function _hfClose(){
   window._hfOnOK = null;
 }
 function _hfConfirm(){
+  // ver.20261105.test01: 発行手数料の負担先と1人ずつの発行手数料（オンライン額）を依頼データに入れる
+  var _p=window._hfPayload, _pr=document.querySelector('input[name="_hfPayer"]:checked');
+  if(_p){
+    _p.issuanceFeePayer=_pr?_pr.value:'';
+    _p.issuanceFeePayerNote=(_p.issuanceFeePayer==='その他')?((document.getElementById('_hfPayerNote')||{}).value||'').trim():'';
+    (_p.jinzaiList||[]).forEach(function(j){ var f=_feeForPeriod(j.hopedStayPeriod); j.issuanceFee=f?f.online:null; });
+  }
+  window._hfPayload=null;
   var cb = window._hfOnOK;
   _hfClose();
   if(typeof cb==='function') cb();
@@ -10179,6 +10205,7 @@ function openNewCaseModal(){
   var cancelB=document.querySelector('#newCaseModalBg .nc-cancel-btn');
   if(cancelB){ cancelB.style.display=''; cancelB.textContent='キャンセル'; }
   _ncPendingPayload=null;
+  window._ncPrevIssPayer=null;  // ver.20261105.test01
   // 人材リストを1行にリセット
   document.getElementById('ncJinzaiBody').innerHTML='';
   _ncJinzaiRows=0;
@@ -11149,6 +11176,8 @@ function closeConfirmModal(){
   }
 }
 
+// ver.20261105.test01: 発行手数料の負担先の表示文字
+function _ncIssPayerText(p){ if(!p||!p.issuanceFeePayer) return ''; return p.issuanceFeePayer==='その他'?('その他（'+(p.issuanceFeePayerNote||'')+'）'):p.issuanceFeePayer; }
 function _renderConfirmBody(p){
   var h = '';
   h += '<div class="nc-cf-label">使用する支援事業所</div><div class="nc-cf-value">' + esc(p.agencyOffice||'') + '</div>';
@@ -11179,6 +11208,7 @@ function _renderConfirmBody(p){
   h += '<div><div class="nc-cf-label">支援委託費（税抜・全員に同額適用）</div><div class="nc-cf-value">' + (p.supportFee ? '¥ ' + Number(p.supportFee).toLocaleString() : '（未入力）') + '</div></div>';
   h += '</div>';
   h += '<div class="nc-cf-label">人材紹介手数料（税抜・1人あたり）</div><div class="nc-cf-value">' + esc(_ncFeeText(p).join(' ／ ')) + '</div>';
+  if(p.issuanceFeePayer) h += '<div class="nc-cf-label">発行手数料の負担先</div><div class="nc-cf-value">' + esc(_ncIssPayerText(p)) + '</div>';  // ver.20261105.test01
   if(p.remarks){
     h += '<div class="nc-cf-label">備考</div><div class="nc-cf-value" style="white-space:pre-wrap;">' + esc(p.remarks) + '</div>';
   }
@@ -11296,6 +11326,9 @@ async function executeSubmit(){
         nationality: j.nationality,
         expire: j.expire || null,
         hoped_stay_period: j.hopedStayPeriod || '',
+        issuance_fee: (j.issuanceFee != null ? String(j.issuanceFee) : ''),   // ver.20261105.test01: 発行手数料（オンライン額・1人分）
+        issuance_fee_payer: p.issuanceFeePayer || '',                        // ver.20261105.test01: 発行手数料の負担先
+        issuance_fee_payer_note: p.issuanceFeePayerNote || '',
         current_stay_period: j.currentStayPeriod || '',
         support_staff: '別紙参照',
         support_fee: feeStr,
@@ -11401,6 +11434,7 @@ function _buildLineReportText(p){
   var _ft = _ncFeeText(p);
   if(_ft.length && _ft[0] !== '（未入力）'){ _ft.forEach(function(x){ lines.push('　' + x); }); }
   else { lines.push('　（　　）'); }
+  if(p.issuanceFeePayer){ lines.push('■発行手数料の負担先'); lines.push('　' + _ncIssPayerText(p)); }  // ver.20261105.test01
   lines.push('■支援費');
   // 支援委託費が入力されていれば反映、無ければ空欄
   if(p.supportFee){
