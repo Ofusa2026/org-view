@@ -9848,8 +9848,9 @@ function _openHopedFeeConfirm(payload, onOK){
             +'<span style="font-size:11.5px;color:#0f2040;line-height:1.35;"><b>'+v+'</b><br><span style="font-size:10px;color:#64748b;">'+sub+'</span></span></label>'; };
           return '<div style="border-top:1px dashed #cbd5e1;padding-top:8px;margin-bottom:8px;">'
             +'<div style="font-size:11.5px;font-weight:800;color:#0f2040;margin-bottom:5px;">発行手数料の負担先 <span style="color:#dc2626;">*</span></div>'
-            +'<div style="display:flex;gap:6px;flex-wrap:wrap;">'+opt('所属機関','受入れ企業が負担')+opt('申請人','外国人本人が負担')+opt('その他','登録支援機関など')+'</div>'
-            +'<input type="text" id="_hfPayerNote" value="'+esc(note)+'" oninput="_hfUpdateBtn()" placeholder="その他の内容（例：登録支援機関が負担）" style="display:'+(cur==='その他'?'block':'none')+';width:100%;box-sizing:border-box;margin-top:6px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">'
+            +'<div style="font-size:10.5px;color:#475569;line-height:1.5;margin-bottom:6px;">許可後、入管からの発行手数料の<b>支払依頼メールは弊社（大房行政書士法人）に届きます</b>。ここで選んだ方へ弊社からお送りしますので、お支払いいただく方をお選びください。</div>'
+            +'<div style="display:flex;gap:6px;flex-wrap:wrap;">'+opt('所属機関','受入れ企業へお送りします')+opt('申請人','外国人本人へお送りします')+opt('その他','送り先を入力')+'</div>'
+            +'<input type="text" id="_hfPayerNote" value="'+esc(note)+'" oninput="_hfUpdateBtn()" placeholder="送り先（例：登録支援機関（貴社）へ送る）" style="display:'+(cur==='その他'?'block':'none')+';width:100%;box-sizing:border-box;margin-top:6px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">'
             +'</div>';
         })()
     // 同意チェック
