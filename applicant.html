@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>申請人マイページ | 大房行政書士法人</title>
+<!-- ver.20261106.01: 案シスにログインしている職員のブラウザで開いたときは「マイページの利用を希望」画面を出さず、URLの自動送信（olink-optin）もしない。人材が自分で開いたときは今までどおり。 -->
 <!-- ver.20261103.02: 書類（建設以外）の提出期限を「案件登録日から14日以内」に変更（アンシスのテンプレート docsDays で変更可・既定14日）。これまでの「受領日から5営業日・在留期限の30日前の早いほう」と3週間スケジュールによる前倒しはやめる。applicant_view_get に created_at（案件登録日）を追加。 -->
 <!-- ver.20261103.01: 「O-Link（オーリンク）マイページとは」の説明と「マイページの使用を希望します」チェックを、マイページを表示する前（PIN入力の前）に出す（8言語・言語切り替えつき）。チェックすると、このマイページのURLを案件につながっているLINE・Chatwork・Slackへ自動で送る（Edge Function olink-optin・記録は olink_optin。1回だけ）。 -->
 <!-- ver.20261102.01: サンプル表示を追加。URLに ?demo=1 で開くと、架空の人材「AKIRA OFUSA」（株式会社大房）でPINなしに表示。ヒアリング回答の見本つき。データは読み書きともサーバーに送らない。 -->
@@ -284,7 +285,7 @@ details.doc-help-d[open]>summary::after{content:' ▲';}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;flex:none;white-space:nowrap;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title" id="hdrTitle">申請人マイページ</span>
-  <span class="header-ver">ver.20261103.02</span>
+  <span class="header-ver">ver.20261106.01</span>
   <div class="header-right">
     <button type="button" id="apTourBtn" onclick="_apTour()" style="padding:5px 11px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">？</button>
     <div id="langSwitch" class="lang-switch"></div>
@@ -1177,8 +1178,20 @@ function _optinCall(action){
 }
 function _opT(k){ var o=_OP_TX[k]; return (o&&(o[curLang]||o.en||o.ja))||''; }
 // マイページを表示する前に出す（すでに希望済みなら出さない）
+// ver.20261106.01: このブラウザで案シス（大房の職員用システム）にログインしているか（同じサイトのログイン情報があるか）
+function _optinIsStaff(){
+  try{
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i)||'';
+      if(/^sb-.*-auth-token$/.test(k)){ var v=JSON.parse(localStorage.getItem(k)||'null'); if(v && ((v.user&&v.user.email)||(v.currentSession&&v.currentSession.user))) return true; }
+    }
+  }catch(e){}
+  return false;
+}
 function _optinGate(next){
   _opGo=function(){ var g=document.getElementById('opGate'); if(g) g.remove(); _opGo=null; next(); };
+  // ver.20261106.01: 案シスにログインしている職員のブラウザで開いたときは、「利用を希望」画面を出さず、何も送らない
+  if(!_DEMO && _optinIsStaff()){ _opGo(); return; }
   if(_DEMO){ _optinShow(); return; }
   _optinCall('status').then(function(r){ if(r&&r.ok&&r.opted) _opGo(); else _optinShow(); }).catch(function(){ _opGo(); });
 }

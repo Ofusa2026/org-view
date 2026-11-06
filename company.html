@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261106.01: 案シスにログインしている職員のブラウザで開いたときは「マイページの利用を希望」画面を出さず、URLの自動送信（olink-optin）もしない。会社・人材が自分で開いたときは今までどおり。 -->
 <!-- ver.20261105.04: 「🔐 登録支援機関とのマイページ共有」を追加（ダッシュボード）。所属機関が登録支援機関ごとに「パスワードを共有する」を押したときだけ、その登録支援機関がマイページ（その機関の案件のみ）と提出書類を見られる（company_org_share）。登録支援機関から共有のお願いが届いたら「対応が必要なタスク」と「ご対応のお願い」に表示。登録支援機関のリンク（&ot=）は共有されていないと開けない。 -->
 <!-- ver.20261105.03: 期限切れの書類行の「📅 いつ出せますか？」を「📅 提出予定日」に、注意文も「『📅 提出予定日』をご入力ください。」に変更（言い方がきついため）。 -->
 <!-- ver.20261105.02: ①「対応が必要なタスク」を件数ではなく中身で表示（書類提出 n件・企業ヒアリングフォームの回答・押印書類のご返送 n件 など。上のバーとご対応のお願いの見出し）。②企業ヒアリングフォームは、フォームの行がまだ無くても申請前の案件があればご依頼事項に出す（これまではフォームを一度開いた会社だけだった）。同じ内容のヒアリング欄が2つ出ないように整理。 -->
@@ -435,7 +436,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261105.04</span>
+  <span class="header-ver">ver.20261106.01</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
@@ -2443,9 +2444,21 @@ function _optinCall(action,share){
   var b={kind:'company',token:currentToken,action:action}; if(typeof share==='boolean') b.share=share;
   return fetch(_OPTIN_FN,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){ return r.json(); });
 }
+// ver.20261106.01: このブラウザで案シス（大房の職員用システム）にログインしているか（同じサイトのログイン情報があるか）
+function _optinIsStaff(){
+  try{
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i)||'';
+      if(/^sb-.*-auth-token$/.test(k)){ var v=JSON.parse(localStorage.getItem(k)||'null'); if(v && ((v.user&&v.user.email)||(v.currentSession&&v.currentSession.user))) return true; }
+    }
+  }catch(e){}
+  return false;
+}
 // マイページを表示する前に出す（すでに希望済みなら出さない）
 function _optinGate(next){
   var go=function(){ var g=document.getElementById('opGate'); if(g) g.remove(); next(); };
+  // ver.20261106.01: 案シスにログインしている職員のブラウザで開いたときは、「利用を希望」画面を出さず、何も送らない（職員が確認で開いたときに自動送信しないため）
+  if(!_DEMO && _optinIsStaff()){ go(); return; }
   if(_DEMO){ _optinShow(go); return; }
   _optinCall('status').then(function(r){ if(r&&r.ok&&r.opted) go(); else _optinShow(go); }).catch(function(){ go(); });
 }
