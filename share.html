@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261106.02: アップデートのお知らせに協議会案内の追加を掲載（audience:all／notify:true）。 -->
 <!-- ver.20261106.01: テスト版（share_test ver.20261106.test05 時点）の協議会案内を本番に反映し、サイドバーの「協議会案内」を再掲。分野別の加入手順（登録支援機関／所属機関）、工業製品製造業（JAIM）の丁寧版、様式・文例、チェック（済の記録は kyogikai_checks_<token> に保存）、フローのコピー・印刷。協議会案内以外のテスト版の機能は含めない。 -->
 <!-- ver.20261105.03: 企業詳細の「企業マイページを開く」と企業の書類ファイル（表示・⬇）は、企業様が所属機関マイページで「パスワードを共有する」を押したとき（company_org_share=approved）だけ。未共有のときは「📝 共有のお願い文を作成」（org_co_share_request）で企業あての依頼文を作ってコピー。PINも共有後のみ表示。 -->
 <!-- ver.20261105.02: 人材詳細のタブから「提出書類（企業）」を外した（人材の画面に企業の書類が出ていて分かりにくいため）。企業の書類は「企業詳細」と「企業マイページを開く」で確認。 -->
@@ -733,7 +734,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261106.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261106.02</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1491,6 +1492,16 @@ var NOTIF_LABELS={'申請済(番号待)':'申請済（番号待ち）','受付�
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20261106.02',
+    date: '2026-11-06',
+    audience: 'all',
+    notify: true,
+    items: [
+      '🤝 サイドバーに<b>「協議会案内」</b>を追加しました。分野を選ぶと、協議会への加入の進め方を<b>登録支援機関さま／所属機関さま</b>それぞれステップでご確認いただけます。',
+      '様式のダウンロード・メール提出の文例・チェック欄・フローのコピー／印刷にも対応しています。加入が済みましたら、在留申請で必要になるため加入証明などのデータを弊社へご共有ください。'
+    ]
+  },
   {
     version: 'ver.20261102.05',
     date: '2026-11-02',
