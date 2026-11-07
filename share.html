@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261107.01: サイドバーのいちばん下に「個人情報保護方針」を追加。押すと「個人情報保護方針・情報セキュリティへの取り組み」（取得する情報・利用目的・第三者提供・アップロード書類の共有・取扱いの委託・安全管理措置・保管及び廃棄・開示等の請求・お問い合わせ窓口・改定）を画面上に表示する（新しいページは作らない）。あわせてサイドバー「申請の流れ」の黄色ハイライトをやめ、他の項目と同じ色にした -->
 <!-- ver.20261106.03: 新規案件依頼の使い方（自動表示）の「もう表示しない」を、ブラウザごとではなく登録支援機関ごとにサーバーへ保存（ほかのPC・ブラウザでも表示しない）。以前このブラウザで止めていた場合もサーバーへ反映。あわせて協議会案内のチェック（済）もサーバーに保存されるようにした（DB側の許可キーを追加）。 -->
 <!-- ver.20261106.02: アップデートのお知らせに協議会案内の追加を掲載（audience:all／notify:true）。 -->
 <!-- ver.20261106.01: テスト版（share_test ver.20261106.test05 時点）の協議会案内を本番に反映し、サイドバーの「協議会案内」を再掲。分野別の加入手順（登録支援機関／所属機関）、工業製品製造業（JAIM）の丁寧版、様式・文例、チェック（済の記録は kyogikai_checks_<token> に保存）、フローのコピー・印刷。協議会案内以外のテスト版の機能は含めない。 -->
@@ -290,6 +291,19 @@ th[data-col-key="name"],th[data-col-key="company"],th[data-col-key="_mlit"]{whit
 .sb-badge{background:rgba(255,255,255,.15);color:white;font-size:10px;padding:1px 6px;border-radius:99px;font-weight:700;}
 .sb-item.active .sb-badge{background:#6366f1;}
 .sb-divider{height:1px;background:rgba(255,255,255,.08);margin:6px 0;}
+/* ver.20261107.01: 個人情報・セキュリティ */
+.sb-policy{color:rgba(255,255,255,.7);}
+.pol-body{font-size:13px;line-height:1.85;color:#1f2937;}
+.pol-body h3{font-size:14.5px;font-weight:800;color:#0f2040;margin:20px 0 8px;padding-left:9px;border-left:4px solid #6366f1;}
+.pol-body h3:first-child{margin-top:0;}
+.pol-body p{margin:0 0 10px;}
+.pol-body dl{margin:0 0 6px;}
+.pol-body dt{font-weight:800;color:#0f2040;margin-top:8px;}
+.pol-body dd{margin:2px 0 0 0;}
+.pol-body ul{margin:4px 0 10px;padding-left:20px;}
+.pol-body li{margin-bottom:6px;}
+.pol-body li b{color:#0f2040;}
+.pol-note{font-size:11.5px;color:#64748b;margin-top:14px;}
 .sb-badge-new{background:#dc2626;color:#fff;font-size:10px;padding:1px 7px;border-radius:99px;font-weight:800;}
 .news-wrap{max-width:760px;margin:0 auto;padding:18px 16px 60px;}
 .news-head{font-size:18px;font-weight:800;color:#0f2040;margin:4px 2px 16px;display:flex;align-items:center;gap:8px;}
@@ -395,8 +409,8 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 .kanban-badge{font-size:9px;padding:1px 6px;border-radius:99px;font-weight:700;}
 
 /* ★★★ 申請の流れ説明モーダル ★★★ */
-.flow-sb-item{padding:10px 14px;cursor:pointer;font-size:11px;font-weight:600;color:#fcd34d;display:flex;align-items:center;gap:6px;border-left:3px solid transparent;transition:.1s;background:rgba(245,158,11,.08);}
-.flow-sb-item:hover{background:rgba(245,158,11,.18);color:#fde68a;border-left-color:#f59e0b;}
+.flow-sb-item{padding:10px 14px;cursor:pointer;font-size:11px;font-weight:600;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:6px;border-left:3px solid transparent;transition:.1s;background:none;} /* ver.20261107.01: 黄色ハイライトをやめ、他の項目と同じ色に */
+.flow-sb-item:hover{background:rgba(255,255,255,.07);color:white;}
 .flow-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;display:none;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto;}
 .flow-modal-bg.open{display:flex;}
 .flow-modal{background:white;border-radius:14px;width:100%;max-width:780px;box-shadow:0 20px 60px rgba(0,0,0,.4);overflow:hidden;}
@@ -735,7 +749,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261106.03</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261107.01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1493,6 +1507,15 @@ var NOTIF_LABELS={'申請済(番号待)':'申請済（番号待ち）','受付�
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20261107.01',
+    date: '2026-11-07',
+    audience: 'all',
+    notify: true,
+    items: [
+      '🔒 サイドバーに<b>「個人情報保護方針」</b>を掲載しました。お預かりする個人情報の取扱い、アップロードいただいた書類の共有（所属機関さまの承認制）、情報セキュリティへの取り組みをご確認いただけます。'
+    ]
+  },
   {
     version: 'ver.20261106.02',
     date: '2026-11-06',
@@ -3622,6 +3645,9 @@ function renderSidebar(){
     h+='<div class="sb-divider"></div>';
     h+='<div class="flow-sb-item" onclick="openFlowModal()">申請の流れ <span style="margin-left:auto;font-size:10px;"></span></div>';
   }
+  // ver.20261107.01: 個人情報保護方針（方針の表示）
+  h+='<div class="sb-divider"></div>';
+  h+='<div class="sb-item sb-policy" onclick="openPolicyModal()"><span>個人情報保護方針</span></div>';
   document.getElementById('sidebar').innerHTML=h;
 }
 
@@ -12004,6 +12030,77 @@ function applyPasteData(){
 }
 
 // ★★★ 申請の流れモーダル ★★★
+// ver.20261107.01: 個人情報・セキュリティ（方針の表示・新しいページは作らない）
+function openPolicyModal(){
+  var bg=document.getElementById('policyModalBg');
+  if(!bg){
+    bg=document.createElement('div');
+    bg.id='policyModalBg'; bg.className='flow-modal-bg';
+    bg.onclick=function(e){ if(e.target===bg&&window._bgDown===bg) closePolicyModal(); };
+    bg.innerHTML=''
+    +'<div class="flow-modal" style="max-width:720px;">'
+    +'<div class="flow-modal-head"><div class="flow-modal-title">個人情報保護方針・情報セキュリティへの取り組み</div>'
+    +'<button class="flow-modal-close" onclick="closePolicyModal()">✕</button></div>'
+    +'<div class="flow-modal-body pol-body">'
+    +'<p>大房行政書士法人（以下「当法人」といいます。）は、在留資格に関する申請取次業務等を行うにあたり、お預かりする個人情報の重要性を認識し、行政書士法に基づく守秘義務、個人情報の保護に関する法律その他の関係法令及びガイドラインを遵守して、以下のとおり個人情報を取り扱います。</p>'
+    +'<h3>1. 取得する個人情報</h3>'
+    +'<p>当法人は、業務の遂行に必要な範囲で、次の個人情報を適正な手段により取得します。</p>'
+    +'<ul>'
+    +'<li>申請人の氏名、国籍・地域、生年月日、性別、住所、連絡先、顔写真、旅券及び在留カードの情報、学歴・職歴、その他申請に必要な事項及び添付書類</li>'
+    +'<li>所属機関・登録支援機関のご担当者の氏名、所属、連絡先</li>'
+    +'</ul>'
+    +'<p>健康診断の結果その他の要配慮個人情報を含む書類は、申請に必要な範囲で、ご本人の同意を得たうえで取得します。</p>'
+    +'<h3>2. 利用目的</h3>'
+    +'<ul>'
+    +'<li>在留資格に関する申請書類の作成及び申請取次</li>'
+    +'<li>国土交通省その他の行政機関に対する申請・届出書類の作成及び提出</li>'
+    +'<li>申請の進捗状況のご連絡、必要書類のご依頼及びお問い合わせへの対応</li>'
+    +'<li>当法人からのお知らせの配信</li>'
+    +'<li>上記に付随する業務</li>'
+    +'</ul>'
+    +'<p>当法人は、上記の利用目的の達成に必要な範囲を超えて個人情報を取り扱いません。</p>'
+    +'<h3>3. 第三者への提供</h3>'
+    +'<p>当法人は、次の場合を除き、個人情報を第三者に提供しません。</p>'
+    +'<ul>'
+    +'<li>ご本人の同意を得た場合</li>'
+    +'<li>申請・届出のため、出入国在留管理庁、国土交通省その他の行政機関に提出する場合</li>'
+    +'<li>法令に基づく場合その他法令で認められる場合</li>'
+    +'</ul>'
+    +'<p>なお、同一の申請に関与する所属機関・登録支援機関との間では、手続に必要な範囲で情報を共有します。書類の共有については、次項の承認手続によります。</p>'
+    +'<h3>4. アップロードいただいた書類の共有</h3>'
+    +'<p>所属機関から O-Link にアップロードいただいた書類及び所属機関マイページの内容は、当該所属機関の承認なく、登録支援機関に共有いたしません。</p>'
+    +'<p>登録支援機関が共有を希望する場合には、所属機関に対して承認依頼が通知されます。所属機関が承認した場合に限り、当該登録支援機関が閲覧できる状態となります。承認は、所属機関においていつでも取り消すことができます。</p>'
+    +'<h3>5. 取扱いの委託</h3>'
+    +'<p>当法人は、利用目的の達成に必要な範囲内において、個人情報の取扱いの全部又は一部を委託することがあります（クラウドサービスの利用を含みます）。この場合、十分な安全管理措置を講じている委託先を選定し、委託先に対して必要かつ適切な監督を行います。</p>'
+    +'<h3>6. 安全管理措置</h3>'
+    +'<p>当法人は、個人情報の漏えい、滅失又は毀損の防止その他の安全管理のため、次の措置を講じています。</p>'
+    +'<ul>'
+    +'<li><b>人的安全管理措置</b>　職員は行政書士法に基づく守秘義務を負い、個人情報の取扱いについて周知・指導を行っています。</li>'
+    +'<li><b>アクセス制御</b>　O-Link の各画面及びマイページは、利用者ごとの専用URL及び設定されたパスワード等により利用者を限定し、当該利用者に関係する情報のみを表示します。</li>'
+    +'<li><b>通信の暗号化</b>　O-Link との通信は、すべて暗号化（HTTPS）しています。</li>'
+    +'<li><b>変更履歴の記録</b>　申請情報の変更について、操作者及び日時を記録しています。</li>'
+    +'<li><b>電子署名</b>　署名用のページでは、対象となる書類のみを表示・保存します。</li>'
+    +'<li><b>継続的改善</b>　安全管理の体制及び仕組みを定期的に点検し、改善を行います。</li>'
+    +'</ul>'
+    +'<h3>7. 保管及び廃棄</h3>'
+    +'<p>当法人は、利用目的の達成に必要な期間及び法令で定められた期間、個人情報を保管し、その期間を経過した後は、速やかに削除又は廃棄します。</p>'
+    +'<h3>8. 開示・訂正・利用停止等のご請求</h3>'
+    +'<p>ご本人から、保有個人データの利用目的の通知、開示、訂正、追加、削除、利用停止、消去又は第三者への提供の停止のご請求があった場合には、ご本人であることを確認したうえで、法令に従い遅滞なく対応します。ご請求は、下記お問い合わせ窓口までご連絡ください。</p>'
+    +'<h3>9. お問い合わせ窓口</h3>'
+    +'<p>大房行政書士法人<br>代表社員　大房 明良<br>〒144-0052　東京都大田区蒲田5丁目11-10 FUNDES蒲田8階<br>メール：<a href="mailto:mail@gyosei-cambo.com">mail@gyosei-cambo.com</a></p>'
+    +'<h3>10. 本方針の改定</h3>'
+    +'<p>当法人は、法令の改正や業務内容の変更等に応じて、本方針を改定することがあります。改定後の内容は、本画面に掲載した時点から適用します。</p>'
+    +'<div class="pol-note">制定日：2026年11月6日</div>'
+    +'</div></div>';
+    document.body.appendChild(bg);
+  }
+  bg.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closePolicyModal(){
+  var bg=document.getElementById('policyModalBg'); if(bg) bg.classList.remove('open');
+  document.body.style.overflow='';
+}
 function openFlowModal(){
   document.getElementById('flowModalBg').classList.add('open');
   document.body.style.overflow='hidden';
