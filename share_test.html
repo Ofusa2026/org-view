@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261109.test02: ステータスの色を見分けやすく変更（雇用条件作成・企業確認＝グレー、審査中＝藍、審査完了(受取対応中)＝青緑。これまで3つとも青系で見分けにくかった）。他機関申請の「申請中」も藍に。 -->
 <!-- ver.20261109.test01: 企業・人材の提出書類チェックリストで、書類名のない内部メモ（memo::）が空の「未受領」として出ていたのを除外。今回不要（skip）にした書類の件数を「今回不要 n」として表示。 -->
 <!-- ver.20261107.test01: サイドバーのいちばん下に「個人情報保護方針」を追加。押すと「個人情報保護方針・情報セキュリティへの取り組み」（取得する情報・利用目的・第三者提供・アップロード書類の共有・取扱いの委託・安全管理措置・保管及び廃棄・開示等の請求・お問い合わせ窓口・改定）を画面上に表示する（新しいページは作らない）。あわせてサイドバー「申請の流れ」の黄色ハイライトをやめ、他の項目と同じ色にした -->
 <!-- ver.20261106.test06: 新規案件依頼の使い方（自動表示）の「もう表示しない」を、ブラウザごとではなく登録支援機関ごとにサーバーへ保存（ほかのPC・ブラウザでも表示しない）。以前このブラウザで止めていた場合もサーバーへ反映。あわせて協議会案内のチェック（済）もサーバーに保存されるようにした（DB側の許可キーを追加）。 -->
@@ -782,7 +783,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261109.test01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261109.test02</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1421,12 +1422,13 @@ var ST_EXTERNAL={
   '審査完了':'新在留カード(または認定証)発行済み'
 };
 // 外部ステータスごとの色（バッジ用）
+// ver.20261109.02: 色の見分けをつけやすく（雇用条件＝グレー、サイン＝紫、押印・準備＝オレンジ、審査中＝藍、審査完了＝青緑、発行済み＝緑）
 var ST_EXT_COL={
-  '雇用条件作成・企業確認':{bg:'#eff6ff',col:'#2563eb',bor:'#93c5fd'},
+  '雇用条件作成・企業確認':{bg:'#f1f5f9',col:'#334155',bor:'#cbd5e1'},
   '申請人サイン対応':{bg:'#fdf4ff',col:'#a21caf',bor:'#e9d5ff'},
   '企業押印ご対応・書類収集・申請準備':{bg:'#fff7ed',col:'#ea580c',bor:'#fed7aa'},
-  '審査中':{bg:'#fef3c7',col:'#b45309',bor:'#fcd34d'},
-  '審査完了(受取対応中)':{bg:'#dbeafe',col:'#1d4ed8',bor:'#93c5fd'},
+  '審査中':{bg:'#eef2ff',col:'#4338ca',bor:'#a5b4fc'},
+  '審査完了(受取対応中)':{bg:'#f0fdfa',col:'#0f766e',bor:'#5eead4'},
   '新在留カード(または認定証)発行済み':{bg:'#dcfce7',col:'#15803d',bor:'#86efac'}
 };
 function getExternalStatus(s){return ST_EXTERNAL[s]||s||'未着手';}
@@ -1477,7 +1479,7 @@ function agencyColor(status){
   if(status==='完了'||status==='完了(許可済)'||status==='申請済み'||status==='補正完了') return '#16a34a';
   if(status==='申請可能') return '#0891b2';
   if(status.indexOf('補正')>=0) return '#ef4444';
-  if(status==='申請中') return '#2563eb';
+  if(status==='申請中') return '#4338ca';
   if(status==='企業確認中') return '#f59e0b';
   if(status.indexOf('大房')>=0) return '#f59e0b';
   if(status.indexOf('企業')>=0) return '#ea580c';
@@ -1501,7 +1503,7 @@ function getOtherAgList(c){
 }
 function otherAgColor(st){
   if(st==='完了'||st==='補正済'||st==='補正完了') return '#16a34a';
-  if(st==='申請中') return '#2563eb';
+  if(st==='申請中') return '#4338ca';
   if(st.indexOf('補正')>=0) return '#ef4444';
   if(st.indexOf('大房')>=0||st.indexOf('相手')>=0) return '#f59e0b';
   return '#64748b';

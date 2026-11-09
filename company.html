@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261109.02: ステータスの色を見分けやすく変更（雇用条件作成・企業確認＝グレー、審査中＝藍、審査完了(受取対応中)＝青緑。これまで3つとも青系で見分けにくかった）。 -->
 <!-- ver.20261106.01: 案シスにログインしている職員のブラウザで開いたときは「マイページの利用を希望」画面を出さず、URLの自動送信（olink-optin）もしない。会社・人材が自分で開いたときは今までどおり。 -->
 <!-- ver.20261109.01: サイドバーのいちばん下と各画面の下に「個人情報保護方針」を追加（登録支援機関のページ share.html と同じ文面・制定日 2026年11月6日）。 -->
 <!-- ver.20261105.04: 「🔐 登録支援機関とのマイページ共有」を追加（ダッシュボード）。所属機関が登録支援機関ごとに「パスワードを共有する」を押したときだけ、その登録支援機関がマイページ（その機関の案件のみ）と提出書類を見られる（company_org_share）。登録支援機関から共有のお願いが届いたら「対応が必要なタスク」と「ご対応のお願い」に表示。登録支援機関のリンク（&ot=）は共有されていないと開けない。 -->
@@ -437,7 +438,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261109.01</span>
+  <span class="header-ver">ver.20261109.02</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
@@ -612,12 +613,13 @@ var ST_EXTERNAL={
   '審査完了':'新在留カード(または認定証)発行済み'
 };
 // 外部ステータスごとの色（バッジ用）
+// ver.20261109.02: 色の見分けをつけやすく（雇用条件＝グレー、サイン＝紫、押印・準備＝オレンジ、審査中＝藍、審査完了＝青緑、発行済み＝緑）
 var ST_EXT_COL={
-  '雇用条件作成・企業確認':{bg:'#eff6ff',col:'#2563eb',bor:'#93c5fd'},
+  '雇用条件作成・企業確認':{bg:'#f1f5f9',col:'#334155',bor:'#cbd5e1'},
   '申請人サイン対応':{bg:'#fdf4ff',col:'#a21caf',bor:'#e9d5ff'},
   '企業押印ご対応・書類収集・申請準備':{bg:'#eef2ff',col:'#4338ca',bor:'#c7d2fe'},
-  '審査中':{bg:'#ecfeff',col:'#0e7490',bor:'#a5f3fc'},
-  '審査完了(受取対応中)':{bg:'#dbeafe',col:'#1d4ed8',bor:'#93c5fd'},
+  '審査中':{bg:'#eef2ff',col:'#4338ca',bor:'#a5b4fc'},
+  '審査完了(受取対応中)':{bg:'#f0fdfa',col:'#0f766e',bor:'#5eead4'},
   '新在留カード(または認定証)発行済み':{bg:'#dcfce7',col:'#15803d',bor:'#86efac'}
 };
 function getExternalStatus(s){return ST_EXTERNAL[s]||s||'未着手';}
