@@ -9,6 +9,7 @@
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
 <!-- ver.20261106.01: 案シスにログインしている職員のブラウザで開いたときは「マイページの利用を希望」画面を出さず、URLの自動送信（olink-optin）もしない。会社・人材が自分で開いたときは今までどおり。 -->
+<!-- ver.20261109.01: サイドバーのいちばん下と各画面の下に「個人情報保護方針」を追加（登録支援機関のページ share.html と同じ文面・制定日 2026年11月6日）。 -->
 <!-- ver.20261105.04: 「🔐 登録支援機関とのマイページ共有」を追加（ダッシュボード）。所属機関が登録支援機関ごとに「パスワードを共有する」を押したときだけ、その登録支援機関がマイページ（その機関の案件のみ）と提出書類を見られる（company_org_share）。登録支援機関から共有のお願いが届いたら「対応が必要なタスク」と「ご対応のお願い」に表示。登録支援機関のリンク（&ot=）は共有されていないと開けない。 -->
 <!-- ver.20261105.03: 期限切れの書類行の「📅 いつ出せますか？」を「📅 提出予定日」に、注意文も「『📅 提出予定日』をご入力ください。」に変更（言い方がきついため）。 -->
 <!-- ver.20261105.02: ①「対応が必要なタスク」を件数ではなく中身で表示（書類提出 n件・企業ヒアリングフォームの回答・押印書類のご返送 n件 など。上のバーとご対応のお願いの見出し）。②企業ヒアリングフォームは、フォームの行がまだ無くても申請前の案件があればご依頼事項に出す（これまではフォームを一度開いた会社だけだった）。同じ内容のヒアリング欄が2つ出ないように整理。 -->
@@ -436,7 +437,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261106.01</span>
+  <span class="header-ver">ver.20261109.01</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
@@ -1431,6 +1432,8 @@ function renderSidebar(){
   h+=item('office','事務所情報',null);
   var _nu=(typeof newsUnreadCount==='function')?newsUnreadCount():0;
   h+=item('news','📰 ニュース等',(_nu>0?_nu:null),_nu>0);
+  h+='<div class="sb-divider"></div>';
+  h+='<div class="sb-item" onclick="openPolicyModal()" style="color:rgba(255,255,255,.7);"><span>個人情報保護方針</span></div>';  // ver.20261109.01
   document.getElementById('sidebar').innerHTML=h;
   _renderMobileNav(nActive, missingDocCount, _nu, _tasks.total);  // ver.20260922.02: 🏠にタスクバッジ
 }
@@ -1444,6 +1447,83 @@ function expInfo(dateStr){
   return {txt:txt,cls:cls,days:days};
 }
 
+
+// ===== ver.20261109.01: 個人情報保護方針（登録支援機関のページ share.html と同じ文面。新しいページは作らずモーダルで表示） =====
+function _polFootHtml(){
+  return '<div style="text-align:center;padding:22px 0 6px;"><a href="javascript:void(0)" onclick="openPolicyModal()" style="font-size:11.5px;color:#64748b;text-decoration:underline;">個人情報保護方針</a></div>';
+}
+function openPolicyModal(){
+  var bg=document.getElementById('policyModalBg');
+  if(!bg){
+    bg=document.createElement('div');
+    bg.id='policyModalBg';
+    bg.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:10050;display:flex;align-items:center;justify-content:center;padding:16px;';
+    bg.onclick=function(e){ if(e.target===bg) closePolicyModal(); };
+    bg.innerHTML=''
+    +'<style>#policyModalBg .pol-body{font-size:13px;line-height:1.85;color:#1f2937;}#policyModalBg .pol-body h3{font-size:14.5px;font-weight:800;color:#0f2040;margin:20px 0 8px;padding-left:9px;border-left:4px solid #6366f1;}#policyModalBg .pol-body h3:first-child{margin-top:0;}#policyModalBg .pol-body p{margin:0 0 10px;}#policyModalBg .pol-body ul{margin:4px 0 10px;padding-left:20px;}#policyModalBg .pol-body li{margin-bottom:6px;}#policyModalBg .pol-body li b{color:#0f2040;}#policyModalBg .pol-note{font-size:11.5px;color:#64748b;margin-top:14px;}</style>'
+    +'<div style="background:#fff;border-radius:14px;max-width:720px;width:100%;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.3);">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 18px;border-bottom:1px solid #e2e8f0;"><div style="font-size:15px;font-weight:900;color:#0f2040;">個人情報保護方針・情報セキュリティへの取り組み</div>'
+    +'<button type="button" onclick="closePolicyModal()" style="background:#f1f5f9;border:none;border-radius:8px;font-size:14px;font-weight:800;padding:6px 10px;cursor:pointer;">✕</button></div>'
+    +'<div class="pol-body" style="padding:18px 20px;overflow-y:auto;">'
+    +'<p>大房行政書士法人（以下「当法人」といいます。）は、在留資格に関する申請取次業務等を行うにあたり、お預かりする個人情報の重要性を認識し、行政書士法に基づく守秘義務、個人情報の保護に関する法律その他の関係法令及びガイドラインを遵守して、以下のとおり個人情報を取り扱います。</p>'
+    +'<h3>1. 取得する個人情報</h3>'
+    +'<p>当法人は、業務の遂行に必要な範囲で、次の個人情報を適正な手段により取得します。</p>'
+    +'<ul>'
+    +'<li>申請人の氏名、国籍・地域、生年月日、性別、住所、連絡先、顔写真、旅券及び在留カードの情報、学歴・職歴、その他申請に必要な事項及び添付書類</li>'
+    +'<li>所属機関・登録支援機関のご担当者の氏名、所属、連絡先</li>'
+    +'</ul>'
+    +'<p>健康診断の結果その他の要配慮個人情報を含む書類は、申請に必要な範囲で、ご本人の同意を得たうえで取得します。</p>'
+    +'<h3>2. 利用目的</h3>'
+    +'<ul>'
+    +'<li>在留資格に関する申請書類の作成及び申請取次</li>'
+    +'<li>国土交通省その他の行政機関に対する申請・届出書類の作成及び提出</li>'
+    +'<li>申請の進捗状況のご連絡、必要書類のご依頼及びお問い合わせへの対応</li>'
+    +'<li>当法人からのお知らせの配信</li>'
+    +'<li>上記に付随する業務</li>'
+    +'</ul>'
+    +'<p>当法人は、上記の利用目的の達成に必要な範囲を超えて個人情報を取り扱いません。</p>'
+    +'<h3>3. 第三者への提供</h3>'
+    +'<p>当法人は、次の場合を除き、個人情報を第三者に提供しません。</p>'
+    +'<ul>'
+    +'<li>ご本人の同意を得た場合</li>'
+    +'<li>申請・届出のため、出入国在留管理庁、国土交通省その他の行政機関に提出する場合</li>'
+    +'<li>法令に基づく場合その他法令で認められる場合</li>'
+    +'</ul>'
+    +'<p>なお、同一の申請に関与する所属機関・登録支援機関との間では、手続に必要な範囲で情報を共有します。書類の共有については、次項の承認手続によります。</p>'
+    +'<h3>4. アップロードいただいた書類の共有</h3>'
+    +'<p>所属機関から O-Link にアップロードいただいた書類及び所属機関マイページの内容は、当該所属機関の承認なく、登録支援機関に共有いたしません。</p>'
+    +'<p>登録支援機関が共有を希望する場合には、所属機関に対して承認依頼が通知されます。所属機関が承認した場合に限り、当該登録支援機関が閲覧できる状態となります。承認は、所属機関においていつでも取り消すことができます。</p>'
+    +'<h3>5. 取扱いの委託</h3>'
+    +'<p>当法人は、利用目的の達成に必要な範囲内において、個人情報の取扱いの全部又は一部を委託することがあります（クラウドサービスの利用を含みます）。この場合、十分な安全管理措置を講じている委託先を選定し、委託先に対して必要かつ適切な監督を行います。</p>'
+    +'<h3>6. 安全管理措置</h3>'
+    +'<p>当法人は、個人情報の漏えい、滅失又は毀損の防止その他の安全管理のため、次の措置を講じています。</p>'
+    +'<ul>'
+    +'<li><b>人的安全管理措置</b>　職員は行政書士法に基づく守秘義務を負い、個人情報の取扱いについて周知・指導を行っています。</li>'
+    +'<li><b>アクセス制御</b>　O-Link の各画面及びマイページは、利用者ごとの専用URL及び設定されたパスワード等により利用者を限定し、当該利用者に関係する情報のみを表示します。</li>'
+    +'<li><b>通信の暗号化</b>　O-Link との通信は、すべて暗号化（HTTPS）しています。</li>'
+    +'<li><b>変更履歴の記録</b>　申請情報の変更について、操作者及び日時を記録しています。</li>'
+    +'<li><b>電子署名</b>　署名用のページでは、対象となる書類のみを表示・保存します。</li>'
+    +'<li><b>継続的改善</b>　安全管理の体制及び仕組みを定期的に点検し、改善を行います。</li>'
+    +'</ul>'
+    +'<h3>7. 保管及び廃棄</h3>'
+    +'<p>当法人は、利用目的の達成に必要な期間及び法令で定められた期間、個人情報を保管し、その期間を経過した後は、速やかに削除又は廃棄します。</p>'
+    +'<h3>8. 開示・訂正・利用停止等のご請求</h3>'
+    +'<p>ご本人から、保有個人データの利用目的の通知、開示、訂正、追加、削除、利用停止、消去又は第三者への提供の停止のご請求があった場合には、ご本人であることを確認したうえで、法令に従い遅滞なく対応します。ご請求は、下記お問い合わせ窓口までご連絡ください。</p>'
+    +'<h3>9. お問い合わせ窓口</h3>'
+    +'<p>大房行政書士法人<br>代表社員　大房 明良<br>〒144-0052　東京都大田区蒲田5丁目11-10 FUNDES蒲田8階<br>メール：<a href="mailto:mail@gyosei-cambo.com">mail@gyosei-cambo.com</a></p>'
+    +'<h3>10. 本方針の改定</h3>'
+    +'<p>当法人は、法令の改正や業務内容の変更等に応じて、本方針を改定することがあります。改定後の内容は、本画面に掲載した時点から適用します。</p>'
+    +'<div class="pol-note">制定日：2026年11月6日</div>'
+    +'</div></div>';
+    document.body.appendChild(bg);
+  }
+  bg.style.display='flex';
+  document.body.style.overflow='hidden';
+}
+function closePolicyModal(){
+  var bg=document.getElementById('policyModalBg'); if(bg) bg.style.display='none';
+  document.body.style.overflow='';
+}
 function render(){
   var m=document.getElementById('main');
   // ver.20261024.07: 書類のご案内があり、まだ「確認しました」を押していなければ、まず必要書類の確認画面
@@ -1458,6 +1538,7 @@ function render(){
   else if(currentTab==='orginfo') m.innerHTML=renderOrgInfo();
   else if(currentTab==='office') m.innerHTML=renderOffice();
   else m.innerHTML=renderDashboard();
+  try{ m.insertAdjacentHTML('beforeend',_polFootHtml()); }catch(eP){}  // ver.20261109.01: 個人情報保護方針（スマホでも見られるよう画面下にも）
   try{ _renderCoSendBar(); }catch(e){}
   // ver.20260921.16: コメント・要望ウィジェットは非表示（ユーザー要望により削除）
   // _mountFeedbackWidget();
