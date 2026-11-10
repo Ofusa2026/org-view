@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261110.05: 登録支援機関情報の入力欄（対応時間・相談方法、別紙、言語別詳細、1-17号標準情報、支援事業所など）で、空欄を黄色（オレンジ）で表示し、入力すると白に戻るように。ページ上部に「黄色＝未入力／赤い*・必須＝入れないと保存できない」の案内を追加。その他・備考などの任意欄と、追加用の入力欄は対象外。 -->
 <!-- ver.20261110.04: 別紙情報（支援責任者・通訳者・支援担当者）を必須に。見出しに「必須」バッジ、各項目に赤い *、上部に案内。各名簿1名以上、氏名・役職・英語表記・ふりがな・対応言語・電話をすべて必須（備考は任意）。足りないと保存できず、赤枠と人ごとの理由を表示。 -->
 <!-- ver.20261110.03: 登録支援機関情報の「対応時間・相談方法」をすべて必須に。見出しに「必須」バッジ、各項目に赤い *、上部に案内。曜日は時間（開始・終了）か「なし」、相談方法・緊急時対応は方法1つ以上＋電話番号＋メールアドレス、適正性は有／無。足りないと保存できず、赤枠と項目別の理由を表示。 -->
 <!-- ver.20261110.02: O-Linkの利用ログを追加（画面ごとの滞在時間・新規依頼などのフォームでどの項目まで進んだか・送信結果）。olink_eventsテーブルに記録するだけで、画面の見た目・動作は変えない。 -->
@@ -755,7 +756,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261110.04</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261110.05</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -6211,7 +6212,7 @@ function _orgProperSet(v){ _properBuf=v; _orgReqClear('proper'); }
 // ver.20261110.03: 対応時間・相談方法はすべて必須（曜日は「なし」にチェックすれば時間は不要。相談方法・緊急時対応は方法を1つ以上＋電話番号＋メールアドレス）
 var _orgReqMiss={};
 function _orgReqClear(k){ if(_orgReqMiss[k]){ delete _orgReqMiss[k]; document.querySelectorAll('[data-oreq="'+k+'"]').forEach(function(e){ e.style.borderColor='#cbd5e1'; e.style.background=''; }); var w=document.querySelector('[data-oreqmsg="'+k+'"]'); if(w) w.style.display='none'; } }
-function _orgReqSt(k){ return _orgReqMiss[k]?'border-color:#dc2626 !important;background:#fef2f2;':''; }
+function _orgReqSt(k){ return _orgReqMiss[k]?'border-color:#dc2626 !important;background:#fef2f2 !important;':''; }
 function _orgReqMsg(k,txt){ return '<div data-oreqmsg="'+k+'" style="display:'+(_orgReqMiss[k]?'block':'none')+';font-size:11px;font-weight:700;color:#dc2626;margin:-4px 0 10px;">'+txt+'</div>'; }
 function _orgHoursValidate(){
   var H=_hoursBuf||orgHours||{}, miss={}, lines=[];
@@ -6330,7 +6331,7 @@ function _orgAttachmentsSectionHtml(){
 }
 // ver.20261110.04: 別紙（支援責任者・通訳者・支援担当者）は各1名以上・全項目必須（備考は任意）
 var _orgAttMiss={};
-function _orgAttSt(k){ return _orgAttMiss[k]?'border-color:#dc2626 !important;background:#fef2f2;':''; }
+function _orgAttSt(k){ return _orgAttMiss[k]?'border-color:#dc2626 !important;background:#fef2f2 !important;':''; }
 function _orgAttClear(k){ if(_orgAttMiss[k]){ delete _orgAttMiss[k]; document.querySelectorAll('[data-oatt="'+k+'"]').forEach(function(e){ e.style.borderColor='#e2e8f0'; e.style.background='#fff'; }); } }
 function _orgAttachValidate(){
   var miss={}, lines=[];
@@ -7157,6 +7158,9 @@ function renderOrgProfile(){
   var p=orgProfile||{};
   var h='<div style="max-width:880px;">';
   h += _orgEditBarHtml();   // ver.20260805.test01
+  h += '<div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:11.5px;color:#475569;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;margin-bottom:10px;">'
+    + '<span><span style="display:inline-block;width:12px;height:12px;background:#fef9c3;border:1.5px solid #eab308;border-radius:3px;vertical-align:-2px;margin-right:4px;"></span><b>黄色の欄は未入力です。</b>入力をお願いします（入力すると白に戻ります）。</span>'
+    + '<span><span style="color:#dc2626;font-weight:800;">*</span>・<span style="font-size:10px;font-weight:800;color:#fff;background:#dc2626;border-radius:4px;padding:0 5px;">必須</span> は入力しないと保存できない項目です。</span></div>';  // ver.20261110.05
   // ヘッダー
   h+='<div style="padding:4px 2px 14px;">';
   if(p.display_name) h+='<div style="font-size:20px;font-weight:900;color:#0f2040;">'+esc(p.display_name)+'</div>';
@@ -7315,6 +7319,28 @@ function renderOrgProfile(){
   h+='</div>';
   document.getElementById('main').innerHTML=h;
   _updateOrgSaveFloat(); // ver.20261002.01: 固定保存バー
+  try{ _pfMarkEmpty(); }catch(e){}  // ver.20261110.05
+}
+// ver.20261110.05: 登録支援機関情報の入力欄のうち、空欄を黄色（オレンジ）で表示。入力すると白に戻る（必須の未入力は赤枠が優先）
+var _PF_MT_SKIP_ID={orgEmailInput:1,orgStaffInput:1,orgInfoChangeReqInput:1,olNewLangSel:1};
+function _pfMtTarget(e){
+  if(!e||!e.tagName) return false; var tg=e.tagName;
+  if(tg!=='INPUT'&&tg!=='TEXTAREA'&&tg!=='SELECT') return false;
+  if(tg==='INPUT' && ['text','tel','email','time','date','number','url',''].indexOf(e.type)<0) return false;
+  if(e.disabled || _PF_MT_SKIP_ID[e.id]) return false;
+  var a=(e.getAttribute('onchange')||'')+(e.getAttribute('oninput')||'');
+  if(!a) return false;                                   // 追加用の入力欄など（保存先がないもの）は対象外
+  if(/'other'|language_custom|_orgAttachSetRemarks|Remarks|note|memo/i.test(a)) return false;  // 任意の欄（その他・備考など）は対象外
+  return true;
+}
+function _pfMtApply(e){ var empty=String(e.value||'').trim()===''; e.classList.toggle('pf-mt', empty); }
+function _pfMarkEmpty(){
+  var m=document.getElementById('main'); if(!m) return;
+  m.querySelectorAll('input,textarea,select').forEach(function(e){ if(_pfMtTarget(e)){ e.setAttribute('data-pfmt','1'); _pfMtApply(e); } });
+  if(!window._pfMtBound){ window._pfMtBound=true;
+    ['input','change'].forEach(function(ev){ document.addEventListener(ev,function(x){ var e=x.target; if(e&&e.getAttribute&&e.getAttribute('data-pfmt')) _pfMtApply(e); },true); });
+    var st=document.createElement('style'); st.textContent='.pf-mt{background:#fef9c3 !important;border-color:#eab308 !important;}'; document.head.appendChild(st);
+  }
 }
 function ncStaffAdd(){
   var inp=document.getElementById('orgStaffInput'); if(!inp) return;
