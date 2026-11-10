@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261110.01: O-Linkの利用ログを追加（画面ごとの滞在時間・新規依頼などのフォームでどの項目まで進んだか・送信結果）。olink_eventsテーブルに記録するだけで、画面の見た目・動作は変えない。 -->
 <!-- ver.20261109.02: ステータスの色を見分けやすく変更（雇用条件作成・企業確認＝グレー、審査中＝黄（そのまま）、審査完了(受取対応中)＝青緑。これまで3つとも青系で見分けにくかった）。 -->
 <!-- ver.20261106.01: 案シスにログインしている職員のブラウザで開いたときは「マイページの利用を希望」画面を出さず、URLの自動送信（olink-optin）もしない。会社・人材が自分で開いたときは今までどおり。 -->
 <!-- ver.20261109.01: サイドバーのいちばん下と各画面の下に「個人情報保護方針」を追加（登録支援機関のページ share.html と同じ文面・制定日 2026年11月6日）。 -->
@@ -438,7 +439,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261109.02</span>
+  <span class="header-ver">ver.20261110.01</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
@@ -3253,6 +3254,111 @@ function _dtTab(k){
 }
 
 init();
+</script>
+<script>
+// ver.20261110.01: O-Linkの利用ログ（画面ごとの滞在時間・フォームのどこまで進んだか）を olink_events に送る。画面の表示・動作は一切変えない。
+// 数えるのは「画面が見えていて、90秒以内に操作がある時間」だけ。デモ表示・token無しは記録しない。
+(function(){
+  var PAGE='company', VER='ver.20261110.01';
+  try{
+    var TOKEN=new URLSearchParams(location.search).get('token')||'';
+    if(!TOKEN || TOKEN==='demo' || /[?&]demo=1\b/.test(location.search)) return;
+    if(typeof SUPABASE_URL==='undefined' || typeof SUPABASE_KEY==='undefined') return;
+    var SID=Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+    var MOBILE=!!(window.matchMedia && matchMedia('(max-width: 768px)').matches);
+    var IDLE=90000;
+    var buf=[], lastAct=Date.now(), lastTick=Date.now(), cur=null, acc=0, forms={};
+
+    function push(ev,screen,ms,detail){
+      buf.push({page:PAGE,token:TOKEN,sid:SID,screen:String(screen||'').slice(0,120),ev:ev,ms:(ms==null?null:Math.max(0,Math.round(ms))),detail:detail||null,mobile:MOBILE,ver:VER});
+      if(buf.length>=20) flush();
+    }
+    function flush(){
+      if(!buf.length) return; var b=buf; buf=[];
+      try{ fetch(SUPABASE_URL+'/rest/v1/olink_events',{method:'POST',keepalive:true,headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(b)}).catch(function(){}); }catch(e){}
+    }
+    function shown(el){
+      if(!el || !el.isConnected) return false;
+      if(el.classList && el.classList.contains('hide')) return false;
+      var s=getComputedStyle(el); return s.display!=='none' && s.visibility!=='hidden' && el.offsetWidth>0;
+    }
+    // 開いているモーダル（画面に重なって出る入力画面など）のidを、開いた順に返す
+    function openModals(){
+      var out=[], c=document.querySelectorAll('[id*="Modal"],[id*="modal"],[id*="Overlay"],[id*="overlay"]');
+      for(var i=0;i<c.length;i++){ var el=c[i]; if(!el.id) continue; var s=getComputedStyle(el); if(s.position==='fixed' && shown(el)) out.push(el.id); }
+      return out;
+    }
+    function baseScreen(){
+      if(shown(document.getElementById('passScreen'))) return 'password';
+      var b=''; try{ b=(typeof currentGroup!=='undefined')?currentGroup:((typeof currentTab!=='undefined')?currentTab:''); }catch(e){}
+      return String(b||'top');
+    }
+    function fieldKey(el){
+      var t='';
+      try{
+        var td=el.closest('td'), tbl=el.closest('table');
+        if(td && tbl){ var th=tbl.querySelectorAll('thead th')[td.cellIndex]; if(th) t=th.innerText; }
+        if(!t){ var lb=el.id?document.querySelector('label[for="'+(window.CSS&&CSS.escape?CSS.escape(el.id):el.id)+'"]'):null; if(!lb && el.type!=='radio' && el.type!=='checkbox') lb=el.closest('label'); if(lb) t=lb.innerText; }
+        if(!t){ var p=el.parentElement; for(var k=0;k<3 && p && !t;k++){ var l=p.querySelector('label,[class*="label"],[class*="lbl"]'); if(l && !l.contains(el)) t=l.innerText; p=p.parentElement; } }
+      }catch(e){}
+      return String(t||el.placeholder||el.name||el.id||String(el.className||'').split(' ')[0]||el.tagName).replace(/\s+/g,' ').trim().slice(0,40);
+    }
+    function closeForm(id,extra){
+      var f=forms[id]; if(!f) return; delete forms[id];
+      var d={modal:id,fields:f.n,last:f.last,submitted:f.submitted,errors:f.errors}; if(extra) for(var k in extra) d[k]=extra[k];
+      push('form_close',f.screen,Date.now()-f.open,d);
+    }
+    function endScreen(){ if(cur!==null && acc>=1000) push('view',cur,acc,null); acc=0; }
+    function tick(){
+      var now=Date.now(), active=!document.hidden && (now-lastAct)<IDLE;
+      if(cur!==null && active) acc+=Math.min(now-lastTick,5000);
+      lastTick=now;
+      var ms=openModals(), base=baseScreen();
+      Object.keys(forms).forEach(function(id){ if(ms.indexOf(id)<0) closeForm(id); });
+      ms.forEach(function(id){ if(!forms[id]) forms[id]={screen:base+' > '+id,open:now,fields:{},last:'',n:0,submitted:false,errors:0}; });
+      var s=base+(ms.length?(' > '+ms[ms.length-1]):'');
+      if(s!==cur){ endScreen(); cur=s; }
+    }
+    function markAct(){ lastAct=Date.now(); }
+    ['pointerdown','keydown','scroll','touchstart','mousemove','wheel'].forEach(function(t){ document.addEventListener(t,markAct,{capture:true,passive:true}); });
+
+    // フォーム項目に初めて触れた順番と、開いてからの時間
+    document.addEventListener('focusin',function(e){
+      var el=e.target; if(!el || !/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) return;
+      var ids=Object.keys(forms), f=null;
+      for(var i=ids.length-1;i>=0;i--){ var m=document.getElementById(ids[i]); if(m && m.contains(el)){ f=forms[ids[i]]; break; } }
+      if(!f) return;
+      var k=fieldKey(el); f.last=k; if(f.fields[k]) return;
+      f.fields[k]=1; f.n++; push('field',f.screen,Date.now()-f.open,{f:k,i:f.n});
+    },true);
+
+    // 送信結果・エラー表示（新規案件依頼）
+    function okRes(res){ return !!res && !res.error && !res.code; }
+    function wrapAsync(name){
+      var o=window[name]; if(typeof o!=='function') return;
+      window[name]=function(){
+        var r=o.apply(this,arguments);
+        try{ Promise.resolve(r).then(function(res){
+          var ok=okRes(res); if(ok) Object.keys(forms).forEach(function(k){ forms[k].submitted=true; });
+          push(ok?'submit_ok':'submit_ng',cur,null,{fn:name,err:ok?null:String((res&&(res.message||res.error||res.code))||'').slice(0,200)});
+        },function(err){ push('submit_ng',cur,null,{fn:name,err:String((err&&err.message)||err).slice(0,200)}); }); }catch(e){}
+        return r;
+      };
+    }
+    wrapAsync('createOrgIntake'); wrapAsync('updateOrgIntake');
+    if(typeof window.showNcError==='function'){
+      var _oe=window.showNcError;
+      window.showNcError=function(m){ try{ Object.keys(forms).forEach(function(k){ forms[k].errors++; }); push('form_error',cur,null,{msg:String(m||'').slice(0,200)}); }catch(e){} return _oe.apply(this,arguments); };
+    }
+
+    document.addEventListener('visibilitychange',function(){
+      if(document.hidden){ tick(); if(cur!==null && acc>=1000){ push('view',cur,acc,{partial:1}); acc=0; } flush(); }
+      else { lastTick=Date.now(); markAct(); }
+    });
+    window.addEventListener('pagehide',function(){ try{ tick(); Object.keys(forms).forEach(function(id){ closeForm(id,{unload:1}); }); endScreen(); cur=null; }catch(e){} flush(); });
+    setInterval(tick,1000); setInterval(flush,15000); tick();
+  }catch(e){}
+})();
 </script>
 </body>
 </html>
