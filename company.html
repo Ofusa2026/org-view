@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261113.01: 人材詳細の「申請情報」に「📮 在留カードの郵送」を追加。入管へ発送済み → 入管に到着 → カードを返送中 → 到着 の4段階と日付、返りのレターパックの追跡番号（日本郵便の追跡ページが開く）を出す。データは company_view_extra の lp（その人材が入っている最新のレターパック1件だけ。ほかの人の情報は出さない）。 -->
 <!-- ver.20261110.01: O-Linkの利用ログを追加（画面ごとの滞在時間・新規依頼などのフォームでどの項目まで進んだか・送信結果）。olink_eventsテーブルに記録するだけで、画面の見た目・動作は変えない。 -->
 <!-- ver.20261109.02: ステータスの色を見分けやすく変更（雇用条件作成・企業確認＝グレー、審査中＝黄（そのまま）、審査完了(受取対応中)＝青緑。これまで3つとも青系で見分けにくかった）。 -->
 <!-- ver.20261106.01: 案シスにログインしている職員のブラウザで開いたときは「マイページの利用を希望」画面を出さず、URLの自動送信（olink-optin）もしない。会社・人材が自分で開いたときは今までどおり。 -->
@@ -439,7 +440,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261110.01</span>
+  <span class="header-ver">ver.20261113.01</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
@@ -518,7 +519,7 @@ function _demoCoGet(){
 function _demoRpc(fn,args){
   if(fn==='company_view_meta') return {ok:true,has_pass:true,company_id:'demo_co',company_name:'株式会社大房'};
   if(fn==='company_view_get') return _demoCoGet();
-  if(fn==='company_view_extra') return {ok:true,cases:[{id:'demo_c1',kokko_status:'準備中(企業ボール)',request_date:_dd(-6)},{id:'demo_c2',kokko_status:'',request_date:_dd(-40)},{id:'demo_c3',kokko_status:'',request_date:_dd(-95)}]};
+  if(fn==='company_view_extra') return {ok:true,cases:[{id:'demo_c1',kokko_status:'準備中(企業ボール)',request_date:_dd(-6)},{id:'demo_c2',kokko_status:'',request_date:_dd(-40)},{id:'demo_c3',kokko_status:'',request_date:_dd(-95),lp:{send_date:_dd(-5),arr_date:_dd(-3).replace(/-/g,'/')+' 10:40',recv_no:'000000000000',recv_found:true,recv_delivered:false,recv_status:'引受',recv_track_date:_dd(0).replace(/-/g,'/')+' 15:40',recv_date:null}}]};
   if(fn==='list_company_feedback') return [];
   if(/set|confirm|change|submit|kyoryoku/.test(fn)) return {ok:true,demo:true,at:new Date().toISOString()};
   return undefined;   // お知らせ・期限ルールなど会社に関係しないものは通常どおり読む
@@ -3201,6 +3202,7 @@ function renderDetail(c,p){
   h+=row('進捗',esc(getExternalStatus(c.status)));
   if(companyShowMlit){ var _ml=getKokkoStatus(c); if(_ml) h+=row('国交省申請',esc(_ml)); }
   h+=row('受付番号',_dv(c.receipt_no));
+  try{ h+=_lpHtml(c); }catch(eLp){}
   h+='<div class="dt-sec">大房行政書士法人担当</div>';
   h+=row('部署',_dv(c.team));
   h+=row('担当',_dv(c.staff));
@@ -3246,6 +3248,45 @@ function renderDetail(c,p){
   return hdr+tabs+bodies;
 }
 var _dtActive=0;
+/* ver.20261113.01: 在留カードの郵送（レターパック）の段階と返りの追跡番号 */
+function _lpMd(v){ if(!v) return ''; var m=String(v).match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/); return m?(parseInt(m[2],10)+'/'+parseInt(m[3],10)):''; }
+function _lpHtml(c){
+  var x=(_extraByCase[c.id]||{}).lp; if(!x||!x.send_date) return '';
+  var base=String(c.request_date||c.created_at||'').slice(0,10);
+  if(base && String(x.send_date)<base) return '';   // 前の申請のときのレターパックは出さない
+  var done4=!!(x.recv_date||x.recv_delivered);
+  var d4=done4?_lpMd(x.recv_date||x.recv_track_date):'';
+  var done3=done4||!!(x.recv_found&&x.recv_status&&x.recv_status!=='番号が見つかりません');
+  var done2=done3||!!x.arr_date;
+  var st=[
+    {t:'入管へ発送済み',d:_lpMd(x.send_date),on:true},
+    {t:'入管に到着',d:_lpMd(x.arr_date),on:done2},
+    {t:'カードを返送中',d:'',on:done3},
+    {t:'到着',d:d4,on:done4}
+  ];
+  var cur=done4?3:(done3?2:(done2?1:0));
+  var h='<div class="dt-sec">📮 在留カードの郵送</div>';
+  h+='<div style="display:flex;align-items:flex-start;gap:0;margin:6px 0 10px;">';
+  st.forEach(function(s,i){
+    var col=s.on?(i===cur&&!done4?'#0369a1':'#16a34a'):'#cbd5e1';
+    var txt=s.on?'#0f172a':'#94a3b8';
+    h+='<div style="flex:1;text-align:center;position:relative;min-width:0;">'
+      +(i>0?'<div style="position:absolute;top:10px;right:50%;width:100%;height:3px;background:'+(s.on?'#16a34a':'#e2e8f0')+';z-index:0;"></div>':'')
+      +'<div style="position:relative;z-index:1;width:22px;height:22px;border-radius:50%;margin:0 auto;background:'+col+';color:#fff;font-size:12px;font-weight:900;line-height:22px;">'+(s.on?(i===cur&&!done4?'●':'✓'):(i+1))+'</div>'
+      +'<div style="font-size:11px;font-weight:800;color:'+txt+';margin-top:4px;line-height:1.3;">'+esc(s.t)+'</div>'
+      +(s.d?'<div style="font-size:11px;color:#64748b;">（'+esc(s.d)+'）</div>':'')
+      +'</div>';
+  });
+  h+='</div>';
+  var no=String(x.recv_no||'').replace(/[^0-9]/g,'');
+  if(no){
+    var url='https://trackings.post.japanpost.jp/services/srv/search/direct?reqCodeNo1='+no+'&searchKind=S002&locale=ja';
+    var disp=no.replace(/^(\d{4})(\d{4})(\d{4})$/,'$1-$2-$3');
+    h+='<div class="dt-row"><span class="dt-l">返りの追跡番号</span><span class="dt-v"><a href="'+url+'" target="_blank" rel="noopener" style="color:#0369a1;font-weight:800;">'+esc(disp)+' ↗</a></span></div>';
+    h+='<div style="font-size:11px;color:#94a3b8;margin-top:2px;">押すと日本郵便の追跡ページが開きます。'+(done3?'':'入管から返送されるまでは「番号が見つかりません」と出ます。')+'</div>';
+  }
+  return h;
+}
 function _dtTab(k){
   _dtActive=k;
   var b=document.getElementById('detailBody'); if(!b) return;
@@ -3259,7 +3300,7 @@ init();
 // ver.20261110.01: O-Linkの利用ログ（画面ごとの滞在時間・フォームのどこまで進んだか）を olink_events に送る。画面の表示・動作は一切変えない。
 // 数えるのは「画面が見えていて、90秒以内に操作がある時間」だけ。デモ表示・token無しは記録しない。
 (function(){
-  var PAGE='company', VER='ver.20261110.01';
+  var PAGE='company', VER='ver.20261113.01';
   try{
     var TOKEN=new URLSearchParams(location.search).get('token')||'';
     if(!TOKEN || TOKEN==='demo' || /[?&]demo=1\b/.test(location.search)) return;
