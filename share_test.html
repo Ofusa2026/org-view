@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261116.test03: 1-17号の標準情報の「通訳者」欄をやめ、別紙の通訳者名簿だけに一本化（案内文を表示） -->
 <!-- ver.20261116.test03: サイドバーに「発行手数料の支払」を追加（まず株式会社JAMのみ）。2026年10月1日以降の申請で入管から届いた決済リンク（支払依頼メール）を、審査完了と同じ形で一覧表示（届いた日・案件・発行手数料・支払者・支払期限・決済ページを開く／リンクをコピー・確認チェック）。同じ案件に入管の支払完了メールが届くと「支払済み」へ移る。データはget_org_shareのfeeMails。 -->
 <!-- ver.20261116.test02: 別紙の入力の手間を減らす：支援責任者名簿が空なら支援責任者を入れておく、支援担当者に「この方が通訳もする」（通訳者名簿にも載る）、支援担当者数は名簿の人数から自動（ヒアリングフォームと同じ） -->
 <!-- ver.20261116.test01: 1-17号の標準情報に「実施方法」（事前ガイダンス・生活オリエンテーション・住居確保/生活契約の支援）を追加。ヒアリングフォームと同じ選択肢で、登録済みの内容を表示 -->
@@ -6529,18 +6530,9 @@ function _orgStd17Html(){
    +'<input type="text" value="'+esc(String(b.supportLanguages||''))+'" placeholder="ベトナム語、インドネシア語、英語" oninput="_s17Set(\'supportLanguages\',this.value)" style="'+iS+'">'
    +'<div style="'+hint+'">記入例：ベトナム語、インドネシア語、英語　／　支援対象者が十分に理解できる言語を記入してください</div></div>';
 
-  // 通訳者
-  s+='<div style="margin-bottom:14px;"><div style="'+lb+'">通訳者</div>';
-  (b.interpreters||[]).forEach(function(it,i){
-    s+='<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center;">'
-      +'<input type="text" value="'+esc(String(it.language||''))+'" placeholder="言語" oninput="_s17IntSet('+i+',\'language\',this.value)" style="'+iS+'flex:1;min-width:0;">'
-      +'<input type="text" value="'+esc(String(it.org||''))+'" placeholder="所属（会社・団体）" oninput="_s17IntSet('+i+',\'org\',this.value)" style="'+iS+'flex:1.4;min-width:0;">'
-      +'<input type="text" value="'+esc(String(it.name||''))+'" placeholder="氏名" oninput="_s17IntSet('+i+',\'name\',this.value)" style="'+iS+'flex:1;min-width:0;">'
-      +'<button type="button" onclick="_s17IntDel('+i+')" style="flex-shrink:0;font-size:12px;color:#dc2626;background:#fff;border:1px solid #fecaca;border-radius:6px;padding:6px 10px;cursor:pointer;">✕</button>'
-      +'</div>';
-  });
-  s+='<button type="button" onclick="_s17IntAdd()" style="font-size:11.5px;font-weight:700;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:6px 14px;cursor:pointer;">＋ 通訳者を追加</button>'
-   +'<div style="'+hint+'">記入例：ベトナム語／株式会社〇〇／グエン　タン　※自社の社員が通訳する場合は所属に貴社名をご記入ください</div></div>';
+  // 通訳者：ver.20261116.03 から別紙の「通訳者名簿」だけに入力（置き場所を1つに）。ここは案内だけ
+  s+='<div style="margin-bottom:14px;"><div style="'+lb+'">通訳者</div>'
+   +'<div style="'+hint+'margin-top:0;">通訳者は、このページの「別紙情報」の<b>通訳者名簿</b>に入力してください（支援担当者が通訳する場合は、支援担当者の「この方が通訳もする」にチェック）。支援計画書にはそこから載ります。</div></div>';
 
   // 定期面談
   var rm=b.regularMeeting||{};
