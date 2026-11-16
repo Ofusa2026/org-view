@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261116.test02: 別紙の入力の手間を減らす：支援責任者名簿が空なら支援責任者を入れておく、支援担当者に「この方が通訳もする」（通訳者名簿にも載る）、支援担当者数は名簿の人数から自動（ヒアリングフォームと同じ） -->
 <!-- ver.20261116.test01: 1-17号の標準情報に「実施方法」（事前ガイダンス・生活オリエンテーション・住居確保/生活契約の支援）を追加。ヒアリングフォームと同じ選択肢で、登録済みの内容を表示 -->
 <!-- ver.20261110.test05: 登録支援機関情報の必須表示を赤から黄色に統一（威圧感を減らすため）。「必須」バッジ・*・案内枠・未入力時の枠をすべて黄色系に。 -->
 <!-- ver.20261110.test04: 登録支援機関情報の入力欄（対応時間・相談方法、別紙、言語別詳細、1-17号標準情報、支援事業所など）で、空欄を黄色（オレンジ）で表示し、入力すると白に戻るように。ページ上部に「黄色＝未入力／赤い*・必須＝入れないと保存できない」の案内を追加。その他・備考などの任意欄と、追加用の入力欄は対象外。 -->
@@ -789,7 +790,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261116.test01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261116.test02</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -6121,7 +6122,12 @@ function _orgAttachmentsSectionHtml(){
           }
           h+='</div>';
         });
-        h+='</div></div>';
+        h+='</div>';
+        if(kind.key==='support_staff'){
+          h+='<label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#334155;margin-top:6px;cursor:pointer;"><input type="checkbox" '+(item.interp_too?'checked':'')+' onchange="_orgAttachSet(\'support_staff\','+ai+',\'interp_too\',this.checked)" style="cursor:pointer;">この方が通訳もする（通訳者名簿にも載せます）</label>';
+          if(item.interp_too) h+='<div data-oatt="a_support_staff_'+ai+'_language_codes" style="margin-top:4px;border:1.5px solid transparent;border-radius:7px;'+_orgAttSt('a_support_staff_'+ai+'_language_codes')+'">'+_orgAttachLangPicker('support_staff', ai, item)+'</div>';
+        }
+        h+='</div>';
       });
       h+='</div>';
     }
@@ -6141,6 +6147,34 @@ function _orgAttachmentsSectionHtml(){
   h+='</div></div>';
   return h;
 }
+// ver.20261116.02: 別紙の入力の手間を減らす（ヒアリングフォームと同じ作り）
+//   ・支援責任者名簿が空なら、登録支援機関情報の支援責任者を入れておく（保存すると名簿になる）
+//   ・通訳もする支援担当者は、通訳者名簿から外して支援担当者の「この方が通訳もする」にまとめて表示する（保存時に通訳者名簿へ戻す）
+function _orgAttNormalize(){
+  var a=orgAttachments; if(!a||typeof a!=='object') return;
+  var p=orgProfile||{};
+  if((!Array.isArray(a.support_managers)||!a.support_managers.length) && String(p.support_manager_name||'').trim())
+    a.support_managers=[{name:p.support_manager_name||'', title:p.support_manager_title||'', name_en:p.support_manager_name_en||'', title_en:p.support_manager_title_en||''}];
+  var st=Array.isArray(a.support_staff)?a.support_staff:[];
+  a.interpreters=(Array.isArray(a.interpreters)?a.interpreters:[]).filter(function(it){
+    if(!it||!it.staff_also) return true;
+    var s=st.filter(function(x){ return x && x.name && x.name===it.name; })[0]; if(!s) return true;
+    s.interp_too=true; s.language_codes=Array.isArray(it.language_codes)?it.language_codes.slice():[]; if(it.language_custom) s.language_custom=it.language_custom;
+    return false;
+  });
+}
+function _orgAttForSave(){
+  var a=orgAttachments||{}, ints=(a.interpreters||[]).slice(), staff=[];
+  (a.support_staff||[]).forEach(function(s){ s=s||{};
+    var c={}; Object.keys(s).forEach(function(k){ if(k!=='interp_too'&&k!=='language_codes'&&k!=='language_custom') c[k]=s[k]; }); staff.push(c);
+    if(s.interp_too && String(s.name||'').trim()){
+      var ex=ints.filter(function(x){ return x && x.name===s.name; })[0];
+      if(ex){ ex.language_codes=Array.from(new Set((ex.language_codes||[]).concat(s.language_codes||[]))); }
+      else { var o={name:s.name, kana:'', language_codes:(s.language_codes||[]).slice(), staff_also:true}; if(s.language_custom) o.language_custom=s.language_custom; ints.push(o); }
+    }
+  });
+  return {support_managers:a.support_managers||[], interpreters:ints, support_staff:staff, remarks:a.remarks||''};
+}
 // ver.20261110.test03: 別紙（支援責任者・通訳者・支援担当者）は各1名以上・全項目必須（備考は任意）
 var _orgAttMiss={};
 function _orgAttSt(k){ return _orgAttMiss[k]?'border-color:#d97706 !important;background:#fef9c3 !important;':''; }
@@ -6150,7 +6184,9 @@ function _orgAttachValidate(){
   _ORG_ATTACH_KINDS.forEach(function(kind){
     var list=(orgAttachments&&Array.isArray(orgAttachments[kind.key]))?orgAttachments[kind.key]:[];
     var nm=kind.label.replace('名簿','');
-    if(!list.length){ miss['a_'+kind.key+'_empty']=1; lines.push(nm+'：1名以上登録してください（「＋ 追加」）'); return; }
+    if(kind.key==='support_staff') list.forEach(function(it,i){ it=it||{}; if(it.interp_too && !((Array.isArray(it.language_codes)&&it.language_codes.length) || String(it.language_custom||'').trim())){ miss['a_support_staff_'+i+'_language_codes']=1; lines.push('支援担当者 '+(i+1)+'人目'+(it.name?'（'+it.name+'）':'')+'：通訳する言語を選んでください'); } });
+    if(kind.key==='interpreters' && !list.length && ((orgAttachments&&orgAttachments.support_staff)||[]).some(function(x){ return x&&x.interp_too; })) return;
+    if(!list.length){ miss['a_'+kind.key+'_empty']=1; lines.push(nm+'：1名以上登録してください（「＋ 追加」。支援担当者が通訳する場合は「この方が通訳もする」にチェックでもOK）'); return; }
     list.forEach(function(it,i){ it=it||{}; var lack=[];
       kind.fields.forEach(function(f){
         var ok = (f.type==='lang_multi') ? ((Array.isArray(it.language_codes)&&it.language_codes.length>0) || String(it.language_custom||'').trim()!=='') : (String(it[f.k]||'').trim()!=='');
@@ -6252,16 +6288,13 @@ async function saveOrgAttachments(){
     var r = await sbRpc('save_org_attachments', {
       p_token: currentToken,
       p_pass: (typeof currentPass!=='undefined'?(currentPass||null):null),
-      p_attachments: {
-        support_managers: orgAttachments.support_managers||[],
-        interpreters:     orgAttachments.interpreters||[],
-        support_staff:    orgAttachments.support_staff||[],
-        remarks:          orgAttachments.remarks||''
-      }
+      p_attachments: _orgAttForSave()
     });
     if(!r || r.error) throw new Error((r&&r.error)||'保存に失敗しました');
     _attachDirty=false;
     if(orgProfile) orgProfile.attachments=r.attachments||orgAttachments;
+    if(orgProfile && r.support_staff_count!=null) orgProfile.support_staff_count=r.support_staff_count;   // ver.20261116.02: 名簿の人数から自動
+    try{ orgAttachments=JSON.parse(JSON.stringify(r.attachments||orgAttachments)); _orgAttNormalize(); }catch(_){}
     renderOrgProfile();
     alert('別紙情報を保存しました。');
   }catch(e){
@@ -9452,6 +9485,7 @@ async function loadData(){
             support_staff:    Array.isArray(_at.support_staff)    ? _at.support_staff.slice()    : [],
             remarks:          (typeof _at.remarks==='string') ? _at.remarks : ''
           };
+          _orgAttNormalize();
         }
       }
       _fillClientStaffDatalist();
