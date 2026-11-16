@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261116.03: サイドバーに「発行手数料の支払」を追加（まず株式会社JAMのみ）。2026年10月1日以降の申請で入管から届いた決済リンク（支払依頼メール）を、審査完了と同じ形で一覧表示（届いた日・案件・発行手数料・支払者・支払期限・決済ページを開く／リンクをコピー・確認チェック）。同じ案件に入管の支払完了メールが届くと「支払済み」へ移る。データはget_org_shareのfeeMails。 -->
 <!-- ver.20261116.02: 別紙の入力の手間を減らす：支援責任者名簿が空なら支援責任者を入れておく、支援担当者に「この方が通訳もする」（通訳者名簿にも載る）、支援担当者数は名簿の人数から自動（ヒアリングフォームと同じ） -->
 <!-- ver.20261116.01: 1-17号の標準情報に「実施方法」（事前ガイダンス・生活オリエンテーション・住居確保/生活契約の支援）を追加。ヒアリングフォームと同じ選択肢で、登録済みの内容を表示 -->
 <!-- ver.20261110.06: 登録支援機関情報の必須表示を赤から黄色に統一（威圧感を減らすため）。「必須」バッジ・*・案内枠・未入力時の枠をすべて黄色系に。 -->
@@ -759,7 +760,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261116.02</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261116.03</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1789,6 +1790,7 @@ var GROUPS=[{id:'dashboard',label:'ダッシュボード'},{id:'active',label:'�
 var orgHours={},orgConsult={},orgEmergency={},orgProperness='',orgEdits=[],orgStd17={};   // ver.20260805.test01
 var orgAttachments={support_managers:[],interpreters:[],support_staff:[]};                // ver.20260805.test04: 別紙情報バッファ
 var _attachDirty=false;                                                                    // ver.20260805.test04: 未保存フラグ
+var allFeePays=[];  // ver.20261116.03: 発行手数料の決済リンク
 var allCases=[],allReceipts=[],allShinsa=[],allCerts=[],allIntakes=[],orgProfile=null,intakeStaff=[],orgEmails=[],caseNotes={},orgComments={},orgOwnComments={},orgWithdraws={},orgChecks={},inshiChecks={},currentGroup='dashboard',currentView='list',searchQuery='',filterStatus=[],filterCompany=[],filterClientStaff=[],colFilters={},sortCol='',sortDir='',currentToken='',orgName='',currentOrgId='',progressUrlCfg=null,isGpMode=false,isGpPartner=false,gpInfoByCaseId={},_imeOn=false; // ver.20260606.13: allCerts追加（認定証PDF）
 // ver.20260622.test54: 書類リスト用グローバル変数（settingsから取得 / 案件管理側と同期）→ 国交省/入管分離に必要
 var requiredDocs={},caseCustomDocs={},requiredDocsCo=[],requiredDocsCoField={};
@@ -3639,6 +3641,11 @@ function renderSidebar(){
   if(isSidebarItemVisible('shinsa')){
     h+='<div class="sb-item'+(currentGroup==='shinsa'?' active':'')+'" onclick="switchGroup(\'shinsa\')">審査完了 <span class="sb-badge">'+allShinsa.length+'</span></div>';
   }
+  // ver.20261116.03: 発行手数料の支払（決済リンク）。まずJAMのみ
+  if(_feePayOrg()){
+    var _feeUnpaid=allFeePays.filter(function(r){ return !r.paidAt; }).length;
+    h+='<div class="sb-item'+(currentGroup==='feepay'?' active':'')+'" onclick="switchGroup(\'feepay\')">発行手数料の支払 <span class="sb-badge"'+(_feeUnpaid?' style="background:#ea580c;"':'')+'>'+_feeUnpaid+'</span></div>';
+  }
   // ver.20260519.17: アイデム専用 窓口申請/窓口受取（日付ベース判定）
   if(_isAidemViewer()){   // ver.20260620.01: アイデム自前も窓口申請/受取を表示
     var showMshinsei = isSidebarItemVisible('madoguchi_shinsei');
@@ -4385,6 +4392,74 @@ function _buildReceiptTable(rows, dimmed){
   return h;
 }
 
+// ver.20261116.03: 発行手数料の支払（2026年10月1日以降の申請の決済リンク）。まずJAMのみ表示
+function _feePayOrg(){ return String(orgName||'').replace(/[ 　]/g,'')==='株式会社JAM'; }
+function _feeCopy(id){
+  var r=allFeePays.find(function(x){return x.id===id;}); if(!r||!r.payUrl) return;
+  var done=function(){ var b=document.querySelector('[data-feecopy="'+id+'"]'); if(b){ var o=b.textContent; b.textContent='コピーしました'; setTimeout(function(){ b.textContent=o; },1500); } };
+  try{ navigator.clipboard.writeText(r.payUrl).then(done,function(){ prompt('決済リンク', r.payUrl); }); }catch(e){ prompt('決済リンク', r.payUrl); }
+}
+function _feePayerBadge(r){
+  if(!r.payer) return '<span style="font-size:10.5px;color:#94a3b8;">未設定</span>';
+  var c=r.payer==='所属機関'?['#1d4ed8','#dbeafe','#93c5fd']:r.payer==='申請人'?['#c2410c','#ffedd5','#fdba74']:['#6d28d9','#f3e8ff','#c4b5fd'];
+  var tx=r.payer==='その他'?('その他'+(r.payerNote?'（'+r.payerNote+'）':'')):r.payer;
+  return '<span style="display:inline-block;font-size:10.5px;font-weight:800;color:'+c[0]+';background:'+c[1]+';border:1px solid '+c[2]+';border-radius:5px;padding:2px 7px;white-space:normal;">'+esc(tx)+'</span>';
+}
+function _buildFeePayTable(rows, dimmed){
+  var today=new Date(Date.now()+9*3600*1000).toISOString().slice(0,10);
+  var h='<div class="tbl-wrap"'+(dimmed?' style="opacity:.65;"':'')+'><table style="table-layout:fixed;min-width:1120px;"><colgroup>'
+    +'<col style="width:60px;"><col style="width:90px;"><col style="width:240px;"><col style="width:140px;"><col style="width:56px;"><col style="width:100px;"><col style="width:100px;"><col style="width:120px;"><col style="width:110px;"><col style="width:190px;"></colgroup>';
+  h+='<thead><tr><th style="text-align:center;" title="確認したらチェック">確認</th><th>届いた日</th><th>案件名 / 申請者</th><th>所属機関</th><th>種別</th><th>担当</th><th>発行手数料</th><th>支払者</th><th>支払期限</th><th>決済リンク</th></tr></thead><tbody>';
+  rows.forEach(function(r){
+    var isChecked=!!orgChecks[r.id];
+    var left=null; if(r.deadline){ left=Math.round((new Date(r.deadline+'T00:00:00Z')-new Date(today+'T00:00:00Z'))/86400000); }
+    var urgent=!r.paidAt && left!==null && left<=5;
+    h+='<tr'+(isChecked&&!dimmed?' style="background:#f0fdf4;"':(urgent?' style="background:#fff7ed;"':''))+'>';
+    h+='<td style="text-align:center;white-space:nowrap;"><input type="checkbox" data-aid="'+esc(r.id)+'" onchange="toggleOrgCheck(this.dataset.aid,this.checked)"'+(isChecked?' checked':'')+' style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a;"></td>';
+    h+='<td style="white-space:nowrap;font-size:11px;color:#6b7280;">'+esc(r.date||'—')+'</td>';
+    var dn=r.caseName||r.applicant||'（未設定）';
+    h+='<td><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(dn)+'</div><div style="font-size:10px;color:#6b7280;">'+esc(r.applicant||'')+'</div></td>';
+    h+='<td><div style="font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(r.company||'—')+'</div></td>';
+    var tCls=r.appType==='認定'?'type-nintei':r.appType==='更新'?'type-koshin':r.appType==='変更'?'type-henkou':'type-other';
+    h+='<td>'+(r.appType?'<span class="type-badge '+tCls+'">'+esc(r.appType)+'</span>':'—')+'</td>';
+    h+='<td style="vertical-align:top;">'+_tantoCell2(r.clientStaff,r.staff)+'</td>';
+    h+='<td><div style="font-size:12px;font-weight:800;color:#0f2040;">'+(r.amount!=null&&r.amount!==''?'¥'+Number(r.amount).toLocaleString():'—')+'</div></td>';
+    h+='<td>'+_feePayerBadge(r)+'</td>';
+    if(r.paidAt){
+      h+='<td style="font-size:11px;color:#64748b;">'+esc(r.deadline||'—')+'</td>';
+      h+='<td><span class="st-badge" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">✓ 支払済み（'+esc(r.paidAt.slice(5).replace('-','/'))+'）</span></td>';
+    }else{
+      var lt=left===null?'':(left<0?'期限切れ':(left===0?'今日まで':'残り'+left+'日'));
+      h+='<td><div style="font-size:11.5px;font-weight:800;color:'+(urgent?'#c2410c':'#0f2040')+';">'+esc(r.deadline||'—')+'</div>'+(lt?'<div style="font-size:10px;font-weight:700;color:'+(urgent?'#ea580c':'#64748b')+';">'+lt+'</div>':'')+'</td>';
+      if(r.payUrl){
+        h+='<td><div style="display:flex;gap:5px;flex-wrap:wrap;"><a href="'+esc(r.payUrl)+'" target="_blank" rel="noopener" style="background:#ea580c;color:#fff;font-size:11px;font-weight:800;border-radius:6px;padding:5px 10px;text-decoration:none;">💳 決済ページを開く</a>'
+          +'<button type="button" data-feecopy="'+esc(r.id)+'" onclick="_feeCopy(this.dataset.feecopy)" style="background:#fff;color:#334155;border:1px solid #cbd5e1;font-size:10.5px;font-weight:700;border-radius:6px;padding:4px 8px;cursor:pointer;">リンクをコピー</button></div>'
+          +'<div style="font-size:9.5px;color:#94a3b8;margin-top:3px;">支払者へ転送してください</div></td>';
+      }else{
+        h+='<td><span style="font-size:10.5px;color:#94a3b8;">リンク準備中</span></td>';
+      }
+    }
+    h+='</tr>';
+  });
+  return h+'</tbody></table></div>';
+}
+function renderFeePay(){
+  var el=document.getElementById('main'); if(!el) return;
+  renderFilterBar();
+  var rows=allFeePays.slice();
+  if(searchQuery){ var q=searchQuery.toLowerCase(); rows=rows.filter(function(r){ return (r.applicant||'').toLowerCase().indexOf(q)>=0||(r.company||'').toLowerCase().indexOf(q)>=0||(r.caseName||'').toLowerCase().indexOf(q)>=0; }); }
+  var un=rows.filter(function(r){return !r.paidAt;}).sort(function(a,b){ return String(a.deadline||'9999').localeCompare(String(b.deadline||'9999')); });
+  var pd=rows.filter(function(r){return !!r.paidAt;}).sort(function(a,b){ return String(b.paidAt).localeCompare(String(a.paidAt)); });
+  var h='<div style="background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#7c2d12;line-height:1.7;">'
+    +'<div style="font-size:13.5px;font-weight:800;margin-bottom:4px;">💳 在留カード発行手数料のお支払い（2026年10月1日以降の申請）</div>'
+    +'許可が出ると、入管から発行手数料の<b>支払依頼メール（決済リンク）</b>が弊社に届きます。届いたリンクをこちらに表示しますので、<b>「支払者」の方へ転送するか、「決済ページを開く」からお支払いください</b>。<br>'
+    +'<span style="font-size:11px;color:#9a3412;">※ 支払期限までにお支払いください。入管から支払完了の連絡が届くと、自動で「支払済み」に移ります。</span></div>';
+  h+='<div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;"><span style="font-size:13px;font-weight:700;color:#0f2040;">未払いの発行手数料</span><span style="font-size:11px;color:#fff;background:#ea580c;padding:1px 8px;border-radius:99px;font-weight:700;">'+un.length+'</span></div>';
+  h+= un.length ? _buildFeePayTable(un,false) : '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;color:#15803d;font-size:12px;font-weight:600;margin-bottom:20px;">未払いの発行手数料はありません</div>';
+  h+='<div style="margin-top:28px;margin-bottom:12px;display:flex;align-items:center;gap:10px;border-top:1px solid #e2e8f0;padding-top:20px;"><span style="font-size:14px;">✔</span><span style="font-size:13px;font-weight:700;color:#64748b;">支払済み</span><span style="font-size:11px;color:#64748b;background:#e2e8f0;padding:1px 8px;border-radius:99px;font-weight:700;">'+pd.length+'</span></div>';
+  h+= pd.length ? _buildFeePayTable(pd,true) : '<div style="color:#94a3b8;font-size:11px;padding:8px;">支払済みの記録はありません</div>';
+  el.innerHTML=h;
+}
 function renderShinsa(){
   var el=document.getElementById('main');
   if(!el)return;
@@ -8912,6 +8987,7 @@ function renderCurrent(){
   if(currentGroup==='dashboard'){renderDashboard();}
   else if(currentGroup==='receipts'){renderReceipts();}
   else if(currentGroup==='shinsa'){renderShinsa();}
+  else if(currentGroup==='feepay'){ if(_feePayOrg()) renderFeePay(); else { currentGroup='dashboard'; renderSidebar(); renderDashboard(); } } // ver.20261116.03
   else if(currentGroup==='madoguchi_shinsei' || currentGroup==='madoguchi_uketori'){renderMadoguchi(currentGroup);}
   else if(currentGroup==='intakes'){renderIntakes();}
   else if(currentGroup==='orgprofile'){renderOrgProfile();}
@@ -9972,6 +10048,19 @@ async function loadData(){
       var lc=allCases.find(function(c){return c.id===r.case_id;})||null;
       return {id:r.id,case_id:r.case_id||'',name:r.name||'',date:r.date||'',caseNo:r.case_no||'',sub:r.sub||'',driveUrl:r.drive_url||'',pdfDone:r.pdf_done||false,movedAt:r.moved_at||'',company:lc?(lc.company||''):'',caseName:lc?(lc.name||''):'',status:lc?(lc.status||''):'',applicant:lc?(lc.applicant||''):''};
     });
+
+    // ver.20261116.03: 発行手数料の決済リンク（支払依頼メール）。同じ案件に支払完了メールがあれば支払済み
+    allFeePays=[];
+    try{
+      var _fm=data.feeMails||[], _paidBy={};
+      _fm.forEach(function(f){ if(f.kind==='paid' && f.case_id){ var d=String(f.received_at||''); if(!_paidBy[f.case_id] || d<_paidBy[f.case_id]) _paidBy[f.case_id]=d; } });
+      allFeePays=_fm.filter(function(f){ return f.kind==='link'; }).map(function(f){
+        var lc=allCases.find(function(c){return c.id===f.case_id;})||null;
+        return {id:'fee_'+f.id, case_id:f.case_id||'', date:String(f.received_at||'').slice(0,10), amount:f.amount, payUrl:f.pay_url||'', deadline:f.deadline||'', receiptNo:f.receipt_no||'',
+          payer:f.payer||'', payerNote:f.payer_note||'', paidAt:_paidBy[f.case_id]?String(_paidBy[f.case_id]).slice(0,10):'',
+          caseName:lc?(lc.name||''):'', applicant:lc?(lc.applicant||''):'', company:lc?(lc.company||''):'', appType:lc?(lc.appType||''):'', staff:lc?(lc.staff||''):'', clientStaff:lc?(lc.clientStaff||''):''};
+      });
+    }catch(eF){ console.warn('[feeMails]', eF); allFeePays=[]; }
 
     // ver.20260612.test07: 送信した依頼を全orgで取得
     allIntakes=[];
