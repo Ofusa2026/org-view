@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>【テスト版】所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261118.test10: 新規案件依頼に「希望在留期間の確認」（発行手数料＝収入印紙）を追加（O-Linkと同じ）。変更・更新のとき送信前に出す（認定は出さない）。1人ずつの手数料・合計・決済手数料の注記・全期間表・入管庁リンク、負担先（所属機関／申請人／その他）、確認チェック2つ。負担先と1人ずつの手数料は依頼に保存（intake_requests.issuance_fee／issuance_fee_payer／issuance_fee_payer_note）し、確認画面と控えのメールにも出す。 -->
 <!-- ver.20261118.test09: 控えの送り先は「ご連絡先メールアドレス」の1つにまとめた（別の欄はやめた）。欄の下の「☑ 送信内容の控えをこのアドレスに送る」（最初からチェック・外せば送らない）。 -->
 <!-- ver.20261118.test08: 新規案件依頼に「控えの送り先メール（任意）」を追加。入れると、送信した内容の控えをそのアドレスへメールで送る（company-intake-copy-mail。内容はDBに入った依頼から組み立て、1回の依頼につき1回だけ）。DB: intake_requests.copy_to／copy_sent_at、create_company_intake が ids を返す。 -->
 <!-- ver.20261118.test07: 依頼フォームはマイページにログインして使う形に。マイページのURLに &form=1 を付けると、ログイン後すぐに「新規案件依頼」が開く（同じURLを何度でも使える）。送信後に「＋ 続けて別の依頼をする」を追加（ご担当者名・メールは次回も入った状態）。 -->
@@ -455,7 +456,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261118.test09</span><span style="margin-left:6px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px;">テスト版</span>
+  <span class="header-ver">ver.20261118.test10</span><span style="margin-left:6px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px;">テスト版</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <button type="button" id="cniHdrBtn" class="new-case-btn" onclick="_cniOpen()" style="display:none;">＋ 新規案件依頼</button><!-- ver.20261118.test02: O-Linkと同じ場所・同じ見た目 -->
   <div class="header-org" id="headerOrg">読み込み中...</div>
@@ -3754,23 +3755,112 @@ function _cniCaseName(d){
   return (d.ds?'【'+d.ds.replace(/^その他: /,'')+'】':'')+(companyName||'')+'（'+d.at+'・'+ns+'）';
 }
 var _cniPending=null, _cniLast=null;
+// ===== ver.20261118.test10: 希望在留期間の確認（発行手数料＝収入印紙）— O-Link の新規案件依頼と同じ。変更・更新のとき送信前に出す（認定は出さない） =====
+// 手数料表（2026-10-01改定・入管庁 https://www.moj.go.jp/isa/01_00644.html）
+var _CNI_FEE_TABLE=[
+  { period:'3ヶ月以下',        window:10000, online:10000 },
+  { period:'3ヶ月超6ヶ月以下', window:18000, online:15000 },
+  { period:'6ヶ月超1年未満',   window:25000, online:21000 },
+  { period:'1年',              window:33000, online:27000 },
+  { period:'1年超3年未満',     window:48000, online:42000 },
+  { period:'3年以上5年未満',   window:64000, online:56000 },
+  { period:'5年以上',          window:75000, online:65000 }
+];
+function _cniMonths(v){ v=String(v||'').trim(); if(!v) return 0; var o=v.match(/^(\d+)ヶ月$/); if(o) return parseInt(o[1],10); var y=0,m=0,a=v.match(/(\d+)年/),b=v.match(/(\d+)月/); if(a) y=parseInt(a[1],10); if(b) m=parseInt(b[1],10); return y*12+m; }
+function _cniFee(v){
+  var t=_cniMonths(v); if(t<=0) return null;
+  var i= t<=3?0 : t<=6?1 : t<12?2 : t===12?3 : t<36?4 : t<60?5 : 6;
+  return _CNI_FEE_TABLE[i]||null;
+}
+function _cniFeeOpen(d, onOK){
+  var ex=document.getElementById('cniFeeBg'); if(ex) ex.remove();
+  var total=0, rows='';
+  d.people.forEach(function(p,i){
+    var f=_cniFee(p.hoped), a=f?f.online:0; total+=a;
+    rows+='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:6px 8px;margin-bottom:5px;">'
+      +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="background:#334155;color:#fff;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;">'+(i+1)+'</span>'
+      +'<span style="font-size:12px;font-weight:700;color:#0f2040;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">'+esc(p.name||'')+'</span>'
+      +'<span style="font-size:12.5px;font-weight:800;color:#1e40af;white-space:nowrap;">'+(f?a.toLocaleString()+'円':'—')+'</span></div>'
+      +'<div style="font-size:10.5px;color:#64748b;padding-left:24px;"><span style="font-weight:700;color:#334155;">'+esc(p.hoped||'-')+'</span> / '+esc(p.uke||'')+'</div></div>';
+  });
+  var sel={}; d.people.forEach(function(p){ var f=_cniFee(p.hoped); if(f) sel[f.period]=1; });
+  var tbl=_CNI_FEE_TABLE.map(function(r){ var on=!!sel[r.period];
+    return '<tr'+(on?' style="background:#fef3c7;font-weight:800;"':'')+'><td style="padding:3px 6px;border:1px solid #e5e7eb;font-size:10.5px;">'+r.period+(on?' <span style="color:#dc2626;">←</span>':'')+'</td>'
+      +'<td style="text-align:right;padding:3px 8px;border:1px solid #e5e7eb;font-size:10.5px;background:#fafafa;">'+r.window.toLocaleString()+'円</td>'
+      +'<td style="text-align:right;padding:3px 8px;border:1px solid #e5e7eb;font-size:10.5px;">'+r.online.toLocaleString()+'円</td></tr>'; }).join('');
+  var y3=d.people.some(function(p){ return _cniMonths(p.hoped)>=36; }), u3=d.people.some(function(p){ var m=_cniMonths(p.hoped); return m>0&&m<36; });
+  var kessai= (y3&&u3)?'※ オンライン申請の場合、別途決済手数料が必要です<br>（許可期間3年未満：330円/件、3年以上：<b style="color:#dc2626;">550円/件</b>）'
+            : (y3?'※ オンライン申請の場合、別途決済手数料<b style="color:#dc2626;">550円/件</b>が必要です（許可期間3年以上のため）':'※ オンライン申請の場合、別途決済手数料330円/件が必要です');
+  var cur=d.issPayer||((_cniLast&&_cniLast.issPayer)||''), note=d.issNote||((_cniLast&&_cniLast.issNote)||'');
+  var opt=function(v,sub){ return '<label class="cniPyLbl" style="flex:1;min-width:110px;display:flex;align-items:flex-start;gap:6px;padding:6px 8px;background:#fff;border:1.5px solid #cbd5e1;border-radius:6px;cursor:pointer;">'
+    +'<input type="radio" name="cniPayer" value="'+v+'"'+(cur===v?' checked':'')+' onchange="_cniFeeBtn()" style="margin-top:2px;">'
+    +'<span style="font-size:11.5px;color:#0f2040;line-height:1.35;"><b>'+v+'</b><br><span style="font-size:10px;color:#64748b;">'+sub+'</span></span></label>'; };
+  var chk=function(id,html){ return '<label id="'+id+'L" style="display:flex;align-items:flex-start;gap:6px;padding:6px 10px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;margin-bottom:4px;cursor:pointer;"><input type="checkbox" id="'+id+'" onchange="_cniFeeBtn()" style="margin-top:3px;cursor:pointer;"><span style="font-size:11.5px;color:#334155;line-height:1.5;">'+html+'</span></label>'; };
+  var bg=document.createElement('div'); bg.id='cniFeeBg';
+  bg.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:10px;box-sizing:border-box;overflow-y:auto;';
+  bg.innerHTML='<div style="background:#fff;border-radius:10px;width:calc(100vw - 40px);max-width:460px;max-height:calc(100vh - 40px);display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden;">'
+    +'<div style="padding:10px 14px;background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff;flex-shrink:0;"><div style="font-size:15px;font-weight:800;">希望在留期間の確認</div><div style="font-size:11px;opacity:.9;margin-top:2px;">2026年10月1日改定の発行手数料（収入印紙）が適用されます</div></div>'
+    +'<div style="padding:10px 14px;overflow-y:auto;flex:1;">'
+    +'<div style="font-size:11.5px;color:#334155;margin-bottom:8px;line-height:1.55;">人材の方に、下記の<b>「希望在留期間」と「発行手数料」</b>についてご確認いただけましたか？</div>'
+    +'<div style="background:linear-gradient(135deg,#dbeafe,#e0f2fe);border:2px solid #3b82f6;border-radius:8px;padding:8px;margin-bottom:8px;">'
+      +'<div style="font-size:10px;color:#1e40af;font-weight:800;text-align:center;margin-bottom:4px;">今回の希望在留期間と発行手数料</div>'+rows
+      +'<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;padding:6px 10px;margin-top:4px;display:flex;justify-content:space-between;align-items:center;"><span style="font-weight:800;font-size:11.5px;color:#78350f;">合計（'+d.people.length+'名）</span><span style="font-weight:900;color:#dc2626;font-size:14px;">'+total.toLocaleString()+'円</span></div>'
+      +'<div style="font-size:9.5px;color:#475569;text-align:center;margin-top:4px;line-height:1.4;">'+kessai+'</div></div>'
+    +'<details style="margin-bottom:8px;"><summary style="cursor:pointer;font-size:11px;color:#475569;font-weight:700;padding:5px 8px;background:#f1f5f9;border-radius:6px;">全期間の手数料表を見る</summary><table style="width:100%;border-collapse:collapse;margin-top:8px;"><thead><tr><th style="padding:4px 6px;font-size:10px;background:#334155;color:#fff;border:1px solid #334155;">許可期間</th><th style="padding:4px 6px;font-size:10px;background:#475569;color:#fff;border:1px solid #334155;">窓口</th><th style="padding:4px 6px;font-size:10px;background:#334155;color:#fff;border:1px solid #334155;">オンライン</th></tr></thead><tbody>'+tbl+'</tbody></table></details>'
+    +'<a href="https://www.moj.go.jp/isa/01_00644.html" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#1e40af;text-decoration:none;padding:5px 10px;border:1px solid #bfdbfe;border-radius:6px;background:#eff6ff;margin-bottom:10px;font-weight:700;">詳細を入管庁ページで確認する（別タブで開く）</a>'
+    +'<div style="border-top:1px dashed #cbd5e1;padding-top:8px;margin-bottom:8px;"><div style="font-size:11.5px;font-weight:800;color:#0f2040;margin-bottom:5px;">発行手数料の負担先 <span style="color:#dc2626;">*</span></div>'
+      +'<div style="font-size:10.5px;color:#475569;line-height:1.5;margin-bottom:6px;">許可後、入管からの発行手数料の<b>支払依頼メールは弊社（大房行政書士法人）に届きます</b>。ここで選んだ方へ弊社からお送りしますので、お支払いいただく方をお選びください。</div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;">'+opt('所属機関','御社へお送りします')+opt('申請人','外国人本人へお送りします')+opt('その他','送り先を入力')+'</div>'
+      +'<input type="text" id="cniPayerNote" value="'+esc(note)+'" oninput="_cniFeeBtn()" placeholder="送り先（例：経理担当 〇〇へ）" style="display:none;width:100%;box-sizing:border-box;margin-top:6px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;font-family:inherit;"></div>'
+    +'<div style="border-top:1px dashed #cbd5e1;padding-top:8px;">'+chk('cniFeeChk1','人材の方に<b>希望在留期間を確認しました</b>')+chk('cniFeeChk2','<b>発行手数料</b>が在留期間により変わることを認識しています')+'</div>'
+    +'</div>'
+    +'<div style="padding:10px 14px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:8px;background:#f8fafc;flex-shrink:0;">'
+      +'<button type="button" onclick="_cniFeeClose()" style="padding:8px 20px;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;">戻る</button>'
+      +'<button type="button" id="cniFeeOK" disabled style="padding:8px 20px;background:#e2e8f0;color:#94a3b8;border:none;border-radius:8px;font-size:12.5px;font-weight:800;cursor:not-allowed;font-family:inherit;">確認しました → 確認画面へ</button></div>'
+    +'</div>';
+  document.body.appendChild(bg);
+  document.getElementById('cniFeeOK').onclick=function(){
+    var r=document.querySelector('input[name="cniPayer"]:checked');
+    d.issPayer=r?r.value:''; d.issNote=(d.issPayer==='その他')?((document.getElementById('cniPayerNote')||{}).value||'').trim():'';
+    d.people.forEach(function(p){ var f=_cniFee(p.hoped); p.issFee=f?f.online:''; });
+    d.issTotal=total;
+    _cniFeeClose(); if(typeof onOK==='function') onOK();
+  };
+  _cniFeeBtn();
+}
+function _cniFeeBtn(){
+  var r=document.querySelector('input[name="cniPayer"]:checked'), v=r?r.value:'', n=document.getElementById('cniPayerNote'), b=document.getElementById('cniFeeOK');
+  if(n) n.style.display=(v==='その他')?'block':'none';
+  document.querySelectorAll('.cniPyLbl').forEach(function(l){ var on=l.querySelector('input').checked; l.style.background=on?'#eff6ff':'#fff'; l.style.borderColor=on?'#2563eb':'#cbd5e1'; });
+  ['cniFeeChk1','cniFeeChk2'].forEach(function(id){ var c=document.getElementById(id), l=document.getElementById(id+'L'); if(c&&l){ l.style.background=c.checked?'#ecfdf5':'#f8fafc'; l.style.borderColor=c.checked?'#22c55e':'#cbd5e1'; } });
+  var ok=!!v && (v!=='その他' || ((n&&n.value)||'').trim()!=='') && document.getElementById('cniFeeChk1').checked && document.getElementById('cniFeeChk2').checked;
+  if(!b) return; b.disabled=!ok;
+  b.style.background=ok?'#2563eb':'#e2e8f0'; b.style.color=ok?'#fff':'#94a3b8'; b.style.cursor=ok?'pointer':'not-allowed';
+}
+function _cniFeeClose(){ var ex=document.getElementById('cniFeeBg'); if(ex) ex.remove(); }
 function _cniConfirm(){
   var d=_cniCollect();
   if(d.errs.length){ _cniErr('未入力・確認が必要な項目があります。<br>・'+d.errs.join('<br>・')); _cniMarkAll(); return; }
-  _cniErr(''); _cniPending=d;
+  _cniErr('');
+  // ver.20261118.test10: 変更・更新は送信前に「希望在留期間の確認」（発行手数料）を出す
+  if(d.at!=='認定'){ _cniFeeOpen(d, function(){ _cniRenderConfirm(d); }); return; }
+  _cniRenderConfirm(d);
+}
+function _cniRenderConfirm(d){
+  _cniPending=d;
   var row=function(k,v){ return '<tr><td style="padding:6px 10px;background:#f8fafc;font-size:11.5px;font-weight:700;color:#475569;width:170px;border-bottom:1px solid #e2e8f0;">'+k+'</td><td style="padding:6px 10px;font-size:12.5px;border-bottom:1px solid #e2e8f0;">'+v+'</td></tr>'; };
   var feeTxt=d.fm==='none'?'なし・未定':(d.fm==='same'?('全員同じ：'+Number(d.fsame).toLocaleString()+'円（1人あたり・税抜）'):'人ごと（下の表）');
   var h='<div class="cni-note" style="margin-bottom:10px;">この内容で弊社へ送信します。よろしければ「この内容で送信する」を押してください。</div>'
     +'<table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;margin-bottom:12px;">'
     +row('案件名',esc(_cniCaseName(d)))+row('申請種別',esc(d.at))+row('希望在留資格',esc(d.ds)+(d.field?'（分野：'+esc(d.field)+'）':''))+row('受入れ経験',esc(d.exp))
-    +row('御社ご担当者',esc(d.staff)+'（'+esc(d.mail)+'）')+row('控えのメール',d.copyTo?('送る（'+esc(d.copyTo)+'）'):'送らない')+row('人材紹介手数料',esc(feeTxt));
+    +row('御社ご担当者',esc(d.staff)+'（'+esc(d.mail)+'）')+row('控えのメール',d.copyTo?('送る（'+esc(d.copyTo)+'）'):'送らない')+(d.issPayer?row('発行手数料（収入印紙）','合計 '+Number(d.issTotal||0).toLocaleString()+'円（'+d.people.length+'名）／ 負担先：'+esc(d.issPayer)+(d.issNote?'（'+esc(d.issNote)+'）':'')):'')+row('人材紹介手数料',esc(feeTxt));
   if(d.at==='認定'){
     var sd=d.sdOrg&&d.sdOrg.not_used?'送り出し機関省略':(d.sdOrg?esc([d.sdOrg.name,d.sdOrg.country,d.sdOrg.address,d.sdOrg.tel].filter(Boolean).join(' ／ '))+(d.sdPay&&d.sdPay.payer?'<br>支払：'+esc(d.sdPay.payer)+(d.sdPay.amount!==''?' '+Number(d.sdPay.amount||0).toLocaleString()+'円':''):''):'（入力なし）');
     h+=row('送り出し機関',sd);
   }
   if(d.remarks) h+=row('備考',esc(d.remarks).replace(/\n/g,'<br>'));
-  h+='</table><table class="cni-tbl" style="min-width:0;"><thead><tr><th>#</th><th>氏名</th><th>国籍</th><th>現在の在留資格</th><th>在留期限</th><th>希望在留期間</th><th>受取方法</th><th>LINE QR</th>'+(d.fm==='each'?'<th>紹介手数料</th>':'')+'</tr></thead><tbody>';
-  d.people.forEach(function(p,i){ h+='<tr><td>'+(i+1)+'</td><td>'+esc(p.name)+'</td><td>'+esc(p.nat)+'</td><td>'+esc(p.cur||'—')+'</td><td>'+esc(p.exp||'—')+'</td><td>'+esc(p.hoped)+'</td><td>'+esc(p.uke)+'</td><td>'+(p.qr?'<img src="'+p.qr+'" style="width:34px;height:34px;object-fit:contain;border:1px solid #cbd5e1;border-radius:4px;">':'—')+'</td>'+(d.fm==='each'?'<td>'+(p.fee?Number(p.fee).toLocaleString()+'円':'—')+'</td>':'')+'</tr>'; });
+  h+='</table><table class="cni-tbl" style="min-width:0;"><thead><tr><th>#</th><th>氏名</th><th>国籍</th><th>現在の在留資格</th><th>在留期限</th><th>希望在留期間</th>'+(d.issPayer?'<th>発行手数料</th>':'')+'<th>受取方法</th><th>LINE QR</th>'+(d.fm==='each'?'<th>紹介手数料</th>':'')+'</tr></thead><tbody>';
+  d.people.forEach(function(p,i){ h+='<tr><td>'+(i+1)+'</td><td>'+esc(p.name)+'</td><td>'+esc(p.nat)+'</td><td>'+esc(p.cur||'—')+'</td><td>'+esc(p.exp||'—')+'</td><td>'+esc(p.hoped)+'</td>'+(d.issPayer?'<td style="white-space:nowrap;">'+(p.issFee?Number(p.issFee).toLocaleString()+'円':'—')+'</td>':'')+'<td>'+esc(p.uke)+'</td><td>'+(p.qr?'<img src="'+p.qr+'" style="width:34px;height:34px;object-fit:contain;border:1px solid #cbd5e1;border-radius:4px;">':'—')+'</td>'+(d.fm==='each'?'<td>'+(p.fee?Number(p.fee).toLocaleString()+'円':'—')+'</td>':'')+'</tr>'; });
   h+='</tbody></table>';
   document.getElementById('cniBody').setAttribute('data-form','1');
   var body=document.getElementById('cniBody'); body.style.display='none';
@@ -3810,7 +3900,7 @@ async function _cniSend(){
       client_staff:d.staff, nationality:p.nat, expire:p.exp||'', delivery_method:(p.uke==='窓口受取'?'window':(p.uke==='メール交付'?'email':'mail')),
       other_support_note:note, to_email:d.mail, hoped_stay_period:p.hoped, current_stay_period:p.curp||'',
       intro_fee:(d.fm==='same'?d.fsame:(d.fm==='each'?(p.fee||''):'')),
-      senddashi_org:d.sdOrg, senddashi_payment:d.sdPay, line_qr:(p.qr||''), copy_to:(d.copyTo||'') };
+      senddashi_org:d.sdOrg, senddashi_payment:d.sdPay, line_qr:(p.qr||''), copy_to:(d.copyTo||''), issuance_fee:(p.issFee!=null&&p.issFee!==''?String(p.issFee):''), issuance_fee_payer:(d.issPayer||''), issuance_fee_payer_note:(d.issNote||'') };
   });
   try{
     // ver.20261118.test07: サンプル表示は送らずに送信後の画面だけ出す（「続けて別の依頼をする」を見られるように）
@@ -3822,7 +3912,7 @@ async function _cniSend(){
     var cf=document.getElementById('cniConfirmBody');
     cf.innerHTML='<div style="text-align:center;padding:30px 10px;"><div style="font-size:40px;">✅</div><div style="font-size:16px;font-weight:800;color:#0f2040;margin:8px 0;">ご依頼を送信しました（'+r.inserted+'名）</div><div class="cni-note">弊社で内容を確認し、ご担当者さまへご連絡します。ありがとうございました。</div></div>';
     // ver.20261118.test07: 続けて別の依頼をする（ご担当者名・メールは次回も入れておく）
-    _cniLast={staff:d.staff, mail:d.mail, copyOn:d.copyOn}; try{ localStorage.setItem('cni_last_'+currentToken, JSON.stringify(_cniLast)); }catch(eL){}
+    _cniLast={staff:d.staff, mail:d.mail, copyOn:d.copyOn, issPayer:d.issPayer||'', issNote:d.issNote||''}; try{ localStorage.setItem('cni_last_'+currentToken, JSON.stringify(_cniLast)); }catch(eL){}
     cf.querySelector('.cni-note').insertAdjacentHTML('beforeend','<br>次のご依頼も、このページからお送りいただけます。'+(r.demo?'<br><span style="color:#92400e;">（サンプル表示のため、実際には送信されていません）</span>':''));
     if(d.copyTo) _cniCopyMail(d.copyTo, r);   // ver.20261118.test08: 控えのメール
     document.querySelector('#cniBg .cni-ft').innerHTML='<button type="button" class="cni-btn" style="background:#fff;border:1px solid #cbd5e1;color:#334155;" onclick="_cniClose()">閉じる</button><button type="button" class="cni-btn" style="background:#16a34a;color:#fff;" onclick="_cniOpen()">＋ 続けて別の依頼をする</button>';
@@ -3837,7 +3927,7 @@ init();
 // ver.20261110.01: O-Linkの利用ログ（画面ごとの滞在時間・フォームのどこまで進んだか）を olink_events に送る。画面の表示・動作は一切変えない。
 // 数えるのは「画面が見えていて、90秒以内に操作がある時間」だけ。デモ表示・token無しは記録しない。
 (function(){
-  var PAGE='company_test', VER='ver.20261118.test09';
+  var PAGE='company_test', VER='ver.20261118.test10';
   try{
     var TOKEN=new URLSearchParams(location.search).get('token')||'';
     if(!TOKEN || TOKEN==='demo' || /[?&]demo=1\b/.test(location.search)) return;
