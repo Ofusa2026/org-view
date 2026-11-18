@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>【テスト版】所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261118.test02: 「＋ 新規案件依頼」ボタンをO-Linkと同じ場所（ヘッダー右・会社名のすぐ左、緑のボタン）に移動し、サイドバーの同じボタンはやめた。依頼フォームの一番上に「AIで読み取って入力」を追加（在留カード・パスポート・LINE/メールの文章・Excelのスクショを、ドラッグ／貼り付け（Ctrl+V）／画像を選ぶ で入れる → 空いている欄だけに入れて黄色で示す）。読み取りは company-intake-ai-read（企業マイページのログインと同じ確認＋自社支援の会社だけ）。 -->
 <!-- ver.20261118.test01: 企業マイページのテスト版（company_test.html）を作成（2026/11/18 秘密の質問 回答済）。ver.20261118.01 の自社支援向け「新規案件依頼」に、申請する人ごとの「本人のLINE QR」（画像・任意。長い辺600pxに縮めて送信）を追加。 -->
 <!-- ver.20261118.01: 自社支援の会社（登録支援機関の案件が1件もない会社）に「＋ 新規案件依頼」を追加（ヘッダーとサイドバー）。O-Linkと同じ流れで、案件の情報（申請種別・希望在留資格・分野・受入れ経験・御社ご担当者・連絡先）、申請する人（最大30名）、人材紹介手数料、送り出し機関（認定のみ・受入れ無は必須）、備考を入力 → 確認 → 送信。支援委託費・支援担当者など支援の項目はなし。送信先はアンシスの受信トレイ（登録支援機関なし・企業マイページからの依頼）。DB: create_company_intake（登録支援機関の案件がある会社は拒否）。 -->
 <!-- ver.20261113.01: 人材詳細の「申請情報」に「📮 在留カードの郵送」を追加。入管へ発送済み → 入管に到着 → カードを返送中 → 到着 の4段階と日付、返りのレターパックの追跡番号（日本郵便の追跡ページが開く）を出す。データは company_view_extra の lp（その人材が入っている最新のレターパック1件だけ。ほかの人の情報は出さない）。 -->
@@ -87,6 +88,11 @@ body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:#f1f5f9;color:#1
 .header-title{font-size:15px;font-weight:800;white-space:nowrap;}
 .header-ver{font-size:9px;opacity:.4;letter-spacing:.3px;white-space:nowrap;flex:none;}
 .header-org{font-size:11px;opacity:.75;margin-left:auto;max-width:240px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* ver.20261118.test02: 新規案件依頼ボタン（O-Linkの .new-case-btn と同じ） */
+.new-case-btn{background:linear-gradient(135deg,#16a34a,#22c55e);color:white;border:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(34,197,94,.3);margin-right:12px;white-space:nowrap;font-family:inherit;}
+.new-case-btn:hover{background:linear-gradient(135deg,#15803d,#16a34a);box-shadow:0 3px 10px rgba(34,197,94,.4);}
+.header:has(.new-case-btn:not([style*="display:none"])) .header-org{margin-left:0;}
+@media(max-width:560px){ .new-case-btn{padding:7px 10px;font-size:11px;margin-right:0;} .header:has(.new-case-btn:not([style*="display:none"])) .header-title{display:none;} }
 .tabs{display:flex;gap:4px;background:#fff;border-bottom:1px solid #e2e8f0;padding:0 12px;position:sticky;top:45px;z-index:150;overflow-x:auto;}
 .tab{padding:11px 14px;font-size:12px;font-weight:700;color:#64748b;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;}
 .tab.active{color:#0f2040;border-bottom-color:#0f2040;}
@@ -442,9 +448,9 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261118.test01</span><span style="margin-left:6px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px;">テスト版</span>
-  <button type="button" id="cniHdrBtn" onclick="_cniOpen()" style="display:none;margin-left:auto;margin-right:8px;padding:7px 14px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">＋ 新規案件依頼</button><!-- ver.20261118.01 -->
+  <span class="header-ver">ver.20261118.test02</span><span style="margin-left:6px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px;">テスト版</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
+  <button type="button" id="cniHdrBtn" class="new-case-btn" onclick="_cniOpen()" style="display:none;">＋ 新規案件依頼</button><!-- ver.20261118.test02: O-Linkと同じ場所・同じ見た目 -->
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
 
@@ -1427,8 +1433,7 @@ function renderSidebar(){
     +(supportOrgName?'<div class="sb-head-org">登録支援機関<b>'+esc(supportOrgName)+'</b></div>':'')+'</div>';
   // ver.20261118.01: 自社支援の会社だけ「新規案件依頼」を出す
   var _cniOk=false; try{ _cniOk=_cniAllowed(); }catch(_){}
-  var _hb=document.getElementById('cniHdrBtn'); if(_hb){ _hb.style.display=_cniOk?'':'none'; var _tb=_hb.nextElementSibling; if(_tb) _tb.style.marginLeft=_cniOk?'0':'auto'; }
-  if(_cniOk) h+='<div class="sb-item" onclick="_cniOpen()" style="color:#fff;background:#16a34a;font-weight:800;margin:6px 8px;border-radius:8px;justify-content:center;"><span>＋ 新規案件依頼</span></div>';
+  var _hb=document.getElementById('cniHdrBtn'); if(_hb){ _hb.style.display=_cniOk?'':'none'; }   // ver.20261118.test02: ボタンはヘッダー右（O-Linkと同じ場所）だけ
   h+='<div class="sb-item" onclick="_coTour()" style="color:#fde047;background:rgba(253,224,71,.12);"><span>O-Link使い方ガイド</span></div>';  // ver.20261030.01: ダッシュボードの上
   h+=item('dashboard','ダッシュボード',(_tasks.total>0?_tasks.total:null),_tasks.total>0);
   h+='<div class="sb-divider"></div>';
@@ -3339,6 +3344,12 @@ function _cniCss(){
     +'.cni-btn{border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;}'
     +'.cni-radio{display:inline-flex;align-items:center;gap:6px;border:1.5px solid #cbd5e1;border-radius:8px;padding:7px 12px;font-size:12.5px;font-weight:700;cursor:pointer;background:#fff;margin-right:6px;}'
     +'.cni-note{font-size:11px;color:#64748b;line-height:1.6;}'
+    +'.cni-ai{border:2px solid #6366f1;background:linear-gradient(135deg,#eef2ff,#f5f3ff);border-radius:12px;padding:12px 14px;margin-top:12px;}'
+    +'.cni-ai-drop{margin-top:10px;border:2px dashed #a5b4fc;border-radius:10px;background:#fff;padding:10px;transition:background .15s,border-color .15s;}'
+    +'.cni-ai-drop.over{background:#e0e7ff;border-color:#4f46e5;}'
+    +'.cni-ai-dz{font-size:12.5px;color:#4338ca;text-align:center;padding:8px 4px 10px;}'
+    +'#cniAiText{width:100%;box-sizing:border-box;min-height:64px;padding:9px 11px;border:1px solid #e0e7ff;border-radius:8px;font-family:inherit;font-size:13px;line-height:1.6;resize:vertical;margin-bottom:6px;}'
+    +'.cni-ai-fill{background:#dcfce7 !important;border-color:#22c55e !important;}'
     +'.cni-err{display:none;margin:0 20px 0;background:#fefce8;border:1px solid #fde047;color:#854d0e;font-size:12px;font-weight:700;border-radius:8px;padding:9px 12px;}';
   document.head.appendChild(st);
 }
@@ -3351,6 +3362,21 @@ function _cniBuild(){
     +'<div id="cniErr" class="cni-err"></div>'
     +'<div class="cni-bd" id="cniBody">'
     +'<div class="cni-note" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:9px 12px;color:#1e3a8a;">弊社（大房行政書士法人）へ、在留申請のご依頼をお送りいただけます。<b>黄色の欄は未入力</b>です。<span style="color:#d97706;font-weight:800;">*</span> の項目は必須です。送信後、弊社で内容を確認してご連絡します。</div>'
+    +'<div id="cniAiBox" class="cni-ai">'
+      +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:11px;font-weight:900;color:#fff;background:#e11d48;border-radius:999px;padding:3px 10px;">NEW</span><span style="font-size:14.5px;font-weight:900;color:#3730a3;">AIで読み取って入力</span>'
+        +'<span style="font-size:11.5px;color:#4f46e5;font-weight:600;flex:1;min-width:200px;">在留カード・パスポートの画像や、LINE・メールの文章、Excelのスクリーンショットを入れるだけで、下の欄に自動で入ります</span></div>'
+      +'<div id="cniAiDrop" class="cni-ai-drop">'
+        +'<div class="cni-ai-dz">📄 在留カードなどの画像を<b>ここにドラッグ</b>（Ctrl+V の貼り付けもOK）</div>'
+        +'<textarea id="cniAiText" data-cniopt="1" placeholder="文章はここに貼り付け（LINE・メールの本文など）"></textarea>'
+        +'<div id="cniAiThumbs" style="display:flex;gap:6px;flex-wrap:wrap;"></div>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;">'
+        +'<label style="display:inline-flex;align-items:center;gap:4px;padding:7px 12px;background:#fff;border:1.5px solid #a5b4fc;border-radius:8px;font-size:12px;font-weight:700;color:#4338ca;cursor:pointer;">📷 画像を選ぶ<input type="file" id="cniAiFile" accept="image/*" multiple style="display:none;" onchange="_cniAiAddFiles(this.files);this.value=\'\';"></label>'
+        +'<button type="button" id="cniAiBtn" onclick="_cniAiRun()" style="padding:8px 16px;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;">読み取って入力する</button>'
+        +'<span style="font-size:10.5px;color:#6b7280;">※ 空いている欄だけに入れます。入った欄は<span style="background:#dcfce7;padding:0 4px;border-radius:3px;">緑</span>になるので、必ず確認してから送信してください。画像は6枚まで。</span>'
+      +'</div>'
+      +'<div id="cniAiMsg" style="display:none;"></div>'
+    +'</div>'
     +'<div class="cni-sec"><span class="n">1</span>案件の情報</div>'
     +'<div class="cni-grid">'
       +'<div><label class="cni-lbl">申請種別'+R+'</label><select id="cni_appType" class="cni-in" onchange="_cniSync()">'+_cniOpts(['認定','変更','更新'])+'</select></div>'
@@ -3388,6 +3414,7 @@ function _cniBuild(){
   var bg=document.createElement('div'); bg.id='cniBg'; bg.innerHTML=h; document.body.appendChild(bg);
   bg.addEventListener('input',function(e){ _cniMark(e.target); }, true);
   bg.addEventListener('change',function(e){ _cniMark(e.target); }, true);
+  _cniAiWire();   // ver.20261118.test02
 }
 function _cniMark(e){ if(!e||!e.classList||!e.classList.contains('cni-in')||e.getAttribute('data-cniopt')) return; if(e.offsetParent===null && e.tagName!=='SELECT'){ } e.classList.toggle('mt', String(e.value||'').trim()===''); }
 function _cniMarkAll(){ document.querySelectorAll('#cniBg .cni-in').forEach(_cniMark); }
@@ -3414,6 +3441,12 @@ function _cniAddRow(){
 function _cniQrPick(inp){
   var f=inp.files&&inp.files[0]; var td=inp.closest('td'); if(!f||!td) return;
   if(!/^image\//.test(f.type)){ alert('画像ファイルを選んでください'); inp.value=''; return; }
+  _cniQrSet(td,f);
+}
+// ver.20261118.test02: 画像を選ぶ・ドラッグ どちらでも同じ処理
+function _cniQrSet(td,f){
+  if(!td||!f) return;
+  if(!/^image\//.test(f.type)){ alert('画像ファイルを選んでください'); return; }
   var fr=new FileReader();
   fr.onload=function(){ var img=new Image(); img.onload=function(){
       var mx=600, w=img.width, h=img.height, s=Math.min(1, mx/Math.max(w,h));
@@ -3460,11 +3493,177 @@ function _cniOpen(){
   _cniBuild();
   var bg=document.getElementById('cniBg');
   // 毎回まっさらにする
-  bg.remove(); _cniRows=0; _cniBuild(); bg=document.getElementById('cniBg');
+  bg.remove(); _cniRows=0; _cniAiImages=[]; _cniBuild(); bg=document.getElementById('cniBg');
   _cniAddRow(); _cniErr('');
   bg.classList.add('open'); _cniSync();
 }
 function _cniClose(){ var bg=document.getElementById('cniBg'); if(bg) bg.classList.remove('open'); }
+// ===== ver.20261118.test02: AIで読み取って入力（在留カード・パスポートの画像／LINE・メールの文章 → 新規案件依頼の欄へ） =====
+//   O-Link の「AIで読み取って入力」と同じ考え方。空いている欄だけに入れ、入った欄は緑で示す（黄色＝未入力 と区別）
+//   画像は ドラッグ／貼り付け（Ctrl+V）／「画像を選ぶ」の3通り。本人のLINE QR の欄にドラッグした画像は、その人のQRとして入れる
+var _cniAiImages=[];   // [{media_type, data(base64), url}]
+function _cniAiThumbs(){
+  var w=document.getElementById('cniAiThumbs'); if(!w) return;
+  w.innerHTML=_cniAiImages.map(function(im,i){
+    return '<div style="position:relative;width:64px;height:64px;border:1px solid #c7d2fe;border-radius:6px;overflow:hidden;background:#fff;"><img src="'+im.url+'" style="width:100%;height:100%;object-fit:cover;"><button type="button" onclick="_cniAiImages.splice('+i+',1);_cniAiThumbs();" title="外す" style="position:absolute;top:1px;right:1px;width:18px;height:18px;border:none;border-radius:50%;background:rgba(15,23,42,.7);color:#fff;font-size:11px;line-height:18px;padding:0;cursor:pointer;">✕</button></div>';
+  }).join('');
+}
+// 画像は長い辺1600pxまで縮めてJPEGにする（送る量を減らす）
+function _cniAiShrink(file){
+  return new Promise(function(res){
+    var fr=new FileReader();
+    fr.onload=function(){
+      var img=new Image();
+      img.onload=function(){
+        var max=1600, w=img.width, h=img.height, r=Math.min(1, max/Math.max(w,h));
+        var cv=document.createElement('canvas'); cv.width=Math.round(w*r); cv.height=Math.round(h*r);
+        var cx=cv.getContext('2d'); cx.fillStyle='#fff'; cx.fillRect(0,0,cv.width,cv.height); cx.drawImage(img,0,0,cv.width,cv.height);
+        var url=cv.toDataURL('image/jpeg',0.85);
+        res({ media_type:'image/jpeg', data:url.split(',')[1], url:url });
+      };
+      img.onerror=function(){ res(null); };
+      img.src=fr.result;
+    };
+    fr.onerror=function(){ res(null); };
+    fr.readAsDataURL(file);
+  });
+}
+async function _cniAiAddFiles(files){
+  var all=Array.prototype.slice.call(files||[]);
+  var list=all.filter(function(f){ return /^image\//.test(f.type); });
+  if(all.length && !list.length){ _cniAiMsg('warn','画像ファイル（JPG・PNGなど）を入れてください。PDFの場合は、画面のスクリーンショットを撮って入れてください。'); return; }
+  for(var i=0;i<list.length;i++){
+    if(_cniAiImages.length>=6){ _cniAiMsg('warn','画像は6枚までです。'); break; }
+    var im=await _cniAiShrink(list[i]); if(im) _cniAiImages.push(im);
+  }
+  _cniAiThumbs();
+  if(list.length) _cniAiMsg('info','画像を '+_cniAiImages.length+'枚 入れました。「読み取って入力する」を押してください。');
+}
+function _cniAiMsg(kind, html){
+  var m=document.getElementById('cniAiMsg'); if(!m) return;
+  var st={ok:'background:#f0fdf4;border:1px solid #86efac;color:#166534;', warn:'background:#fffbeb;border:1px solid #fde68a;color:#92400e;', err:'background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;', info:'background:#eef2ff;border:1px solid #c7d2fe;color:#3730a3;'}[kind]||'';
+  m.style.cssText='display:block;margin-top:8px;font-size:12px;line-height:1.6;border-radius:8px;padding:8px 10px;'+st;
+  m.innerHTML=html;
+}
+function _cniAiWire(){
+  var bg=document.getElementById('cniBg'); if(!bg || bg._aiWired) return; bg._aiWired=true;
+  var box=document.getElementById('cniAiBox'), dz=document.getElementById('cniAiDrop');
+  var hasFiles=function(ev){ var t=ev.dataTransfer && ev.dataTransfer.types; return t && Array.prototype.indexOf.call(t,'Files')>=0; };
+  // モーダルのどこに落としても、ブラウザが画像を開いてしまわないようにする
+  bg.addEventListener('dragover',function(ev){ if(!hasFiles(ev)) return; ev.preventDefault(); var td=ev.target.closest && ev.target.closest('td'); if(dz) dz.classList.toggle('over', !(td && td.querySelector('.cni-qrfile'))); });
+  bg.addEventListener('dragleave',function(ev){ if(dz && (!ev.relatedTarget || !bg.contains(ev.relatedTarget))) dz.classList.remove('over'); });
+  bg.addEventListener('drop',function(ev){
+    if(!hasFiles(ev)) return; ev.preventDefault(); if(dz) dz.classList.remove('over');
+    var files=ev.dataTransfer.files; if(!files || !files.length) return;
+    // 本人のLINE QR の欄に落とした → その人のQRとして入れる
+    var td=ev.target.closest && ev.target.closest('td');
+    if(td && td.querySelector('.cni-qrfile')){ _cniQrSet(td, files[0]); return; }
+    _cniAiAddFiles(files);
+    try{ box.scrollIntoView({block:'nearest',behavior:'smooth'}); }catch(_){}
+  });
+}
+document.addEventListener('paste', function(ev){
+  var bg=document.getElementById('cniBg'); if(!bg || !bg.classList.contains('open')) return;
+  var items=(ev.clipboardData && ev.clipboardData.items) || [], files=[];
+  for(var i=0;i<items.length;i++){ if(items[i].kind==='file' && /^image\//.test(items[i].type)){ var f=items[i].getAsFile(); if(f) files.push(f); } }
+  if(files.length){ ev.preventDefault(); _cniAiAddFiles(files); }
+});
+function _cniAiMark(el){
+  if(!el) return; el.classList.add('cni-ai-fill');
+  var f=function(){ el.classList.remove('cni-ai-fill'); el.removeEventListener('change',f); el.removeEventListener('input',f); };
+  el.addEventListener('change',f); el.addEventListener('input',f);
+}
+function _cniAiSetSel(el, v){
+  if(!el || !v) return false;
+  for(var i=0;i<el.options.length;i++){ if(el.options[i].value===v){ el.value=v; return true; } }
+  return false;
+}
+function _cniAiPeriod(v){ return String(v||'').replace(/\s/g,'').replace(/ヶ月|か月|カ月|ケ月|箇月/g,'月'); }
+async function _cniAiRun(){
+  var text=(document.getElementById('cniAiText').value||'').trim();
+  if(!text && !_cniAiImages.length){ _cniAiMsg('warn','画像をドラッグするか、文章を貼り付けてください。'); return; }
+  var btn=document.getElementById('cniAiBtn'); btn.disabled=true; btn.textContent='読み取り中…（10〜30秒）'; btn.style.opacity='.7';
+  _cniAiMsg('info','読み取り中です。そのままお待ちください。');
+  try{
+    var j;
+    if(_DEMO){
+      // サンプル表示：実際の読み取りはしない（在留カード1枚を読んだ想定の値）
+      await new Promise(function(r){ setTimeout(r,900); });
+      j={ ok:true, data:{ 'case':{ appType:'変更', desiredStatus:'特定技能1号', applicantField:'工業製品製造業' },
+        jinzai:[{ name:'NGUYEN VAN AN', nationality:'ベトナム', currentStatus:'技能実習2号', expire:'2027-03-31', currentStayPeriod:'1年' }],
+        notes:['サンプル表示です（実際の読み取りはしていません）'] } };
+    }else{
+      var r=await fetch(SUPABASE_URL+'/functions/v1/company-intake-ai-read',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},
+        body:JSON.stringify({ token:currentToken, pass:(_correctPass||_opPass||''), text:text, images:_cniAiImages.map(function(im){ return {media_type:im.media_type, data:im.data}; }) })});
+      j=await r.json().catch(function(){ return null; });
+    }
+    if(!j || !j.ok){
+      var er=(j && j.error)||'';
+      if(er==='not_self_support') throw new Error('この画面の読み取りは、登録支援機関に委託していない会社さま向けです');
+      if(er==='unauthorized') throw new Error('ログインの確認ができませんでした。ページを開き直してください');
+      throw new Error(er || '通信エラー');
+    }
+    _cniAiApply(j.data||{});
+  }catch(e){
+    _cniAiMsg('err','読み取れませんでした：'+esc(e.message||String(e))+'<br>もう一度お試しいただくか、手で入力してください。');
+  }finally{
+    btn.disabled=false; btn.textContent='読み取って入力する'; btn.style.opacity='';
+  }
+}
+function _cniAiApply(d){
+  var c=d['case']||{}, filled=[], skipped=[];
+  var setSel=function(id,label,v){ var el=document.getElementById(id); if(!el||!v) return; if(String(el.value||'').trim()){ if(el.value!==v) skipped.push(label); return; } if(_cniAiSetSel(el,v)){ _cniAiMark(el); filled.push(label); } };
+  setSel('cni_appType','申請種別',c.appType);
+  setSel('cni_desired','希望在留資格',c.desiredStatus);
+  _cniSync();
+  setSel('cni_field','分野',c.applicantField);
+  if(c.acceptExp==='有'||c.acceptExp==='無'){
+    var chk=document.querySelector('input[name="cni_exp"]:checked');
+    if(!chk){ var rb=document.querySelector('input[name="cni_exp"][value="'+c.acceptExp+'"]'); if(rb){ rb.checked=true; _cniAiMark(rb.closest('label')||rb); filled.push('受入れ経験'); } }
+    else if(chk.value!==c.acceptExp) skipped.push('受入れ経験');
+  }
+  // 人材紹介手数料は1人あたり。合計で書かれていたら人数で割る
+  var js=(Array.isArray(d.jinzai)?d.jinzai:[]).filter(function(x){ return x && (x.name||x.nationality||x.expire); });
+  var rfTot=parseInt(String(c.referralFeeTotal||'').replace(/[^\d]/g,''),10)||0, rf=parseInt(String(c.referralFee||'').replace(/[^\d]/g,''),10)||0, rfMsg='';
+  if(rfTot && js.length>1){ var per=Math.round(rfTot/js.length); if(!rf || rf===rfTot) rf=per; rfMsg='人材紹介手数料：合計 '+rfTot.toLocaleString()+'円 を '+js.length+'名で割って、1人あたり '+rf.toLocaleString()+'円 で入れました。'; }
+  if(rf){
+    var fm=_cniRadio('cni_feeMode')||'none';
+    if(fm==='none'){ var rs=document.querySelector('input[name="cni_feeMode"][value="same"]'); if(rs){ rs.checked=true; fm='same'; } }
+    if(fm==='same'){ var fs=document.getElementById('cni_feeSame'); if(fs && !String(fs.value||'').trim()){ fs.value=String(rf); _cniAiMark(fs); filled.push('人材紹介手数料（1人あたり）'); } else skipped.push('人材紹介手数料'); }
+    else skipped.push('人材紹介手数料（人ごとに入力中）');
+  }
+  if(c.remarks){
+    var rm=document.getElementById('cni_remarks');
+    if(rm){ if(!String(rm.value||'').trim()) rm.value=c.remarks; else if(rm.value.indexOf(c.remarks)<0) rm.value=rm.value+'\n'+c.remarks; _cniAiMark(rm); filled.push('備考'); }
+  }
+  // 申請する人：氏名が空の行から順に入れ、足りなければ行を足す
+  var nJ=0;
+  js.forEach(function(x){
+    var rows=Array.prototype.slice.call(document.querySelectorAll('#cniRows > tr'));
+    var row=rows.find(function(r){ var n=r.querySelector('.cni-name'); return n && !String(n.value||'').trim(); });
+    if(!row){ if(rows.length>=30) return; _cniAddRow(); rows=document.querySelectorAll('#cniRows > tr'); row=rows[rows.length-1]; }
+    var q=function(cls){ return row.querySelector(cls); };
+    if(x.name){ var n=q('.cni-name'); n.value=String(x.name).toUpperCase(); _cniAiMark(n); }
+    if(x.nationality){ var na=q('.cni-nat'); if(_cniAiSetSel(na,x.nationality)) _cniAiMark(na); }
+    if(x.currentStatus){ var cs=q('.cni-cur'); if(_cniAiSetSel(cs,x.currentStatus)) _cniAiMark(cs); }
+    if(x.expire && /^\d{4}-\d{2}-\d{2}$/.test(x.expire)){ var ex=q('.cni-exp'); ex.value=x.expire; _cniAiMark(ex); }
+    if(x.currentStayPeriod){ var cp=q('.cni-curp'); if(_cniAiSetSel(cp,_cniAiPeriod(x.currentStayPeriod))) _cniAiMark(cp); }
+    if(x.hopedStayPeriod){ var hp=q('.cni-hoped'); if(_cniAiSetSel(hp,_cniAiPeriod(x.hopedStayPeriod))) _cniAiMark(hp); }
+    if(x.ukeMethod){ var uk=q('.cni-uke'); if(_cniAiSetSel(uk,x.ukeMethod)) _cniAiMark(uk); }
+    nJ++;
+  });
+  if(nJ){ _cniNum(); filled.push('申請する人 '+nJ+'名'); }
+  _cniSync();
+  var notes=(Array.isArray(d.notes)?d.notes:[]).filter(Boolean);
+  if(!filled.length){
+    _cniAiMsg('warn','読み取れる項目がありませんでした。別の画像や文章でお試しください。'+(notes.length?'<br>'+notes.map(function(t){return '・'+esc(t);}).join('<br>'):''));
+    return;
+  }
+  _cniAiMsg('ok','入力しました：<b>'+filled.map(esc).join('、')+'</b><br><span style="background:#dcfce7;padding:0 4px;border-radius:3px;">緑の欄</span>を確認・修正してから「内容を確認して送信」を押してください。<span style="background:#fef9c3;padding:0 4px;border-radius:3px;">黄色の欄</span>はまだ空いています。'
+    +(skipped.length?'<br><span style="color:#92400e;">すでに入力があったため変えなかった欄：'+skipped.map(esc).join('、')+'</span>':'')
+    +(rfMsg?'<br><span style="color:#1d4ed8;">'+esc(rfMsg)+'</span>':'')
+    +(notes.length?'<br><span style="color:#92400e;">AIからのメモ：'+notes.map(esc).join(' ／ ')+'</span>':''));
+}
 function _cniCollect(){
   var at=_cniVal('cni_appType'), ds=_cniVal('cni_desired'), dsn=_cniVal('cni_desiredNote'), exp=_cniRadio('cni_exp');
   var staff=_cniVal('cni_staff'), mail=_cniVal('cni_mail'), fm=_cniRadio('cni_feeMode')||'none', fsame=_cniVal('cni_feeSame').replace(/[,，円\s]/g,'');
@@ -3576,7 +3775,7 @@ init();
 // ver.20261110.01: O-Linkの利用ログ（画面ごとの滞在時間・フォームのどこまで進んだか）を olink_events に送る。画面の表示・動作は一切変えない。
 // 数えるのは「画面が見えていて、90秒以内に操作がある時間」だけ。デモ表示・token無しは記録しない。
 (function(){
-  var PAGE='company_test', VER='ver.20261118.test01';
+  var PAGE='company_test', VER='ver.20261118.test02';
   try{
     var TOKEN=new URLSearchParams(location.search).get('token')||'';
     if(!TOKEN || TOKEN==='demo' || /[?&]demo=1\b/.test(location.search)) return;
