@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>【テスト版】所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261118.test06: 自社支援の会社では「個人情報保護方針」からも登録支援機関の記載を外した（取得する情報の「登録支援機関のご担当者」、第三者提供の「登録支援機関との共有」の一文、「4. アップロードいただいた書類の共有」の項。以降の項目番号は繰り上げ）。 -->
 <!-- ver.20261118.test05: 登録支援機関がいない会社（自社支援）では、登録支援機関・支援の記載を出さない（案件一覧とCSVの「登録支援機関」列、人材詳細の「登録支援機関」、所属機関情報の「登録支援機関名・登録番号・住所・支援担当者」→ 見出しも「担当」に）。 -->
 <!-- ver.20261118.test04: 新規案件依頼の「案件の情報」で、入力欄の高さと位置をそろえた（見出しが2行になる欄があっても、選択欄・入力欄・受入れ有/無の高さが同じ線に並ぶ）。登録支援機関の案件が1件もない会社（自社支援）では、最初の「O-Linkのご案内」の「御社の提出書類と提出状況を、登録支援機関と共有することに同意いたします」を出さない（DB: company_view_meta に has_support_org を追加）。 -->
 <!-- ver.20261118.test03: テスト版のサンプル表示（?demo=1）を「自社支援の会社」にした（サンプルの案件に登録支援機関を付けない）。これで「＋ 新規案件依頼」とAI読み取りをサンプルで試せる。登録支援機関がいる会社の見え方を見たいときは ?demo=1&org=1 。 -->
@@ -451,7 +452,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261118.test05</span><span style="margin-left:6px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px;">テスト版</span>
+  <span class="header-ver">ver.20261118.test06</span><span style="margin-left:6px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px;">テスト版</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <button type="button" id="cniHdrBtn" class="new-case-btn" onclick="_cniOpen()" style="display:none;">＋ 新規案件依頼</button><!-- ver.20261118.test02: O-Linkと同じ場所・同じ見た目 -->
   <div class="header-org" id="headerOrg">読み込み中...</div>
@@ -1537,10 +1538,23 @@ function openPolicyModal(){
     +'<p>当法人は、法令の改正や業務内容の変更等に応じて、本方針を改定することがあります。改定後の内容は、本画面に掲載した時点から適用します。</p>'
     +'<div class="pol-note">制定日：2026年11月6日</div>'
     +'</div></div>';
+    try{ if(_coNoOrg()) _polNoOrg(bg); }catch(eN){}   // ver.20261118.test06
     document.body.appendChild(bg);
   }
   bg.style.display='flex';
   document.body.style.overflow='hidden';
+}
+// ver.20261118.test06: 自社支援の会社（登録支援機関がいない）には、登録支援機関に関する記載を外して見せる（項目番号は繰り上げ）
+function _polNoOrg(bg){
+  var body=bg.querySelector('.pol-body'); if(!body) return;
+  body.querySelectorAll('li').forEach(function(li){ if(li.textContent.indexOf('所属機関・登録支援機関のご担当者')>=0) li.textContent=li.textContent.replace('所属機関・登録支援機関のご担当者','所属機関のご担当者'); });
+  body.querySelectorAll('p').forEach(function(pp){ if(pp.textContent.indexOf('登録支援機関との間では')>=0) pp.remove(); });
+  var hs=Array.prototype.slice.call(body.querySelectorAll('h3'));
+  hs.forEach(function(h){
+    if(h.textContent.indexOf('アップロードいただいた書類の共有')<0) return;
+    var n=h.nextElementSibling; while(n && n.tagName!=='H3'){ var nx=n.nextElementSibling; n.remove(); n=nx; } h.remove();
+  });
+  body.querySelectorAll('h3').forEach(function(h,i){ h.textContent=h.textContent.replace(/^\d+\.\s*/, (i+1)+'. '); });
 }
 function closePolicyModal(){
   var bg=document.getElementById('policyModalBg'); if(bg) bg.style.display='none';
@@ -3793,7 +3807,7 @@ init();
 // ver.20261110.01: O-Linkの利用ログ（画面ごとの滞在時間・フォームのどこまで進んだか）を olink_events に送る。画面の表示・動作は一切変えない。
 // 数えるのは「画面が見えていて、90秒以内に操作がある時間」だけ。デモ表示・token無しは記録しない。
 (function(){
-  var PAGE='company_test', VER='ver.20261118.test05';
+  var PAGE='company_test', VER='ver.20261118.test06';
   try{
     var TOKEN=new URLSearchParams(location.search).get('token')||'';
     if(!TOKEN || TOKEN==='demo' || /[?&]demo=1\b/.test(location.search)) return;
