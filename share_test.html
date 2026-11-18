@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261118.test01: 新規案件依頼に「控えのメール（任意）」を追加（企業マイページの依頼フォームと同じ）。備考の下の1つの欄にメールアドレスを入れると、送信した内容の控えをそのアドレスへメールで送る（company-intake-copy-mail・O-Linkのログイン確認。内容はDBに入った依頼から作る。1回の依頼につき1回だけ・3件まで）。欄は登録支援機関情報のメールアドレスから選べ、前回入れたアドレスが次回も入る。DB: intake_requests.copy_to、create_org_intake が ids を返す。 -->
 <!-- ver.20261117.test01: 1-17号の標準情報・対応時間・相談方法を、まだ入っていない機関にはヒアリングフォームと同じ最初の値（定期面談 対面とオンライン・3か月に1回以上／事前ガイダンス3時間・生活オリエンテーション8時間／実施方法／各支援の実施予定／対応時間9:00〜18:00／相談方法 直接面談・電話／支援の適正性 有）で出す -->
 <!-- ver.20261116.test03: 1-17号の標準情報の「通訳者」欄をやめ、別紙の通訳者名簿だけに一本化（案内文を表示） -->
 <!-- ver.20261116.test03: サイドバーに「発行手数料の支払」を追加（まず株式会社JAMのみ）。2026年10月1日以降の申請で入管から届いた決済リンク（支払依頼メール）を、審査完了と同じ形で一覧表示（届いた日・案件・発行手数料・支払者・支払期限・決済ページを開く／リンクをコピー・確認チェック）。同じ案件に入管の支払完了メールが届くと「支払済み」へ移る。データはget_org_shareのfeeMails。 -->
@@ -793,7 +794,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261117.test01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261118.test01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1185,6 +1186,11 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 
         <div class="nc-section-title"><span class="nc-stepno">5</span>備考</div>
         <textarea id="nc_remarks" class="nc-input" placeholder="その他、連絡事項があればご記入ください（任意）" style="width:100%;box-sizing:border-box;min-height:72px;resize:vertical;font-family:inherit;padding:8px 10px;"></textarea>
+        <!-- ver.20261118.test01: 控えのメール（任意・1つの欄） -->
+        <div class="nc-section-title"><span class="nc-stepno">6</span>控えのメール <span class="nc-sec-sub">（任意）送信した内容の控えをお送りします</span></div>
+        <input type="text" id="nc_copyTo" class="nc-input" list="nc_copyToList" inputmode="email" autocomplete="email" placeholder="控えを送るメールアドレス（例：tanto@example.co.jp）※ 空欄なら送りません" style="width:100%;box-sizing:border-box;padding:8px 10px;">
+        <datalist id="nc_copyToList"></datalist>
+        <div style="font-size:10.5px;color:#64748b;margin-top:4px;line-height:1.5;">複数のときはカンマで区切って3件まで。登録支援機関情報のメールアドレスから選べます。前回入れたアドレスは次回も入ります。</div>
 
       </div>
     </div>
@@ -10548,6 +10554,12 @@ function openNewCaseModal(){
   try{ _ncFeeReset(); }catch(_){}
   var rmEl=document.getElementById('nc_remarks');
   if(rmEl) rmEl.value='';
+  // ver.20261118.test01: 控えのメール（前回のアドレスを入れておく・候補は登録支援機関情報のメール）
+  try{
+    var _cpEl=document.getElementById('nc_copyTo'), _cpL=document.getElementById('nc_copyToList');
+    if(_cpL) _cpL.innerHTML=(orgEmails||[]).map(function(e){ return '<option value="'+esc(e)+'">'; }).join('');
+    if(_cpEl){ var _cpv=''; try{ _cpv=localStorage.getItem('nc_copy_to_'+currentToken)||''; }catch(_){} _cpEl.value=_cpv; }
+  }catch(_){}
   document.getElementById('ncError').style.display='none';
   document.getElementById('ncSuccess').style.display='none';
   var bigSuc=document.getElementById('ncBigSuccess');
@@ -11344,6 +11356,12 @@ async function _submitNewCaseInner(){
   var referralFeeRaw = (document.getElementById('nc_referralFee')||{}).value || '';
   var referralFee = referralFeeRaw.replace(/[,，円\s]/g,'').trim();
   var remarks = ((document.getElementById('nc_remarks')||{}).value || '').trim();
+  // ver.20261118.test01: 控えのメール（任意）
+  var _cpRaw = ((document.getElementById('nc_copyTo')||{}).value || '').trim();
+  var _cpList = _cpRaw ? _cpRaw.split(/[\s,、;；]+/).filter(Boolean) : [];
+  if(_cpList.length > 3){ showNcError('控えのメールは3件までです'); return; }
+  if(_cpList.some(function(a){ return !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a); })){ showNcError('控えのメールアドレスの形が正しくありません'); try{ document.getElementById('nc_copyTo').focus(); }catch(_){} return; }
+  var copyTo = _cpList.join(', ');
   var aidemBranch = (document.getElementById('nc_aidemBranch')||{}).value || '';
   // ver.20260907.01: オープンケア専用「パートナー」（他orgでは常に空）
   var _isOpencareForSend = (orgName && orgName.indexOf('オープンケア')>=0);
@@ -11503,6 +11521,7 @@ async function _submitNewCaseInner(){
     aidemBranch: aidemBranch, clientStaff: clientStaff, clientStaffArr: clientStaffArr,
     supportFee: supportFee, referralFee: referralFee, feeMode: _feeMode, remarks: remarks, jinzaiList: jinzaiList,
     toEmail: toEmail, ccEmail: ccEmail,
+    copyTo: copyTo,   // ver.20261118.test01
     salesPartner: salesPartner,
     // ver.20261027.test01: 送り出し機関＋支払情報（受入れ経験=無 × 申請種別=認定 のときに値が入る）
     senddashiOrg: (function(){ try{ return _ncCollectSenddashiPayload().org; }catch(_){ return null; } })(),
@@ -11567,6 +11586,8 @@ function _renderConfirmBody(p){
   if(p.remarks){
     h += '<div class="nc-cf-label">備考</div><div class="nc-cf-value" style="white-space:pre-wrap;">' + esc(p.remarks) + '</div>';
   }
+  // ver.20261118.test01: 控えのメール
+  h += '<div class="nc-cf-label">控えのメール</div><div class="nc-cf-value">' + (p.copyTo ? '送る（' + esc(p.copyTo) + '）' : '送らない') + '</div>';
   // アイデム拠点・担当者はアイデムのみ表示（非アイデムには出さない）
   if(orgName === '株式会社アイデム'){
     h += '<div class="nc-cf-grid">';
@@ -11624,6 +11645,24 @@ function copyConfirmReqText(){
   }
 }
 
+// ver.20261118.test01: 送信内容の控えを依頼者へメール（内容はサーバーがDBの依頼から作る。O-Link のログイン確認）
+function _ncSendCopyMail(to, res, practice){
+  var host=document.getElementById('ncBigSuccessText'); if(!host) return;
+  var box=document.createElement('div'); box.id='ncCopyMsg';
+  box.style.cssText='margin-top:10px;font-size:12px;font-weight:700;border-radius:8px;padding:8px 10px;background:#eef2ff;color:#3730a3;';
+  box.textContent='控えのメールを送っています…（'+to+'）'; host.appendChild(box);
+  var warn=function(t){ box.style.background='#fffbeb'; box.style.color='#92400e'; box.textContent=t; };
+  if(practice){ warn('練習モードのため、控えのメールは送られません（本番では '+to+' へお送りします）'); return; }
+  var ids=(res&&Array.isArray(res.ids))?res.ids:[];
+  if(!ids.length){ warn('控えのメールを送れませんでした（ご依頼は弊社に届いています）'); return; }
+  fetch(SUPABASE_URL+'/functions/v1/company-intake-copy-mail',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},
+    body:JSON.stringify({ org:true, token:currentToken, pass:(currentPass||''), ids:ids })})
+  .then(function(x){ return x.json().catch(function(){ return null; }); })
+  .then(function(j){
+    if(j && j.ok){ box.style.background='#f0fdf4'; box.style.color='#166534'; box.textContent='📧 控えを '+((j.to||[]).join(', ')||to)+' へお送りしました'; }
+    else warn('控えのメールを送れませんでした（ご依頼は弊社に届いています）');
+  }).catch(function(){ warn('控えのメールを送れませんでした（ご依頼は弊社に届いています）'); });
+}
 async function executeSubmit(){
   if(!_ncPendingPayload) return;
   var p = _ncPendingPayload;
@@ -11693,6 +11732,7 @@ async function executeSubmit(){
         other_support_note: otherNote,
         to_email: p.toEmail||'',
         cc_email: p.ccEmail||'',
+        copy_to: p.copyTo||'',   // ver.20261118.test01: 控えのメールの送り先
         received_at: nowIso,
         status: 'pending'
       };
@@ -11726,6 +11766,9 @@ async function executeSubmit(){
     var mailTextEl = document.getElementById('ncMailText');   // ver.20261010.01: 初回メール文案
     if(mailTextEl) mailTextEl.value = _buildIntroMailText(p.company, (p.jinzaiList||[]).map(function(j){return j.name;}), p.clientStaff);
     bigSuc.classList.add('show');
+    // ver.20261118.test01: 控えのメール
+    try{ localStorage.setItem('nc_copy_to_'+currentToken, p.copyTo||''); }catch(_){}
+    if(p.copyTo) _ncSendCopyMail(p.copyTo, _res, _practice);
     // 下部ボタンの調整
     document.getElementById('ncSubmitBtn').style.display = 'none';
     var cancelBtn = document.querySelector('#newCaseModalBg .nc-cancel-btn');
