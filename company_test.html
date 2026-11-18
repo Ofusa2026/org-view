@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>【テスト版】所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261118.test05: 登録支援機関がいない会社（自社支援）では、登録支援機関・支援の記載を出さない（案件一覧とCSVの「登録支援機関」列、人材詳細の「登録支援機関」、所属機関情報の「登録支援機関名・登録番号・住所・支援担当者」→ 見出しも「担当」に）。 -->
 <!-- ver.20261118.test04: 新規案件依頼の「案件の情報」で、入力欄の高さと位置をそろえた（見出しが2行になる欄があっても、選択欄・入力欄・受入れ有/無の高さが同じ線に並ぶ）。登録支援機関の案件が1件もない会社（自社支援）では、最初の「O-Linkのご案内」の「御社の提出書類と提出状況を、登録支援機関と共有することに同意いたします」を出さない（DB: company_view_meta に has_support_org を追加）。 -->
 <!-- ver.20261118.test03: テスト版のサンプル表示（?demo=1）を「自社支援の会社」にした（サンプルの案件に登録支援機関を付けない）。これで「＋ 新規案件依頼」とAI読み取りをサンプルで試せる。登録支援機関がいる会社の見え方を見たいときは ?demo=1&org=1 。 -->
 <!-- ver.20261118.test02: 「＋ 新規案件依頼」ボタンをO-Linkと同じ場所（ヘッダー右・会社名のすぐ左、緑のボタン）に移動し、サイドバーの同じボタンはやめた。依頼フォームの一番上に「AIで読み取って入力」を追加（在留カード・パスポート・LINE/メールの文章・Excelのスクショを、ドラッグ／貼り付け（Ctrl+V）／画像を選ぶ で入れる → 空いている欄だけに入れて黄色で示す）。読み取りは company-intake-ai-read（企業マイページのログインと同じ確認＋自社支援の会社だけ）。 -->
@@ -450,7 +451,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261118.test04</span><span style="margin-left:6px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px;">テスト版</span>
+  <span class="header-ver">ver.20261118.test05</span><span style="margin-left:6px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px;">テスト版</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <button type="button" id="cniHdrBtn" class="new-case-btn" onclick="_cniOpen()" style="display:none;">＋ 新規案件依頼</button><!-- ver.20261118.test02: O-Linkと同じ場所・同じ見た目 -->
   <div class="header-org" id="headerOrg">読み込み中...</div>
@@ -665,6 +666,8 @@ function isDone(s){ return /受取|交付|完了|許可済/.test(s||''); }
 var DONE_ST=['完了','審査完了'];
 function classifyCase(c){ return DONE_ST.indexOf((c&&c.status)||'')>=0?'done':'active'; }
 /* ver.20260616.01: 案件のorg(登録支援機関名)から重複なしの一覧を作る。複数機関の企業でもトークン単位で案件が分かれるため通常は1機関 */
+// ver.20261118.test05: 登録支援機関がいない会社（自社支援）か。案件の登録支援機関が1つもなければ true（機関向け表示のときは false）
+function _coNoOrg(){ if(_orgToken || _orgScope) return false; if(window._coHasOrg===true && !(allCases||[]).length) return false; return !String(supportOrgName||'').trim(); }
 function _distinctOrgs(arr){ var seen=[]; (arr||[]).forEach(function(c){ var o=((c&&c.org)||'').trim(); if(o&&seen.indexOf(o)<0) seen.push(o); }); return seen.join(' ・ '); }
 
 /* 在留期限アラートの除外（本体 _KANRI_EXPIRE_EXCLUDE と同一）。申請済・審査中・交付・完了等は対象外 */
@@ -2104,6 +2107,9 @@ function renderOrgInfo(){
   var any=false;
   ORGINFO_GROUPS.forEach(function(grp){
     var rows='';
+    // ver.20261118.test05: 自社支援の会社は登録支援機関の項目を出さない（見出しも「担当」に）
+    var _noO=_coNoOrg(), _SUPF=['support_org_name','support_org_no','support_org_address','support_staff'];
+    if(_noO && grp.g==='登録支援機関・担当') grp={g:'担当', fields:grp.fields.filter(function(f){ return _SUPF.indexOf(f[0])<0; })};
     grp.fields.forEach(function(f){
       var v=p[f[0]];
       if(v!=null && String(v).trim()!==''){ rows+='<div class="oi-row"><span class="oi-l">'+f[1]+'</span><span class="oi-v">'+esc(v)+'</span></div>'; }
@@ -2997,12 +3003,16 @@ function renderDocs(){
 }
 
 function exportCsv(){
+  var _no=_coNoOrg();   // ver.20261118.test05: 自社支援の会社は登録支援機関の列を出さない
   var cols=['氏名','国籍','登録支援機関','申請在留資格','申請種別','分野・職種','進捗','受付番号','在留期限','特例期限','部署','担当'];
+  if(_no) cols.splice(2,1);
   var rows=[cols];
   allCases.forEach(function(c){
     var field=[c.applicant_field,c.job_category].filter(Boolean).join(' / ')||(c.industry||'');
     var tok=_tokureiTracked(c)?(_tokureiDate(c)||''):'';
-    rows.push([c.applicant||c.name||'',natVal(c),c.org||'',c.residence_status||'',c.app_type||'',field,getExternalStatus(c.status),c.receipt_no||'',c.expire||'',tok,c.team||'',c.staff||'']);
+    var _r=[c.applicant||c.name||'',natVal(c),c.org||'',c.residence_status||'',c.app_type||'',field,getExternalStatus(c.status),c.receipt_no||'',c.expire||'',tok,c.team||'',c.staff||''];
+    if(_no) _r.splice(2,1);
+    rows.push(_r);
   });
   var csv='\uFEFF'+rows.map(function(r){return r.map(function(v){v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(',');}).join('\r\n');
   var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
@@ -3053,7 +3063,7 @@ function renderPeople(group){
   });
   h+='</div>';
   h+='<div class="tbl-wrap has-pcards"><table><thead><tr>'
-    +'<th>氏名</th><th>国籍</th><th>登録支援機関</th><th>申請在留資格</th><th>申請種別</th><th>分野・職種</th>'
+    +'<th>氏名</th><th>国籍</th>'+(_coNoOrg()?'':'<th>登録支援機関</th>')+'<th>申請在留資格</th><th>申請種別</th><th>分野・職種</th>'
     +'<th>進捗</th><th>受付番号</th><th>在留期限</th><th>担当窓口</th><th>PDF</th>'
     +'</tr></thead><tbody>';
   rows.forEach(function(c){
@@ -3063,7 +3073,7 @@ function renderPeople(group){
     h+='<tr class="people-row" onclick="openDetail(\''+esc(c.id)+'\')">';
     h+='<td><b>'+esc(nm)+'</b></td>';
     h+='<td>'+esc(natVal(c)||'—')+'</td>';
-    h+='<td><div class="wrap-cell" style="max-width:108px;">'+esc(c.org||'—')+'</div></td>';
+    if(!_coNoOrg()) h+='<td><div class="wrap-cell" style="max-width:108px;">'+esc(c.org||'—')+'</div></td>';
     h+='<td><div class="wrap-cell" style="max-width:96px;">'+esc(c.residence_status||'—')+'</div></td>';
     h+='<td>'+esc(c.app_type||'—')+'</td>';
     h+='<td>'+esc(field)+'</td>';
@@ -3213,7 +3223,7 @@ function renderDetail(c,p){
   h+=row('在留期限',_dv(c.expire));
   if(ti) h+=row('特例期限',ti.txt);
   h+=row('申請種別',_dv(c.app_type));
-  h+=row('登録支援機関',_dv(c.org));
+  if(!_coNoOrg()) h+=row('登録支援機関',_dv(c.org));
   h+=row('進捗',esc(getExternalStatus(c.status)));
   if(companyShowMlit){ var _ml=getKokkoStatus(c); if(_ml) h+=row('国交省申請',esc(_ml)); }
   h+=row('受付番号',_dv(c.receipt_no));
@@ -3783,7 +3793,7 @@ init();
 // ver.20261110.01: O-Linkの利用ログ（画面ごとの滞在時間・フォームのどこまで進んだか）を olink_events に送る。画面の表示・動作は一切変えない。
 // 数えるのは「画面が見えていて、90秒以内に操作がある時間」だけ。デモ表示・token無しは記録しない。
 (function(){
-  var PAGE='company_test', VER='ver.20261118.test04';
+  var PAGE='company_test', VER='ver.20261118.test05';
   try{
     var TOKEN=new URLSearchParams(location.search).get('token')||'';
     if(!TOKEN || TOKEN==='demo' || /[?&]demo=1\b/.test(location.search)) return;
