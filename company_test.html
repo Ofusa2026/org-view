@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>【テスト版】所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261118.test03: テスト版のサンプル表示（?demo=1）を「自社支援の会社」にした（サンプルの案件に登録支援機関を付けない）。これで「＋ 新規案件依頼」とAI読み取りをサンプルで試せる。登録支援機関がいる会社の見え方を見たいときは ?demo=1&org=1 。 -->
 <!-- ver.20261118.test02: 「＋ 新規案件依頼」ボタンをO-Linkと同じ場所（ヘッダー右・会社名のすぐ左、緑のボタン）に移動し、サイドバーの同じボタンはやめた。依頼フォームの一番上に「AIで読み取って入力」を追加（在留カード・パスポート・LINE/メールの文章・Excelのスクショを、ドラッグ／貼り付け（Ctrl+V）／画像を選ぶ で入れる → 空いている欄だけに入れて黄色で示す）。読み取りは company-intake-ai-read（企業マイページのログインと同じ確認＋自社支援の会社だけ）。 -->
 <!-- ver.20261118.test01: 企業マイページのテスト版（company_test.html）を作成（2026/11/18 秘密の質問 回答済）。ver.20261118.01 の自社支援向け「新規案件依頼」に、申請する人ごとの「本人のLINE QR」（画像・任意。長い辺600pxに縮めて送信）を追加。 -->
 <!-- ver.20261118.01: 自社支援の会社（登録支援機関の案件が1件もない会社）に「＋ 新規案件依頼」を追加（ヘッダーとサイドバー）。O-Linkと同じ流れで、案件の情報（申請種別・希望在留資格・分野・受入れ経験・御社ご担当者・連絡先）、申請する人（最大30名）、人材紹介手数料、送り出し機関（認定のみ・受入れ無は必須）、備考を入力 → 確認 → 送信。支援委託費・支援担当者など支援の項目はなし。送信先はアンシスの受信トレイ（登録支援機関なし・企業マイページからの依頼）。DB: create_company_intake（登録支援機関の案件がある会社は拒否）。 -->
@@ -448,7 +449,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261118.test02</span><span style="margin-left:6px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px;">テスト版</span>
+  <span class="header-ver">ver.20261118.test03</span><span style="margin-left:6px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px;">テスト版</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <button type="button" id="cniHdrBtn" class="new-case-btn" onclick="_cniOpen()" style="display:none;">＋ 新規案件依頼</button><!-- ver.20261118.test02: O-Linkと同じ場所・同じ見た目 -->
   <div class="header-org" id="headerOrg">読み込み中...</div>
@@ -498,7 +499,7 @@ var _DEMO=/[?&]demo=1\b/.test(location.search);
 function _dd(n){ var d=new Date(); d.setDate(d.getDate()+n); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
 var _DEMO_PDF='https://drive.google.com/file/d/1LIqM5Z6vaSzmA4vzybsmajFMOGVHIVXm/preview';
 function _demoCoGet(){
-  var ORG='サンプル登録支援機関';
+  var ORG=/[?&]org=1\b/.test(location.search)?'サンプル登録支援機関':'';   // ver.20261118.test03: テスト版のサンプルは自社支援の会社（&org=1 で登録支援機関あり）
   function cs(o){ return Object.assign({org:ORG,team:'書類部',staff:'大房　太郎',industry:null,created_at:_dd(-10)+'T10:00:00+09:00',receipt_no:null,nationality:'ベトナム',shinsa_date:null,status_date:_dd(-3)+'T10:00:00+09:00',temp_return:null,contract_start:_dd(30),contract_end:_dd(1125),job_category:null,receipt_date:null,milestone_step:null,other_agencies:{},applicant_field:'建設分野（特定技能１号）',residence_status:'特定技能1号',application_deadline:null},o); }
   function ps(o){ return Object.assign({email:'sample@example.com',phone:null,expire:null,tel_num:null,hire_date:null,jp_address:'東京都千代田区サンプル1-2-3',nationality:'ベトナム',contract_end:null,contract_start:null,jp_postal_code:'100-0000',jp_detail_address:'サンプルハイツ101',home_country_address:null,custody_receipt_pdf_urls:[],application_cert_pdf_urls:[],cel_phone:'090-0000-0000'},o); }
   var R=_dd(-6);
@@ -3775,7 +3776,7 @@ init();
 // ver.20261110.01: O-Linkの利用ログ（画面ごとの滞在時間・フォームのどこまで進んだか）を olink_events に送る。画面の表示・動作は一切変えない。
 // 数えるのは「画面が見えていて、90秒以内に操作がある時間」だけ。デモ表示・token無しは記録しない。
 (function(){
-  var PAGE='company_test', VER='ver.20261118.test02';
+  var PAGE='company_test', VER='ver.20261118.test03';
   try{
     var TOKEN=new URLSearchParams(location.search).get('token')||'';
     if(!TOKEN || TOKEN==='demo' || /[?&]demo=1\b/.test(location.search)) return;
