@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>【テスト版】所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261118.test09: 控えの送り先は「ご連絡先メールアドレス」の1つにまとめた（別の欄はやめた）。欄の下の「☑ 送信内容の控えをこのアドレスに送る」（最初からチェック・外せば送らない）。 -->
 <!-- ver.20261118.test08: 新規案件依頼に「控えの送り先メール（任意）」を追加。入れると、送信した内容の控えをそのアドレスへメールで送る（company-intake-copy-mail。内容はDBに入った依頼から組み立て、1回の依頼につき1回だけ）。DB: intake_requests.copy_to／copy_sent_at、create_company_intake が ids を返す。 -->
 <!-- ver.20261118.test07: 依頼フォームはマイページにログインして使う形に。マイページのURLに &form=1 を付けると、ログイン後すぐに「新規案件依頼」が開く（同じURLを何度でも使える）。送信後に「＋ 続けて別の依頼をする」を追加（ご担当者名・メールは次回も入った状態）。 -->
 <!-- ver.20261118.test06: 自社支援の会社では「個人情報保護方針」からも登録支援機関の記載を外した（取得する情報の「登録支援機関のご担当者」、第三者提供の「登録支援機関との共有」の一文、「4. アップロードいただいた書類の共有」の項。以降の項目番号は繰り上げ）。 -->
@@ -454,7 +455,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261118.test08</span><span style="margin-left:6px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px;">テスト版</span>
+  <span class="header-ver">ver.20261118.test09</span><span style="margin-left:6px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px;">テスト版</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <button type="button" id="cniHdrBtn" class="new-case-btn" onclick="_cniOpen()" style="display:none;">＋ 新規案件依頼</button><!-- ver.20261118.test02: O-Linkと同じ場所・同じ見た目 -->
   <div class="header-org" id="headerOrg">読み込み中...</div>
@@ -3423,9 +3424,8 @@ function _cniBuild(){
       +'<div><label class="cni-lbl">受入れ経験'+R+'</label><div><label class="cni-radio"><input type="radio" name="cni_exp" value="有" onchange="_cniSync()"> 受入れ有</label><label class="cni-radio"><input type="radio" name="cni_exp" value="無" onchange="_cniSync()"> 受入れ無</label></div></div>'
       +'<div><label class="cni-lbl">御社ご担当者名'+R+'</label><input id="cni_staff" class="cni-in" placeholder="例：山田 太郎"></div>'
       +'<div><label class="cni-lbl">ご連絡先メールアドレス'+R+'</label><input id="cni_mail" type="email" class="cni-in" placeholder="例：yamada@example.co.jp"></div>'
-      +'<div><label class="cni-lbl">控えの送り先メール <span style="font-weight:500;color:#94a3b8;">（任意）</span></label><input id="cni_copyTo" type="email" class="cni-in" data-cniopt="1" placeholder="例：yamada@example.co.jp"></div>'   // ver.20261118.test08
     +'</div>'
-    +'<div class="cni-note" style="margin-top:6px;">※「控えの送り先メール」を入れると、送信した内容の控えをそのアドレスへメールでお送りします（複数のときはカンマで区切って3件まで）。</div>'
+    +'<label style="display:inline-flex;align-items:center;gap:7px;margin-top:8px;font-size:12px;font-weight:700;color:#334155;cursor:pointer;"><input type="checkbox" id="cni_copyChk" checked style="width:16px;height:16px;"> 送信内容の控えを「ご連絡先メールアドレス」に送る</label>'   // ver.20261118.test09
     +'<div class="cni-sec"><span class="n">2</span>申請する人 <span style="font-weight:500;font-size:11px;color:#64748b;">1行に1人（最大30名）</span></div>'
     +'<div style="overflow-x:auto;"><table class="cni-tbl"><thead><tr><th>#</th><th>氏名（英字）'+R+'</th><th>国籍'+R+'</th><th>現在の在留資格<span id="cni_curRq">'+R+'</span></th><th>在留期限<span id="cni_expRq">'+R+'</span></th><th>現在の在留期間</th><th>希望在留期間'+R+'</th><th>受取方法'+R+'</th><th>本人のLINE QR <span style="font-weight:500;color:#94a3b8;">（任意）</span></th><th class="cni-feecol" style="display:none;">紹介手数料（円・税抜）</th><th></th></tr></thead><tbody id="cniRows"></tbody></table></div>'
     +'<button type="button" onclick="_cniAddRow()" style="margin-top:8px;background:#fff;border:1.5px dashed #1e3a8a;color:#1e3a8a;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;">＋ 人を追加</button>'
@@ -3536,7 +3536,7 @@ function _cniOpen(){
   _cniAddRow(); _cniErr('');
   // ver.20261118.test07: 前回のご担当者名・メールを入れておく
   if(!_cniLast){ try{ _cniLast=JSON.parse(localStorage.getItem('cni_last_'+currentToken)||'null'); }catch(eL){ _cniLast=null; } }
-  if(_cniLast){ var _s=document.getElementById('cni_staff'), _m=document.getElementById('cni_mail'); if(_s&&_cniLast.staff) _s.value=_cniLast.staff; if(_m&&_cniLast.mail) _m.value=_cniLast.mail; var _c=document.getElementById('cni_copyTo'); if(_c&&_cniLast.copyTo) _c.value=_cniLast.copyTo; }
+  if(_cniLast){ var _s=document.getElementById('cni_staff'), _m=document.getElementById('cni_mail'); if(_s&&_cniLast.staff) _s.value=_cniLast.staff; if(_m&&_cniLast.mail) _m.value=_cniLast.mail; var _c=document.getElementById('cni_copyChk'); if(_c&&_cniLast.copyOn===false) _c.checked=false; }
   bg.classList.add('open'); _cniSync();
 }
 function _cniClose(){ var bg=document.getElementById('cniBg'); if(bg) bg.classList.remove('open'); }
@@ -3716,11 +3716,8 @@ function _cniCollect(){
   if(!staff) errs.push('御社ご担当者名を入れてください');
   if(!mail) errs.push('ご連絡先メールアドレスを入れてください'); else if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) errs.push('メールアドレスの形が正しくありません');
   if(fm==='same' && !/^\d+$/.test(fsame)) errs.push('人材紹介手数料（全員同じ金額）を数字で入れてください');
-  // ver.20261118.test08: 控えの送り先（任意）
-  var copyTo=_cniVal('cni_copyTo'), _cps=copyTo?copyTo.split(/[\s,、;；]+/).filter(Boolean):[];
-  if(_cps.length>3) errs.push('控えの送り先メールは3件までです');
-  else if(_cps.some(function(a){ return !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a); })) errs.push('控えの送り先メールの形が正しくありません');
-  copyTo=_cps.join(', ');
+  // ver.20261118.test09: 控えはご連絡先メールアドレスへ（チェックしたときだけ）
+  var _cc=document.getElementById('cni_copyChk'), copyOn=!!(_cc&&_cc.checked), copyTo=(copyOn&&mail)?mail:'';
   var nintei=(at==='認定'), people=[];
   document.querySelectorAll('#cniRows tr').forEach(function(tr,i){
     var g=function(c){ var e=tr.querySelector(c); return e?String(e.value||'').trim():''; };
@@ -3749,7 +3746,7 @@ function _cniCollect(){
       if(py||am) sdPay={payer:py,amount:am};
     }else{ sdOrg={not_used:true}; }
   }
-  return {errs:errs, copyTo:copyTo, at:at, ds:(ds==='その他'&&dsn?('その他: '+dsn):ds), field:_cniVal('cni_field'), exp:exp, staff:staff, mail:mail, fm:fm, fsame:fsame, people:people, sdOrg:sdOrg, sdPay:sdPay, remarks:_cniVal('cni_remarks')};
+  return {errs:errs, copyTo:copyTo, copyOn:copyOn, at:at, ds:(ds==='その他'&&dsn?('その他: '+dsn):ds), field:_cniVal('cni_field'), exp:exp, staff:staff, mail:mail, fm:fm, fsame:fsame, people:people, sdOrg:sdOrg, sdPay:sdPay, remarks:_cniVal('cni_remarks')};
 }
 function _cniCaseName(d){
   var nats={}; d.people.forEach(function(p){ nats[p.nat]=(nats[p.nat]||0)+1; });
@@ -3766,7 +3763,7 @@ function _cniConfirm(){
   var h='<div class="cni-note" style="margin-bottom:10px;">この内容で弊社へ送信します。よろしければ「この内容で送信する」を押してください。</div>'
     +'<table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;margin-bottom:12px;">'
     +row('案件名',esc(_cniCaseName(d)))+row('申請種別',esc(d.at))+row('希望在留資格',esc(d.ds)+(d.field?'（分野：'+esc(d.field)+'）':''))+row('受入れ経験',esc(d.exp))
-    +row('御社ご担当者',esc(d.staff)+'（'+esc(d.mail)+'）')+(d.copyTo?row('控えの送り先',esc(d.copyTo)):'')+row('人材紹介手数料',esc(feeTxt));
+    +row('御社ご担当者',esc(d.staff)+'（'+esc(d.mail)+'）')+row('控えのメール',d.copyTo?('送る（'+esc(d.copyTo)+'）'):'送らない')+row('人材紹介手数料',esc(feeTxt));
   if(d.at==='認定'){
     var sd=d.sdOrg&&d.sdOrg.not_used?'送り出し機関省略':(d.sdOrg?esc([d.sdOrg.name,d.sdOrg.country,d.sdOrg.address,d.sdOrg.tel].filter(Boolean).join(' ／ '))+(d.sdPay&&d.sdPay.payer?'<br>支払：'+esc(d.sdPay.payer)+(d.sdPay.amount!==''?' '+Number(d.sdPay.amount||0).toLocaleString()+'円':''):''):'（入力なし）');
     h+=row('送り出し機関',sd);
@@ -3825,7 +3822,7 @@ async function _cniSend(){
     var cf=document.getElementById('cniConfirmBody');
     cf.innerHTML='<div style="text-align:center;padding:30px 10px;"><div style="font-size:40px;">✅</div><div style="font-size:16px;font-weight:800;color:#0f2040;margin:8px 0;">ご依頼を送信しました（'+r.inserted+'名）</div><div class="cni-note">弊社で内容を確認し、ご担当者さまへご連絡します。ありがとうございました。</div></div>';
     // ver.20261118.test07: 続けて別の依頼をする（ご担当者名・メールは次回も入れておく）
-    _cniLast={staff:d.staff, mail:d.mail, copyTo:d.copyTo||''}; try{ localStorage.setItem('cni_last_'+currentToken, JSON.stringify(_cniLast)); }catch(eL){}
+    _cniLast={staff:d.staff, mail:d.mail, copyOn:d.copyOn}; try{ localStorage.setItem('cni_last_'+currentToken, JSON.stringify(_cniLast)); }catch(eL){}
     cf.querySelector('.cni-note').insertAdjacentHTML('beforeend','<br>次のご依頼も、このページからお送りいただけます。'+(r.demo?'<br><span style="color:#92400e;">（サンプル表示のため、実際には送信されていません）</span>':''));
     if(d.copyTo) _cniCopyMail(d.copyTo, r);   // ver.20261118.test08: 控えのメール
     document.querySelector('#cniBg .cni-ft').innerHTML='<button type="button" class="cni-btn" style="background:#fff;border:1px solid #cbd5e1;color:#334155;" onclick="_cniClose()">閉じる</button><button type="button" class="cni-btn" style="background:#16a34a;color:#fff;" onclick="_cniOpen()">＋ 続けて別の依頼をする</button>';
@@ -3840,7 +3837,7 @@ init();
 // ver.20261110.01: O-Linkの利用ログ（画面ごとの滞在時間・フォームのどこまで進んだか）を olink_events に送る。画面の表示・動作は一切変えない。
 // 数えるのは「画面が見えていて、90秒以内に操作がある時間」だけ。デモ表示・token無しは記録しない。
 (function(){
-  var PAGE='company_test', VER='ver.20261118.test08';
+  var PAGE='company_test', VER='ver.20261118.test09';
   try{
     var TOKEN=new URLSearchParams(location.search).get('token')||'';
     if(!TOKEN || TOKEN==='demo' || /[?&]demo=1\b/.test(location.search)) return;
