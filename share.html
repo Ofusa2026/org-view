@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261119.02: 申請期限切れのポップアップに「過ぎているが依頼する」を追加。押した人は依頼でき、確認画面に「申請期限切れ」、案シスの備考の先頭に【申請期限切れ承知で依頼（申請期限 ○）】が入る。在留期限を変えたらもう一度確認が出る -->
+<!-- ver.20261119.01: 新規案件依頼で、変更・更新の人の申請期限（在留期限の7日前）がもう過ぎていたら「在留期限を確認してください」のポップアップを出して依頼できないようにした（認定は対象外） -->
 <!-- ver.20261117.01: 1-17号の標準情報・対応時間・相談方法を、まだ入っていない機関にはヒアリングフォームと同じ最初の値（定期面談 対面とオンライン・3か月に1回以上／事前ガイダンス3時間・生活オリエンテーション8時間／実施方法／各支援の実施予定／対応時間9:00〜18:00／相談方法 直接面談・電話／支援の適正性 有）で出す -->
 <!-- ver.20261116.03: 1-17号の標準情報の「通訳者」欄をやめ、別紙の通訳者名簿だけに一本化（案内文を表示） -->
 <!-- ver.20261116.03: サイドバーに「発行手数料の支払」を追加（まず株式会社JAMのみ）。2026年10月1日以降の申請で入管から届いた決済リンク（支払依頼メール）を、審査完了と同じ形で一覧表示（届いた日・案件・発行手数料・支払者・支払期限・決済ページを開く／リンクをコピー・確認チェック）。同じ案件に入管の支払完了メールが届くと「支払済み」へ移る。データはget_org_shareのfeeMails。 -->
@@ -762,7 +764,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261117.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261119.02</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -11422,6 +11424,46 @@ function _ncFeeReset(){
   _ncFeeSync();
 }
 
+// ver.20261119.01: 申請期限＝在留期限の7日前（案シスで依頼を受けたときに入る申請期限と同じ）。今日より前なら期限切れ
+function _ncDeadlineOf(exp){
+  var m=String(exp||'').match(/^(\d{4})-(\d{2})-(\d{2})/); if(!m) return null;
+  var dl=new Date(+m[1], +m[2]-1, +m[3]-7);
+  var today=new Date(); today.setHours(0,0,0,0);
+  if(isNaN(dl)) return null;
+  var ymd=dl.getFullYear()+'/'+('0'+(dl.getMonth()+1)).slice(-2)+'/'+('0'+dl.getDate()).slice(-2);
+  return {over: dl.getTime()<today.getTime(), ymd: ymd, overDays: Math.round((today-dl)/86400000)};
+}
+function _ncShowDeadlinePopup(no, name, exp, dl, rowEl){
+  var ex=document.getElementById('_ncDlPop'); if(ex) ex.remove();
+  var esc2=function(t){ return String(t||'').replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+  var bg=document.createElement('div');
+  bg.id='_ncDlPop';
+  bg.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:16px;';
+  bg.innerHTML='<div style="background:#fff;border-radius:14px;max-width:440px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3);overflow:hidden;">'
+    +'<div style="background:#fee2e2;color:#b91c1c;font-weight:900;font-size:16px;padding:14px 20px;">⚠ 在留期限を確認してください</div>'
+    +'<div style="padding:16px 20px;font-size:13px;line-height:1.8;color:#1e293b;">'
+    +'<b>'+no+'人目'+(name?'（'+esc2(name)+'）':'')+'</b>の申請期限が、すでに過ぎています。<br>'
+    +'<div style="margin:10px 0;padding:10px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">'
+    +'入力された在留期限：<b>'+esc2(String(exp).replace(/-/g,'/'))+'</b><br>'
+    +'申請期限（在留期限の7日前）：<b style="color:#dc2626;">'+dl.ymd+'</b>（'+dl.overDays+'日過ぎています）</div>'
+    +'在留期限の<b>年</b>などが間違っていないか、在留カードでご確認ください。<br>'
+    +'在留期限が正しく、申請期限が過ぎていても依頼する場合は「過ぎているが依頼する」を押してください。大房行政書士法人で対応できるか確認してご連絡します。'
+    +'</div>'
+    +'<div style="padding:0 20px 16px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">'
+    +'<button type="button" id="_ncDlPopGo" style="font-size:13px;font-weight:800;padding:8px 16px;background:#fff;color:#dc2626;border:1.5px solid #fca5a5;border-radius:8px;cursor:pointer;">過ぎているが依頼する</button>'
+    +'<button type="button" id="_ncDlPopOk" style="font-size:13px;font-weight:800;padding:8px 22px;background:#1e3a8a;color:#fff;border:none;border-radius:8px;cursor:pointer;">在留期限を確認する</button></div>'
+    +'</div>';
+  document.body.appendChild(bg);
+  document.getElementById('_ncDlPopOk').onclick=function(){ bg.remove(); };
+  // ver.20261119.02: 過ぎているが依頼する → この人に印を付けて、もう一度「登録」と同じ流れで進める（ほかの人の確認も続けて行う）
+  document.getElementById('_ncDlPopGo').onclick=function(){
+    bg.remove();
+    if(rowEl){ rowEl.dataset.dlAck = exp; try{ rowEl.querySelector('.nc-j-expire').style.borderColor=''; }catch(e){} }
+    var _el=document.getElementById('ncError'); if(_el) _el.style.display='none';
+    submitNewCase();
+  };
+}
+
 function showNcError(msg){
   var el = document.getElementById('ncError');
   el.textContent = '' + msg;
@@ -11659,6 +11701,15 @@ async function _submitNewCaseInner(){
       try{ rowEl.querySelector('.nc-j-expire').focus(); }catch(e){}
       return;
     }
+    // ver.20261119.01: 変更・更新で申請期限（在留期限の7日前）がもう過ぎている人は依頼できない。確認のポップアップを出して止める
+    if(appType !== '認定' && exp){
+      var _dl = _ncDeadlineOf(exp);
+      if(_dl && _dl.over && rowEl.dataset.dlAck !== exp){   // ver.20261119.02: 「過ぎているが依頼する」を押した人（同じ在留期限のまま）は通す
+        _ncShowDeadlinePopup(i+1, nm, exp, _dl, rowEl);
+        try{ var _ee=rowEl.querySelector('.nc-j-expire'); _ee.style.borderColor='#dc2626'; _ee.focus(); }catch(e){}
+        return;
+      }
+    }
     // ver.20261020.test01: 変更・更新は現在の在留期間も必須に（認定は空でもよい）
     if(appType !== '認定' && !currentStayPeriod){
       showNcError((i+1) + '人目の現在の在留期間を選択してください（変更・更新のときは必須です）');
@@ -11678,6 +11729,7 @@ async function _submitNewCaseInner(){
       hopedStayPeriod: hopedStayPeriod,
       currentStayPeriod: currentStayPeriod,
       _iid: (rowEl.dataset && rowEl.dataset.intakeId) || '',   // ver.20261030.03: 編集のとき、元の依頼の行
+      dlOverAck: (appType !== '認定' && exp && rowEl.dataset.dlAck === exp) ? (_ncDeadlineOf(exp)||{}).ymd || '' : '',   // ver.20261119.02: 申請期限が過ぎているが依頼する
       introFee: introFee
     });
   }
@@ -11787,7 +11839,7 @@ function _renderConfirmBody(p){
         curDisp = esc(j.currentStatus);
       }
     }
-    h += '<tr><td>' + (idx+1) + '</td><td>' + esc(j.name) + '</td><td>' + esc(j.nationality) + '</td><td style="font-size:10.5px;">' + curDisp + '</td><td>' + esc(j.expire || '-') + '</td><td>' + esc(j.ukeMethod) + '</td><td style="text-align:center;">' + recMark + '</td></tr>';
+    h += '<tr><td>' + (idx+1) + '</td><td>' + esc(j.name) + '</td><td>' + esc(j.nationality) + '</td><td style="font-size:10.5px;">' + curDisp + '</td><td>' + esc(j.expire || '-') + (j.dlOverAck ? '<div style="color:#dc2626;font-size:10px;font-weight:800;">申請期限切れ（'+esc(j.dlOverAck)+'）</div>' : '') + '</td><td>' + esc(j.ukeMethod) + '</td><td style="text-align:center;">' + recMark + '</td></tr>';
   });
   h += '</tbody></table></div>';
   // ver.20260531.04: 送信前にも依頼テキストを生成してコピーできるようにする
@@ -11856,6 +11908,10 @@ async function executeSubmit(){
         noteParts.push(p.remarks);
       }
       var otherNote = noteParts.join(' / ');
+      // ver.20261119.02: 申請期限が過ぎているが依頼した人は、備考の先頭に印を付けて案シス側で気づけるようにする
+      if(j.dlOverAck){
+        otherNote = '【申請期限切れ承知で依頼（申請期限 ' + j.dlOverAck + '）】' + (otherNote ? '\n' + otherNote : '');
+      }
       // ver.20260701.test66: 分野は案シスに受け皿カラムが無いため、備考(other_support_note)の先頭に「【分野：○○】」として合成する
       if(p.applicantField){
         otherNote = '【分野：' + p.applicantField + '】' + (otherNote ? '\n' + otherNote : '');
