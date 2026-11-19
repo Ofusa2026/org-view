@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261119.01: オープンケア協同組合への「パスワードを共有する」は、その企業に関係するパートナー企業（例：グローバルパートナーズ）にも共有されることを、パートナー名を入れて、共有欄・確認・最初の同意文に明記（共有の承認はパートナーにも引き継ぐ：DB _share_org_id）。 -->
 <!-- ver.20261113.01: 人材詳細の「申請情報」に「📮 在留カードの郵送」を追加。入管へ発送済み → 入管に到着 → カードを返送中 → 到着 の4段階と日付、返りのレターパックの追跡番号（日本郵便の追跡ページが開く）を出す。データは company_view_extra の lp（その人材が入っている最新のレターパック1件だけ。ほかの人の情報は出さない）。 -->
 <!-- ver.20261110.01: O-Linkの利用ログを追加（画面ごとの滞在時間・新規依頼などのフォームでどの項目まで進んだか・送信結果）。olink_eventsテーブルに記録するだけで、画面の見た目・動作は変えない。 -->
 <!-- ver.20261109.02: ステータスの色を見分けやすく変更（雇用条件作成・企業確認＝グレー、審査中＝黄（そのまま）、審査完了(受取対応中)＝青緑。これまで3つとも青系で見分けにくかった）。 -->
@@ -440,7 +441,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261113.01</span>
+  <span class="header-ver">ver.20261119.01</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
@@ -761,6 +762,7 @@ async function init(){
     var meta=await callRpc('company_view_meta',{p_token:token});
     if(!meta||!meta.ok){ document.getElementById('main').innerHTML='<div class="error-box">このURLは無効です。担当者にお問い合わせください。</div>'; return; }
     companyId=meta.company_id||'';
+    window._coPartners=(Array.isArray(meta.oc_partners)?meta.oc_partners:[]).filter(Boolean);  // ver.20261119.01: この企業のオープンケア案件のパートナー企業名（その会社に関係するパートナーだけ）
     companyName=meta.company_name||'';
     document.getElementById('headerOrg').textContent=companyName+' 様';
     document.title=companyName+' 様 | 所属機関マイページ';
@@ -1627,19 +1629,20 @@ function _coShareRows(onlyReq){
     var btn=on?'<button type="button" onclick="_coShareSet(\''+esc(o.org_id)+'\',false)" style="background:#fff;color:#b91c1c;border:1px solid #fca5a5;border-radius:8px;font-size:12px;font-weight:800;padding:7px 12px;cursor:pointer;font-family:inherit;">共有をやめる</button>'
       :'<button type="button" onclick="_coShareSet(\''+esc(o.org_id)+'\',true)" style="background:#1a56db;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:800;padding:8px 14px;cursor:pointer;font-family:inherit;">パスワードを共有する</button>';
     return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 2px;border-bottom:1px solid #eef1f5;">'
-      +'<div style="flex:1;min-width:180px;font-size:13px;font-weight:800;color:#0f2040;">'+esc(_coShareOrgName(o.org_name))+' 様　'+chip+'</div>'+btn+'</div>';
+      +'<div style="flex:1;min-width:180px;font-size:13px;font-weight:800;color:#0f2040;">'+esc(_coShareOrgName(o.org_name))+' 様　'+chip
+      +((o.partners&&o.partners.length)?'<div style="font-size:11px;font-weight:600;color:#64748b;margin-top:3px;">共有すると、パートナー企業の'+esc(o.partners.join('・'))+'にも共有されます</div>':'')+'</div>'+btn+'</div>';
   }).join('');
 }
 function _coShareCard(){
   if(_DEMO || _orgScope || !(_coShareList||[]).length) return '';
   return '<div id="coShareCard" style="background:#fff;border:1px solid #dbe3ef;border-radius:12px;padding:14px 16px;margin-bottom:16px;">'
     +'<div style="font-size:14px;font-weight:900;color:#0f2040;margin-bottom:4px;">🔐 登録支援機関とのマイページ共有</div>'
-    +'<div style="font-size:11.5px;color:#64748b;line-height:1.7;margin-bottom:4px;">「パスワードを共有する」を押していただくと、その登録支援機関が、御社のマイページ（その登録支援機関が支援している案件のみ）と、ご提出いただいた書類を確認できるようになります。共有はいつでも「共有をやめる」で取りやめられます。</div>'
+    +'<div style="font-size:11.5px;color:#64748b;line-height:1.7;margin-bottom:4px;">「パスワードを共有する」を押していただくと、その登録支援機関'+(function(){ var x=(_coShareList||[]).find(function(y){return y.partners&&y.partners.length;}); return x?'（オープンケア協同組合の場合は、パートナー企業の'+esc(x.partners.join('・'))+'も含みます）':''; })()+'が、御社のマイページ（その登録支援機関が支援している案件のみ）と、ご提出いただいた書類を確認できるようになります。共有はいつでも「共有をやめる」で取りやめられます。</div>'
     +_coShareRows(false)+'</div>';
 }
 function _coShareSet(orgId, on){
   var o=(_coShareList||[]).find(function(x){ return x.org_id===orgId; }); var nm=o?_coShareOrgName(o.org_name):'';
-  var msg=on?(nm+' 様と、御社のマイページ（パスワード）とご提出書類を共有します。よろしいですか？'):(nm+' 様との共有をやめます。よろしいですか？');
+  var msg=on?(nm+' 様'+((o&&o.partners&&o.partners.length)?'（パートナー企業の'+o.partners.join('・')+'を含む）':'')+'と、御社のマイページ（パスワード）とご提出書類を共有します。よろしいですか？'):(nm+' 様との共有をやめます。よろしいですか？');
   if(!confirm(msg)) return;
   callRpc('company_view_share_set',{p_token:currentToken,p_pass:_correctPass||_opPass||null,p_org_id:orgId,p_approve:!!on}).then(function(r){
     if(!(r&&r.ok)){ alert('保存できませんでした。時間をおいてもう一度お試しください。'); return; }
@@ -2562,8 +2565,8 @@ function _optinShow(go){
     +'<label class="op-chk"><input type="checkbox" id="opChk"> マイページの利用を希望いたします</label>'
     +'<div class="op-note">チェックを入れてお進みいただくと、本マイページのURLを、弊社との連絡用のLINEグループ（Chatwork・Slack）へお送りいたします。</div>'
     // ver.20261105.01: 提出書類を登録支援機関と共有することへの同意（olink_optin.share_consent に記録）
-    +'<label class="op-chk" style="margin-top:10px;"><input type="checkbox" id="opChk2"> 御社の提出書類と提出状況を、登録支援機関と共有することに同意いたします</label>'
-    +'<div class="op-note">同意いただくと、御社をご担当の登録支援機関も、弊社のシステム（O-Link）で御社の書類の提出状況をご確認いただけるようになります。</div>'
+    +'<label class="op-chk" style="margin-top:10px;"><input type="checkbox" id="opChk2"> 御社の提出書類と提出状況を、登録支援機関'+((window._coPartners||[]).length?'（パートナー企業の'+esc(window._coPartners.join('・'))+'を含む）':'')+'と共有することに同意いたします</label>'
+    +'<div class="op-note">同意いただくと、御社をご担当の登録支援機関'+((window._coPartners||[]).length?'と、パートナー企業の'+esc(window._coPartners.join('・'))+'':'')+'も、弊社のシステム（O-Link）で御社の書類の提出状況をご確認いただけるようになります。</div>'
     +'<button type="button" class="op-go" id="opGo">マイページへ進む</button>'
     +'<div id="opMsg" class="op-msg"></div>'
     +'</div>';
@@ -3300,7 +3303,7 @@ init();
 // ver.20261110.01: O-Linkの利用ログ（画面ごとの滞在時間・フォームのどこまで進んだか）を olink_events に送る。画面の表示・動作は一切変えない。
 // 数えるのは「画面が見えていて、90秒以内に操作がある時間」だけ。デモ表示・token無しは記録しない。
 (function(){
-  var PAGE='company', VER='ver.20261113.01';
+  var PAGE='company', VER='ver.20261119.01';
   try{
     var TOKEN=new URLSearchParams(location.search).get('token')||'';
     if(!TOKEN || TOKEN==='demo' || /[?&]demo=1\b/.test(location.search)) return;
