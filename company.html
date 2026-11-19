@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261119.02: 建設の進捗カードに「📜 国交省の受入計画が認定されました（認定日）」を追加。郵送で届いた認定証のスキャンが会社フォルダ（直下・0.参照など）に入ると「認定証を見る」、まだなら「📮 郵送待ち」。認定証は kokko-nintei-scan が自動で拾う（kokko_nintei_cert）。 -->
 <!-- ver.20261119.01: オープンケア協同組合への「パスワードを共有する」は、その企業に関係するパートナー企業（例：グローバルパートナーズ）にも共有されることを、パートナー名を入れて、共有欄・確認・最初の同意文に明記（共有の承認はパートナーにも引き継ぐ：DB _share_org_id）。 -->
 <!-- ver.20261113.01: 人材詳細の「申請情報」に「📮 在留カードの郵送」を追加。入管へ発送済み → 入管に到着 → カードを返送中 → 到着 の4段階と日付、返りのレターパックの追跡番号（日本郵便の追跡ページが開く）を出す。データは company_view_extra の lp（その人材が入っている最新のレターパック1件だけ。ほかの人の情報は出さない）。 -->
 <!-- ver.20261110.01: O-Linkの利用ログを追加（画面ごとの滞在時間・新規依頼などのフォームでどの項目まで進んだか・送信結果）。olink_eventsテーブルに記録するだけで、画面の見た目・動作は変えない。 -->
@@ -441,7 +442,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261119.01</span>
+  <span class="header-ver">ver.20261119.02</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
@@ -846,6 +847,7 @@ async function loadData(pass){
         '<div id="orgScopeBanner" style="background:#eef4fd;border-bottom:1px solid #b9d0ee;padding:8px 16px;font-size:12px;color:#1c3d6e;font-weight:700;">🔗 '+esc(_orgScope)+' 様向け表示：この画面には '+esc(_orgScope)+' 様が支援している案件のみが表示されています。</div>');
     }
     await _coShareLoad();  // ver.20261105.04: 登録支援機関とのマイページ共有
+    await _coNinteiLoad();  // ver.20261119.02: 国交省の認定・認定証
     await loadNews();
     renderSidebar();
     render();
@@ -1610,6 +1612,29 @@ function renderStats(){
 /* ver.20260617.13: ダッシュボードの依頼事項を「種類ごとのセクション＋該当案件入れ子」に */
 // ===== ver.20261105.04: 登録支援機関とのマイページ共有（所属機関が「パスワードを共有する」を押したときだけ、その登録支援機関がマイページと書類を見られる） =====
 var _coShareList=[];
+// ===== ver.20261119.02: 国交省の認定（認定日）と、郵送で届いた認定証のスキャン =====
+var _coNintei=null;
+function _coNinteiLoad(){
+  _coNintei=null;
+  if(_DEMO || _orgScope) return Promise.resolve();
+  return callRpc('company_view_nintei',{p_token:currentToken,p_pass:_correctPass||_opPass||null}).then(function(r){
+    if(r&&r.ok&&r.nintei) _coNintei=r.nintei;
+  }).catch(function(){});
+}
+function _coNinteiHtml(){
+  var n=_coNintei; if(!n) return '';
+  var d=String(n.nintei_date||'').slice(0,10), dTxt=d?(Number(d.slice(5,7))+'月'+Number(d.slice(8,10))+'日'):'';
+  var h='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:10px 12px;margin:8px 0 10px;">'
+    +'<div style="flex:1;min-width:180px;"><div style="font-size:12.5px;font-weight:900;color:#15803d;">📜 国交省の受入計画が認定されました'+(dTxt?'（'+dTxt+'）':'')+'</div>';
+  if(n.cert_file_id){
+    h+='<div style="font-size:11px;color:#475569;margin-top:2px;">認定証のスキャンをご確認いただけます。原本は大切に保管してください。</div></div>'
+      +'<a href="https://drive.google.com/file/d/'+encodeURIComponent(n.cert_file_id)+'/view" target="_blank" rel="noopener" style="background:#15803d;color:#fff;border-radius:8px;font-size:12px;font-weight:800;padding:8px 14px;text-decoration:none;white-space:nowrap;">認定証を見る</a>';
+  } else {
+    h+='<div style="font-size:11px;color:#475569;margin-top:2px;">認定証は<b style="color:#b45309;">郵送待ち</b>です（認定からおよそ2週間で届きます）。届きしだい、ここでご確認いただけます。</div></div>'
+      +'<span style="font-size:11px;font-weight:800;color:#b45309;background:#fffbeb;border:1px solid #fcd34d;border-radius:99px;padding:3px 10px;white-space:nowrap;">📮 郵送待ち</span>';
+  }
+  return h+'</div>';
+}
 function _coShareLoad(){
   _coShareList=[];
   if(_DEMO || _orgScope) return Promise.resolve();
@@ -1688,6 +1713,7 @@ function _kokkoDashCard(){
   var h='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin:0 0 14px;">';
   h+='<div style="font-size:13.5px;font-weight:900;color:#0f2040;margin-bottom:4px;">🏗🛂 書類・申請の進捗（建設特定技能）</div>';
   h+=_cksKokkoAxisHtml(minReqD, kokkoSt, anyApplied);
+  h+=_coNinteiHtml();  // ver.20261119.02
   h+=_cksNyukanAxisHtml(minExpire, anyT1App);  // ver.20260921.20: 入管書類の軸もダッシュボードに
   h+=_cksFinalDlNote(postExpire?_cksAddM(postExpire,-5):null);
   h+='<button class="req-btn" onclick="switchGroup(\'docs\')">提出書類を開く</button>';
@@ -3303,7 +3329,7 @@ init();
 // ver.20261110.01: O-Linkの利用ログ（画面ごとの滞在時間・フォームのどこまで進んだか）を olink_events に送る。画面の表示・動作は一切変えない。
 // 数えるのは「画面が見えていて、90秒以内に操作がある時間」だけ。デモ表示・token無しは記録しない。
 (function(){
-  var PAGE='company', VER='ver.20261119.01';
+  var PAGE='company', VER='ver.20261119.02';
   try{
     var TOKEN=new URLSearchParams(location.search).get('token')||'';
     if(!TOKEN || TOKEN==='demo' || /[?&]demo=1\b/.test(location.search)) return;

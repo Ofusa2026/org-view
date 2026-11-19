@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261119.04: 企業詳細の概要に「国交省認定」の行を追加（認定日と、郵送で届いた認定証のスキャン。認定証は企業が「パスワードを共有する」を押したときだけ表示・DL、まだ届いていなければ「📮 認定証は郵送待ち」）。org_nintei_list／kokko_nintei_cert。 -->
 <!-- ver.20261119.03: 企業詳細の「共有のお願い文」：オープンケア協同組合・パートナーから作ると「オープンケア協同組合」の「パスワードを共有する」を押す案内と、その企業に関係するパートナー企業名（GPならGPだけ）を入れる。共有の承認はパートナーにも引き継ぎ、提出書類（国交省・入管）のタブで書類ファイルが見られる（DB _share_org_id）。 -->
 <!-- ver.20261119.02: 申請期限切れのポップアップに「過ぎているが依頼する」を追加。押した人は依頼でき、確認画面に「申請期限切れ」、案シスの備考の先頭に【申請期限切れ承知で依頼（申請期限 ○）】が入る。在留期限を変えたらもう一度確認が出る -->
 <!-- ver.20261119.01: 新規案件依頼で、変更・更新の人の申請期限（在留期限の7日前）がもう過ぎていたら「在留期限を確認してください」のポップアップを出して依頼できないようにした（認定は対象外） -->
@@ -765,7 +766,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261119.03</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261119.04</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1271,7 +1272,7 @@ function confirmOrgNotifs(ids,confirmed){return sbRpc('confirm_org_notifications
 function createOrgIntake(records){return sbRpc('create_org_intake',{p_token:currentToken,p_pass:(currentPass||null),p_records:records});}
 // ver.20260702.01: 認証つき書類配信（GAS getOrgDoc）— ファイルは非公開のまま、token+パスワード認証を通した閲覧者だけがプレビュー/ダウンロード
 var GAS_URL='https://script.google.com/macros/s/AKfycbxxBta5g1jXVzTf-s4EgaIbMc3No42aaH8guMOorQQ8HZl2SlNu-8vpu0fCFj_rjKsalQ/exec';
-var allDocsByCase={}, _olDocLabel={}, _coFilesByCo={};
+var allDocsByCase={}, _olDocLabel={}, _coFilesByCo={}; var _ninteiByCo={};  // ver.20261119.04
 // ver.20260702.02: 案件管理システムと同じ堅牢なGAS呼び出し（fetch cors 主／JSONP・XHR フォールバック）
 function _olParseCb(text,cb){
   var fp=text.indexOf('('); if(fp>=0){ var lp=text.lastIndexOf(')'); if(lp>fp){ try{cb(JSON.parse(text.slice(fp+1,lp)));return;}catch(e){} } }
@@ -2276,6 +2277,7 @@ function openGpCoModal(companyId, _keep){
     +row('Ofusa担当',esc(Object.keys(e.staff).join('・')||'—'))
     +row('案件','進行中 <b>'+e.active+'</b>／完了 '+e.done)
     +row('国交省書類',kokkoLine)
+    +(_ninteiByCo[companyId]?row('国交省認定',_ninteiLine(companyId)):'')  // ver.20261119.04
     +row('企業ログインPIN',pinTxt)
     +'<div style="margin-top:14px;">'+openBtn+'</div>';
   // ---- タブ：概要／提出書類（国交省）／提出書類（入管）／人材一覧
@@ -2307,6 +2309,16 @@ function openGpCoModal(companyId, _keep){
   document.body.insertAdjacentHTML('beforeend',html);
   if(_keep){ var _nb=document.querySelector('#gpCoModal .gcm-body'); if(_nb) _nb.scrollTop=_oldSc; }
   if(_hcid) _loadReqHist(_hcid);
+}
+// ver.20261119.04: 国交省認定の行（認定日・認定証／郵送待ち）
+function _ninteiLine(companyId){
+  var n=_ninteiByCo[companyId]; if(!n) return '';
+  var d=String(n.nintei_date||'').slice(0,10), t=d?('認定 '+d.slice(0,4)+'/'+d.slice(5,7)+'/'+d.slice(8,10)):'認定済み';
+  var h='<span style="color:#15803d;font-weight:800;">📜 '+esc(t)+'</span>　';
+  if(n.cert_file_id) h+='<button onclick="olPreviewDoc(\''+esc(n.cert_file_id)+'\')" style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;padding:2px 9px;font-size:11px;font-weight:700;cursor:pointer;">認定証を表示</button> <button onclick="olDownloadDoc(\''+esc(n.cert_file_id)+'\')" style="background:#0f2040;color:#fff;border:none;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;cursor:pointer;">⬇</button>';
+  else if(n.has_cert) h+='<span style="font-size:10.5px;color:#64748b;">認定証あり（企業様が共有すると見られます）</span>';
+  else h+='<span style="font-size:10.5px;font-weight:800;color:#b45309;background:#fffbeb;border:1px solid #fcd34d;border-radius:99px;padding:1px 8px;">📮 認定証は郵送待ち</span>';
+  return h;
 }
 function _gcmSel(i){
   var m=document.getElementById('gpCoModal'); if(!m) return;
@@ -9824,6 +9836,9 @@ async function loadData(){
         });
       }
     }catch(e){ console.warn('[get_org_docs failed]',e); }
+    // ver.20261119.04: 国交省の認定（認定日）と認定証（認定証ファイルは企業が共有を承認したときだけ）
+    _ninteiByCo={};
+    try{ var _nr=await sbRpc('org_nintei_list',{p_token:currentToken,p_pass:(currentPass||null)}); if(_nr&&_nr.ok&&Array.isArray(_nr.list)) _nr.list.forEach(function(x){ _ninteiByCo[x.company_id]=x; if(x.cert_file_id) _olDocLabel[x.cert_file_id]='国交省認定証'; }); }catch(e){ console.warn('[org_nintei_list failed]',e); }
 
     gpInfoByCaseId={};
     if(isGpMode && Array.isArray(data.gpMap)){
