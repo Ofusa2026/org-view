@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261120.01: 新規案件依頼で「支援委託費」と「現在の在留資格」を必須にした（見出しに＊）。支援委託費は数字（無い場合は 0）。現在の在留資格は変更・更新のとき必須（認定は海外から来る人なので空でよい・在留期限と同じ扱い）。 -->
 <!-- ver.20261119.04: 企業詳細の概要に「国交省認定」の行を追加（認定日と、郵送で届いた認定証のスキャン。認定証は企業が「パスワードを共有する」を押したときだけ表示・DL、まだ届いていなければ「📮 認定証は郵送待ち」）。org_nintei_list／kokko_nintei_cert。 -->
 <!-- ver.20261119.03: 企業詳細の「共有のお願い文」：オープンケア協同組合・パートナーから作ると「オープンケア協同組合」の「パスワードを共有する」を押す案内と、その企業に関係するパートナー企業名（GPならGPだけ）を入れる。共有の承認はパートナーにも引き継ぎ、提出書類（国交省・入管）のタブで書類ファイルが見られる（DB _share_org_id）。 -->
 <!-- ver.20261119.02: 申請期限切れのポップアップに「過ぎているが依頼する」を追加。押した人は依頼でき、確認画面に「申請期限切れ」、案シスの備考の先頭に【申請期限切れ承知で依頼（申請期限 ○）】が入る。在留期限を変えたらもう一度確認が出る -->
@@ -766,7 +767,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261119.04</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261120.01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -915,7 +916,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                 <th style="min-width:252px;">所属機関（企業名）<span style="color:#dc2626;">*</span></th>
                 <th style="min-width:172px;">希望在留資格 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:152px;">受入れ経験 <span style="color:#dc2626;">*</span></th>
-                <th style="min-width:128px;" title="全員同額で反映されます">支援委託費(円・税抜)</th>
+                <th style="min-width:128px;" title="全員同額で反映されます">支援委託費(円・税抜) <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:112px;" id="nc_branchTh">アイデム拠点 <span style="color:#dc2626;">*</span></th>
                 <!-- ver.20260907.01: オープンケア専用「パートナー」列 -->
                 <th style="min-width:150px;display:none;" id="nc_partnerTh">パートナー <span style="color:#dc2626;">*</span></th>
@@ -1119,7 +1120,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
               <th class="nc-row-num">#</th>
               <th>氏名(英語)<span style="color:#dc2626;">*</span></th>
               <th style="width:120px;">国籍 <span style="color:#dc2626;">*</span></th>
-              <th style="width:155px;">現在の在留資格</th>
+              <th style="width:155px;">現在の在留資格<span class="nc-exp-req" style="color:#dc2626;"> *</span></th>
               <th style="width:140px;">在留期限<span class="nc-exp-req" style="color:#dc2626;"> *</span></th>
               <th style="width:150px;">現在の在留期間<span class="nc-exp-req" style="color:#dc2626;"> *</span></th>
               <th style="width:150px;">希望在留期間 <span style="color:#dc2626;">*</span></th><!-- ver.20261102.01: 1月〜5年の1ヶ月刻みに合わせ列幅調整 -->
@@ -11670,6 +11671,12 @@ async function _submitNewCaseInner(){
     showNcError('案件担当者を入力してください（リストから選択 / 直接入力もOK）');
     return;
   }
+  // ver.20261120.01: 支援委託費を必須に（無い場合は 0）
+  if(!supportFee){
+    showNcError('支援委託費を入力してください（数字・税抜。無い場合は 0）');
+    var _sfEl0=document.getElementById('nc_supportFee'); if(_sfEl0){ _sfEl0.focus(); _sfEl0.style.borderColor='#dc2626'; }
+    return;
+  }
   if(supportFee && !/^\d+$/.test(supportFee)){
     showNcError('支援委託費は数字のみで入力してください（例：30000）。現在の入力:「'+supportFee+'」');
     var _sfEl=document.getElementById('nc_supportFee'); if(_sfEl){ _sfEl.focus(); _sfEl.style.borderColor='#dc2626'; }
@@ -11725,6 +11732,12 @@ async function _submitNewCaseInner(){
     if(!nm && !nat && !uke){ continue; }
     if(!nm){ showNcError((i+1) + '人目の氏名を入力してください'); return; }
     if(!nat){ showNcError((i+1) + '人目の国籍を選択してください'); return; }
+    // ver.20261120.01: 変更・更新は現在の在留資格も必須に（認定は空でもよい）
+    if(appType !== '認定' && !cur){
+      showNcError((i+1) + '人目の現在の在留資格を選択してください（変更・更新のときは必須です）');
+      try{ curEl.focus(); curEl.style.borderColor='#dc2626'; }catch(e){}
+      return;
+    }
     // ver.20261016.01: 変更・更新は在留期限を必須に（認定は新しく入国する人のため空でもよい）
     if(appType !== '認定' && !exp){
       showNcError((i+1) + '人目の在留期限を入力してください（変更・更新のときは必須です）');
