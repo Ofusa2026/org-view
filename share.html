@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261124.01: 担当の絞り込みを個人名にした（「安田 祐貴、丸山 健二」のようなまとまりではなく1人ずつ。選んだ人が担当に入っている案件が出る）。あわせて人材詳細に重要事項説明書（ver.20261119.05分）。 -->
+<!-- ver.20261119.05: 人材詳細の「書類PDF」の下に「📄 重要事項説明書」を追加（人材フォルダ・建設書類などから自動で拾ったもの。企業が「パスワードを共有する」を押したときだけ表示・DL）。org_juusetsu_list／case_juusetsu。 -->
 <!-- ver.20261120.01: 新規案件依頼で「支援委託費」と「現在の在留資格」を必須にした（見出しに＊）。支援委託費は数字（無い場合は 0）。現在の在留資格は変更・更新のとき必須（認定は海外から来る人なので空でよい・在留期限と同じ扱い）。 -->
 <!-- ver.20261119.04: 企業詳細の概要に「国交省認定」の行を追加（認定日と、郵送で届いた認定証のスキャン。認定証は企業が「パスワードを共有する」を押したときだけ表示・DL、まだ届いていなければ「📮 認定証は郵送待ち」）。org_nintei_list／kokko_nintei_cert。 -->
 <!-- ver.20261119.03: 企業詳細の「共有のお願い文」：オープンケア協同組合・パートナーから作ると「オープンケア協同組合」の「パスワードを共有する」を押す案内と、その企業に関係するパートナー企業名（GPならGPだけ）を入れる。共有の承認はパートナーにも引き継ぎ、提出書類（国交省・入管）のタブで書類ファイルが見られる（DB _share_org_id）。 -->
@@ -767,7 +769,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261120.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261124.01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1273,7 +1275,7 @@ function confirmOrgNotifs(ids,confirmed){return sbRpc('confirm_org_notifications
 function createOrgIntake(records){return sbRpc('create_org_intake',{p_token:currentToken,p_pass:(currentPass||null),p_records:records});}
 // ver.20260702.01: 認証つき書類配信（GAS getOrgDoc）— ファイルは非公開のまま、token+パスワード認証を通した閲覧者だけがプレビュー/ダウンロード
 var GAS_URL='https://script.google.com/macros/s/AKfycbxxBta5g1jXVzTf-s4EgaIbMc3No42aaH8guMOorQQ8HZl2SlNu-8vpu0fCFj_rjKsalQ/exec';
-var allDocsByCase={}, _olDocLabel={}, _coFilesByCo={}; var _ninteiByCo={};  // ver.20261119.04
+var allDocsByCase={}, _olDocLabel={}, _coFilesByCo={}; var _ninteiByCo={}; var _juusetsuByCase={};  // ver.20261119.04
 // ver.20260702.02: 案件管理システムと同じ堅牢なGAS呼び出し（fetch cors 主／JSONP・XHR フォールバック）
 function _olParseCb(text,cb){
   var fp=text.indexOf('('); if(fp>=0){ var lp=text.lastIndexOf(')'); if(lp>fp){ try{cb(JSON.parse(text.slice(fp+1,lp)));return;}catch(e){} } }
@@ -2321,6 +2323,15 @@ function _ninteiLine(companyId){
   else h+='<span style="font-size:10.5px;font-weight:800;color:#b45309;background:#fffbeb;border:1px solid #fcd34d;border-radius:99px;padding:1px 8px;">📮 認定証は郵送待ち</span>';
   return h;
 }
+// ver.20261119.05: 人材詳細の「重要事項説明書」（人材フォルダから自動で拾ったもの。企業が共有を承認したときだけ開ける）
+function _juusetsuHtml(caseId){
+  var j=_juusetsuByCase[caseId]; if(!j) return '';
+  var h='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-top:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">'
+    +'<span style="font-size:12px;font-weight:800;color:#0f2040;flex:1;">📄 重要事項説明書</span>';
+  if(j.file_id) h+='<button onclick="olPreviewDoc(\''+esc(j.file_id)+'\')" style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;">表示</button><button onclick="olDownloadDoc(\''+esc(j.file_id)+'\')" style="background:#0f2040;color:#fff;border:none;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer;">⬇</button>';
+  else h+='<span style="font-size:10.5px;color:#64748b;">企業様が「パスワードを共有する」を押すと見られます</span>';
+  return h+'</div>';
+}
 function _gcmSel(i){
   var m=document.getElementById('gpCoModal'); if(!m) return;
   m.querySelectorAll('.gcm-tab').forEach(function(t,j){ var on=(j===i); t.style.borderBottomColor=on?'#0f2040':'transparent'; t.style.background=on?'#f1f5f9':'transparent'; t.style.color=on?'#0f2040':'#64748b'; });
@@ -2635,6 +2646,7 @@ function openPersonModal(caseId, _keep){
   _seg('書類PDF');
   h+=_personSectionTitle('書類PDF');
   h+=buildDownloadCell(c);
+  h+=_juusetsuHtml(c.id);  // ver.20261119.05
   // 書類チェックリスト（人材）
   // ver.20260921.03: 提出期限バッジ／ver.20260921.04: 人材書類を特活分・特定技能1号分に分割（対象3機関×特活×建設のみ）
   var _dlInfo=_ksDocDl(c,p);
@@ -2777,7 +2789,7 @@ function facetCases(gid, skip){
   if(searchQuery){ var q=searchQuery.toLowerCase(); base=base.filter(function(c){ return _caseMatchesSearch(c,q); }); }
   if(filterStatus.length && !skip.status) base=base.filter(function(c){return filterStatus.indexOf(getExternalStatus(c.status))>=0;});
   if(filterCompany.length && !skip.company) base=base.filter(function(c){return filterCompany.indexOf(c.company)>=0;});
-  if(filterClientStaff.length && !skip.clientStaff) base=base.filter(function(c){return filterClientStaff.indexOf(c.clientStaff)>=0;});
+  if(filterClientStaff.length && !skip.clientStaff) base=base.filter(_staffFilterMatch);  // ver.20261124.01: 担当は個人名で絞り込み
   Object.keys(colFilters).forEach(function(k){
     if(skip.colKey===k) return;
     if(TB_MAP[k]) return; // ツールバー共有次元はfilter*配列側で適用済み
@@ -2809,7 +2821,7 @@ function groupCases(gid){
   // ver.20260722.test79: 複数選択対応（配列）
   if(filterStatus.length) base=base.filter(function(c){return filterStatus.indexOf(getExternalStatus(c.status))>=0;});
   if(filterCompany.length) base=base.filter(function(c){return filterCompany.indexOf(c.company)>=0;});
-  if(filterClientStaff.length) base=base.filter(function(c){return filterClientStaff.indexOf(c.clientStaff)>=0;});
+  if(filterClientStaff.length) base=base.filter(_staffFilterMatch);  // ver.20261124.01
   // ver.20260618.test52: ヘッダー列フィルタ（ver.20260722.test79: 複数選択・日付範囲対応）
   Object.keys(colFilters).forEach(function(k){
     if(TB_MAP[k]) return; // ツールバー共有次元はfilter*配列側で適用済み
@@ -3808,6 +3820,11 @@ function isSidebarItemVisible(itemId){
 }
 
 // ver.20260618.test52: ヘッダー列での絞り込み
+// ver.20261124.01: 担当（「安田 祐貴、丸山 健二」のように複数名）を1人ずつに分けて絞り込む
+function _staffNames(v){ return String(v||'').split(/[、,，\/／・;；\n]+/).map(function(x){return x.replace(/^[\s　]+|[\s　]+$/g,'');}).filter(Boolean); }
+function _staffFilterMatch(c){ if(!filterClientStaff.length) return true; if(filterClientStaff.indexOf(c.clientStaff||'')>=0) return true; return _staffNames(c.clientStaff).some(function(n){return filterClientStaff.indexOf(n)>=0;}); }
+function _staffCounts(list){ var m={}; (list||[]).forEach(function(c){ _staffNames(c.clientStaff).forEach(function(n){ m[n]=(m[n]||0)+1; }); }); return m; }
+function _staffList(list){ var s={}; (list||[]).forEach(function(c){ _staffNames(c.clientStaff).forEach(function(n){ s[n]=1; }); }); return Object.keys(s).sort(function(a,b){return a.localeCompare(b,'ja');}); }
 var FILTER_DEFS={
   company:    {type:'value', get:function(c){return c.company||'';}},
   requestDate:{type:'daterange', get:function(c){return c.requestDate||'';}}, // ver.20260722.test79: 日付範囲絞り込み
@@ -3906,9 +3923,9 @@ function filterThHtml(col){
     var tsel=window[tb.name]||[];
     var tskip={}; tskip[tb.skip]=true;
     var tfb=facetCases(currentGroup,tskip);
-    var tcnt=_facetCounts(tfb,def.get);
+    var tcnt=(col.key==='staff')?_staffCounts(tfb):_facetCounts(tfb,def.get);  // ver.20261124.01
     var tvalsBase=(currentGroup==='all'?allCases:allCases.filter(function(c){return classify(c)===currentGroup;}));
-    var tvals=Array.from(new Set(tvalsBase.map(def.get).filter(Boolean))).sort(function(a,b){return String(a).localeCompare(String(b),'ja');});
+    var tvals=(col.key==='staff')?_staffList(tvalsBase):Array.from(new Set(tvalsBase.map(def.get).filter(Boolean))).sort(function(a,b){return String(a).localeCompare(String(b),'ja');});
     var tpid='ms_col_'+col.key;
     var tlbl=tsel.length?(tsel.length+'件選択'):('（全て）('+tfb.length+')');
     var tinner='<div class="ms-actions"><button type="button" onclick="msClearTb(\''+tb.name+'\',\''+tpid+'\')">（全て）に戻す ('+tfb.length+')</button></div>'
@@ -4132,7 +4149,7 @@ function renderFilterBar(){
   var statuses=[...new Set(baseAll.map(function(c){return getExternalStatus(c.status)||'';}).filter(Boolean))].sort();
   var companies=[...new Set(baseAll.map(function(c){return c.company||'';}).filter(Boolean))].sort();
   // ver.20260527.17: アイデム担当者の選択肢
-  var clientStaffs=[...new Set(baseAll.map(function(c){return c.clientStaff||'';}).filter(Boolean))].sort(function(a,b){return a.localeCompare(b,'ja');});
+  var clientStaffs=_staffList(baseAll);  // ver.20261124.01: 担当は個人名で一覧
   var cases=groupCases(currentGroup);
   var h='<div class="filter-bar-inner">';
   // テキスト検索
@@ -4157,7 +4174,7 @@ function renderFilterBar(){
   // ver.20260527.17: アイデム担当者フィルタ（担当者がいる案件が1件以上あるときのみ表示）
   if(clientStaffs.length){
     var _fbCs=facetCases(currentGroup,{clientStaff:true});
-    var _cntCs=_facetCounts(_fbCs,function(c){return c.clientStaff||'';});
+    var _cntCs=_staffCounts(_fbCs);
     var _lblCs=filterClientStaff.length?('担当: '+filterClientStaff.length+'件'):('担当（全て）('+_fbCs.length+')');
     h+='<span class="ms-btnwrap"><button type="button" id="msb_ms_tb_filterClientStaff" class="ms-tbbtn'+(filterClientStaff.length?' active':'')+'" onclick="msTogglePanel(\'ms_tb_filterClientStaff\',this,event)">'+_lblCs+' ▾</button></span>';
     h+='<div class="ms-panel" id="ms_tb_filterClientStaff" style="display:none"><div class="ms-actions"><button type="button" onclick="msClearTb(\'filterClientStaff\')">（全て）に戻す ('+_fbCs.length+')</button></div>'+msItemsHtml('tb','filterClientStaff',clientStaffs,filterClientStaff,_cntCs)+'</div>';
@@ -9838,6 +9855,9 @@ async function loadData(){
       }
     }catch(e){ console.warn('[get_org_docs failed]',e); }
     // ver.20261119.04: 国交省の認定（認定日）と認定証（認定証ファイルは企業が共有を承認したときだけ）
+    // ver.20261119.05: 人材ごとの重要事項説明書（ファイルは企業が共有を承認したときだけ）
+    _juusetsuByCase={};
+    try{ var _jr=await sbRpc('org_juusetsu_list',{p_token:currentToken,p_pass:(currentPass||null)}); if(_jr&&_jr.ok&&Array.isArray(_jr.list)) _jr.list.forEach(function(x){ _juusetsuByCase[x.case_id]=x; if(x.file_id) _olDocLabel[x.file_id]='重要事項説明書'; }); }catch(e){ console.warn('[org_juusetsu_list failed]',e); }
     _ninteiByCo={};
     try{ var _nr=await sbRpc('org_nintei_list',{p_token:currentToken,p_pass:(currentPass||null)}); if(_nr&&_nr.ok&&Array.isArray(_nr.list)) _nr.list.forEach(function(x){ _ninteiByCo[x.company_id]=x; if(x.cert_file_id) _olDocLabel[x.cert_file_id]='国交省認定証'; }); }catch(e){ console.warn('[org_nintei_list failed]',e); }
 
