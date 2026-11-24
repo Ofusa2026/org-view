@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261124.02: 企業様へ大房行政書士法人をご紹介する初回メール（つなぎメール）を、更新だけの依頼では「在留期間の更新に向けて」の文面にした（認定・変更はこれまでどおり「ご入社に向けて」）。 -->
 <!-- ver.20261124.01: 担当の絞り込みを個人名にした（「安田 祐貴、丸山 健二」のようなまとまりではなく1人ずつ。選んだ人が担当に入っている案件が出る）。あわせて人材詳細に重要事項説明書（ver.20261119.05分）。 -->
 <!-- ver.20261119.05: 人材詳細の「書類PDF」の下に「📄 重要事項説明書」を追加（人材フォルダ・建設書類などから自動で拾ったもの。企業が「パスワードを共有する」を押したときだけ表示・DL）。org_juusetsu_list／case_juusetsu。 -->
 <!-- ver.20261120.01: 新規案件依頼で「支援委託費」と「現在の在留資格」を必須にした（見出しに＊）。支援委託費は数字（無い場合は 0）。現在の在留資格は変更・更新のとき必須（認定は海外から来る人なので空でよい・在留期限と同じ扱い）。 -->
@@ -769,7 +770,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261124.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261124.02</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1528,6 +1529,16 @@ var NOTIF_LABELS={'申請済(番号待)':'申請済（番号待ち）','受付�
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20261124.02',
+    date: '2026-11-24',
+    audience: 'all',
+    notify: true,
+    items: [
+      '👥 一覧の<b>「担当」の絞り込み</b>が、<b>1人ずつの名前</b>で選べるようになりました。選んだ方が担当に入っている案件がまとめて表示されます',
+      '✉️ 新規案件依頼のあとに出る<b>企業様へのご紹介メール（文案）</b>が、<b>更新のご依頼</b>では「在留期間の更新に向けて」の文面になりました（認定・変更はこれまでどおり）'
+    ]
+  },
   {
     version: 'ver.20261119.03',
     date: '2026-11-19',
@@ -6050,7 +6061,7 @@ function _intakeGroupToPayload(g){
   };
 }
 // ===== ver.20261010.01: 企業様へ大房行政書士法人をご紹介する初回メールの文案 =====
-function _buildIntroMailText(company, names, staff){
+function _buildIntroMailText(company, names, staff, appType){
   var co=String(company||'').trim()||'・・・';
   var nm=(names||[]).map(function(x){return String(x||'').trim();}).filter(Boolean);
   var who=nm.length?nm.join('様、'):'・・・';
@@ -6058,6 +6069,31 @@ function _buildIntroMailText(company, names, staff){
   var me=st.length?st[0]:'・・・';
   var tanto=st.length?st.join('、'):'・・・';
   var org=String(orgName||'').trim()||'株式会社・・・';
+  // ver.20261124.02: 更新だけの依頼は「入社に向けて」ではなく、在留期間の更新の文面にする
+  var _at=String(appType||'');
+  var isKoushin=/更新/.test(_at) && !/認定|変更/.test(_at);
+  if(isKoushin) return [
+    co+'様',
+    '',
+    'お世話になっております。',
+    org+'の'+me+'です。',
+    who+'様の在留期間の更新に向けて、今後、更新申請に必要な書類の準備を進めてまいります。',
+    '更新申請につきましては、専門的な確認や書類の準備が必要となるため、弊社が提携しております',
+    '「大房行政書士法人」と連携のうえ、手続きを進めさせていただきます。',
+    '＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝',
+    '大房行政書士法人',
+    '〒144-0052',
+    '東京都大田区蒲田5-11-10 FUNDES蒲田8F',
+    'TEL：03-6424-8849',
+    'HP：https://gyosei-cambo.com/',
+    '＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝',
+    '今後の手続きや必要書類について、まずは大房行政書士法人の担当者よりメールにてご連絡させていただきます。',
+    '更新申請に関するご不明点や、必要書類についてのご質問等がございましたら、大房行政書士法人の担当者へ',
+    '直接お問い合わせいただけますと、スムーズにご案内が可能です。',
+    '在留期限までに余裕をもって申請できるよう、弊社とも連携しながら手続きを進めてまいりますので、引き続きどうぞよろしくお願いいたします。',
+    '',
+    '登録支援機関の担当は引き続き、'+tanto+'が担当させていただきます。'
+  ].join('\n');
   return [
     co+'様',
     '',
@@ -6135,7 +6171,7 @@ function copyIntroMailText(){
 }
 function copyIntakeMailText(gid,btn){
   var g=_intakeGroupCache[gid]; if(!g) return;
-  _copyTextFlash(_buildIntroMailText(g.company, (g.rows||[]).map(function(r){return r.applicant;}), g.client_staff), btn);
+  _copyTextFlash(_buildIntroMailText(g.company, (g.rows||[]).map(function(r){return r.applicant;}), g.client_staff, g.app_type), btn);
 }
 function copyIntakeLineText(gid,btn){
   var g=_intakeGroupCache[gid];
@@ -12052,7 +12088,7 @@ async function executeSubmit(){
     if(lineTextEl) lineTextEl.value = lineText;
     try{ _loadOfusaContacts().then(_renderOfusaAddrs); }catch(_){}   // ver.20261102.03
     var mailTextEl = document.getElementById('ncMailText');   // ver.20261010.01: 初回メール文案
-    if(mailTextEl) mailTextEl.value = _buildIntroMailText(p.company, (p.jinzaiList||[]).map(function(j){return j.name;}), p.clientStaff);
+    if(mailTextEl) mailTextEl.value = _buildIntroMailText(p.company, (p.jinzaiList||[]).map(function(j){return j.name;}), p.clientStaff, p.appType);
     bigSuc.classList.add('show');
     // 下部ボタンの調整
     document.getElementById('ncSubmitBtn').style.display = 'none';
