@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261124.03: 新規案件依頼の「受入れ経験」を、希望在留資格が特定技能1号のときは定義の言葉にした（有＝「同一年度内に受入れ済み」／無＝「同一年度内は初めて」。値は有/無のまま）。定義＝同一年度内（4月1日〜翌3月31日。今年度は2026年4月1日〜）に特定技能外国人を既に受け入れている所属機関。「同一年度内に受入れ済み」を選ぶと、定義と申請書類が変わる注意を表の下に大きく出す。確認画面も同じ言葉で表示。弊社で同じ所属機関の特定技能の案件・依頼がすでにある（2件目以降）ときは、「同一年度内に受入れ済み」を選んでも注意は出さない（取下げ・不許可は数えない。編集中の依頼自身も数えない）。申請種別が「更新」のときは注意を出さない（O-Linkごと・同じ所属機関ごとに、1件目の認定・変更だけ出す）。見出しも特定技能1号のときは「特定技能受入経験」。注意枠に「定義を確認しました」のチェックを付け、注意が出ているときはチェックしないと送れない（注意が隠れたらチェックは外れる）。 -->
 <!-- ver.20261124.02: 企業様へ大房行政書士法人をご紹介する初回メール（つなぎメール）を、更新だけの依頼では「在留期間の更新に向けて」の文面にした（認定・変更はこれまでどおり「ご入社に向けて」）。 -->
 <!-- ver.20261124.01: 担当の絞り込みを個人名にした（「安田 祐貴、丸山 健二」のようなまとまりではなく1人ずつ。選んだ人が担当に入っている案件が出る）。あわせて人材詳細に重要事項説明書（ver.20261119.05分）。 -->
 <!-- ver.20261119.05: 人材詳細の「書類PDF」の下に「📄 重要事項説明書」を追加（人材フォルダ・建設書類などから自動で拾ったもの。企業が「パスワードを共有する」を押したときだけ表示・DL）。org_juusetsu_list／case_juusetsu。 -->
@@ -673,6 +674,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 .nc-radio-group{display:flex;gap:8px;}
 .nc-radio-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 10px;border:1.2px solid #cbd5e1;border-radius:6px;font-size:12.5px;font-weight:600;color:#475569;cursor:pointer;background:white;transition:.15s;}
 .nc-radio-btn:hover{border-color:#94a3b8;background:#f8fafc;}
+.nc-radio-btn .nc-ae-txt{white-space:nowrap;}   /* ver.20261124: 受入れ経験のボタンは1行で */
 .nc-radio-btn input[type="radio"]{margin:0;cursor:pointer;accent-color:#2563eb;}
 .nc-radio-btn:has(input[type="radio"]:checked){border-color:#2563eb;background:#eff6ff;color:#1e40af;font-weight:700;}
 .filter-row th.filter-th{padding:4px 6px;background:#1a2c4e;border-top:1px solid rgba(255,255,255,.08);}
@@ -770,7 +772,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261124.02</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261124.03</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -918,7 +920,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                 <th style="min-width:92px;">申請種別 <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:252px;">所属機関（企業名）<span style="color:#dc2626;">*</span></th>
                 <th style="min-width:172px;">希望在留資格 <span style="color:#dc2626;">*</span></th>
-                <th style="min-width:152px;">受入れ経験 <span style="color:#dc2626;">*</span></th>
+                <th style="min-width:215px;"><span id="nc_aeHead">受入れ経験</span> <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:128px;" title="全員同額で反映されます">支援委託費(円・税抜) <span style="color:#dc2626;">*</span></th>
                 <th style="min-width:112px;" id="nc_branchTh">アイデム拠点 <span style="color:#dc2626;">*</span></th>
                 <!-- ver.20260907.01: オープンケア専用「パートナー」列 -->
@@ -974,8 +976,8 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
                 </td>
                 <td>
                   <div class="nc-radio-group">
-                    <label class="nc-radio-btn"><input type="radio" name="nc_acceptExp" value="有" onchange="_ncUpdateSenddashiVisibility()"> 受入れ有</label>
-                    <label class="nc-radio-btn"><input type="radio" name="nc_acceptExp" value="無" onchange="_ncUpdateSenddashiVisibility()"> 受入れ無</label>
+                    <label class="nc-radio-btn"><input type="radio" name="nc_acceptExp" value="有" onchange="_ncUpdateSenddashiVisibility()"> <span class="nc-ae-txt">受入れ有</span></label>
+                    <label class="nc-radio-btn"><input type="radio" name="nc_acceptExp" value="無" onchange="_ncUpdateSenddashiVisibility()"> <span class="nc-ae-txt">受入れ無</span></label>
                   </div>
                 </td>
                 <td><input type="text" class="nc-input" id="nc_supportFee" placeholder="例：30000" inputmode="numeric"></td>
@@ -1010,6 +1012,15 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- ver.20261124.03: 特定技能1号で「同一年度内に受入れ済み」を選んだときの注意（定義と申請書類） -->
+        <div id="nc_aeNotice" style="display:none;margin:0 0 10px;background:#fffbeb;border:2px solid #f59e0b;border-radius:8px;padding:10px 14px;font-size:12px;line-height:1.7;color:#78350f;">
+          <div style="font-weight:900;font-size:13.5px;color:#92400e;margin-bottom:2px;">⚠️ 「同一年度内に受入れ済み」で間違いありませんか？ 選んだ方で申請書類が変わります</div>
+          <div>定義：<b>同一年度内（<span class="nc-ae-fy">2026年4月1日〜2027年3月31日</span>）に、特定技能外国人を既に受け入れている所属機関</b>です。今年度まだ受け入れていない場合は「同一年度内は初めて」を選んでください。</div>
+          <div style="margin-top:4px;">・<b>同一年度内に受入れ済み</b>：所属機関に関する書類（特定技能所属機関概要書・登記事項証明書・各種納付資料など）は、<b>申請時に提出しません</b>。<br>・<b>同一年度内は初めて</b>：所属機関に関する書類を<b>申請時に提出</b>します。</div>
+          <div style="margin-top:4px;font-weight:800;color:#b45309;">選び間違えると、申請に必要な書類が足りなくなります。お間違いのないようご確認ください。</div>
+          <label id="nc_aeChkL" style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 12px;background:#fff;border:2px solid #f59e0b;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:800;color:#78350f;"><input type="checkbox" id="nc_aeChk" style="width:18px;height:18px;accent-color:#d97706;cursor:pointer;" onchange="this.parentNode.style.background=this.checked?'#dcfce7':'#fff';this.parentNode.style.borderColor=this.checked?'#22c55e':'#f59e0b';"> 定義を確認しました。「同一年度内に受入れ済み」で間違いありません <span style="color:#dc2626;">*</span></label>
         </div>
 
         <div id="nc_desiredStatusNoteWrap" style="display:none;margin-bottom:10px;background:#fff7ed;border-left:3px solid #fb923c;border-radius:4px;padding:8px 12px;">
@@ -1529,6 +1540,16 @@ var NOTIF_LABELS={'申請済(番号待)':'申請済（番号待ち）','受付�
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20261124.03',
+    date: '2026-11-24',
+    audience: 'all',
+    notify: true,
+    items: [
+      '📝 新規案件依頼で、希望在留資格が<b>「特定技能1号」</b>のときは、受入れ経験の欄を<b>「特定技能受入経験」</b>とし、<b>「同一年度内に受入れ済み」「同一年度内は初めて」</b>から選ぶ形にしました。',
+      '⚠️ 初めてご依頼いただく所属機関で<b>「同一年度内に受入れ済み」</b>を選ぶと、定義（同一年度内＝4月1日〜翌年3月31日に、特定技能外国人を既に受け入れている所属機関）と、<b>選んだ内容で申請書類が変わること</b>のご案内が出ます。内容をご確認のうえ、<b>確認のチェック</b>を入れてください（更新のご依頼や、2件目以降の所属機関では表示されません）。'
+    ]
+  },
   {
     version: 'ver.20261124.02',
     date: '2026-11-24',
@@ -10902,7 +10923,37 @@ function _ncApplyNotUsedUI(){
     badge.style.opacity = notUsed ? '0.5' : '1';
   }
 }
+// ver.20261124.03: 特定技能1号の「受入れ経験」は定義の言葉で出す（値は 有/無 のまま）。「同一年度内に受入れ済み」を選んだら注意を出す
+var _NC_AE_LBL={ ssw:{'有':'同一年度内に受入れ済み','無':'同一年度内は初めて'}, gen:{'有':'受入れ有','無':'受入れ無'} };
+// 同一年度＝4月1日〜翌3月31日（今の年度を自動で出す）
+function _ncAeFy(){ var d=new Date(), y=d.getFullYear()-((d.getMonth()+1)<4?1:0); return y+'年4月1日〜'+(y+1)+'年3月31日'; }
+function _ncAeIsSsw1(){ return ((document.getElementById('nc_desiredStatus')||{}).value||'')==='特定技能1号'; }
+function _ncAeLabel(v){ return (_ncAeIsSsw1()?_NC_AE_LBL.ssw:_NC_AE_LBL.gen)[v]||v||''; }
+// 弊社で同じ所属機関の特定技能の案件・依頼がすでにあるか（2件目以降なら注意を出さない）。取下げ・不許可は数えない。編集中の依頼自身も数えない
+function _ncAeNormCo(s){ return String(s||'').normalize('NFKC').replace(/[\s　]/g,'').replace(/\(株\)|㈱/g,'株式会社').replace(/\(有\)|㈲/g,'有限会社').toLowerCase(); }
+function _ncAeKnownCompany(){
+  var co=_ncAeNormCo((document.getElementById('nc_company')||{}).value); if(!co) return false;
+  var bad=/取下|取り下|不許可|キャンセル|中止/, edit=window._ncEditIds||[];
+  var hit=(allCases||[]).some(function(c){ return _ncAeNormCo(c.company)===co && /^特定技能/.test(c.residenceStatus||'') && !bad.test(c.status||''); });
+  if(!hit) hit=(allIntakes||[]).some(function(r){ return r && edit.indexOf(r.id)<0 && _ncAeNormCo(r.company)===co && /^特定技能/.test(r.desired_status||'') && !bad.test(r.status||'') && r.status!=='rejected'; });
+  return hit;
+}
+function _ncAeRefresh(){
+  var ssw=_ncAeIsSsw1();
+  var _hd=document.getElementById('nc_aeHead'); if(_hd) _hd.textContent=ssw?'特定技能受入経験':'受入れ経験';   // 見出しも切り替える
+  var coEl=document.getElementById('nc_company'); if(coEl && !coEl._aeBound){ coEl._aeBound=true; coEl.addEventListener('input',function(){ try{ _ncAeRefresh(); }catch(_){} }); coEl.addEventListener('change',function(){ try{ _ncAeRefresh(); }catch(_){} }); }
+  document.querySelectorAll('input[name="nc_acceptExp"]').forEach(function(r){
+    var lb=r.closest('label'), sp=lb?lb.querySelector('.nc-ae-txt'):null; if(sp) sp.textContent=_ncAeLabel(r.value);
+    if(lb) lb.title=ssw?(r.value==='有'?'同一年度内（'+_ncAeFy()+'）に特定技能外国人を既に受け入れている':'同一年度内（'+_ncAeFy()+'）はまだ受け入れていない'):'';
+  });
+  var chk=document.querySelector('input[name="nc_acceptExp"]:checked'), n=document.getElementById('nc_aeNotice');
+  var _at=((document.getElementById('nc_appType')||{}).value||'');   // 更新のときは出さない
+  var _show=(ssw && _at!=='更新' && chk && chk.value==='有' && !_ncAeKnownCompany());
+  if(n){ if(!_show && n.style.display!=='none'){ var _c=document.getElementById('nc_aeChk'); if(_c){ _c.checked=false; _c.onchange&&_c.onchange(); } } n.style.display=_show?'':'none'; }   // 隠れたら確認チェックを外す
+  document.querySelectorAll('.nc-ae-fy').forEach(function(e){ e.textContent=_ncAeFy(); });
+}
 function _ncUpdateSenddashiVisibility(){
+  try{ _ncAeRefresh(); }catch(_){}
   var wrap=document.getElementById('nc_senddashiWrap'); if(!wrap) return;
   var appType=(document.getElementById('nc_appType')||{}).value||'';
   var expEl=document.querySelector('input[name="nc_acceptExp"]:checked');
@@ -11289,6 +11340,7 @@ function _updateHopedOptions(){
   });
 }
 function _onDesiredStatusChange(){
+  try{ _ncAeRefresh(); }catch(_){}   // ver.20261124.03
   var sel = document.getElementById('nc_desiredStatus');
   if(!sel) return;
   var wrap = document.getElementById('nc_desiredStatusNoteWrap');
@@ -11704,6 +11756,14 @@ async function _submitNewCaseInner(){
     return;
   }
   if(!acceptExp){ showNcError('受入れ経験を選択してください'); return; }
+  // ver.20261124: 「同一年度内に受入れ済み」の注意が出ているときは、確認チェックが必要
+  (function(){ try{ _ncAeRefresh(); }catch(_){} })();
+  var _aeN=document.getElementById('nc_aeNotice');
+  if(_aeN && _aeN.style.display!=='none' && !(document.getElementById('nc_aeChk')||{}).checked){
+    showNcError('「同一年度内に受入れ済み」の定義を確認して、確認のチェックを入れてください');
+    try{ _aeN.scrollIntoView({block:'center',behavior:'smooth'}); }catch(_){}
+    return;
+  }
   // ver.20261027.test02: 送り出し機関バリデーション（認定×受入経験「無」のときのみ必須）
   // ver.20261027.test03: 「未使用」トグルがONならバリデーションスキップ
   if(appType==='認定' && acceptExp==='無' && !window._ncSenddashiNotUsed){
@@ -11909,7 +11969,7 @@ function _renderConfirmBody(p){
     h += '<div class="nc-cf-label">分野</div><div class="nc-cf-value">' + esc(p.applicantField) + '</div>';
   }
   h += '<div class="nc-cf-grid">';
-  h += '<div><div class="nc-cf-label">受入れ経験</div><div class="nc-cf-value">' + esc(p.acceptExp) + '</div></div>';
+  h += '<div><div class="nc-cf-label">受入れ経験</div><div class="nc-cf-value">' + esc(p.desiredStatus==='特定技能1号' && _NC_AE_LBL.ssw[p.acceptExp] ? _NC_AE_LBL.ssw[p.acceptExp]+'（'+p.acceptExp+'）' : p.acceptExp) + '</div></div>';   // ver.20261124.03
   h += '<div><div class="nc-cf-label">支援委託費（税抜・全員に同額適用）</div><div class="nc-cf-value">' + (p.supportFee ? '¥ ' + Number(p.supportFee).toLocaleString() : '（未入力）') + '</div></div>';
   h += '</div>';
   h += '<div class="nc-cf-label">人材紹介手数料（税抜・1人あたり）</div><div class="nc-cf-value">' + esc(_ncFeeText(p).join(' ／ ')) + '</div>';

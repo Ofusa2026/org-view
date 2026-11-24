@@ -8,6 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>【テスト版】所属機関マイページ | 大房行政書士法人</title>
+<!-- ver.20261124.test01: 新規案件依頼の「受入れ経験」をO-Linkと同じにした。希望在留資格が特定技能1号のときは「同一年度内に受入れ済み」／「同一年度内は初めて」と表示（値は有/無のまま）。「同一年度内に受入れ済み」を選ぶと、定義（同一年度内＝4月1日〜翌3月31日に特定技能外国人を既に受け入れている）と申請書類が変わる注意を出す。出すのは認定・変更の1件目だけ（更新は出さない。御社の特定技能の案件がすでにあるときは出さない。取下げ・不許可は数えない）。確認画面も同じ言葉。見出しも特定技能1号のときは「特定技能受入経験」。注意枠に「定義を確認しました」のチェック（注意が出ているときは必須）。 -->
 <!-- ver.20261119.test02: company.html ver.20261119.02 と同じ（国交省の認定・認定証／郵送待ち）。 -->
 <!-- ver.20261119.test01: オープンケア協同組合への「パスワードを共有する」は、その企業に関係するパートナー企業（例：グローバルパートナーズ）にも共有されることを、パートナー名を入れて明記（company.html ver.20261119.01 と同じ）。 -->
 <!-- ver.20261118.test10: 新規案件依頼に「希望在留期間の確認」（発行手数料＝収入印紙）を追加（O-Linkと同じ）。変更・更新のとき送信前に出す（認定は出さない）。1人ずつの手数料・合計・決済手数料の注記・全期間表・入管庁リンク、負担先（所属機関／申請人／その他）、確認チェック2つ。負担先と1人ずつの手数料は依頼に保存（intake_requests.issuance_fee／issuance_fee_payer／issuance_fee_payer_note）し、確認画面と控えのメールにも出す。 -->
@@ -458,7 +459,7 @@ tr:hover td{background:#fcfcfd;}
   <span class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></span>
   <span class="header-logo">大房行政書士法人</span>
   <span class="header-title">所属機関マイページ</span>
-  <span class="header-ver">ver.20261119.test02</span><span style="margin-left:6px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px;">テスト版</span>
+  <span class="header-ver">ver.20261124.test01</span><span style="margin-left:6px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;border-radius:4px;padding:1px 6px;">テスト版</span>
   <button type="button" onclick="_coTour()" style="margin-left:auto;margin-right:10px;padding:6px 12px;background:#fde047;color:#422006;border:none;border-radius:999px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:inherit;">このページの見方</button>
   <button type="button" id="cniHdrBtn" class="new-case-btn" onclick="_cniOpen()" style="display:none;">＋ 新規案件依頼</button><!-- ver.20261118.test02: O-Linkと同じ場所・同じ見た目 -->
   <div class="header-org" id="headerOrg">読み込み中...</div>
@@ -3397,6 +3398,8 @@ function _cniCss(){
     +'.cni-sec .n{display:inline-flex;width:22px;height:22px;border-radius:50%;background:#1e3a8a;color:#fff;font-size:12px;align-items:center;justify-content:center;}'
     +'.cni-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px 14px;}'
     +'.cni-grid>div{display:flex;flex-direction:column;}'
+    +'@media(min-width:640px){.cni-grid>div.cni-span2{grid-column:span 2;}}'
+    +'.cni-span2 .cni-radio{white-space:nowrap;}'
     +'.cni-grid>div>.cni-lbl{flex:1 0 auto;}'
     +'.cni-grid .cni-in,.cni-grid .cni-radio{height:36px;box-sizing:border-box;}'
     +'.cni-grid>div>div{display:flex;flex-wrap:wrap;gap:6px;}'
@@ -3451,11 +3454,18 @@ function _cniBuild(){
       +'<div><label class="cni-lbl">希望在留資格'+R+' <span style="font-weight:500;color:#94a3b8;">（申請したあとの在留資格）</span></label><select id="cni_desired" class="cni-in" onchange="_cniSync()">'+_cniOpts(_CNI_DES)+'</select>'
         +'<input id="cni_desiredNote" class="cni-in" placeholder="その他の在留資格名" style="display:none;margin-top:5px;"></div>'
       +'<div id="cni_fieldWrap"><label class="cni-lbl">分野（特定技能）</label><select id="cni_field" class="cni-in">'+_cniOpts(_CNI_FIELDS,'-- 選択（任意）--')+'</select></div>'
-      +'<div><label class="cni-lbl">受入れ経験'+R+'</label><div><label class="cni-radio"><input type="radio" name="cni_exp" value="有" onchange="_cniSync()"> 受入れ有</label><label class="cni-radio"><input type="radio" name="cni_exp" value="無" onchange="_cniSync()"> 受入れ無</label></div></div>'
+      +'<div class="cni-span2"><label class="cni-lbl"><span id="cni_aeHead">受入れ経験</span>'+R+'</label><div><label class="cni-radio"><input type="radio" name="cni_exp" value="有" onchange="_cniSync()"> <span class="cni-ae-txt">受入れ有</span></label><label class="cni-radio"><input type="radio" name="cni_exp" value="無" onchange="_cniSync()"> <span class="cni-ae-txt">受入れ無</span></label></div></div>'
       +'<div><label class="cni-lbl">御社ご担当者名'+R+'</label><input id="cni_staff" class="cni-in" placeholder="例：山田 太郎"></div>'
       +'<div><label class="cni-lbl">ご連絡先メールアドレス'+R+'</label><input id="cni_mail" type="email" class="cni-in" placeholder="例：yamada@example.co.jp"></div>'
     +'</div>'
     +'<label style="display:inline-flex;align-items:center;gap:7px;margin-top:8px;font-size:12px;font-weight:700;color:#334155;cursor:pointer;"><input type="checkbox" id="cni_copyChk" checked style="width:16px;height:16px;"> 送信内容の控えを「ご連絡先メールアドレス」に送る</label>'   // ver.20261118.test09
+    +'<div id="cni_aeNotice" style="display:none;margin:10px 0 0;background:#fffbeb;border:2px solid #f59e0b;border-radius:8px;padding:10px 14px;font-size:12px;line-height:1.7;color:#78350f;">'   // ver.20261124.test01
+      +'<div style="font-weight:900;font-size:13.5px;color:#92400e;margin-bottom:2px;">⚠️ 「同一年度内に受入れ済み」で間違いありませんか？ 選んだ方で申請書類が変わります</div>'
+      +'<div>定義：<b>同一年度内（<span class="cni-ae-fy"></span>）に、特定技能外国人を既に受け入れている</b>場合です。今年度まだ受け入れていない場合は「同一年度内は初めて」を選んでください。</div>'
+      +'<div style="margin-top:4px;">・<b>同一年度内に受入れ済み</b>：御社に関する書類（特定技能所属機関概要書・登記事項証明書・各種納付資料など）は、<b>申請時に提出しません</b>。<br>・<b>同一年度内は初めて</b>：御社に関する書類を<b>申請時に提出</b>します。</div>'
+      +'<div style="margin-top:4px;font-weight:800;color:#b45309;">選び間違えると、申請に必要な書類が足りなくなります。お間違いのないようご確認ください。</div>'
+      +'<label id="cni_aeChkL" style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 12px;background:#fff;border:2px solid #f59e0b;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:800;color:#78350f;"><input type="checkbox" id="cni_aeChk" data-cniopt="1" style="width:18px;height:18px;accent-color:#d97706;cursor:pointer;" onchange="this.parentNode.style.background=this.checked?\'#dcfce7\':\'#fff\';this.parentNode.style.borderColor=this.checked?\'#22c55e\':\'#f59e0b\';"> 定義を確認しました。「同一年度内に受入れ済み」で間違いありません <span style="color:#dc2626;">*</span></label>'
+    +'</div>'
     +'<div class="cni-sec"><span class="n">2</span>申請する人 <span style="font-weight:500;font-size:11px;color:#64748b;">1行に1人（最大30名）</span></div>'
     +'<div style="overflow-x:auto;"><table class="cni-tbl"><thead><tr><th>#</th><th>氏名（英字）'+R+'</th><th>国籍'+R+'</th><th>現在の在留資格<span id="cni_curRq">'+R+'</span></th><th>在留期限<span id="cni_expRq">'+R+'</span></th><th>現在の在留期間</th><th>希望在留期間'+R+'</th><th>受取方法'+R+'</th><th>本人のLINE QR <span style="font-weight:500;color:#94a3b8;">（任意）</span></th><th class="cni-feecol" style="display:none;">紹介手数料（円・税抜）</th><th></th></tr></thead><tbody id="cniRows"></tbody></table></div>'
     +'<button type="button" onclick="_cniAddRow()" style="margin-top:8px;background:#fff;border:1.5px dashed #1e3a8a;color:#1e3a8a;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;">＋ 人を追加</button>'
@@ -3531,8 +3541,22 @@ function _cniQrClear(b){ var td=b.closest('td'); td.querySelector('.cni-qr').val
 function _cniNum(){ document.querySelectorAll('#cniRows tr').forEach(function(tr,i){ var c=tr.querySelector('.cni-no'); if(c) c.textContent=i+1; }); }
 function _cniVal(id){ var e=document.getElementById(id); return e?String(e.value||'').trim():''; }
 function _cniRadio(n){ var r=document.querySelector('input[name="'+n+'"]:checked'); return r?r.value:''; }
+// ver.20261124.test01: 受入れ経験（O-Linkと同じ）。特定技能1号は定義の言葉で出し、1件目の認定・変更で「受入れ済み」を選んだら注意を出す
+var _CNI_AE_LBL={ ssw:{'有':'同一年度内に受入れ済み','無':'同一年度内は初めて'}, gen:{'有':'受入れ有','無':'受入れ無'} };
+function _cniAeFy(){ var d=new Date(), y=d.getFullYear()-((d.getMonth()+1)<4?1:0); return y+'年4月1日〜'+(y+1)+'年3月31日'; }
+function _cniAeLabel(v, ds){ return (ds==='特定技能1号'?_CNI_AE_LBL.ssw:_CNI_AE_LBL.gen)[v]||v||''; }
+function _cniAeKnown(){ var bad=/取下|取り下|不許可|キャンセル|中止/; return (allCases||[]).some(function(c){ return /^特定技能/.test(c.residence_status||'') && !bad.test(c.status||''); }); }
+function _cniAeRefresh(at, ds, exp){
+  var ssw=(ds==='特定技能1号');
+  var _hd=document.getElementById('cni_aeHead'); if(_hd) _hd.textContent=ssw?'特定技能受入経験':'受入れ経験';   // 見出しも切り替える
+  document.querySelectorAll('input[name="cni_exp"]').forEach(function(r){ var lb=r.closest('label'), sp=lb?lb.querySelector('.cni-ae-txt'):null; if(sp) sp.textContent=_cniAeLabel(r.value, ds); });
+  document.querySelectorAll('.cni-ae-fy').forEach(function(e){ e.textContent=_cniAeFy(); });
+  var n=document.getElementById('cni_aeNotice'), _show=(ssw && at!=='更新' && exp==='有' && !_cniAeKnown());
+  if(n){ if(!_show && n.style.display!=='none'){ var _c=document.getElementById('cni_aeChk'); if(_c){ _c.checked=false; _c.onchange&&_c.onchange(); } } n.style.display=_show?'':'none'; }   // 隠れたら確認チェックを外す
+}
 function _cniSync(){
   var at=_cniVal('cni_appType'), ds=_cniVal('cni_desired'), exp=_cniRadio('cni_exp'), fm=_cniRadio('cni_feeMode')||'none';
+  try{ _cniAeRefresh(at, ds, exp); }catch(_){}
   var dn=document.getElementById('cni_desiredNote'); if(dn) dn.style.display=(ds==='その他')?'':'none';
   var fw=document.getElementById('cni_fieldWrap'); if(fw) fw.style.display=/特定技能|特定活動/.test(ds)||!ds?'':'none';
   // 認定は現在の在留資格・在留期限は不要
@@ -3743,6 +3767,8 @@ function _cniCollect(){
   if(!at) errs.push('申請種別を選んでください');
   if(!ds) errs.push('希望在留資格を選んでください'); else if(ds==='その他' && !dsn) errs.push('「その他」の在留資格名を入れてください');
   if(!exp) errs.push('受入れ経験（有／無）を選んでください');
+  // ver.20261124.test01: 「同一年度内に受入れ済み」の注意が出ているときは確認チェックが必要
+  var _aeN=document.getElementById('cni_aeNotice'); if(_aeN && _aeN.style.display!=='none' && !(document.getElementById('cni_aeChk')||{}).checked) errs.push('「同一年度内に受入れ済み」の定義を確認して、確認のチェックを入れてください');
   if(!staff) errs.push('御社ご担当者名を入れてください');
   if(!mail) errs.push('ご連絡先メールアドレスを入れてください'); else if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) errs.push('メールアドレスの形が正しくありません');
   if(fm==='same' && !/^\d+$/.test(fsame)) errs.push('人材紹介手数料（全員同じ金額）を数字で入れてください');
@@ -3881,7 +3907,7 @@ function _cniRenderConfirm(d){
   var feeTxt=d.fm==='none'?'なし・未定':(d.fm==='same'?('全員同じ：'+Number(d.fsame).toLocaleString()+'円（1人あたり・税抜）'):'人ごと（下の表）');
   var h='<div class="cni-note" style="margin-bottom:10px;">この内容で弊社へ送信します。よろしければ「この内容で送信する」を押してください。</div>'
     +'<table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;margin-bottom:12px;">'
-    +row('案件名',esc(_cniCaseName(d)))+row('申請種別',esc(d.at))+row('希望在留資格',esc(d.ds)+(d.field?'（分野：'+esc(d.field)+'）':''))+row('受入れ経験',esc(d.exp))
+    +row('案件名',esc(_cniCaseName(d)))+row('申請種別',esc(d.at))+row('希望在留資格',esc(d.ds)+(d.field?'（分野：'+esc(d.field)+'）':''))+row('受入れ経験',esc(d.ds==='特定技能1号'&&_CNI_AE_LBL.ssw[d.exp]?_CNI_AE_LBL.ssw[d.exp]+'（'+d.exp+'）':d.exp))
     +row('御社ご担当者',esc(d.staff)+'（'+esc(d.mail)+'）')+row('控えのメール',d.copyTo?('送る（'+esc(d.copyTo)+'）'):'送らない')+(d.issPayer?row('発行手数料（収入印紙）','合計 '+Number(d.issTotal||0).toLocaleString()+'円（'+d.people.length+'名）／ 負担先：'+esc(d.issPayer)+(d.issNote?'（'+esc(d.issNote)+'）':'')):'')+row('人材紹介手数料',esc(feeTxt));
   if(d.at==='認定'){
     var sd=d.sdOrg&&d.sdOrg.not_used?'送り出し機関省略':(d.sdOrg?esc([d.sdOrg.name,d.sdOrg.country,d.sdOrg.address,d.sdOrg.tel].filter(Boolean).join(' ／ '))+(d.sdPay&&d.sdPay.payer?'<br>支払：'+esc(d.sdPay.payer)+(d.sdPay.amount!==''?' '+Number(d.sdPay.amount||0).toLocaleString()+'円':''):''):'（入力なし）');
@@ -3956,7 +3982,7 @@ init();
 // ver.20261110.01: O-Linkの利用ログ（画面ごとの滞在時間・フォームのどこまで進んだか）を olink_events に送る。画面の表示・動作は一切変えない。
 // 数えるのは「画面が見えていて、90秒以内に操作がある時間」だけ。デモ表示・token無しは記録しない。
 (function(){
-  var PAGE='company_test', VER='ver.20261119.test02';
+  var PAGE='company_test', VER='ver.20261124.test01';
   try{
     var TOKEN=new URLSearchParams(location.search).get('token')||'';
     if(!TOKEN || TOKEN==='demo' || /[?&]demo=1\b/.test(location.search)) return;
