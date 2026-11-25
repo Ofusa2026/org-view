@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261125.01: 「送信した依頼」に案件担当者の絞り込みを追加（年度・月のタブのあとに1人ずつ選べるプルダウン。「林、SU」の依頼は林にもSUにも数える。担当者なしも選べる）。 -->
 <!-- ver.20261124.03: 新規案件依頼の「受入れ経験」を、希望在留資格が特定技能1号のときは定義の言葉にした（有＝「同一年度内に受入れ済み」／無＝「同一年度内は初めて」。値は有/無のまま）。定義＝同一年度内（4月1日〜翌3月31日。今年度は2026年4月1日〜）に特定技能外国人を既に受け入れている所属機関。「同一年度内に受入れ済み」を選ぶと、定義と申請書類が変わる注意を表の下に大きく出す。確認画面も同じ言葉で表示。弊社で同じ所属機関の特定技能の案件・依頼がすでにある（2件目以降）ときは、「同一年度内に受入れ済み」を選んでも注意は出さない（取下げ・不許可は数えない。編集中の依頼自身も数えない）。申請種別が「更新」のときは注意を出さない（O-Linkごと・同じ所属機関ごとに、1件目の認定・変更だけ出す）。見出しも特定技能1号のときは「特定技能受入経験」。注意枠に「定義を確認しました」のチェックを付け、注意が出ているときはチェックしないと送れない（注意が隠れたらチェックは外れる）。 -->
 <!-- ver.20261124.02: 企業様へ大房行政書士法人をご紹介する初回メール（つなぎメール）を、更新だけの依頼では「在留期間の更新に向けて」の文面にした（認定・変更はこれまでどおり「ご入社に向けて」）。 -->
 <!-- ver.20261124.01: 担当の絞り込みを個人名にした（「安田 祐貴、丸山 健二」のようなまとまりではなく1人ずつ。選んだ人が担当に入っている案件が出る）。あわせて人材詳細に重要事項説明書（ver.20261119.05分）。 -->
@@ -772,7 +773,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261124.03</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261125.01</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1540,6 +1541,15 @@ var NOTIF_LABELS={'申請済(番号待)':'申請済（番号待ち）','受付�
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20261125.01',
+    date: '2026-11-25',
+    audience: 'all',
+    notify: true,
+    items: [
+      '🔎 <b>「送信した依頼」</b>で、<b>案件担当者</b>で絞り込めるようになりました。年度・月を選んだあと、「案件担当者」のプルダウンから1人を選ぶと、その方が担当に入っている依頼だけが表示されます（「林、SU」のような依頼は、林さん・SUさんのどちらを選んでも表示されます）。月ごとの依頼件数の確認にお使いください。'
+    ]
+  },
   {
     version: 'ver.20261124.03',
     date: '2026-11-24',
@@ -5809,7 +5819,8 @@ function _intakeNoteHtml(rows){
     +'<div style="font-size:10px;color:#a16207;font-weight:800;margin-bottom:3px;">備考 <span style="font-weight:500;color:#ca8a04;">（クリックで全文表示／折りたたみ）</span></div>'
     +'<div class="intake-note" onclick="this.classList.toggle(\'nt-open\')">'+body+'</div></div>';
 }
-var intakeFY=null, intakeMonth='all';
+var intakeFY=null, intakeMonth='all', intakeStaff='all';   // ver.20261125.01: 担当者の絞り込み
+function switchIntakeStaff(v){ intakeStaff=v||'all'; renderIntakes(); }
 function _intakeFY(iso){ var d=new Date(iso); if(isNaN(d.getTime())) return null; var y=d.getFullYear(),m=d.getMonth()+1; return m>=4?y:y-1; }
 function switchIntakeFY(y){ intakeFY=y; intakeMonth='all'; renderIntakes(); }
 function switchIntakeMonth(m){ intakeMonth=m; renderIntakes(); }
@@ -5846,6 +5857,30 @@ function renderIntakes(){
   fyMonths.forEach(function(m){ h+=_intakeMonTab(String(m),m+'月（'+monCnt[m]+'）',intakeMonth===String(m)); });
   h+='</div>';
   var list=(intakeMonth==='all')?inFY:inFY.filter(function(x){ var d=new Date(x.received_at); return !isNaN(d.getTime())&&(d.getMonth()+1)===parseInt(intakeMonth,10); });
+  // ver.20261125.01: 案件担当者で絞り込む（「林、SU」は林・SUそれぞれに数える。選んだ人が入っている依頼を表示）
+  var _stCnt={}, _stNone=0;
+  list.forEach(function(x){ var ns=_staffNames(x.client_staff); if(!ns.length) _stNone++; ns.forEach(function(n){ _stCnt[n]=(_stCnt[n]||0)+1; }); });
+  var _stNames=Object.keys(_stCnt).sort(function(a,b){ return (_stCnt[b]-_stCnt[a])||a.localeCompare(b,'ja'); });
+  if(intakeStaff!=='all' && intakeStaff!=='__none__' && !_stCnt[intakeStaff]) intakeStaff='all';
+  if(intakeStaff==='__none__' && !_stNone) intakeStaff='all';
+  if(_stNames.length){
+    h+='<div style="display:flex;align-items:center;gap:8px;margin:-4px 2px 14px;flex-wrap:wrap;">';
+    h+='<span style="font-size:12px;font-weight:800;color:#475569;">案件担当者</span>';
+    h+='<select onchange="switchIntakeStaff(this.value)" style="border:1px solid '+(intakeStaff!=='all'?'#6366f1':'#cbd5e1')+';border-radius:8px;padding:5px 10px;font-size:13px;font-weight:700;color:#0f2040;background:'+(intakeStaff!=='all'?'#eef2ff':'#fff')+';">';
+    h+='<option value="all"'+(intakeStaff==='all'?' selected':'')+'>すべて（'+list.length+'）</option>';
+    _stNames.forEach(function(n){ h+='<option value="'+esc(n)+'"'+(intakeStaff===n?' selected':'')+'>'+esc(n)+'（'+_stCnt[n]+'）</option>'; });
+    if(_stNone) h+='<option value="__none__"'+(intakeStaff==='__none__'?' selected':'')+'>担当者なし（'+_stNone+'）</option>';
+    h+='</select>';
+    if(intakeStaff!=='all') h+='<button onclick="switchIntakeStaff(\'all\')" style="border:1px solid #e2e8f0;background:#fff;border-radius:8px;padding:4px 10px;font-size:11.5px;color:#64748b;cursor:pointer;">✕ 解除</button>';
+    // 説明の例は、この機関で一番多い「2人以上の担当」の組み合わせを使う（無ければ一般的な例）
+    var _cmb={}, _ex=null; list.forEach(function(x){ var ns=_staffNames(x.client_staff); if(ns.length>=2){ var k=ns.slice(0,2).join('、'); _cmb[k]=(_cmb[k]||0)+1; } });
+    Object.keys(_cmb).forEach(function(k){ if(!_ex || _cmb[k]>_cmb[_ex]) _ex=k; });
+    var _exA=_ex?_ex.split('、'):['Aさん','Bさん'];
+    h+='<div style="flex-basis:100%;font-size:11.5px;color:#64748b;line-height:1.6;">1人選ぶと、その人が担当に入っている依頼だけが表示されます。「'+esc(_exA[0])+'、'+esc(_exA[1])+'」の依頼は、'+esc(_exA[0])+'と'+esc(_exA[1])+'のどちらを選んでも出ます。</div>';
+    h+='</div>';
+  }
+  if(intakeStaff==='__none__') list=list.filter(function(x){ return !_staffNames(x.client_staff).length; });
+  else if(intakeStaff!=='all') list=list.filter(function(x){ return _staffNames(x.client_staff).indexOf(intakeStaff)>=0; });
   if(!list.length){
     h+='<div class="empty">この期間に送信した依頼はありません</div>';
     document.getElementById('main').innerHTML=h; return;
