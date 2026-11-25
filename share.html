@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261125.03: 送信日と案件受領日を両方表示。一覧の「案件受領日」の下に小さく「送信 日付」（O-Link経由のみ）、「送信した依頼」のカードの送信日時の下に「案件受領日」（登録済みのみ）。 -->
 <!-- ver.20261125.02: 至急修正：.01で追加した担当者の絞り込みの変数名が、新規案件依頼の「案件担当者」登録リスト（intakeStaff）と同じだったため改名（intakeStaffSel）。 -->
 <!-- ver.20261125.01: 「送信した依頼」に案件担当者の絞り込みを追加（年度・月のタブのあとに1人ずつ選べるプルダウン。「林、SU」の依頼は林にもSUにも数える。担当者なしも選べる）。 -->
 <!-- ver.20261124.03: 新規案件依頼の「受入れ経験」を、希望在留資格が特定技能1号のときは定義の言葉にした（有＝「同一年度内に受入れ済み」／無＝「同一年度内は初めて」。値は有/無のまま）。定義＝同一年度内（4月1日〜翌3月31日。今年度は2026年4月1日〜）に特定技能外国人を既に受け入れている所属機関。「同一年度内に受入れ済み」を選ぶと、定義と申請書類が変わる注意を表の下に大きく出す。確認画面も同じ言葉で表示。弊社で同じ所属機関の特定技能の案件・依頼がすでにある（2件目以降）ときは、「同一年度内に受入れ済み」を選んでも注意は出さない（取下げ・不許可は数えない。編集中の依頼自身も数えない）。申請種別が「更新」のときは注意を出さない（O-Linkごと・同じ所属機関ごとに、1件目の認定・変更だけ出す）。見出しも特定技能1号のときは「特定技能受入経験」。注意枠に「定義を確認しました」のチェックを付け、注意が出ているときはチェックしないと送れない（注意が隠れたらチェックは外れる）。 -->
@@ -774,7 +775,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261125.02</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261125.03</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1542,6 +1543,15 @@ var NOTIF_LABELS={'申請済(番号待)':'申請済（番号待ち）','受付�
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20261125.03',
+    date: '2026-11-25',
+    audience: 'all',
+    notify: true,
+    items: [
+      '📅 <b>送信日</b>（O-Linkで依頼を送った日）と<b>案件受領日</b>（大房が依頼の内容を確認して、案件として登録した日）を、両方見られるようになりました。一覧の「案件受領日」の下に小さく<b>「送信 日付」</b>、「送信した依頼」の各依頼には送信日時の下に<b>「案件受領日」</b>を表示します。月末に送った依頼を翌月に登録した場合など、2つの日付が違うときの確認にお使いください。日付にカーソルを乗せると、それぞれの日付の意味が表示されます。'
+    ]
+  },
   {
     version: 'ver.20261125.02',
     date: '2026-11-25',
@@ -3248,7 +3258,7 @@ function buildRow(c){
     h+='<td data-col-key="name" style="min-width:110px;max-width:170px;"><div style="font-size:11px;font-weight:700;color:#0f2040;white-space:normal;word-break:break-word;line-height:1.4;" title="'+esc(displayName)+'">'+notifDot+esc(displayName)+'</div><div style="font-size:10px;color:#6b7280;word-break:break-word;">'+esc(c.applicant||'')+'</div>'+_personBtn(cid)+_gpCoBtn(c)+'</td>'; // ver.20260612.test05: 幅を半分に＋折り返し ver.20260921.11b: 企業詳細ボタン追加
   }
   h+='<td data-col-key="company" style="min-width:110px;max-width:170px;"><div style="font-size:10px;font-weight:600;white-space:normal;word-break:break-word;line-height:1.4;">'+esc(c.company||'—')+'</div></td>'; // ver.20260612.test05: 折り返して全文表示
-  h+='<td data-col-key="requestDate" style="font-size:10px;white-space:nowrap;color:#475569;min-width:88px;">'+(c.requestDate?esc(c.requestDate):'<span style="color:#d1d5db;">—</span>')+'</td>'; // ver.20260617.test47: 案件受領日
+  h+='<td data-col-key="requestDate" style="font-size:10px;white-space:nowrap;color:#475569;min-width:88px;">'+(c.requestDate?'<span title="'+_DT_TIP_REQ+'" style="cursor:help;">'+esc(c.requestDate)+'</span>':'<span style="color:#d1d5db;">—</span>')+(function(){ var sd=_caseSentDate(c.id); return sd?'<div style="font-size:9.5px;color:#94a3b8;margin-top:2px;cursor:help;" title="'+_DT_TIP_SENT+'">送信 '+esc(sd)+'</div>':''; })()+'</td>'; // ver.20260617.test47: 案件受領日
   var _zs='';
   if(c.residenceStatus){ var _r=c.residenceStatus;
     _zs=/特定技能2号/.test(_r)?'特定技能2号':/特定技能/.test(_r)?'特定技能1号':(/技人国/.test(_r)||/技術.*人文知識.*国際業務/.test(_r))?'技人国':/特定活動/.test(_r)?'特定活動':/技能実習/.test(_r)?'技能実習':_r;
@@ -4130,7 +4140,7 @@ var _PV_DESC={
   '受注ID':'グローバルパートナーズの受注ID',
   '案件名 / 申請者':'案件名と申請人の名前です。赤い点は、まだ貴社で確認していない動きがある案件です。',
   '所属機関':'雇用する会社',
-  '案件受領日':'大房が依頼を受けた日',
+  '案件受領日':'大房が依頼の内容を確認して、案件として登録した日（O-Linkから送った依頼は、その下に小さく送信日も表示）',
   '種別':'変更・更新・認定 と 希望在留資格',
   '担当':'上が貴社のご担当者、下が大房行政書士法人の担当者です。',
   'ステータス':'今どの段階か',
@@ -5820,6 +5830,20 @@ function _intakeNoteHtml(rows){
     +'<div style="font-size:10px;color:#a16207;font-weight:800;margin-bottom:3px;">備考 <span style="font-weight:500;color:#ca8a04;">（クリックで全文表示／折りたたみ）</span></div>'
     +'<div class="intake-note" onclick="this.classList.toggle(\'nt-open\')">'+body+'</div></div>';
 }
+// ver.20261125.03: 送信日（O-Linkで送った日）と案件受領日（大房が受け付けた日）を両方見せるための引き当て
+var _DT_TIP_REQ='案件受領日：大房行政書士法人が依頼の内容を確認して、案件として登録した日です。月末に送った依頼を翌月に登録した場合などは、送信日と違う日になります。', _DT_TIP_SENT='送信日：O-Linkの「新規案件依頼」から依頼を送信した日です。「送信した依頼」の月のタブは、この日付で分けています。';   // カーソルを乗せたときの説明
+var _sentDateMap=null, _sentDateMapLen=-1;
+function _caseSentDate(caseId){
+  if(!caseId) return '';
+  if(!_sentDateMap || _sentDateMapLen!==(allIntakes||[]).length){
+    _sentDateMap={}; _sentDateMapLen=(allIntakes||[]).length;
+    (allIntakes||[]).forEach(function(x){ if(!x||!x.case_id||!x.received_at) return; var d=new Date(x.received_at); if(isNaN(d.getTime())) return;
+      var z=function(n){return (n<10?'0':'')+n;}; var v=d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate());
+      if(!_sentDateMap[x.case_id] || v<_sentDateMap[x.case_id]) _sentDateMap[x.case_id]=v; });
+  }
+  return _sentDateMap[caseId]||'';
+}
+function _caseReqDate(caseId){ if(!caseId) return ''; for(var i=0;i<(allCases||[]).length;i++){ var c=allCases[i]; if(c&&c.id===caseId) return c.requestDate||''; } return ''; }
 var intakeFY=null, intakeMonth='all', intakeStaffSel='all';   // ver.20261125.02: 担当者の絞り込み（既存の intakeStaff＝担当者登録リストと名前がぶつかっていたので改名）
 function switchIntakeStaff(v){ intakeStaffSel=v||'all'; renderIntakes(); }
 function _intakeFY(iso){ var d=new Date(iso); if(isNaN(d.getTime())) return null; var y=d.getFullYear(),m=d.getMonth()+1; return m>=4?y:y-1; }
@@ -5916,7 +5940,9 @@ function renderIntakes(){
       +(_canEdit?('<button onclick="openIntakeEditModal('+gi+')" title="大房が確認する前なので、送った内容を直せます（人材の追加・削除もできます）" style="padding:3px 11px;border-radius:999px;font-size:11px;font-weight:800;background:#fff;color:#b45309;border:1px solid #fcd34d;cursor:pointer;white-space:nowrap;line-height:1.5;">✏️ 編集</button>'
         +'<button onclick="withdrawIntakeGroup('+gi+',this)" title="重複して送ったときなどに、この依頼を取り下げます" style="padding:3px 11px;border-radius:999px;font-size:11px;font-weight:800;background:#fff;color:#b91c1c;border:1px solid #fecaca;cursor:pointer;white-space:nowrap;line-height:1.5;">🗑 取り下げ</button>'):'')
       +badges+'</div>'
-      +'<div style="font-size:10.5px;color:#94a3b8;margin-top:4px;">送信: '+_intakeFmtDt(g.received_at)+'</div>'
+      +'<div style="font-size:10.5px;color:#94a3b8;margin-top:4px;cursor:help;" title="'+_DT_TIP_SENT+'">送信: '+_intakeFmtDt(g.received_at)+'</div>'
+      +(function(){ var ds={}; g.rows.forEach(function(r){ var d=_caseReqDate(r.case_id); if(d) ds[d]=1; }); var k=Object.keys(ds).sort(); if(!k.length) return '';
+          return '<div style="font-size:10.5px;color:#475569;margin-top:2px;cursor:help;" title="'+_DT_TIP_REQ+'">案件受領日: '+esc(k[0])+(k.length>1?' 〜 '+esc(k[k.length-1]):'')+'</div>'; })()
       +(_edAt?('<div style="font-size:10.5px;color:#b45309;margin-top:2px;font-weight:700;">✏️ 編集: '+_intakeFmtDt(_edAt)+'</div>'):'')+'</div>';
     h+='</div>';
     // ver.20261001.01: 依頼時に入力した宛先(TO/CC)も表示
