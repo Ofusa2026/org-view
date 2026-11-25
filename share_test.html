@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
-<!-- ver.20261125.test05: share.html ver.20261125.05 と同じ。.04の修正。足りない所の一覧が画面に出ていなかった（赤枠と下の赤い帯だけ出ていた）のを表示。案件名が空のまま会社名だけ入れて「登録する」を押したとき、案件名を先に自動で作ってから確認するようにした（自動で入ったのに赤枠が残っていた）。 -->
-<!-- ver.20261125.test04: share.html ver.20261125.04 と同じ。 新規案件依頼を使いやすく。①「登録する」で足りない所を全部まとめて赤枠＋一覧で表示（押すと移動）②人の列見出しに「全員に」（1人目の値を2人目以降へ。国籍・現在の在留資格・希望在留期間・受取方法のみ。在留期限・現在の在留期間は人ごとに違うため付けない）③入力途中で閉じるときは確認し、下書きを自動保存（次に開いたとき「続きから入れる」）。送れたら下書きは消す ④会社名を入れると前回の依頼から共通の欄（空いている所だけ）を入れられる／送信した依頼カードに「コピーして新規」⑤特定技能1号で、弊社に完了した特定技能の案件がある会社なのに受入れ経験が未選択・「初めて」のとき目安を表示 ⑥分野の選択肢の「（任意）」表記を削除（必須のため）。何も入れていない人の行は送るときに飛ばす。 -->
+<!-- ver.20261125.test06: share.html ver.20261125.06 と同じ。 新規案件依頼 その2。①スマホ（幅700px以下）は表をやめて案件の情報を縦並び・人は1人ずつカード表示（「1人目と同じにする」ボタン付き。入力欄は16pxでiPhoneの拡大を防ぐ）②AIで読み取って入力に PDF・Excel（xlsx/xls）・CSV を追加。ファイルを枠に持ってきて離すだけでも入る（Excelはサーバー側 intake-ai-read v4 で表を文字にする。CSVはShift-JISも読む）③前回の依頼の案内に、入る中身（希望在留資格・受入れ経験・委託費・担当者・宛先）を先に表示 ④フォームの使われ方を記録（nc_form_events／RPC log_nc_event。開いた・足りない欄で止まった欄名・送れた・入力途中で閉じた・AI読み取り・下書き・前回の依頼。氏名などは送らない）。 -->
+<!-- ver.20261125.05: .04の修正。足りない所の一覧が画面に出ていなかった（赤枠と下の赤い帯だけ出ていた）のを表示。案件名が空のまま会社名だけ入れて「登録する」を押したとき、案件名を先に自動で作ってから確認するようにした（自動で入ったのに赤枠が残っていた）。 -->
+<!-- ver.20261125.04: 新規案件依頼を使いやすく。①「登録する」で足りない所を全部まとめて赤枠＋一覧で表示（押すと移動）②人の列見出しに「全員に」（1人目の値を2人目以降へ。国籍・現在の在留資格・希望在留期間・受取方法のみ。在留期限・現在の在留期間は人ごとに違うため付けない）③入力途中で閉じるときは確認し、下書きを自動保存（次に開いたとき「続きから入れる」）。送れたら下書きは消す ④会社名を入れると前回の依頼から共通の欄（空いている所だけ）を入れられる／送信した依頼カードに「コピーして新規」⑤特定技能1号で、弊社に完了した特定技能の案件がある会社なのに受入れ経験が未選択・「初めて」のとき目安を表示 ⑥分野の選択肢の「（任意）」表記を削除（必須のため）。何も入れていない人の行は送るときに飛ばす。 -->
 <!-- ver.20261125.03: 送信日と案件受領日を両方表示。一覧の「案件受領日」の下に小さく「送信 日付」（O-Link経由のみ）、「送信した依頼」のカードの送信日時の下に「案件受領日」（登録済みのみ）。 -->
 <!-- ver.20261125.02: 至急修正：.01で追加した担当者の絞り込みの変数名が、新規案件依頼の「案件担当者」登録リスト（intakeStaff）と同じだったため改名（intakeStaffSel）。 -->
 <!-- ver.20261125.01: 「送信した依頼」に案件担当者の絞り込みを追加（年度・月のタブのあとに1人ずつ選べるプルダウン。「林、SU」の依頼は林にもSUにも数える。担当者なしも選べる）。 -->
@@ -594,6 +595,36 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 .nc-radio-group.nc-err-mark{padding:3px;}
 .nc-all-btn{display:inline-block;margin-left:4px;padding:1px 7px;border-radius:999px;font-size:9.5px;font-weight:800;background:#ecfdf5;color:#047857;border:1px solid #6ee7b7;cursor:pointer;vertical-align:middle;line-height:1.5;white-space:nowrap;}
 .nc-all-btn:hover{background:#d1fae5;}
+/* ver.20261125.06: スマホ（幅700px以下）は表をやめて、1人ずつカードで出す */
+.nc-allbar-m{display:none;}
+@media (max-width:700px){
+  .nc-hscroll-hint{display:none!important;}
+  .nc-common-table thead{display:none;}
+  .nc-common-table,.nc-common-table tbody,.nc-common-table tr{display:block;width:100%!important;min-width:0!important;}
+  #ncJinzaiTable{min-width:0!important;width:100%!important;}
+  #ncJinzaiBody > tr > td.nc-row-num{width:auto!important;padding:0!important;}
+  .nc-common-table td{display:block;border-right:none!important;border-bottom:1px solid #f1f5f9;padding:8px 10px;min-width:0!important;}
+  .nc-common-table td::before{content:attr(data-label);display:block;font-size:11px;font-weight:700;color:#475569;margin-bottom:4px;}
+  #ncJinzaiTable thead{display:none;}
+  #ncJinzaiTable,#ncJinzaiTable tbody{display:block;width:100%;}
+  #ncJinzaiBody > tr:not([id$="_noteRow"]){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 10px;border:1.5px solid #cbd5e1;border-radius:10px;padding:10px 10px 10px;margin:0 0 10px;background:#fff;position:relative;}
+  #ncJinzaiBody > tr > td:not(.nc-fee-col){display:block;padding:0;border:none;min-width:0;}
+  #ncJinzaiBody > tr > td.nc-fee-col{padding:0;border:none;}
+  #ncJinzaiBody > tr > td::before{content:attr(data-label);display:block;font-size:11px;font-weight:700;color:#475569;margin-bottom:3px;}
+  #ncJinzaiBody > tr > td.nc-row-num{grid-column:1 / -1;font-size:13px;font-weight:900;color:#1e3a8a;text-align:left;}
+  #ncJinzaiBody > tr > td.nc-row-num::before{display:none;}
+  #ncJinzaiBody > tr > td.nc-row-num::after{content:'人目';}
+  #ncJinzaiBody > tr > td:nth-child(2){grid-column:1 / -1;}
+  #ncJinzaiBody > tr > td.nc-row-del{position:absolute;top:6px;right:6px;}
+  #ncJinzaiBody > tr > td.nc-row-del::before{display:none;}
+  #ncJinzaiBody > tr[id$="_noteRow"]:not([style*="none"]){display:block;margin:-4px 0 12px;}
+  #ncJinzaiBody > tr[id$="_noteRow"] > td:first-child{display:none;}
+  #ncJinzaiBody > tr[id$="_noteRow"] > td{display:block;padding:0!important;}
+  #newCaseModalBg .nc-input,#newCaseModalBg .nc-select{font-size:16px!important;}   /* iPhoneで入力時に画面が拡大されないように */
+  .nc-allbar-m[data-many="1"]{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:4px 0 8px;font-size:11.5px;font-weight:700;color:#047857;}
+  .nc-allbar-m button{padding:4px 10px;border-radius:999px;font-size:11.5px;font-weight:800;background:#ecfdf5;color:#047857;border:1px solid #6ee7b7;cursor:pointer;}
+}
+
 .nc-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .nc-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
 .nc-jinzai-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px;}
@@ -782,7 +813,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261125.test05</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261125.test06</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -906,13 +937,13 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
             <span style="font-size:11px;font-weight:900;color:#fff;background:#e11d48;border-radius:999px;padding:3px 10px;letter-spacing:.5px;">NEW</span>
             <span style="font-size:11px;font-weight:800;color:#4f46e5;background:#fff;border:1.5px solid #6366f1;border-radius:999px;padding:2px 10px;">新機能</span>
             <span class="nc-stepno" style="background:#6366f1;">1</span><div style="font-size:15px;font-weight:900;color:#3730a3;">AIで読み取って入力</div>
-            <div style="font-size:11.5px;color:#4f46e5;flex:1;min-width:180px;font-weight:600;">LINE・メールの文章や、求人票・在留カード・Excelのスクリーンショットを入れるだけで、下の欄に自動で入ります</div>
+            <div style="font-size:11.5px;color:#4f46e5;flex:1;min-width:180px;font-weight:600;">LINE・メールの文章や、求人票・在留カードの写真・PDF・Excel・CSVを入れるだけで、下の欄に自動で入ります（ファイルはこの枠に持ってきて離すだけでも入ります）</div>
           </div>
           <div id="ncAiBody" style="margin-top:10px;">
-            <textarea id="ncAiText" class="nc-ai-ta" placeholder="ここに貼り付け（Ctrl+V）&#10;・LINE・メールの文章&#10;・求人票・在留カードなどのスクリーンショット" style="width:100%;min-height:92px;padding:12px 14px;border:2px dashed #a5b4fc;border-radius:10px;font-family:inherit;font-size:13.5px;line-height:1.7;color:#0f172a;resize:vertical;background:#fff;box-sizing:border-box;"></textarea>
+            <textarea id="ncAiText" class="nc-ai-ta" placeholder="ここに貼り付け（Ctrl+V）&#10;・LINE・メールの文章&#10;・求人票・在留カードなどのスクリーンショット&#10;・PDF・Excelのファイルは、この枠に持ってくるだけでも入ります" style="width:100%;min-height:92px;padding:12px 14px;border:2px dashed #a5b4fc;border-radius:10px;font-family:inherit;font-size:13.5px;line-height:1.7;color:#0f172a;resize:vertical;background:#fff;box-sizing:border-box;"></textarea>
             <div id="ncAiThumbs" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;"></div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;">
-              <label style="display:inline-flex;align-items:center;gap:4px;padding:7px 12px;background:#fff;border:1.5px solid #a5b4fc;border-radius:8px;font-size:12px;font-weight:700;color:#4338ca;cursor:pointer;">スクリーンショットを選ぶ<input type="file" id="ncAiFile" accept="image/*" multiple style="display:none;" onchange="_ncAiAddFiles(this.files);this.value='';"></label>
+              <label style="display:inline-flex;align-items:center;gap:4px;padding:7px 12px;background:#fff;border:1.5px solid #a5b4fc;border-radius:8px;font-size:12px;font-weight:700;color:#4338ca;cursor:pointer;">スクリーンショット・PDF・Excelを選ぶ<input type="file" id="ncAiFile" accept="image/*,.pdf,.xlsx,.xls,.xlsm,.csv,.txt" multiple style="display:none;" onchange="_ncAiAddFiles(this.files);this.value='';"></label>
               <button type="button" id="ncAiBtn" onclick="_ncAiRun()" style="padding:8px 16px;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:800;cursor:pointer;">読み取って入力する</button>
               <span style="font-size:10.5px;color:#6b7280;">※ 空いている欄だけに入れます。入った欄は<span style="background:#fef9c3;padding:0 4px;border-radius:3px;">黄色</span>になるので、必ず確認してから「登録する」を押してください。</span>
             </div>
@@ -921,7 +952,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
         </div>
 
         <div class="nc-section-title"><span class="nc-stepno">2</span>案件の情報 <span class="nc-sec-sub">会社・申請の種類など（全員共通）</span></div>
-        <div style="font-size:10.5px;color:#94a3b8;margin:-4px 0 8px;">→ 横スクロールで各項目を入力できます</div>
+        <div class="nc-hscroll-hint" style="font-size:10.5px;color:#94a3b8;margin:-4px 0 8px;">→ 横スクロールで各項目を入力できます</div>
         <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:6px;">
           <table class="nc-common-table">
             <thead>
@@ -1139,6 +1170,8 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
           <span class="nc-jinzai-count" id="ncJinzaiCount">最大30名</span>
         </div>
 
+        <!-- ver.20261125.06: スマホ用「1人目と同じにする」 -->
+        <div id="ncAllBarM" class="nc-allbar-m"><span>1人目と同じにする：</span><button type="button" onclick="_ncFillAll('nc-j-nat')">国籍</button><button type="button" onclick="_ncFillAll('nc-j-current')">現在の在留資格</button><button type="button" onclick="_ncFillAll('nc-j-hoped')">希望在留期間</button><button type="button" onclick="_ncFillAll('nc-j-uke')">受取方法</button></div>
         <table class="nc-jinzai-table" id="ncJinzaiTable">
           <thead>
             <tr>
@@ -1551,6 +1584,15 @@ var NOTIF_LABELS={'申請済(番号待)':'申請済（番号待ち）','受付�
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20261125.test06',
+    date: '2026-11-25',
+    audience: 'all',
+    notify: true,
+    items: [
+      '📱 <b>スマホでの案件のご依頼</b>が入れやすくなりました。スマホでは、申請する人を<b>1人ずつカード</b>で表示します（横にずらさなくても全部の欄が見えます）。<br>📎 <b>AIで読み取って入力</b>に、<b>PDF・Excel・CSV</b>のファイルも入れられるようになりました。ファイルは枠に持ってきて離すだけでも入ります。<br>📋 会社名を入れたとき、前回のご依頼から<b>入る内容</b>（希望在留資格・担当者・宛先など）を先に表示するようにしました'
+    ]
+  },
   {
     version: 'ver.20261125.test04',
     date: '2026-11-25',
@@ -10664,12 +10706,6 @@ function _ncAiReset(){
   _ncAiToggle(false);
   document.querySelectorAll('#newCaseModalBg ._ncAiFilled').forEach(function(e){ e.classList.remove('_ncAiFilled'); e.style.background=''; });
 }
-function _ncAiRenderThumbs(){
-  var w=document.getElementById('ncAiThumbs'); if(!w) return;
-  w.innerHTML=_ncAiImages.map(function(im,i){
-    return '<div style="position:relative;width:64px;height:64px;border:1px solid #c7d2fe;border-radius:6px;overflow:hidden;background:#fff;"><img src="'+im.url+'" style="width:100%;height:100%;object-fit:cover;"><button type="button" onclick="_ncAiImages.splice('+i+',1);_ncAiRenderThumbs();" title="外す" style="position:absolute;top:1px;right:1px;width:18px;height:18px;border:none;border-radius:50%;background:rgba(15,23,42,.7);color:#fff;font-size:11px;line-height:18px;padding:0;cursor:pointer;">✕</button></div>';
-  }).join('');
-}
 // 画像は長い辺1600pxまで縮めてJPEGにする（送る量を減らす）
 function _ncAiShrink(file){
   return new Promise(function(res){
@@ -10690,19 +10726,117 @@ function _ncAiShrink(file){
     fr.readAsDataURL(file);
   });
 }
+// ===== ver.20261125.06: スマホは1人ずつカード表示／AI読み取りにPDF・Excel・CSVとドラッグ＆ドロップ／前回の依頼の中身を先に見せる／使われ方の記録 =====
+// ---- スマホ表示：表の見出しを各欄のラベルにする ----
+function _ncThText(th){ if(!th) return ''; var c=th.cloneNode(true); c.querySelectorAll('button,.nc-all-btn').forEach(function(b){ b.remove(); }); return String(c.textContent||'').replace(/\s+/g,' ').trim(); }
+function _ncMobLabelRow(tr){
+  if(!tr || tr.id.slice(-8)==='_noteRow') return;
+  var ths=document.querySelectorAll('#ncJinzaiTable thead th');
+  Array.prototype.forEach.call(tr.children, function(td,i){ if(!td.dataset.label) td.dataset.label=_ncThText(ths[i]); });
+}
+function _ncMobLabelCommon(){
+  var tb=document.querySelector('.nc-common-table'); if(!tb) return;
+  var ths=tb.querySelectorAll('thead th'), tds=tb.querySelectorAll('tbody td');
+  Array.prototype.forEach.call(tds, function(td,i){
+    var th=td.id==='nc_partnerTd'?document.getElementById('nc_partnerTh'):(td.id==='nc_branchTd'?document.getElementById('nc_branchTh'):ths[i]);
+    td.dataset.label=_ncThText(th);
+  });
+}
+
+// ---- AI読み取り：画像・PDF・Excel・CSV ----
+var _NC_AI_MAX=6, _NC_AI_FILE_MB=5;
+function _ncAiKind(f){
+  var n=String(f.name||'').toLowerCase(), t=String(f.type||'');
+  if(/^image\//.test(t)) return 'image';
+  if(t==='application/pdf' || /\.pdf$/.test(n)) return 'pdf';
+  if(/\.(xlsx|xls|xlsm)$/.test(n) || /spreadsheetml|ms-excel/.test(t)) return 'excel';
+  if(/\.(csv|tsv|txt)$/.test(n) || /^text\//.test(t)) return 'csv';
+  return '';
+}
+function _ncReadB64(file){ return new Promise(function(res){ var fr=new FileReader(); fr.onload=function(){ res(String(fr.result||'').split(',')[1]||''); }; fr.onerror=function(){ res(''); }; fr.readAsDataURL(file); }); }
+function _ncReadText(file){
+  return new Promise(function(res){
+    var fr=new FileReader();
+    fr.onload=function(){
+      var buf=new Uint8Array(fr.result||new ArrayBuffer(0)), txt='';
+      try{ txt=new TextDecoder('utf-8',{fatal:true}).decode(buf); }catch(_){ try{ txt=new TextDecoder('shift_jis').decode(buf); }catch(__){ txt=''; } }
+      res(txt.replace(/^﻿/,''));
+    };
+    fr.onerror=function(){ res(''); };
+    fr.readAsArrayBuffer(file);
+  });
+}
 async function _ncAiAddFiles(files){
-  var list=Array.prototype.slice.call(files||[]).filter(function(f){ return /^image\//.test(f.type); });
+  var list=Array.prototype.slice.call(files||[]), skipped=[];
   for(var i=0;i<list.length;i++){
-    if(_ncAiImages.length>=6){ _ncAiMsg('warn','スクリーンショットは6枚までです。'); break; }
-    var im=await _ncAiShrink(list[i]); if(im) _ncAiImages.push(im);
+    var f=list[i], k=_ncAiKind(f);
+    if(!k){ skipped.push(f.name||'ファイル'); continue; }
+    if(_ncAiImages.length>=_NC_AI_MAX){ _ncAiMsg('warn','入れられるのは'+_NC_AI_MAX+'つまでです。'); break; }
+    if(k==='image'){ var im=await _ncAiShrink(f); if(im){ im.kind='image'; im.name=f.name||''; _ncAiImages.push(im); } continue; }
+    if(f.size>_NC_AI_FILE_MB*1024*1024){ _ncAiMsg('warn','「'+esc(f.name)+'」は大きすぎます（'+_NC_AI_FILE_MB+'MBまで）。ページを減らすか、スクリーンショットにしてください。'); continue; }
+    if(k==='csv'){ var t=await _ncReadText(f); if(t.trim()) _ncAiImages.push({kind:'csv', name:f.name||'', text:t.slice(0,30000)}); continue; }
+    var b=await _ncReadB64(f); if(!b) continue;
+    _ncAiImages.push({kind:k, name:f.name||'', media_type:(k==='pdf'?'application/pdf':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'), data:b});
   }
+  if(skipped.length) _ncAiMsg('warn','読み取れない形式のファイルは外しました：'+esc(skipped.join('、'))+'<br>画像・PDF・Excel・CSVを入れてください。');
   _ncAiRenderThumbs();
 }
+function _ncAiRenderThumbs(){
+  var w=document.getElementById('ncAiThumbs'); if(!w) return;
+  var ic={pdf:['PDF','#dc2626'],excel:['Excel','#15803d'],csv:['CSV','#0369a1']};
+  w.innerHTML=_ncAiImages.map(function(im,i){
+    var x='<button type="button" onclick="_ncAiImages.splice('+i+',1);_ncAiRenderThumbs();" title="外す" style="position:absolute;top:1px;right:1px;width:18px;height:18px;border:none;border-radius:50%;background:rgba(15,23,42,.7);color:#fff;font-size:11px;line-height:18px;padding:0;cursor:pointer;">✕</button>';
+    if(!im.kind || im.kind==='image') return '<div style="position:relative;width:64px;height:64px;border:1px solid #c7d2fe;border-radius:6px;overflow:hidden;background:#fff;"><img src="'+im.url+'" style="width:100%;height:100%;object-fit:cover;">'+x+'</div>';
+    var c=ic[im.kind]||['FILE','#475569'];
+    return '<div title="'+esc(im.name)+'" style="position:relative;width:64px;height:64px;border:1px solid #c7d2fe;border-radius:6px;overflow:hidden;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:4px;box-sizing:border-box;"><span style="font-size:11px;font-weight:900;color:#fff;background:'+c[1]+';border-radius:4px;padding:1px 6px;">'+c[0]+'</span><span style="font-size:9px;color:#334155;max-width:56px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(im.name)+'</span>'+x+'</div>';
+  }).join('');
+}
+// 送る中身（CSVは文章に足す。画像・PDF・Excelはファイルとして送る）
+function _ncAiPayload(text){
+  var extra=_ncAiImages.filter(function(im){ return im.kind==='csv'; }).map(function(im){ return '【CSVファイル：'+im.name+'】\n'+im.text; }).join('\n\n');
+  return { text: [text, extra].filter(Boolean).join('\n\n'),
+           images: _ncAiImages.filter(function(im){ return im.kind!=='csv'; }).map(function(im){ return {media_type:im.media_type, data:im.data, name:im.name||''}; }) };
+}
+// ファイルを枠に持ってきて入れる
+(function _ncAiDropBind(){
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', _ncAiDropBind); return; }
+  var body=document.getElementById('ncAiBody'); if(!body) return;
+  var box=body.parentNode||body, cnt=0;
+  var on=function(v){ box.style.outline=v?'3px dashed #6366f1':''; box.style.outlineOffset=v?'-3px':''; box.style.background=v?'#eef2ff':''; };
+  box.addEventListener('dragenter', function(e){ if(e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types||[],'Files')>=0){ e.preventDefault(); cnt++; on(true); } });
+  box.addEventListener('dragover', function(e){ if(e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types||[],'Files')>=0){ e.preventDefault(); e.dataTransfer.dropEffect='copy'; } });
+  box.addEventListener('dragleave', function(){ cnt=Math.max(0,cnt-1); if(!cnt) on(false); });
+  box.addEventListener('drop', function(e){ cnt=0; on(false); if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length){ e.preventDefault(); try{ _ncAiToggle(true); }catch(_){} _ncAiAddFiles(e.dataTransfer.files); } });
+})();
+
+// ---- 前回の依頼：入る中身を先に見せる ----
+function _ncPrevSummary(r0, rows){
+  var a=[];
+  if(r0.desired_status){ var fm=''; (rows||[r0]).some(function(r){ var m=String(r.other_support_note||'').match(/^【分野：([^】]*)】/); if(m){ fm=m[1]; return true; } return false; }); a.push('希望在留資格：'+r0.desired_status+(fm?'（'+fm+'）':'')); }
+  if(r0.accept_exp) a.push('受入れ経験：'+_ncAeLabel(r0.accept_exp));
+  if(r0.support_fee!=null && r0.support_fee!=='') a.push('委託費：'+Number(r0.support_fee).toLocaleString()+'円');
+  if(r0.client_staff) a.push('担当者：'+r0.client_staff);
+  var to=String(r0.to_email||'').split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+  if(to.length) a.push('宛先：'+to.map(function(s){ var m=s.match(/^(.*?)\s*<([^>]+)>$/); return m?(m[1]||m[2]):s; }).join('、'));
+  return a;
+}
+
+// ---- 使われ方の記録（名前などは送らない） ----
+var _ncSess='', _ncOpenAt=0, _ncUsed={};
+function _ncLog(ev, detail){
+  try{
+    if(!currentToken || currentToken==='demo' || window._ncPractice) return;
+    var mob=window.matchMedia ? window.matchMedia('(max-width:700px)').matches : null;
+    sbRpc('log_nc_event',{p_token:currentToken, p_pass:(currentPass||null), p_session:_ncSess, p_event:ev, p_detail:detail||null, p_mobile:mob}).catch(function(){});
+  }catch(_){}
+}
+function _ncSecSinceOpen(){ return _ncOpenAt?Math.round((Date.now()-_ncOpenAt)/1000):null; }
+
 document.addEventListener('paste', function(ev){
   var box=document.getElementById('ncAiBody'); if(!box || box.style.display==='none') return;
   if(!document.getElementById('newCaseModalBg') || !document.getElementById('newCaseModalBg').classList.contains('open')) return;
   var items=(ev.clipboardData && ev.clipboardData.items) || [], files=[];
-  for(var i=0;i<items.length;i++){ if(items[i].kind==='file' && /^image\//.test(items[i].type)){ var f=items[i].getAsFile(); if(f) files.push(f); } }
+  for(var i=0;i<items.length;i++){ if(items[i].kind==='file' && (/^image\//.test(items[i].type) || items[i].type==='application/pdf')){ var f=items[i].getAsFile(); if(f) files.push(f); } }
   if(files.length){ ev.preventDefault(); _ncAiAddFiles(files); }
 });
 function _ncAiMsg(kind, html){
@@ -10724,11 +10858,13 @@ async function _ncAiRun(){
   _ncAiMsg('info','読み取り中です。そのままお待ちください。');
   try{
     var r=await fetch(SUPABASE_URL+'/functions/v1/intake-ai-read',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},
-      body:JSON.stringify({ token:currentToken, pass:(currentPass||''), text:text, images:_ncAiImages.map(function(im){ return {media_type:im.media_type, data:im.data}; }) })});
+      body:(function(){ var _pl=_ncAiPayload(text); return JSON.stringify({ token:currentToken, pass:(currentPass||''), text:_pl.text, images:_pl.images }); })()});   // ver.20261125.06: PDF・Excel・CSVも送る
     var j=await r.json().catch(function(){ return null; });
     if(!j || !j.ok) throw new Error((j && j.error) || ('通信エラー（'+r.status+'）'));
     _ncAiApply(j.data||{});
+    try{ _ncUsed.ai=1; var _kc={}; _ncAiImages.forEach(function(im){ var k=im.kind||'image'; _kc[k]=(_kc[k]||0)+1; }); if(text) _kc.text=1; _ncLog('ai_read',{ok:true,kinds:_kc,people:((j.data||{}).jinzai||[]).length}); }catch(_){}
   }catch(e){
+    try{ _ncLog('ai_read',{ok:false,err:String(e&&e.message||e).slice(0,120)}); }catch(_){}
     _ncAiMsg('err','読み取れませんでした：'+esc(e.message||String(e))+'<br>もう一度お試しいただくか、手で入力してください。');
   }finally{
     btn.disabled=false; btn.textContent='読み取って入力する'; btn.style.opacity='';
@@ -11338,6 +11474,7 @@ function addJinzaiRow(){
       '</div>' +
     '</td>';
   document.getElementById('ncJinzaiBody').appendChild(noteTr);
+  try{ _ncMobLabelRow(tr); }catch(_){}   // ver.20261125.06: スマホ表示のラベル
   updateJinzaiCount();
   _updateHopedOptions(); // ver.20260830.03: 追加行にも5年オプション制御を反映
   _ncApplyUkeRule();     // ver.20260912.01: 認定なら受取方法をメール交付に固定
@@ -11750,6 +11887,7 @@ function _ncPrecheckAll(){
   });
   if(!nPeople){ var fr=_ncDataRows()[0]; add(fr?fr.querySelector('.nc-j-name'):null,'申請する人（1名以上）'); }
   if(!errs.length){ var el0=$('ncError'); if(el0) el0.style.display='none'; return true; }
+  try{ var _fs={}; errs.forEach(function(e){ var k=String(e.msg).replace(/^\d+人目の/,''); _fs[k]=(_fs[k]||0)+1; }); _ncLog('blocked',{n:errs.length,fields:_fs,people:nPeople,sec:_ncSecSinceOpen()}); }catch(_){}
   var el=$('ncError');
   var h='<div style="font-weight:900;margin-bottom:4px;">入力が足りない所が '+errs.length+' か所あります（赤い枠の欄）</div><div style="display:flex;flex-wrap:wrap;gap:4px 6px;">';
   errs.slice(0,20).forEach(function(e,k){ h+='<a href="javascript:void(0)" onclick="_ncJumpErr('+k+')" style="display:inline-block;padding:2px 8px;border-radius:999px;background:#fff;border:1px solid #fca5a5;color:#b91c1c;font-size:11px;font-weight:700;text-decoration:none;">'+esc(e.msg)+'</a>'; });
@@ -11812,6 +11950,7 @@ function _ncFillAll(cls){
 function _ncAllBtnSync(){
   var many=_ncDataRows().length>=2;
   document.querySelectorAll('#ncJinzaiTable .nc-all-btn').forEach(function(b){ b.style.display=many?'':'none'; });
+  var bm=document.getElementById('ncAllBarM'); if(bm) bm.dataset.many=many?'1':'';
 }
 
 // ---- ③ 閉じる前の確認・下書き ----
@@ -11901,11 +12040,15 @@ function _ncDraftBanner(){
     +'<button type="button" onclick="_ncDraftDiscard()" style="padding:4px 12px;border-radius:999px;font-size:11.5px;font-weight:800;background:#fff;color:#64748b;border:1px solid #cbd5e1;cursor:pointer;">消す</button>';
   fa.insertBefore(b, fa.firstChild);
 }
-function _ncDraftUse(){ var d=_ncDraftLoad(); var b=document.getElementById('ncDraftBanner'); if(b) b.remove(); if(!d) return; try{ _ncRestore(d); }catch(e){ console.error('[nc draft restore]', e); } window._ncSnap0=''; }
+function _ncDraftUse(){ var d=_ncDraftLoad(); var b=document.getElementById('ncDraftBanner'); if(b) b.remove(); if(!d) return; try{ _ncRestore(d); }catch(e){ console.error('[nc draft restore]', e); } window._ncSnap0=''; _ncUsed.draft=1; _ncLog('draft_restore',{}); }
 function _ncDraftDiscard(){ if(!confirm('下書きを消しますか？（元に戻せません）')) return; _ncDraftClear(); }
 function _ncAfterOpen(){
   setTimeout(function(){
     window._ncSnap0=_ncSnapStr();
+    var _mode=window._ncPractice?'practice':(window._ncEditIds?'edit':(window._ncSkipDraftBanner?'copy':'new'));
+    _ncSess=Math.random().toString(36).slice(2,12); _ncOpenAt=Date.now(); _ncUsed={copy:_mode==='copy'?1:0};
+    _ncLog('open',{mode:_mode});
+    try{ _ncMobLabelCommon(); _ncDataRows().forEach(_ncMobLabelRow); }catch(_){}
     if(window._ncSkipDraftBanner){ window._ncSkipDraftBanner=false; } else _ncDraftBanner();
     _ncCoHintRefresh(); _ncAllBtnSync();
   }, 0);
@@ -11914,7 +12057,9 @@ function _ncCanClose(){
   if(!_ncIsDirty()) return true;
   if(_ncDraftEnabled()){
     _ncDraftSave();
-    return confirm('入力した内容はまだ送信していません。\n\n閉じても下書きとして残るので、次に「新規案件依頼」を開いたときに続きから入れられます。\n閉じますか？');
+    var _ok=confirm('入力した内容はまだ送信していません。\n\n閉じても下書きとして残るので、次に「新規案件依頼」を開いたときに続きから入れられます。\n閉じますか？');
+    if(_ok){ try{ var _d=_ncSerialize(); _ncLog('close_dirty',{sec:_ncSecSinceOpen(),people:(_d.rows||[]).filter(function(r){ return (r.name||'').trim(); }).length,company:!!(_d.f.nc_company||'').trim()}); }catch(_){} }
+    return _ok;
   }
   return confirm(window._ncEditIds?'変更はまだ送信していません。閉じると、いま直した内容は消えます。閉じますか？':'入力した内容は消えます。閉じますか？');
 }
@@ -11964,6 +12109,7 @@ function _ncApplyCommon(r0, rows, opt){
 function _ncUseLastIntake(){
   var li=_ncLastIntakeOf(_ncV('nc_company')); if(!li) return;
   var n=_ncApplyCommon(li.r0, li.rows, {withAppType:!_ncV('nc_appType')});
+  _ncUsed.prev=1; _ncLog('use_prev',{n:n});
   window._ncCoHintUsed=_ncAeNormCo(_ncV('nc_company'));
   _ncCoHintRefresh();
   _ncToast(n?('前回の依頼から '+n+' 項目を入れました（空いていた欄だけ）。確認してください'):'空いている欄はありませんでした');
@@ -11995,7 +12141,7 @@ function _ncCoHintRefresh(){
     if(li){
       var d=String(li.r0.received_at||'').slice(0,10).replace(/-/g,'/');
       h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 12px;background:#f0f9ff;border:1px solid #7dd3fc;border-radius:8px;color:#075985;font-size:11.5px;line-height:1.6;margin-bottom:6px;">'
-        +'<span style="flex:1;min-width:200px;">📋 この会社の<b>前回の依頼</b>があります（'+esc(d)+'・'+esc(li.r0.case_name||'')+'）。希望在留資格・受入れ経験・支援委託費・担当者・宛先などを入れられます</span>'
+        +'<span style="flex:1;min-width:200px;">📋 この会社の<b>前回の依頼</b>があります（'+esc(d)+'・'+esc(li.r0.case_name||'')+'）。空いている欄に、次の内容を入れられます'+(function(){ var sm=_ncPrevSummary(li.r0, li.rows); return sm.length?'<span style="display:block;margin-top:3px;color:#0c4a6e;font-size:11px;">'+sm.map(esc).join('　／　')+'</span>':''; })()+'</span>'
         +'<button type="button" onclick="_ncUseLastIntake()" style="padding:4px 12px;border-radius:999px;font-size:11.5px;font-weight:800;background:#0369a1;color:#fff;border:none;cursor:pointer;white-space:nowrap;">前回の内容を入れる</button></div>';
     }
     if(_ncAeIsSsw1() && _ncV('nc_appType')!=='更新'){
@@ -12562,6 +12708,7 @@ async function executeSubmit(){
     var mailTextEl = document.getElementById('ncMailText');   // ver.20261010.01: 初回メール文案
     if(mailTextEl) mailTextEl.value = _buildIntroMailText(p.company, (p.jinzaiList||[]).map(function(j){return j.name;}), p.clientStaff, p.appType);
     bigSuc.classList.add('show');
+    try{ _ncLog('submit_ok',{edit:!!_editIds,people:(p.jinzaiList||[]).length,appType:p.appType,ai:!!_ncUsed.ai,draft:!!_ncUsed.draft,prev:!!_ncUsed.prev,copy:!!_ncUsed.copy,sec:_ncSecSinceOpen()}); }catch(_){}
     try{ if(!_editIds && !window._ncPractice) _ncDraftClear(); window._ncSnap0=null; }catch(_){}   // ver.20261125.04: 送れたら下書きを消す
     // 下部ボタンの調整
     document.getElementById('ncSubmitBtn').style.display = 'none';
