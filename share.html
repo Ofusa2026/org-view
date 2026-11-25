@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261125.04: 新規案件依頼を使いやすく。①「登録する」で足りない所を全部まとめて赤枠＋一覧で表示（押すと移動）②人の列見出しに「全員に」（1人目の値を2人目以降へ。国籍・現在の在留資格・希望在留期間・受取方法のみ。在留期限・現在の在留期間は人ごとに違うため付けない）③入力途中で閉じるときは確認し、下書きを自動保存（次に開いたとき「続きから入れる」）。送れたら下書きは消す ④会社名を入れると前回の依頼から共通の欄（空いている所だけ）を入れられる／送信した依頼カードに「コピーして新規」⑤特定技能1号で、弊社に完了した特定技能の案件がある会社なのに受入れ経験が未選択・「初めて」のとき目安を表示 ⑥分野の選択肢の「（任意）」表記を削除（必須のため）。何も入れていない人の行は送るときに飛ばす。 -->
 <!-- ver.20261125.03: 送信日と案件受領日を両方表示。一覧の「案件受領日」の下に小さく「送信 日付」（O-Link経由のみ）、「送信した依頼」のカードの送信日時の下に「案件受領日」（登録済みのみ）。 -->
 <!-- ver.20261125.02: 至急修正：.01で追加した担当者の絞り込みの変数名が、新規案件依頼の「案件担当者」登録リスト（intakeStaff）と同じだったため改名（intakeStaffSel）。 -->
 <!-- ver.20261125.01: 「送信した依頼」に案件担当者の絞り込みを追加（年度・月のタブのあとに1人ずつ選べるプルダウン。「林、SU」の依頼は林にもSUにも数える。担当者なしも選べる）。 -->
@@ -587,6 +588,11 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 .nc-label .req{color:#dc2626;margin-left:3px;}
 .nc-input,.nc-select{width:100%;padding:8px 10px;border:1.2px solid #cbd5e1;border-radius:6px;font-size:12.5px;color:#0f2040;background:white;box-sizing:border-box;}
 .nc-input:focus,.nc-select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.15);}
+/* ver.20261125.04: 足りない欄の赤枠・「全員に」ボタン */
+.nc-err-mark{border-color:#dc2626!important;background:#fef2f2!important;box-shadow:0 0 0 2px rgba(220,38,38,.18)!important;border-radius:6px;}
+.nc-radio-group.nc-err-mark{padding:3px;}
+.nc-all-btn{display:inline-block;margin-left:4px;padding:1px 7px;border-radius:999px;font-size:9.5px;font-weight:800;background:#ecfdf5;color:#047857;border:1px solid #6ee7b7;cursor:pointer;vertical-align:middle;line-height:1.5;white-space:nowrap;}
+.nc-all-btn:hover{background:#d1fae5;}
 .nc-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .nc-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
 .nc-jinzai-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px;}
@@ -775,7 +781,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261125.03</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261125.04</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1018,6 +1024,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
         </div>
 
         <!-- ver.20261124.03: 特定技能1号で「同一年度内に受入れ済み」を選んだときの注意（定義と申請書類） -->
+        <div id="nc_coHint" style="display:none;"></div><!-- ver.20261125.04: 前回の依頼から入れる／受入れ経験の目安 -->
         <div id="nc_aeNotice" style="display:none;margin:0 0 10px;background:#fffbeb;border:2px solid #f59e0b;border-radius:8px;padding:10px 14px;font-size:12px;line-height:1.7;color:#78350f;">
           <div style="font-weight:900;font-size:13.5px;color:#92400e;margin-bottom:2px;">⚠️ 「同一年度内に受入れ済み」で間違いありませんか？ 選んだ方で申請書類が変わります</div>
           <div>定義：<b>同一年度内（<span class="nc-ae-fy">2026年4月1日〜2027年3月31日</span>）に、特定技能外国人を既に受け入れている所属機関</b>です。今年度まだ受け入れていない場合は「同一年度内は初めて」を選んでください。</div>
@@ -1035,7 +1042,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
         <div id="nc_fieldWrap" style="display:none;margin-bottom:10px;background:#eff6ff;border-left:3px solid #3b82f6;border-radius:4px;padding:8px 12px;">
           <label style="font-size:10.5px;color:#1e40af;font-weight:700;display:block;margin-bottom:4px;">分野（特定技能）<span style="color:#dc2626;">*</span></label>
           <select class="nc-select" id="nc_applicantField" style="background:white;">
-            <option value="">-- 選択（任意）--</option>
+            <option value="">-- 選択 --</option>
             <option value="介護">介護</option>
             <option value="ビルクリーニング">ビルクリーニング</option>
             <option value="工業製品製造業">工業製品製造業</option>
@@ -1136,12 +1143,12 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
             <tr>
               <th class="nc-row-num">#</th>
               <th>氏名(英語)<span style="color:#dc2626;">*</span></th>
-              <th style="width:120px;">国籍 <span style="color:#dc2626;">*</span></th>
-              <th style="width:155px;">現在の在留資格<span class="nc-exp-req" style="color:#dc2626;"> *</span></th>
+              <th style="width:120px;">国籍 <span style="color:#dc2626;">*</span><button type="button" class="nc-all-btn" style="display:none;" onclick="_ncFillAll('nc-j-nat')" title="1人目と同じ値を、2人目以降に入れます">全員に</button></th>
+              <th style="width:155px;">現在の在留資格<span class="nc-exp-req" style="color:#dc2626;"> *</span><button type="button" class="nc-all-btn" style="display:none;" onclick="_ncFillAll('nc-j-current')" title="1人目と同じ値を、2人目以降に入れます">全員に</button></th>
               <th style="width:140px;">在留期限<span class="nc-exp-req" style="color:#dc2626;"> *</span></th>
               <th style="width:150px;">現在の在留期間<span class="nc-exp-req" style="color:#dc2626;"> *</span></th>
-              <th style="width:150px;">希望在留期間 <span style="color:#dc2626;">*</span></th><!-- ver.20261102.01: 1月〜5年の1ヶ月刻みに合わせ列幅調整 -->
-              <th style="width:120px;">受取方法 <span style="color:#dc2626;">*</span></th>
+              <th style="width:150px;">希望在留期間 <span style="color:#dc2626;">*</span><button type="button" class="nc-all-btn" style="display:none;" onclick="_ncFillAll('nc-j-hoped')" title="1人目と同じ値を、2人目以降に入れます">全員に</button></th><!-- ver.20261102.01: 1月〜5年の1ヶ月刻みに合わせ列幅調整 -->
+              <th style="width:120px;">受取方法 <span style="color:#dc2626;">*</span><button type="button" class="nc-all-btn" style="display:none;" onclick="_ncFillAll('nc-j-uke')" title="1人目と同じ値を、2人目以降に入れます">全員に</button></th>
               <th style="width:80px;text-align:center;">推薦票</th>
               <th class="nc-fee-col" style="width:115px;">紹介料（1人あたり・円）</th>
               <th class="nc-row-del"></th>
@@ -1543,6 +1550,15 @@ var NOTIF_LABELS={'申請済(番号待)':'申請済（番号待ち）','受付�
 // 新バージョン初見時に右上トーストで通知（localStorage 'share_last_seen_version' で記録）。
 // 軽微な内部変更で通知を出したくない場合は notify: false を指定。履歴モーダルには表示される。
 var WHATS_NEW = [
+  {
+    version: 'ver.20261125.04',
+    date: '2026-11-25',
+    audience: 'all',
+    notify: true,
+    items: [
+      '📝 <b>案件のご依頼フォーム</b>が使いやすくなりました。<br>・「登録する」を押したとき、足りない所を<b>まとめて赤い枠</b>で表示します（上の一覧を押すと、その欄へ移ります）<br>・2人以上のとき、国籍・現在の在留資格・希望在留期間・受取方法の見出しに<b>「全員に」</b>ボタンが出ます（1人目と同じ値を2人目以降に入れます）<br>・入力の途中で閉じても<b>下書き</b>が残り、次に開いたとき「続きから入れる」で戻せます<br>・会社名を入れると、その会社の<b>前回のご依頼の内容</b>（希望在留資格・受入れ経験・担当者・宛先など）を入れられます。「送信した依頼」にも<b>「📋 コピーして新規」</b>を付けました<br>・特定技能1号で、弊社でその会社の特定技能の案件が完了しているのに「同一年度内は初めて」を選んだときは、確認のご案内を出します'
+    ]
+  },
   {
     version: 'ver.20261125.03',
     date: '2026-11-25',
@@ -5937,6 +5953,7 @@ function renderIntakes(){
       +'<button onclick="copyIntakeLineText('+gi+',this)" title="この依頼のLINE報告用テキストをコピーします" style="padding:3px 11px;border-radius:999px;font-size:11px;font-weight:800;background:#fff;color:#15803d;border:1px solid #86efac;cursor:pointer;white-space:nowrap;line-height:1.5;">テキスト</button>'
       +'<button onclick="copyIntakeMailText('+gi+',this)" title="企業様へ大房行政書士法人をご紹介する初回メールの文案をコピーします" style="padding:3px 11px;border-radius:999px;font-size:11px;font-weight:800;background:#fff;color:#1d4ed8;border:1px solid #93c5fd;cursor:pointer;white-space:nowrap;line-height:1.5;">初回メール</button>'
       +'<button onclick="copyOfusaEmails(this)" title="大房行政書士法人のメールアドレス（代表＋担当）をまとめてコピーします" style="padding:3px 11px;border-radius:999px;font-size:11px;font-weight:800;background:#fff;color:#1d4ed8;border:1px solid #93c5fd;cursor:pointer;white-space:nowrap;line-height:1.5;">大房アドレス</button>'
+      +'<button onclick="copyIntakeToNew('+gi+')" title="この依頼の会社・申請の内容（希望在留資格・受入れ経験・支援委託費・担当者・宛先など）を入れて、新しい依頼を作ります" style="padding:3px 11px;border-radius:999px;font-size:11px;font-weight:800;background:#fff;color:#0369a1;border:1px solid #7dd3fc;cursor:pointer;white-space:nowrap;line-height:1.5;">📋 コピーして新規</button>'
       +(_canEdit?('<button onclick="openIntakeEditModal('+gi+')" title="大房が確認する前なので、送った内容を直せます（人材の追加・削除もできます）" style="padding:3px 11px;border-radius:999px;font-size:11px;font-weight:800;background:#fff;color:#b45309;border:1px solid #fcd34d;cursor:pointer;white-space:nowrap;line-height:1.5;">✏️ 編集</button>'
         +'<button onclick="withdrawIntakeGroup('+gi+',this)" title="重複して送ったときなどに、この依頼を取り下げます" style="padding:3px 11px;border-radius:999px;font-size:11px;font-weight:800;background:#fff;color:#b91c1c;border:1px solid #fecaca;cursor:pointer;white-space:nowrap;line-height:1.5;">🗑 取り下げ</button>'):'')
       +badges+'</div>'
@@ -10934,7 +10951,9 @@ function openNewCaseModal(){
   // ver.20261027.test01: 送り出し機関セクション初期化
   try{ _ncResetSenddashi(); _loadSenddashiCache().then(function(){ try{ _ncFillSenddashiOptions(); }catch(_){ } }); _ncUpdateSenddashiVisibility(); }catch(_){}
   try{ _loadOfusaContacts(); }catch(_){}   // ver.20261102.03: 送信完了画面用に大房アドレスを先読み
+  window._ncCoHintUsed=''; window._ncErrList=null; try{ _ncClearErrMarks(); }catch(_){}   // ver.20261125.04
   document.getElementById('newCaseModalBg').classList.add('open');
+  try{ _ncAfterOpen(); }catch(_){}   // ver.20261125.04: 開いたときの内容を覚える（閉じる前の確認用）・下書きの案内
 }
 
 // ===== ver.20261027.test01: 送り出し機関機能 =====
@@ -11199,7 +11218,9 @@ function _ncCollectSenddashiPayload(){
   return {org:org, payment:payment};
 }
 
-function closeNewCaseModal(){
+function closeNewCaseModal(force){
+  if(!force){ try{ if(!_ncCanClose()) return; }catch(_){} }   // ver.20261125.04: 入力途中なら確認（下書きは残す）
+  window._ncSnap0=null;
   document.getElementById('newCaseModalBg').classList.remove('open');
   window._ncPractice=false; try{ _ncPracticeBannerSync(); }catch(_){}   // ver.20261019.test01
   window._ncEditIds=null;   // ver.20261030.03
@@ -11458,6 +11479,7 @@ function updateJinzaiCount(){
   var count = document.querySelectorAll('#ncJinzaiBody > tr:not([id$="_noteRow"])').length;
   document.getElementById('ncJinzaiCount').textContent = '最大' + _NC_MAX_JINZAI + '名';
   try{ _ncFeeSync(); }catch(_){}
+  try{ _ncAllBtnSync(); }catch(_){}   // ver.20261125.04
 }
 // ver.20261019.test04: 人材紹介手数料（1人あたり）の表示・計算
 function _ncFeeNum(v){ var t=String(v||'').replace(/[,，円\s]/g,'').replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0xFEE0);}); return /^\d+$/.test(t)?parseInt(t,10):(t?NaN:0); }
@@ -11665,6 +11687,330 @@ function _ncShowDeadlinePopup(no, name, exp, dl, rowEl){
   };
 }
 
+// ===== ver.20261125.04: 新規案件依頼を使いやすく（①足りない所をまとめて表示 ②全員に同じ値 ③閉じる前の確認・下書き ④前の依頼から入れる ⑤受入れ経験の目安） =====
+function _ncToast(msg){
+  var t0=document.getElementById('_ncOkToast'); if(t0) t0.remove();
+  var t=document.createElement('div'); t.id='_ncOkToast'; t.textContent=msg;
+  t.style.cssText='position:fixed;left:50%;bottom:88px;transform:translateX(-50%);background:#065f46;color:#fff;padding:11px 18px;border-radius:10px;font-size:12.5px;font-weight:800;box-shadow:0 8px 24px rgba(6,95,70,.35);z-index:2147483647;max-width:92vw;text-align:center;line-height:1.6;';
+  document.body.appendChild(t); setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 3500);
+}
+if(typeof window.showToast!=='function') window.showToast=_ncToast;
+function _ncV(id){ var e=document.getElementById(id); return e?String(e.value||'').trim():''; }
+function _ncDataRows(){ return Array.prototype.slice.call(document.querySelectorAll('#ncJinzaiBody > tr:not([id$="_noteRow"])')); }
+// 人の行が空か（氏名・国籍・現在の在留資格・在留期限がどれも空）。空の行は送るときに飛ばす
+function _ncRowIsBlank(tr){
+  var g=function(c){ var e=tr.querySelector(c); return e?String(e.value||'').trim():''; };
+  return !g('.nc-j-name') && !g('.nc-j-nat') && !g('.nc-j-current') && !g('.nc-j-expire');
+}
+
+// ---- ① 足りない所をまとめて表示 ----
+function _ncClearErrMarks(){ document.querySelectorAll('#newCaseModalBg .nc-err-mark').forEach(function(e){ e.classList.remove('nc-err-mark'); }); }
+function _ncPrecheckAll(){
+  _ncClearErrMarks();
+  var errs=[];
+  var add=function(el,msg){ errs.push({el:el,msg:msg}); if(el) el.classList.add('nc-err-mark'); };
+  var $=function(id){ return document.getElementById(id); };
+  var appType=_ncV('nc_appType'), ds=_ncV('nc_desiredStatus'), isAidem=(orgName==='株式会社アイデム');
+  if(!_ncV('nc_caseName')) add($('nc_caseName'),'案件名');
+  if(!appType) add($('nc_appType'),'申請種別');
+  if(!_ncV('nc_company')) add($('nc_company'),'所属機関（企業名）');
+  if(!ds) add($('nc_desiredStatus'),'希望在留資格');
+  var fw=$('nc_fieldWrap'); if(fw && fw.style.display!=='none' && !_ncV('nc_applicantField')) add($('nc_applicantField'),'分野（特定技能）');
+  if(ds==='その他' && !_ncV('nc_desiredStatusNote')) add($('nc_desiredStatusNote'),'希望在留資格（その他）の詳細');
+  var ae=document.querySelector('input[name="nc_acceptExp"]:checked');
+  var aeGrp=(document.querySelector('input[name="nc_acceptExp"]')||{closest:function(){return null;}}).closest('.nc-radio-group');
+  if(!ae) add(aeGrp,_ncAeIsSsw1()?'特定技能受入経験':'受入れ経験');
+  try{ _ncAeRefresh(); }catch(_){}
+  var aeN=$('nc_aeNotice'); if(aeN && aeN.style.display!=='none' && !($('nc_aeChk')||{}).checked) add($('nc_aeChkL')||$('nc_aeChk'),'「同一年度内に受入れ済み」の確認チェック');
+  if(appType==='認定' && ae && ae.value==='無' && !window._ncSenddashiNotUsed){
+    [['nc_senddashiName','送り出し機関の氏名又は名称'],['nc_senddashiCountry','送り出し機関の所在国'],['nc_senddashiTel','送り出し機関の電話番号'],['nc_senddashiAddress','送り出し機関の所在地'],['nc_senddashiPayer','送り出し機関に支払った人']].forEach(function(a){ if(!_ncV(a[0])) add($(a[0]),a[1]); });
+    var amt=_ncV('nc_senddashiAmount').replace(/[,，円\s]/g,''); if(!/^\d+$/.test(amt)) add($('nc_senddashiAmount'),'送り出し機関への金額（数字。支払なしなら 0）');
+  }
+  if(isAidem && !_ncV('nc_aidemBranch')) add($('nc_aidemBranch'),'アイデム拠点');
+  if(isAidem && _ncV('nc_aidemBranch')==='東' && !_ncV('nc_clientStaff') && !_ncV('nc_clientStaff2')) add($('nc_clientStaff'),'案件担当者');
+  var sf=_ncV('nc_supportFee').replace(/[,，円\s]/g,'');
+  if(!sf) add($('nc_supportFee'),'支援委託費（無い場合は 0）'); else if(!/^\d+$/.test(sf)) add($('nc_supportFee'),'支援委託費は数字だけ');
+  var nPeople=0;
+  _ncDataRows().forEach(function(tr,i){
+    if(_ncRowIsBlank(tr)) return;
+    nPeople++;
+    var q=function(c){ return tr.querySelector(c); }, val=function(c){ var e=q(c); return e?String(e.value||'').trim():''; }, no=(i+1)+'人目の';
+    if(!val('.nc-j-name')) add(q('.nc-j-name'),no+'氏名');
+    if(!val('.nc-j-nat')) add(q('.nc-j-nat'),no+'国籍');
+    if(appType!=='認定'){
+      if(!val('.nc-j-current')) add(q('.nc-j-current'),no+'現在の在留資格');
+      if(!val('.nc-j-expire')) add(q('.nc-j-expire'),no+'在留期限');
+      if(!val('.nc-j-curperiod')) add(q('.nc-j-curperiod'),no+'現在の在留期間');
+    }
+    if(val('.nc-j-current')==='その他'){ var nt=document.querySelector('#'+tr.id+'_noteRow .nc-j-current-note'); if(nt && !String(nt.value||'').trim()) add(nt,no+'現在の在留資格（その他）の詳細'); }
+    if(!val('.nc-j-hoped')) add(q('.nc-j-hoped'),no+'希望在留期間');
+    if(!val('.nc-j-uke')) add(q('.nc-j-uke'),no+'受取方法');
+  });
+  if(!nPeople){ var fr=_ncDataRows()[0]; add(fr?fr.querySelector('.nc-j-name'):null,'申請する人（1名以上）'); }
+  if(!errs.length){ var el0=$('ncError'); if(el0) el0.style.display='none'; return true; }
+  var el=$('ncError');
+  var h='<div style="font-weight:900;margin-bottom:4px;">入力が足りない所が '+errs.length+' か所あります（赤い枠の欄）</div><div style="display:flex;flex-wrap:wrap;gap:4px 6px;">';
+  errs.slice(0,20).forEach(function(e,k){ h+='<a href="javascript:void(0)" onclick="_ncJumpErr('+k+')" style="display:inline-block;padding:2px 8px;border-radius:999px;background:#fff;border:1px solid #fca5a5;color:#b91c1c;font-size:11px;font-weight:700;text-decoration:none;">'+esc(e.msg)+'</a>'; });
+  if(errs.length>20) h+='<span style="font-size:11px;">ほか '+(errs.length-20)+' か所</span>';
+  h+='</div>';
+  el.innerHTML=h; el.style.display='';
+  window._ncErrList=errs;
+  var t0=document.getElementById('_ncErrToast'); if(t0) t0.remove();
+  var toast=document.createElement('div'); toast.id='_ncErrToast';
+  toast.textContent='入力が足りない所が '+errs.length+' か所あります。赤い枠の欄を入れてください';
+  toast.style.cssText='position:fixed;left:50%;bottom:88px;transform:translateX(-50%);background:#dc2626;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:800;box-shadow:0 8px 24px rgba(220,38,38,.4);z-index:2147483647;max-width:92vw;text-align:center;line-height:1.6;';
+  document.body.appendChild(toast); setTimeout(function(){ if(toast.parentNode) toast.parentNode.removeChild(toast); }, 4500);
+  _ncJumpErr(0, true);
+  return false;
+}
+function _ncJumpErr(k, first){
+  var e=(window._ncErrList||[])[k]; if(!e||!e.el) return;
+  try{ e.el.scrollIntoView({behavior:'smooth', block:'center', inline:'center'}); }catch(_){}
+  var f=(e.el.matches && e.el.matches('input,select,textarea'))?e.el:e.el.querySelector('input,select,textarea');
+  if(f) setTimeout(function(){ try{ f.focus({preventScroll:true}); }catch(_){ try{ f.focus(); }catch(__){} } }, first?350:250);
+}
+// 入れ直したら赤い枠を消す。全部消えたらメッセージも消す
+function _ncErrWatch(e){
+  var t=e.target; if(!t || !t.closest) return;
+  var m=t.classList&&t.classList.contains('nc-err-mark')?t:t.closest('.nc-err-mark');
+  if(!m) return;
+  var ok=true;
+  if(m.matches('input[type=text],input[type=date],input:not([type]),select,textarea')) ok=!!String(m.value||'').trim();
+  if(ok) m.classList.remove('nc-err-mark');
+  if(!document.querySelector('#newCaseModalBg .nc-err-mark')){ var el=document.getElementById('ncError'); if(el && window._ncErrList) { el.style.display='none'; window._ncErrList=null; } }
+}
+
+// ---- ② 1人目の値を全員に入れる ----
+var _NC_ALL_LBL={'nc-j-nat':'国籍','nc-j-current':'現在の在留資格','nc-j-hoped':'希望在留期間','nc-j-uke':'受取方法'};
+function _ncFillAll(cls){
+  var rows=_ncDataRows(); if(rows.length<2) return;
+  var src=rows[0].querySelector('.'+cls); if(!src) return;
+  var v=String(src.value||''), lbl=_NC_ALL_LBL[cls]||'';
+  if(!v){ showNcError('1人目の「'+lbl+'」を先に入れてください。1人目と同じ値を2人目以降に入れます'); try{ src.focus(); }catch(_){} return; }
+  if(src.disabled) return;
+  var srcNote=''; if(cls==='nc-j-current' && v==='その他'){ var sn=document.querySelector('#'+rows[0].id+'_noteRow .nc-j-current-note'); srcNote=sn?sn.value:''; }
+  var others=rows.slice(1), diff=others.filter(function(tr){ var e=tr.querySelector('.'+cls); return e && e.value && e.value!==v; });
+  var overwrite=true;
+  if(diff.length) overwrite=confirm('2人目以降に「'+lbl+'」がちがう値の人が '+diff.length+' 名います。\n\nOK：全員を1人目と同じ「'+(cls==='nc-j-expire'?v.replace(/-/g,'/'):v)+'」にする\nキャンセル：空いている人にだけ入れる');
+  var n=0;
+  others.forEach(function(tr){
+    var e=tr.querySelector('.'+cls); if(!e || e.disabled) return;
+    if(e.value && !overwrite) return;
+    if(e.value===v) return;
+    if(e.tagName==='SELECT') _ncSetSel(e, v); else e.value=v;
+    try{ e.dispatchEvent(new Event('change',{bubbles:true})); }catch(_){}
+    if(cls==='nc-j-current' && v==='その他'){ var nt=document.querySelector('#'+tr.id+'_noteRow .nc-j-current-note'); if(nt && !nt.value) nt.value=srcNote; }
+    e.classList.remove('nc-err-mark');
+    e.style.transition='background .6s'; e.style.background='#dcfce7'; setTimeout(function(){ e.style.background=''; }, 1200);
+    n++;
+  });
+  _ncToast(n?('「'+lbl+'」を '+n+' 名に入れました'):('「'+lbl+'」はもう全員同じです'));
+  try{ _ncDraftSaveSoon(); }catch(_){}
+}
+function _ncAllBtnSync(){
+  var many=_ncDataRows().length>=2;
+  document.querySelectorAll('#ncJinzaiTable .nc-all-btn').forEach(function(b){ b.style.display=many?'':'none'; });
+}
+
+// ---- ③ 閉じる前の確認・下書き ----
+var _NC_DRAFT_IDS=['nc_caseName','nc_appType','nc_company','nc_desiredStatus','nc_desiredStatusNote','nc_applicantField','nc_supportFee','nc_referralFee','nc_remarks','nc_aidemBranch','nc_salesPartner','nc_clientStaff','nc_clientStaff2','nc_senddashiName','nc_senddashiCountry','nc_senddashiAddress','nc_senddashiTel','nc_senddashiPayer','nc_senddashiAmount'];
+function _ncDraftKey(){ return 'nc_draft_'+(currentToken||''); }
+function _ncSerialize(){
+  var d={v:1,at:Date.now(),f:{},r:{},rows:[],to:_ncCollectAddrs('nc_toRows'),cc:_ncCollectAddrs('nc_ccRows')};
+  _NC_DRAFT_IDS.forEach(function(id){ var e=document.getElementById(id); if(e) d.f[id]=e.value||''; });
+  var cn=document.getElementById('nc_caseName'); d.caseManual=cn?(cn.dataset.manual||''):'';
+  ['nc_acceptExp','nc_feeMode'].forEach(function(nm){ var r=document.querySelector('input[name="'+nm+'"]:checked'); d.r[nm]=r?r.value:''; });
+  d.sdNotUsed=!!window._ncSenddashiNotUsed; d.aeChk=!!(document.getElementById('nc_aeChk')||{}).checked;
+  _ncDataRows().forEach(function(tr){
+    var g=function(c){ var e=tr.querySelector(c); return e?(e.type==='checkbox'?!!e.checked:(e.value||'')):''; };
+    var nt=document.querySelector('#'+tr.id+'_noteRow .nc-j-current-note');
+    d.rows.push({name:g('.nc-j-name'),nat:g('.nc-j-nat'),cur:g('.nc-j-current'),curNote:nt?nt.value:'',exp:g('.nc-j-expire'),cp:g('.nc-j-curperiod'),hoped:g('.nc-j-hoped'),uke:g('.nc-j-uke'),rec:g('.nc-j-recommend'),fee:g('.nc-j-fee')});
+  });
+  return d;
+}
+// 比べるとき用（時刻は除く）
+function _ncSnapStr(){ try{ var d=_ncSerialize(); delete d.at; return JSON.stringify(d); }catch(_){ return ''; } }
+function _ncHasContent(d){
+  if(!d) return false;
+  if((d.f.nc_company||'').trim() || (d.f.nc_caseName||'').trim()) return true;
+  return (d.rows||[]).some(function(r){ return (r.name||'').trim() || r.nat || r.exp; });
+}
+function _ncIsDirty(){
+  var fa=document.getElementById('ncFormArea'); if(!fa || fa.style.display==='none') return false;   // 送信が終わった画面
+  return window._ncSnap0!=null && _ncSnapStr()!==window._ncSnap0;
+}
+function _ncDraftEnabled(){ return !window._ncEditIds && !window._ncPractice; }
+var _ncDraftT=null;
+function _ncDraftSaveSoon(){ clearTimeout(_ncDraftT); _ncDraftT=setTimeout(_ncDraftSave, 700); }
+function _ncDraftSave(){
+  if(!_ncDraftEnabled()) return;
+  var bg=document.getElementById('newCaseModalBg'); if(!bg || !bg.classList.contains('open')) return;
+  var fa=document.getElementById('ncFormArea'); if(!fa || fa.style.display==='none') return;
+  if(!_ncIsDirty()) return;
+  try{ var d=_ncSerialize(); if(_ncHasContent(d)) localStorage.setItem(_ncDraftKey(), JSON.stringify(d)); }catch(_){}
+}
+function _ncDraftLoad(){ try{ var s=localStorage.getItem(_ncDraftKey()); if(!s) return null; var d=JSON.parse(s); if(!d||d.v!==1) return null; if(Date.now()-(d.at||0)>30*86400000){ _ncDraftClear(); return null; } return _ncHasContent(d)?d:null; }catch(_){ return null; } }
+function _ncDraftClear(){ try{ localStorage.removeItem(_ncDraftKey()); }catch(_){} var b=document.getElementById('ncDraftBanner'); if(b) b.remove(); }
+function _ncRestore(d){
+  var $=function(id){ return document.getElementById(id); };
+  var set=function(id){ var e=$(id); if(!e || d.f[id]==null) return; if(e.tagName==='SELECT') _ncSetSel(e, d.f[id]); else e.value=d.f[id]; };
+  ['nc_caseName','nc_appType','nc_company','nc_desiredStatus'].forEach(set);
+  if($('nc_caseName')) $('nc_caseName').dataset.manual=d.caseManual||'';
+  try{ _onDesiredStatusChange(); }catch(_){}
+  _NC_DRAFT_IDS.forEach(function(id){ if(['nc_caseName','nc_appType','nc_company','nc_desiredStatus'].indexOf(id)<0) set(id); });
+  try{ _onAidemBranchChange(); }catch(_){}
+  _ncFillAddrs('nc_toRows','to',d.to||''); _ncFillAddrs('nc_ccRows','cc',d.cc||'');
+  document.querySelectorAll('input[name="nc_acceptExp"]').forEach(function(x){ x.checked=(x.value===(d.r.nc_acceptExp||'')); });
+  if(d.r.nc_feeMode){ var fm=document.querySelector('input[name="nc_feeMode"][value="'+d.r.nc_feeMode+'"]'); if(fm) fm.checked=true; }
+  $('ncJinzaiBody').innerHTML=''; _ncJinzaiRows=0;
+  (d.rows&&d.rows.length?d.rows:[{}]).forEach(function(r){
+    addJinzaiRow();
+    var trs=_ncDataRows(), tr=trs[trs.length-1]; if(!tr) return;
+    var q=function(c){ return tr.querySelector(c); };
+    if(q('.nc-j-name')) q('.nc-j-name').value=r.name||'';
+    _ncSetSel(q('.nc-j-nat'), r.nat||'');
+    _ncSetSel(q('.nc-j-current'), r.cur||'');
+    if(r.cur==='その他'){ _onJinzaiCurrentStatusChange(q('.nc-j-current'), tr.id+'_noteRow'); var ni=document.querySelector('#'+tr.id+'_noteRow .nc-j-current-note'); if(ni) ni.value=r.curNote||''; }
+    if(q('.nc-j-expire')){ q('.nc-j-expire').value=r.exp||''; try{ q('.nc-j-expire').dispatchEvent(new Event('change',{bubbles:true})); }catch(_){} }
+    _ncSetSel(q('.nc-j-curperiod'), r.cp||'');
+    _ncSetSel(q('.nc-j-hoped'), r.hoped||'');
+    if(r.uke) _ncSetSel(q('.nc-j-uke'), r.uke);
+    if(q('.nc-j-recommend')) q('.nc-j-recommend').checked=!!r.rec;
+    if(q('.nc-j-fee')) q('.nc-j-fee').value=r.fee||'';
+  });
+  window._ncSenddashiNotUsed=!!d.sdNotUsed;
+  try{ _ncUpdateSenddashiVisibility(); _ncApplyNotUsedUI(); }catch(_){}
+  if(d.aeChk && $('nc_aeChk')){ $('nc_aeChk').checked=true; try{ $('nc_aeChk').onchange&&$('nc_aeChk').onchange(); }catch(_){} }
+  try{ _updateHopedOptions(); _ncApplyUkeRule(); _ncFeeSync(); }catch(_){}
+  try{ if(($('nc_caseName')||{}).dataset.manual!=='1') _ncAutoCaseName(); _ncCaseNameHint(); }catch(_){}
+  try{ _ncCoHintRefresh(); _ncAllBtnSync(); }catch(_){}
+}
+function _ncDraftBanner(){
+  var old=document.getElementById('ncDraftBanner'); if(old) old.remove();
+  if(!_ncDraftEnabled()) return;
+  var d=_ncDraftLoad(); if(!d) return;
+  var fa=document.getElementById('ncFormArea'); if(!fa) return;
+  var dt=new Date(d.at), ts=(dt.getMonth()+1)+'/'+dt.getDate()+' '+('0'+dt.getHours()).slice(-2)+':'+('0'+dt.getMinutes()).slice(-2);
+  var who=(d.f.nc_company||d.f.nc_caseName||'').trim(), np=(d.rows||[]).filter(function(r){ return (r.name||'').trim(); }).length;
+  var b=document.createElement('div'); b.id='ncDraftBanner';
+  b.style.cssText='margin:0 0 12px;padding:9px 12px;border-radius:8px;background:#eef2ff;border:1px solid #a5b4fc;color:#312e81;font-size:12px;line-height:1.7;display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
+  b.innerHTML='<span style="flex:1;min-width:200px;">📝 <b>入力途中の下書きがあります</b>（'+esc(ts)+(who?'・'+esc(who):'')+(np?'・'+np+'名':'')+'）</span>'
+    +'<button type="button" onclick="_ncDraftUse()" style="padding:4px 12px;border-radius:999px;font-size:11.5px;font-weight:800;background:#4338ca;color:#fff;border:none;cursor:pointer;">続きから入れる</button>'
+    +'<button type="button" onclick="_ncDraftDiscard()" style="padding:4px 12px;border-radius:999px;font-size:11.5px;font-weight:800;background:#fff;color:#64748b;border:1px solid #cbd5e1;cursor:pointer;">消す</button>';
+  fa.insertBefore(b, fa.firstChild);
+}
+function _ncDraftUse(){ var d=_ncDraftLoad(); var b=document.getElementById('ncDraftBanner'); if(b) b.remove(); if(!d) return; try{ _ncRestore(d); }catch(e){ console.error('[nc draft restore]', e); } window._ncSnap0=''; }
+function _ncDraftDiscard(){ if(!confirm('下書きを消しますか？（元に戻せません）')) return; _ncDraftClear(); }
+function _ncAfterOpen(){
+  setTimeout(function(){
+    window._ncSnap0=_ncSnapStr();
+    if(window._ncSkipDraftBanner){ window._ncSkipDraftBanner=false; } else _ncDraftBanner();
+    _ncCoHintRefresh(); _ncAllBtnSync();
+  }, 0);
+}
+function _ncCanClose(){
+  if(!_ncIsDirty()) return true;
+  if(_ncDraftEnabled()){
+    _ncDraftSave();
+    return confirm('入力した内容はまだ送信していません。\n\n閉じても下書きとして残るので、次に「新規案件依頼」を開いたときに続きから入れられます。\n閉じますか？');
+  }
+  return confirm(window._ncEditIds?'変更はまだ送信していません。閉じると、いま直した内容は消えます。閉じますか？':'入力した内容は消えます。閉じますか？');
+}
+window.addEventListener('beforeunload', function(e){
+  try{ var bg=document.getElementById('newCaseModalBg'); if(bg && bg.classList.contains('open') && _ncIsDirty()){ _ncDraftSave(); e.preventDefault(); e.returnValue=''; } }catch(_){}
+});
+(function _ncUxBind(){
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', _ncUxBind); return; }
+  var bg=document.getElementById('newCaseModalBg'); if(!bg) return;
+  bg.addEventListener('input', function(e){ _ncErrWatch(e); _ncDraftSaveSoon(); });
+  bg.addEventListener('change', function(e){ _ncErrWatch(e); _ncDraftSaveSoon(); if(e.target && (e.target.id==='nc_company'||e.target.id==='nc_desiredStatus'||e.target.name==='nc_acceptExp'||e.target.id==='nc_appType')) _ncCoHintRefresh(); });
+  var co=document.getElementById('nc_company'); if(co) co.addEventListener('input', function(){ clearTimeout(window._ncCoT); window._ncCoT=setTimeout(_ncCoHintRefresh, 400); });
+})();
+
+// ---- ④ 前の依頼から入れる ／ ⑤ 受入れ経験の目安 ----
+function _ncLastIntakeOf(co){
+  var n=_ncAeNormCo(co); if(!n) return null;
+  var edit=window._ncEditIds||[], best=null;
+  (allIntakes||[]).forEach(function(r){ if(!r || edit.indexOf(r.id)>=0 || r.status==='rejected' || _ncAeNormCo(r.company)!==n) return; if(!best || String(r.received_at||'')>String(best.received_at||'')) best=r; });
+  if(!best) return null;
+  var rows=(allIntakes||[]).filter(function(r){ return r && r.received_at===best.received_at && _ncAeNormCo(r.company)===n && (r.case_name||'')===(best.case_name||''); });
+  return {r0:best, rows:rows.length?rows:[best]};
+}
+// 会社ごとの共通の欄だけ入れる（空いている欄だけ。人・案件名は触らない）
+function _ncApplyCommon(r0, rows, opt){
+  opt=opt||{}; var $=function(id){ return document.getElementById(id); }, n=0;
+  var put=function(id,v){ var e=$(id); if(!e || v==null || v==='' ) return; if(String(e.value||'').trim() && !opt.force) return; if(e.tagName==='SELECT') _ncSetSel(e,String(v)); else e.value=String(v); n++; };
+  if(opt.withAppType) put('nc_appType', r0.app_type||'');
+  var ds=String(r0.desired_status||''), dm=ds.match(/^その他[:：]\s*([\s\S]*)$/);
+  if(!_ncV('nc_desiredStatus') && ds){ _ncSetSel($('nc_desiredStatus'), dm?'その他':ds); n++; try{ _onDesiredStatusChange(); }catch(_){} if(dm && $('nc_desiredStatusNote')) $('nc_desiredStatusNote').value=dm[1]||''; }
+  var note=''; (rows||[r0]).some(function(r){ var s=String(r.other_support_note||''); if(s.trim()){ note=s; return true; } return false; });
+  var fm=note.match(/^【分野：([^】]*)】/); if(fm && $('nc_fieldWrap') && $('nc_fieldWrap').style.display!=='none') put('nc_applicantField', fm[1]);
+  if(!document.querySelector('input[name="nc_acceptExp"]:checked') && r0.accept_exp){ var ra=document.querySelector('input[name="nc_acceptExp"][value="'+r0.accept_exp+'"]'); if(ra){ ra.checked=true; n++; } }
+  put('nc_supportFee', r0.support_fee==null?'':r0.support_fee);
+  if(orgName==='株式会社アイデム'){ put('nc_aidemBranch', r0.aidem_branch||''); try{ _onAidemBranchChange(); }catch(_){} }
+  if(orgName && orgName.indexOf('オープンケア')>=0) put('nc_salesPartner', r0.sales_partner||'');
+  var cst=String(r0.client_staff||'').split(/[、,]/).map(function(x){ return x.trim(); }).filter(Boolean);
+  if(!_ncV('nc_clientStaff') && !_ncV('nc_clientStaff2')){ put('nc_clientStaff', cst[0]||''); put('nc_clientStaff2', cst[1]||''); }
+  if(_ncToccIsEmpty() && (r0.to_email||r0.cc_email)){ _ncFillAddrs('nc_toRows','to',r0.to_email||''); _ncFillAddrs('nc_ccRows','cc',r0.cc_email||''); n++; }
+  // 送り出し機関（認定のとき）
+  var so=r0.senddashi_org; try{ if(typeof so==='string') so=JSON.parse(so); }catch(_){ so=null; }
+  try{ _ncUpdateSenddashiVisibility(); }catch(_){}
+  if(so && !so.not_used && !_ncV('nc_senddashiName')){ put('nc_senddashiName',so.name); put('nc_senddashiCountry',so.country); put('nc_senddashiAddress',so.address); put('nc_senddashiTel',so.tel); }
+  try{ _updateHopedOptions(); _ncApplyUkeRule(); _ncAeRefresh(); if(($('nc_caseName')||{}).dataset.manual!=='1') _ncAutoCaseName(); _ncCaseNameHint(); }catch(_){}
+  return n;
+}
+function _ncUseLastIntake(){
+  var li=_ncLastIntakeOf(_ncV('nc_company')); if(!li) return;
+  var n=_ncApplyCommon(li.r0, li.rows, {withAppType:!_ncV('nc_appType')});
+  window._ncCoHintUsed=_ncAeNormCo(_ncV('nc_company'));
+  _ncCoHintRefresh();
+  _ncToast(n?('前回の依頼から '+n+' 項目を入れました（空いていた欄だけ）。確認してください'):'空いている欄はありませんでした');
+  _ncDraftSaveSoon();
+}
+// 送信した依頼カードの「コピーして新規」
+function copyIntakeToNew(gi){
+  var g=_intakeGroupCache[gi]; if(!g || !g.rows || !g.rows.length) return;
+  var r0=g.rows[0];
+  window._ncSkipDraftBanner=true;   // コピーのときは下書きの案内を出さない（下書きは残る）
+  openNewCaseModal();
+  var co=document.getElementById('nc_company'); if(co) co.value=r0.company||g.company||'';
+  window._ncCoHintUsed=_ncAeNormCo(r0.company||g.company||'');
+  _ncApplyCommon(r0, g.rows, {withAppType:true});
+  _ncToast('「'+(g.case_name_now||g.case_name||'')+'」の会社・申請の内容を入れました。申請する人を入れてください');
+}
+// 弊社でのこの会社の特定技能の案件（取下げ・不許可は除く）
+function _ncSswCasesOf(co){
+  var n=_ncAeNormCo(co); if(!n) return {all:0,done:0};
+  var bad=/取下|取り下|不許可|キャンセル|中止/, done=/完了|交付|窓口受取/;
+  var cs=(allCases||[]).filter(function(c){ return _ncAeNormCo(c.company)===n && /^特定技能/.test(c.residenceStatus||'') && !bad.test(c.status||''); });
+  return {all:cs.length, done:cs.filter(function(c){ return done.test(c.status||''); }).length};
+}
+function _ncCoHintRefresh(){
+  var box=document.getElementById('nc_coHint'); if(!box) return;
+  var co=_ncV('nc_company'), h='';
+  if(co){
+    var li=(!window._ncEditIds && window._ncCoHintUsed!==_ncAeNormCo(co))?_ncLastIntakeOf(co):null;
+    if(li){
+      var d=String(li.r0.received_at||'').slice(0,10).replace(/-/g,'/');
+      h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 12px;background:#f0f9ff;border:1px solid #7dd3fc;border-radius:8px;color:#075985;font-size:11.5px;line-height:1.6;margin-bottom:6px;">'
+        +'<span style="flex:1;min-width:200px;">📋 この会社の<b>前回の依頼</b>があります（'+esc(d)+'・'+esc(li.r0.case_name||'')+'）。希望在留資格・受入れ経験・支援委託費・担当者・宛先などを入れられます</span>'
+        +'<button type="button" onclick="_ncUseLastIntake()" style="padding:4px 12px;border-radius:999px;font-size:11.5px;font-weight:800;background:#0369a1;color:#fff;border:none;cursor:pointer;white-space:nowrap;">前回の内容を入れる</button></div>';
+    }
+    if(_ncAeIsSsw1() && _ncV('nc_appType')!=='更新'){
+      var sc=_ncSswCasesOf(co), ae=document.querySelector('input[name="nc_acceptExp"]:checked');
+      if(sc.done && (!ae || ae.value==='無')){
+        var warn=(ae && ae.value==='無');
+        h+='<div style="padding:7px 12px;background:'+(warn?'#fff7ed':'#f8fafc')+';border:1px solid '+(warn?'#fb923c':'#cbd5e1')+';border-radius:8px;color:'+(warn?'#9a3412':'#334155')+';font-size:11.5px;line-height:1.7;margin-bottom:6px;">'
+          +(warn?'⚠️ ':'💡 ')+'弊社では、この会社の特定技能の案件が <b>'+sc.done+'件 完了</b>しています。'
+          +'その人たちが<b>今年度（<span class="nc-ae-fy">'+esc(_ncAeFy())+'</span>）もこの会社で働いている</b>なら「<b>同一年度内に受入れ済み</b>」です。'
+          +(warn?'<br>「同一年度内は初めて」で合っているか、もう一度ご確認ください（退職などで今年度は1人もいない場合は「初めて」で合っています）。':'')
+          +'</div>';
+      }
+    }
+  }
+  box.innerHTML=h; box.style.display=h?'':'none';
+}
+
 function showNcError(msg){
   var el = document.getElementById('ncError');
   el.textContent = '' + msg;
@@ -11755,6 +12101,8 @@ async function submitNewCase(){
     if(_cbg){ _cbg.classList.remove('open'); }
   }catch(_){}
   // ver.20261013.02: submitNewCase 全体を try/catch で包み、どこで落ちてもユーザーに原因を見せる
+  // ver.20261125.04: 足りない所を先にまとめて出す（1つずつ出さない）
+  try{ if(!_ncPrecheckAll()) return; }catch(e){ console.warn('[nc precheck]', e); }
   try{
     await _submitNewCaseInner();
   }catch(err){
@@ -11907,7 +12255,7 @@ async function _submitNewCaseInner(){
       if(isNaN(_fv)){ showNcError((i+1) + '人目の紹介料は数字だけで入れてください（例：300000）'); try{ _feeEl.focus(); }catch(e){} return; }
       introFee = _fv ? String(_fv) : '';
     }
-    if(!nm && !nat && !uke){ continue; }
+    if(_ncRowIsBlank(rowEl)){ continue; }   // ver.20261125.04: 何も入れていない行は飛ばす（受取方法は最初から入っているため、空の行でもエラーになっていた）
     if(!nm){ showNcError((i+1) + '人目の氏名を入力してください'); return; }
     if(!nat){ showNcError((i+1) + '人目の国籍を選択してください'); return; }
     // ver.20261120.01: 変更・更新は現在の在留資格も必須に（認定は空でもよい）
@@ -12212,6 +12560,7 @@ async function executeSubmit(){
     var mailTextEl = document.getElementById('ncMailText');   // ver.20261010.01: 初回メール文案
     if(mailTextEl) mailTextEl.value = _buildIntroMailText(p.company, (p.jinzaiList||[]).map(function(j){return j.name;}), p.clientStaff, p.appType);
     bigSuc.classList.add('show');
+    try{ if(!_editIds && !window._ncPractice) _ncDraftClear(); window._ncSnap0=null; }catch(_){}   // ver.20261125.04: 送れたら下書きを消す
     // 下部ボタンの調整
     document.getElementById('ncSubmitBtn').style.display = 'none';
     var cancelBtn = document.querySelector('#newCaseModalBg .nc-cancel-btn');
