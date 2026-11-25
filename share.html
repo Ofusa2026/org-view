@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261125.07: 「＋ 人材を追加」で足した人に、前の人の国籍・現在の在留資格（その他の詳細も）・受取方法を先に入れる（薄い緑で知らせる）。在留期限・現在の在留期間は入れない。AI読み取り・下書き・編集で行を作るときは引き継がない。 -->
 <!-- ver.20261125.06: 新規案件依頼 その2。①スマホ（幅700px以下）は表をやめて案件の情報を縦並び・人は1人ずつカード表示（「1人目と同じにする」ボタン付き。入力欄は16pxでiPhoneの拡大を防ぐ）②AIで読み取って入力に PDF・Excel（xlsx/xls）・CSV を追加。ファイルを枠に持ってきて離すだけでも入る（Excelはサーバー側 intake-ai-read v4 で表を文字にする。CSVはShift-JISも読む）③前回の依頼の案内に、入る中身（希望在留資格・受入れ経験・委託費・担当者・宛先）を先に表示 ④フォームの使われ方を記録（nc_form_events／RPC log_nc_event。開いた・足りない欄で止まった欄名・送れた・入力途中で閉じた・AI読み取り・下書き・前回の依頼。氏名などは送らない）。 -->
 <!-- ver.20261125.05: .04の修正。足りない所の一覧が画面に出ていなかった（赤枠と下の赤い帯だけ出ていた）のを表示。案件名が空のまま会社名だけ入れて「登録する」を押したとき、案件名を先に自動で作ってから確認するようにした（自動で入ったのに赤枠が残っていた）。 -->
 <!-- ver.20261125.04: 新規案件依頼を使いやすく。①「登録する」で足りない所を全部まとめて赤枠＋一覧で表示（押すと移動）②人の列見出しに「全員に」（1人目の値を2人目以降へ。国籍・現在の在留資格・希望在留期間・受取方法のみ。在留期限・現在の在留期間は人ごとに違うため付けない）③入力途中で閉じるときは確認し、下書きを自動保存（次に開いたとき「続きから入れる」）。送れたら下書きは消す ④会社名を入れると前回の依頼から共通の欄（空いている所だけ）を入れられる／送信した依頼カードに「コピーして新規」⑤特定技能1号で、弊社に完了した特定技能の案件がある会社なのに受入れ経験が未選択・「初めて」のとき目安を表示 ⑥分野の選択肢の「（任意）」表記を削除（必須のため）。何も入れていない人の行は送るときに飛ばす。 -->
@@ -813,7 +814,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261125.06</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261125.07</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -1192,7 +1193,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
           </tbody>
         </table>
 
-        <button type="button" class="nc-add-jinzai-btn" onclick="addJinzaiRow()">＋ 人材を追加</button>
+        <button type="button" class="nc-add-jinzai-btn" onclick="_ncAddRowInherit()" title="前の人と同じ国籍・在留資格・受取方法が入った行を足します">＋ 人材を追加</button>
 
         <!-- ver.20261019.test04: 人材紹介手数料（1人あたり）を独立ボックスに -->
         <div class="nc-section-title"><span class="nc-stepno">4</span>人材紹介手数料 <span class="nc-sec-sub">任意・税抜・<b>1人あたり</b>で入れます</span></div>
@@ -11920,6 +11921,25 @@ function _ncErrWatch(e){
   if(!document.querySelector('#newCaseModalBg .nc-err-mark')){ var el=document.getElementById('ncError'); if(el && window._ncErrList) { el.style.display='none'; window._ncErrList=null; } }
 }
 
+// ver.20261125.07: 「＋ 人材を追加」で足した人に、前の人の国籍・現在の在留資格・受取方法を先に入れておく（在留期限・現在の在留期間は人ごとに違うので入れない）
+function _ncAddRowInherit(){
+  var prev=_ncDataRows().slice(-1)[0];
+  var before=_ncDataRows().length;
+  addJinzaiRow();
+  var rows=_ncDataRows(); if(!prev || rows.length<=before) return;
+  var tr=rows[rows.length-1], n=0;
+  ['.nc-j-nat','.nc-j-current','.nc-j-uke'].forEach(function(c){
+    var s=prev.querySelector(c), d=tr.querySelector(c); if(!s || !d || d.disabled) return;
+    var v=String(s.value||''); if(!v || d.value===v) return;
+    _ncSetSel(d, v); try{ d.dispatchEvent(new Event('change',{bubbles:true})); }catch(_){}
+    if(c==='.nc-j-current' && v==='その他'){ var sn=document.querySelector('#'+prev.id+'_noteRow .nc-j-current-note'), dn=document.querySelector('#'+tr.id+'_noteRow .nc-j-current-note'); if(sn && dn) dn.value=sn.value; }
+    d.style.transition='background .6s'; d.style.background='#dcfce7'; setTimeout(function(){ d.style.background=''; }, 1500);
+    n++;
+  });
+  var nm=tr.querySelector('.nc-j-name'); if(nm) setTimeout(function(){ try{ nm.focus(); }catch(_){} }, 50);
+  if(n) _ncToast('前の人と同じ国籍・在留資格・受取方法を入れました（違うときは直してください）');
+  try{ _ncDraftSaveSoon(); }catch(_){}
+}
 // ---- ② 1人目の値を全員に入れる ----
 var _NC_ALL_LBL={'nc-j-nat':'国籍','nc-j-current':'現在の在留資格','nc-j-hoped':'希望在留期間','nc-j-uke':'受取方法'};
 function _ncFillAll(cls){
