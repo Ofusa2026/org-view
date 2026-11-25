@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261125.05: .04の修正。足りない所の一覧が画面に出ていなかった（赤枠と下の赤い帯だけ出ていた）のを表示。案件名が空のまま会社名だけ入れて「登録する」を押したとき、案件名を先に自動で作ってから確認するようにした（自動で入ったのに赤枠が残っていた）。 -->
 <!-- ver.20261125.04: 新規案件依頼を使いやすく。①「登録する」で足りない所を全部まとめて赤枠＋一覧で表示（押すと移動）②人の列見出しに「全員に」（1人目の値を2人目以降へ。国籍・現在の在留資格・希望在留期間・受取方法のみ。在留期限・現在の在留期間は人ごとに違うため付けない）③入力途中で閉じるときは確認し、下書きを自動保存（次に開いたとき「続きから入れる」）。送れたら下書きは消す ④会社名を入れると前回の依頼から共通の欄（空いている所だけ）を入れられる／送信した依頼カードに「コピーして新規」⑤特定技能1号で、弊社に完了した特定技能の案件がある会社なのに受入れ経験が未選択・「初めて」のとき目安を表示 ⑥分野の選択肢の「（任意）」表記を削除（必須のため）。何も入れていない人の行は送るときに飛ばす。 -->
 <!-- ver.20261125.03: 送信日と案件受領日を両方表示。一覧の「案件受領日」の下に小さく「送信 日付」（O-Link経由のみ）、「送信した依頼」のカードの送信日時の下に「案件受領日」（登録済みのみ）。 -->
 <!-- ver.20261125.02: 至急修正：.01で追加した担当者の絞り込みの変数名が、新規案件依頼の「案件担当者」登録リスト（intakeStaff）と同じだったため改名（intakeStaffSel）。 -->
@@ -781,7 +782,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261125.04</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261125.05</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
@@ -11710,6 +11711,7 @@ function _ncPrecheckAll(){
   var errs=[];
   var add=function(el,msg){ errs.push({el:el,msg:msg}); if(el) el.classList.add('nc-err-mark'); };
   var $=function(id){ return document.getElementById(id); };
+  try{ var _cn=$('nc_caseName'); if(_cn && _cn.dataset.manual!=='1' && !_cn.value) _ncAutoCaseName(); }catch(_){}   // 案件名は自動で作れるときは先に作る
   var appType=_ncV('nc_appType'), ds=_ncV('nc_desiredStatus'), isAidem=(orgName==='株式会社アイデム');
   if(!_ncV('nc_caseName')) add($('nc_caseName'),'案件名');
   if(!appType) add($('nc_appType'),'申請種別');
@@ -11753,7 +11755,7 @@ function _ncPrecheckAll(){
   errs.slice(0,20).forEach(function(e,k){ h+='<a href="javascript:void(0)" onclick="_ncJumpErr('+k+')" style="display:inline-block;padding:2px 8px;border-radius:999px;background:#fff;border:1px solid #fca5a5;color:#b91c1c;font-size:11px;font-weight:700;text-decoration:none;">'+esc(e.msg)+'</a>'; });
   if(errs.length>20) h+='<span style="font-size:11px;">ほか '+(errs.length-20)+' か所</span>';
   h+='</div>';
-  el.innerHTML=h; el.style.display='';
+  el.innerHTML=h; el.style.display='block';   // .nc-error は CSS で隠れているので block で出す
   window._ncErrList=errs;
   var t0=document.getElementById('_ncErrToast'); if(t0) t0.remove();
   var toast=document.createElement('div'); toast.id='_ncErrToast';
