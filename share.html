@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- ver.20261127.02: 「手数料について」をダッシュボードの上から、ヘッダーの「＋ 新規案件依頼」の左へ移動（白の細枠で目立たせない。スマホは小さく）。 -->
 <!-- ver.20261127.01: ダッシュボードの一番上に「手数料について」ボタンを追加。押すと料金表の画像（入管庁のポスターの料金表部分）・入管庁のページ・コンビニ決済／銀行決済の支払手順PDFへのリンクを表示。 -->
 <!-- ver.20261125.07: 「＋ 人材を追加」で足した人に、前の人の国籍・現在の在留資格（その他の詳細も）・受取方法を先に入れる（薄い緑で知らせる）。在留期限・現在の在留期間は入れない。AI読み取り・下書き・編集で行を作るときは引き継がない。 -->
 <!-- ver.20261125.06: 新規案件依頼 その2。①スマホ（幅700px以下）は表をやめて案件の情報を縦並び・人は1人ずつカード表示（「1人目と同じにする」ボタン付き。入力欄は16pxでiPhoneの拡大を防ぐ）②AIで読み取って入力に PDF・Excel（xlsx/xls）・CSV を追加。ファイルを枠に持ってきて離すだけでも入る（Excelはサーバー側 intake-ai-read v4 で表を文字にする。CSVはShift-JISも読む）③前回の依頼の案内に、入る中身（希望在留資格・受入れ経験・委託費・担当者・宛先）を先に表示 ④フォームの使われ方を記録（nc_form_events／RPC log_nc_event。開いた・足りない欄で止まった欄名・送れた・入力途中で閉じた・AI読み取り・下書き・前回の依頼。氏名などは送らない）。 -->
@@ -490,6 +491,10 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
 .new-case-btn{background:linear-gradient(135deg,#16a34a,#22c55e);color:white;border:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(34,197,94,.3);margin-right:12px;margin-left:auto;white-space:nowrap;}
 .new-case-btn:hover{background:linear-gradient(135deg,#15803d,#16a34a);box-shadow:0 3px 10px rgba(34,197,94,.4);}
 .header:has(.new-case-btn:not([style*="display:none"])) .header-org{margin-left:0;}
+/* ver.20261127.02: 新規案件依頼の左に「手数料について」（目立たせない白の細枠） */
+.fee-info-btn{background:transparent;color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.3);padding:8px 13px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-left:auto;margin-right:8px;white-space:nowrap;}
+.fee-info-btn:hover{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.5);}
+.fee-info-btn:not([style*="display:none"]) + .new-case-btn{margin-left:0;}
 /* ver.20260701.02: モバイルヘッダー最適化（縦積み解消・要素整理） */
 @media(max-width:600px){
   .header{flex-wrap:wrap;gap:6px 8px;padding:9px 12px;}
@@ -497,6 +502,7 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   .hdr-ver{display:none;}
   .header-title{font-size:12.5px;}
   .new-case-btn{padding:7px 11px;font-size:11px;margin-right:0;}
+  .fee-info-btn{padding:6px 8px;font-size:10.5px;margin-right:6px;}
   .header-org{max-width:120px;font-size:10px;}
 }
 .nc-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:none;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto;}
@@ -815,11 +821,12 @@ body.gp-mode .type-badge{font-size:11px;padding:3px 8px;}
   <div class="ol-brand" style="display:inline-flex;align-items:center;gap:7px;"><svg width="24" height="24" viewBox="0 0 120 120" style="flex:none;display:block;"><path d="M 72.9 17.9 A 44 44 0 0 1 102.9 69.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 90.0 92.2 A 44 44 0 0 1 30.0 92.2" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><path d="M 17.1 69.9 A 44 44 0 0 1 47.1 17.9" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/><circle cx="60.0" cy="16.0" r="13" fill="#19C2A6"/><circle cx="98.1" cy="82.0" r="13" fill="#19C2A6"/><circle cx="21.9" cy="82.0" r="13" fill="#19C2A6"/></svg><span style="font-size:17px;font-weight:800;letter-spacing:.3px;color:#fff;line-height:1;">O<span style="color:#19C2A6;">-</span>Link</span></div>
     <div class="header-logo">大房行政書士法人</div>
     <div class="header-title">登録支援機関マイページ</div>
-    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261127.01</div>
+    <div class="hdr-ver" style="font-size:9px;opacity:.4;letter-spacing:.3px;cursor:pointer;text-decoration:underline dotted;" onclick="openWhatsNew()" title="クリックでアップデート履歴を表示">ver.20261127.02</div>
   <button id="notifBtn" class="notif-btn" style="display:none;" onclick="openNotifModal()">
     <span style="font-size:11px;font-weight:800;">通知</span>
     <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
   </button>
+  <button id="feeInfoBtn" class="fee-info-btn" style="display:none;" onclick="openFeeInfo()" title="在留手数料の料金表・支払手順">手数料について</button>
   <button id="newCaseBtn" class="new-case-btn" style="display:none;" onclick="openNewCaseModal()">＋ 新規案件依頼</button>
   <div class="header-org" id="headerOrg">読み込み中...</div>
 </div>
@@ -1592,7 +1599,7 @@ var WHATS_NEW = [
     audience: 'all',
     notify: true,
     items: [
-      'ダッシュボードの一番上に<b>「手数料について」</b>を追加しました。令和8年10月1日からの<b>在留手数料の料金表</b>と、オンライン申請の<b>コンビニ決済／銀行決済の支払手順</b>をすぐにご確認いただけます。'
+      '画面右上の「＋ 新規案件依頼」の左に<b>「手数料について」</b>を追加しました。令和8年10月1日からの<b>在留手数料の料金表</b>と、オンライン申請の<b>コンビニ決済／銀行決済の支払手順</b>をすぐにご確認いただけます。'
     ]
   },
   {
@@ -5123,8 +5130,6 @@ function renderDashboard(){
   var todayReceipts=allReceipts.filter(function(r){return isToday(r.date);}).length;
   // ③ 今日の審査完了
   var todayShinsa=allShinsa.filter(function(s){return isToday(s.date);}).length;
-  // ver.20261127.01: 在留手数料（令和8年10月1日改定・オンライン申請はコンビニ／銀行決済）の案内ボタン
-  h+='<div style="margin-bottom:12px;"><button onclick="openFeeInfo()" style="padding:8px 16px;background:#fff;color:#1e3a8a;border:1.5px solid #93c5fd;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;">手数料について</button></div>';
   h+='<div style="font-size:11px;color:#64748b;font-weight:600;margin-bottom:8px;">本日（'+todayStr+'）の動向</div>';
   h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px;">';
   h+=_buildDashCard('申請', todayApplied, '#7c3aed', '#f5f3ff', '#c4b5fd', 'receipts');
@@ -9986,6 +9991,7 @@ async function loadData(){
     // ver.20260612.test07: 新規案件依頼を全orgで有効化
     var ncBtn=document.getElementById('newCaseBtn');
     if(ncBtn) ncBtn.style.display='';
+    var feeBtn=document.getElementById('feeInfoBtn'); if(feeBtn) feeBtn.style.display='';   // ver.20261127.02
     var hOrg=document.getElementById('headerOrg');
     if(hOrg) hOrg.style.marginLeft='0';
     if(orgName==='株式会社アイデム' && currentGroup==='dashboard') currentGroup='active';
